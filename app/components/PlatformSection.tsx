@@ -1,0 +1,83 @@
+import React from "react";
+
+type PlatformCard = {
+  key: string;
+  name: string;
+  desc: string;
+  tags: string[];
+  cta: string;
+};
+
+const PLATFORMS: PlatformCard[] = [
+  {
+    key: "instagram",
+    name: "Instagram",
+    desc:
+      "Boost your posts, gain credibility, and reach the Explore Page with our premium Instagram services.",
+    tags: ["Likes", "Followers", "Views"],
+    cta: "View Instagram Services",
+  },
+  {
+    key: "tiktok",
+    name: "TikTok",
+    desc:
+      "Give your videos the viral push they need to land on the FYP and capture millions of views.",
+    tags: ["Likes", "Followers", "Views"],
+    cta: "View TikTok Services",
+  },
+  {
+    key: "youtube",
+    name: "YouTube",
+    desc:
+      "Increase your video rankings, watch time, and channel authority to stand out on the world's largest video platform.",
+    tags: ["Views", "Subscribers", "Likes"],
+    cta: "View YouTube Services",
+  },
+];
+
+export default function PlatformSection() {
+  return (
+    <section className="platforms">
+      <div className="container">
+        <h2 className="platforms-title">Choose Your Platform to Start Growing</h2>
+        <p className="platforms-subtitle">
+          We offer specialized services for the world's leading social media platforms.
+          Select yours to see our packages.
+        </p>
+
+        <div className="platform-grid">
+          {PLATFORMS.map((p) => (
+            <article key={p.key} className="p-card">
+              <div className="p-top">
+                <div className={`p-icon ${p.key}`}></div>
+                <div className="p-name">{p.name}</div>
+                <div className="rating-pill">
+                  <span className="star">★</span>
+                  <span>5.0</span>
+                  <span className="muted">4,500+</span>
+                </div>
+              </div>
+
+              <p className="p-desc">{p.desc}</p>
+
+              <div className="p-tags">
+                {p.tags.map((t) => (
+                  <span key={t} className="chip">
+                    {t}
+                  </span>
+                ))}
+              </div>
+
+              <div className="p-cta">
+                <button className="btn btn-dark btn-full">
+                  {p.cta}
+                  <span className="arrow">→</span>
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
