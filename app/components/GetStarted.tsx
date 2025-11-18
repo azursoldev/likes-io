@@ -90,15 +90,49 @@ export default function GetStarted() {
   const price = useMemo(() => (qty * unitPrice), [qty, unitPrice]);
   const oldPrice = useMemo(() => (price + 10), [price]);
 
+  const PillIcon = ({ name }: { name: Platform }) => {
+    switch (name) {
+      case "instagram":
+        return (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H7zm5 3a5 5 0 110 10 5 5 0 010-10zm6.5-1.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+          </svg>
+        );
+      case "tiktok":
+        return (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M14 3v4.6c1.3 1 2.9 1.6 4.6 1.6V13c-1.9-.1-3.6-.8-4.6-1.9V14a5 5 0 11-5-5c.3 0 .7 0 1 .1V6.5c-2.7-.3-5 1.7-5.4 4.3A6 6 0 1014 14V3z"/>
+          </svg>
+        );
+      case "youtube":
+        return (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M10 8l6 4-6 4V8z"/>
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <section className="getstarted">
       <div className="container">
         <div className="gs-header">
           <h3 className="font-heading">Get Started Instantly</h3>
           <div className="gs-platforms">
-            <button className={`pill ${platform === "instagram" ? "active" : ""}`} onClick={() => setPlatform("instagram")}>Instagram</button>
-            <button className={`pill ${platform === "tiktok" ? "active" : ""}`} onClick={() => setPlatform("tiktok")}>TikTok</button>
-            <button className={`pill ${platform === "youtube" ? "active" : ""}`} onClick={() => setPlatform("youtube")}>YouTube</button>
+            <button className={`pill ${platform === "instagram" ? "active" : ""}`} onClick={() => setPlatform("instagram")}>
+              <span className="pill-icon"><PillIcon name="instagram" /></span>
+              Instagram
+            </button>
+            <button className={`pill ${platform === "tiktok" ? "active" : ""}`} onClick={() => setPlatform("tiktok")}>
+              <span className="pill-icon"><PillIcon name="tiktok" /></span>
+              TikTok
+            </button>
+            <button className={`pill ${platform === "youtube" ? "active" : ""}`} onClick={() => setPlatform("youtube")}>
+              <span className="pill-icon"><PillIcon name="youtube" /></span>
+              YouTube
+            </button>
           </div>
         </div>
 
@@ -141,16 +175,18 @@ export default function GetStarted() {
               />
             </div>
 
-            <div className="gs-input">
-              <input className="input-field" placeholder={`Your ${platform === "instagram" ? "Instagram" : platform === "tiktok" ? "TikTok" : "YouTube"} username`} />
-            </div>
+            <form className="gs-form" onSubmit={(e) => { e.preventDefault(); }}>
+              <div className="gs-input">
+                <input className="input-field" placeholder={`Your ${platform === "instagram" ? "Instagram" : platform === "tiktok" ? "TikTok" : "YouTube"} username`} />
+              </div>
 
-            <button className="btn buy-btn">Buy Now</button>
+              <button type="submit" className="btn buy-btn">Buy Now</button>
 
-            <div className="gs-trust">
-              <span className="trust-item">🛡️ 100% Safe Delivery</span>
-              <span className="trust-item">🔒 Secure Checkout</span>
-            </div>
+              <div className="gs-trust">
+                <span className="trust-item">🛡️ 100% Safe Delivery</span>
+                <span className="trust-item">🔒 Secure Checkout</span>
+              </div>
+            </form>
           </div>
 
           {/* Right features */}

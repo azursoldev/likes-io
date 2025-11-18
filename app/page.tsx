@@ -10,6 +10,7 @@ import FAQSection from "./components/FAQSection";
 import QuickStartSection from "./components/QuickStartSection";
 
 export default function HomePage() {
+  const SHOW_REVIEWS = false;
   return (
     <main>
       <Header />
@@ -18,7 +19,7 @@ export default function HomePage() {
       <PlatformSection />
       <GetStarted />
       <InfluenceSection />
-      <ReviewsSection />
+      {SHOW_REVIEWS && <ReviewsSection />}
       <FAQSection />
       <QuickStartSection />
       <Footer />

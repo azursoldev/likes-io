@@ -10,8 +10,16 @@ function formatTime(total: number) {
 }
 
 export default function PromoBar() {
+  // Countdown seconds (kept from existing behavior)
   const [seconds, setSeconds] = useState(20 * 3600 + 26 * 60 + 51);
   const [visible, setVisible] = useState(true);
+  // Rotating promo messages
+  const messages = [
+    "Limited Time: Double your YouTube Views on select packages today only!",
+    "Boost Instagram reach with premium likes and followers.",
+    "Grow TikTok faster with high-quality likes and views.",
+  ];
+  const [msgIndex, setMsgIndex] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -20,21 +28,33 @@ export default function PromoBar() {
     return () => clearInterval(id);
   }, []);
 
+  // Rotate message every 2 seconds
+  useEffect(() => {
+    const id = setInterval(() => {
+      setMsgIndex((i) => (i + 1) % messages.length);
+    }, 2000);
+    return () => clearInterval(id);
+  }, [messages.length]);
+
   if (!visible) return null;
 
   return (
     <div className="promo-bar">
       <div className="container promo-inner">
-        <div className="promo-left">
+        {/* Centered area: icon, rotating message, and countdown */}
+        <div className="promo-left" aria-live="polite">
           <span className="promo-icon" aria-hidden>
             🔔
           </span>
-          <span className="promo-text">
-            Limited Time: Double your YouTube Views on select packages today only!
+          <span key={msgIndex} className="promo-message fadeup">
+            {messages[msgIndex]}
+          </span>
+          <span className="countdown" aria-label="Offer ends in">
+            {formatTime(seconds)}
           </span>
         </div>
+        {/* Right area: close button */}
         <div className="promo-right">
-          <span className="countdown">{formatTime(seconds)}</span>
           <button className="promo-close" aria-label="Close" onClick={() => setVisible(false)}>
             ✕
           </button>

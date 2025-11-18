@@ -1,4 +1,18 @@
+"use client";
+import { useEffect, useState } from "react";
+
 export default function Hero() {
+  // Social update rotation every 3 seconds
+  const updates = [
+    { handle: "@fitfoodie", item: "5,000 Followers", time: "1m ago" },
+    { handle: "@yourbrand", item: "8.3k Views", time: "1h ago" },
+    { handle: "@davidArt", item: "1,000 Likes", time: "3m ago" },
+  ];
+  const [uIndex, setUIndex] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setUIndex((i) => (i + 1) % updates.length), 6000);
+    return () => clearInterval(id);
+  }, []);
   return (
     <section className="hero-section">
       <div className="container hero-grid">
@@ -52,19 +66,19 @@ export default function Hero() {
                 <div className="label">Engagement</div>
               </div>
             </div>
-            <div className="delivered-badge">+350 Followers<span className="sub"> delivered</span></div>
-            <div className="likes-float">❤ +1.2k Likes <span className="sub">in 5 minutes</span></div>
+            <div className="delivered-badge"><span className="db-icon" aria-hidden>👤</span> +350 Followers<span className="sub"> delivered</span></div>
+            <div className="likes-float"><span className="lf-icon" aria-hidden>❤</span> +2.1k Likes <span className="sub">in 12 minutes</span></div>
           </div>
         </div>
       </div>
-      <div className="social-update">
+      <div className="social-update fadeup" key={uIndex}>
         <span className="pill">
           <span className="ig-logo" aria-hidden="true" />
-          <span className="handle">@fitfoodie</span>
+          <span className="handle">{updates[uIndex].handle}</span>
         </span>
         <span className="muted">just purchased</span>
-        <b className="accent-num">5,000 Followers</b>
-        <span className="time">1m ago</span>
+        <b className="accent-num">{updates[uIndex].item}</b>
+        <span className="time">{updates[uIndex].time}</span>
       </div>
     </section>
   );

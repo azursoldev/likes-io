@@ -1,26 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
 import PromoBar from "./PromoBar";
 
 export default function Header() {
-  const [theme, setTheme] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const nextTheme = saved ?? (prefersDark ? "dark" : "light");
-      setTheme(nextTheme);
-      document.documentElement.classList.toggle("dark", nextTheme === "dark");
-    } catch {}
-  }, []);
-
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    try { localStorage.setItem("theme", next); } catch {}
-    document.documentElement.classList.toggle("dark", next === "dark");
-  };
+  // Dark mode toggle removed per request
 
   return (
     <>
@@ -48,9 +30,6 @@ export default function Header() {
             <div className="currency">USD <span className="caret">▾</span></div>
             <a className="login" href="#login">Login</a>
             <button className="signup">Sign up</button>
-            <button className="btn" onClick={toggleTheme} aria-label="Toggle theme">
-              {theme === "dark" ? "Light" : "Dark"}
-            </button>
           </div>
         </div>
       </header>

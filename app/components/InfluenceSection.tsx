@@ -94,7 +94,11 @@ export default function InfluenceSection() {
           <div className="influence-right">
             <div className="illus-wrap">
               <div className="glow-circle"></div>
-              <div className="illus-placeholder">Illustration of a person giving a thumbs up</div>
+              <img
+                src="/illustrations/thumbs-up.svg"
+                alt="Thumbs up illustration representing positive social engagement"
+                className="illus-image"
+              />
             </div>
           </div>
         </div>
