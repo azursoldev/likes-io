@@ -484,11 +484,12 @@ html.dark .floating-icon { opacity: 0.14; }
 .sub-title { font-weight: 700; }
 .sub-text { color: rgba(17,24,39,0.7); }
 
-.influence-right { position: relative; }
+.influence-right { position: relative; align-self: center; }
 .illus-wrap { position: relative; min-height: 320px; display: grid; place-items: center; }
 .glow-circle { position: absolute; width: 340px; height: 340px; border-radius: 9999px; background: radial-gradient(circle, rgba(249,115,22,0.25), rgba(249,115,22,0)); filter: blur(12px); }
 .illus-placeholder { position: relative; z-index: 1; background: #fff; border: 1px solid rgba(17,24,39,0.08); border-radius: 12px; padding: 12px; color: rgba(17,24,39,0.7); box-shadow: 0 20px 40px rgba(17,24,39,0.06); text-align: center; }
 .illus-image { position: relative; z-index: 1; width: 260px; height: auto; filter: drop-shadow(0 20px 40px rgba(17,24,39,0.06)); }
+.illus-image-lg { width: 360px; }
 
 /* Reviews section */
 .reviews { padding: 40px 0 56px; }
@@ -530,7 +531,7 @@ html.dark .floating-icon { opacity: 0.14; }
 .faq-list { display: grid; gap: 12px; max-width: 760px; margin: 0 auto; }
 .faq-item { background: #fff; border: 1px solid rgba(17,24,39,0.08); border-radius: 12px; box-shadow: 0 8px 16px rgba(17,24,39,0.06); transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease; will-change: transform, box-shadow; }
 .faq-item:hover, .faq-item:focus-within { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(17,24,39,0.12); border-color: rgba(17,24,39,0.12); }
-.faq-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: transparent; border: none; cursor: pointer; color: rgb(var(--color-text-primary)); font-weight: 700; }
+.faq-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: transparent; border: none; cursor: pointer; font-family: 'Inter', system-ui, sans-serif; font-size: 18px; font-weight: 600; color: #1f2937; }
 .faq-toggle { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 9999px; border: 1px solid rgba(17,24,39,0.12); color: rgba(17,24,39,0.8); background: #fff; box-shadow: 0 6px 12px rgba(17,24,39,0.06); }
 .faq-item.open .faq-toggle { background: rgba(17,24,39,0.03); }
 .faq-body { padding: 0 16px 16px; color: rgba(17,24,39,0.8); }

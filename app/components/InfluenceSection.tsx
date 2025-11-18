@@ -95,9 +95,9 @@ export default function InfluenceSection() {
             <div className="illus-wrap">
               <div className="glow-circle"></div>
               <img
-                src="/illustrations/thumbs-up.svg"
-                alt="Thumbs up illustration representing positive social engagement"
-                className="illus-image"
+                src="/businesswoman-receiving-best-award.png"
+                alt="Businesswoman receiving best award"
+                className="illus-image illus-image-lg"
               />
             </div>
           </div>
