@@ -15,7 +15,13 @@ export default function Footer() {
             <a href="#privacy">Privacy Policy</a>
           </nav>
           <div className="footer-lang">
-            <button className="lang-btn" aria-label="Change language">English ▾</button>
+            <button className="lang-btn" aria-label="Change language">
+              <span className="flag" aria-hidden>
+                🇺🇸
+              </span>
+              <span className="lang-label">English</span>
+              <span className="caret" aria-hidden>▾</span>
+            </button>
           </div>
         </div>
 
@@ -66,7 +72,10 @@ export default function Footer() {
             <h4>Affiliate Program</h4>
             <ul>
               <li><a href="#">Become an Affiliate</a></li>
-              <li><a href="#" className="muted">Log in to view stats.</a></li>
+              <li>
+                <a href="#" className="login-link">Log in</a>
+                <span className="login-note"> to view stats.</span>
+              </li>
             </ul>
           </div>
         </div>
