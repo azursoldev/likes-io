@@ -78,7 +78,11 @@ export default function Hero() {
                 <div className="label">Engagement</div>
               </div>
             </div>
-            <div className="delivered-badge"><span className="db-icon" aria-hidden>👤</span> +350 Followers<span className="sub"> delivered</span></div>
+            <div className="delivered-badge">
+              <span className="db-icon" aria-hidden>👤</span>
+              <span className="main-text">+500 Followers</span>
+              <span className="sub">delivered</span>
+            </div>
             <div className="likes-float">
               <span className={floatUpdates[fIndex].iconClass} aria-hidden>{floatUpdates[fIndex].icon}</span>
               <span className="main-text">{floatUpdates[fIndex].text}</span>
