@@ -17,12 +17,30 @@ export default function QuickStartSection() {
 
           <div className="qs-right">
             <div className="qs-actions">
-              <a href="#" className="qs-btn grad-orange">BUY INSTAGRAM FOLLOWERS <span className="arrow">›</span></a>
-              <a href="#" className="qs-btn grad-red">BUY INSTAGRAM LIKES <span className="arrow">›</span></a>
-              <a href="#" className="qs-btn grad-pink">BUY INSTAGRAM VIEWS <span className="arrow">›</span></a>
-              <a href="#" className="qs-btn grad-purple">BUY TIKTOK LIKES <span className="arrow">›</span></a>
-              <a href="#" className="qs-btn grad-violet">BUY TIKTOK VIEWS <span className="arrow">›</span></a>
-              <a href="#" className="qs-btn grad-magenta">BUY TIKTOK FOLLOWERS <span className="arrow">›</span></a>
+              <a href="#" className="qs-btn grad-orange">
+                <span className="qs-label">BUY INSTAGRAM FOLLOWERS</span>
+                <span className="arrow" aria-hidden="true"></span>
+              </a>
+              <a href="#" className="qs-btn grad-red">
+                <span className="qs-label">BUY INSTAGRAM LIKES</span>
+                <span className="arrow" aria-hidden="true"></span>
+              </a>
+              <a href="#" className="qs-btn grad-pink">
+                <span className="qs-label">BUY INSTAGRAM VIEWS</span>
+                <span className="arrow" aria-hidden="true"></span>
+              </a>
+              <a href="#" className="qs-btn grad-purple">
+                <span className="qs-label">BUY TIKTOK LIKES</span>
+                <span className="arrow" aria-hidden="true"></span>
+              </a>
+              <a href="#" className="qs-btn grad-violet">
+                <span className="qs-label">BUY TIKTOK VIEWS</span>
+                <span className="arrow" aria-hidden="true"></span>
+              </a>
+              <a href="#" className="qs-btn grad-magenta">
+                <span className="qs-label">BUY TIKTOK FOLLOWERS</span>
+                <span className="arrow" aria-hidden="true"></span>
+              </a>
             </div>
           </div>
         </div>
