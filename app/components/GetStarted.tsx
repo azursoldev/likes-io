@@ -76,9 +76,8 @@ export default function GetStarted() {
   };
 
   useEffect(() => {
-    // Reset default pack per platform for more natural UX
-    const defaultPack = platform === "youtube" ? "views" : "likes";
-    setPackType(defaultPack);
+    // Default to "likes" for all platforms to match the reference layout
+    setPackType("likes");
   }, [platform]);
 
   const unitPrice = useMemo(() => {
@@ -194,10 +193,11 @@ export default function GetStarted() {
             <h4 className="gs-right-title">Premium {packType.charAt(0).toUpperCase() + packType.slice(1)} Features</h4>
             <ul className="gs-checklist">
               {FEATURES_BY_PLATFORM[platform].map((item, idx) => (
-                <li key={idx}><span className="check">✓</span> {item}</li>
+                <li key={idx}><span className="check">✓</span><span className="plus">+</span> {item}</li>
               ))}
             </ul>
 
+            <div className="gs-divider" />
             <h4 className="gs-right-sub">Why Are {PLATFORM_LABELS[platform]} {packType.charAt(0).toUpperCase() + packType.slice(1)} Important?</h4>
             <p className="gs-right-text">{EXPLAIN_BY_PLATFORM[platform]}</p>
           </div>

@@ -10,7 +10,19 @@ export default function Hero() {
   ];
   const [uIndex, setUIndex] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setUIndex((i) => (i + 1) % updates.length), 6000);
+    const id = setInterval(() => setUIndex((i) => (i + 1) % updates.length), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Floating pill rotation: Likes, Followers, Views every 5 seconds
+  const floatUpdates = [
+    { icon: "❤", iconClass: "lf-icon", text: "+2.1k Likes", sub: "in 12 minutes" },
+    { icon: "👤", iconClass: "db-icon", text: "+500 Followers", sub: "delivered" },
+    { icon: "👁️", iconClass: "vw-icon", text: "+8.3k Views", sub: "in 1 hour" },
+  ];
+  const [fIndex, setFIndex] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setFIndex((i) => (i + 1) % floatUpdates.length), 5000);
     return () => clearInterval(id);
   }, []);
   return (
@@ -67,7 +79,11 @@ export default function Hero() {
               </div>
             </div>
             <div className="delivered-badge"><span className="db-icon" aria-hidden>👤</span> +350 Followers<span className="sub"> delivered</span></div>
-            <div className="likes-float"><span className="lf-icon" aria-hidden>❤</span> +2.1k Likes <span className="sub">in 12 minutes</span></div>
+            <div className="likes-float">
+              <span className={floatUpdates[fIndex].iconClass} aria-hidden>{floatUpdates[fIndex].icon}</span>
+              <span className="main-text">{floatUpdates[fIndex].text}</span>
+              <span className="sub">{floatUpdates[fIndex].sub}</span>
+            </div>
           </div>
         </div>
       </div>

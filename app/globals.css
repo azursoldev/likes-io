@@ -114,23 +114,29 @@ html.dark .btn.light:hover, html.dark .btn.light:focus-visible { background: rgb
 .blob-1 { width: 360px; height: 360px; top: -40px; right: 40px; background: #a78bfa; }
 .blob-2 { width: 300px; height: 300px; top: 180px; right: -20px; background: #22d3ee; }
 
-.profile-card { position: relative; background: white; border-radius: 1rem; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.08); padding: 1rem; width: 360px; margin-left: auto; }
+.profile-card { position: relative; background: white; border-radius: 1rem; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.08); padding: 1rem; width: 336px; height: 448px; margin-left: auto; }
 html.dark .profile-card { background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.1); }
 .profile-header { display: flex; align-items: center; gap: 0.75rem; }
 .avatar { width: 36px; height: 36px; border-radius: 9999px; background: linear-gradient(135deg, #f97316, #ef4444); }
 .profile-meta .handle { font-weight: 700; }
 .profile-meta .role { font-size: 0.85rem; color: rgb(var(--color-text-secondary)); }
-.profile-image { margin: 0.75rem 0; height: 220px; background: #e5e7eb; border-radius: 0.5rem; }
+.profile-image { margin: 0.75rem 0; height: 306px; background: #e5e7eb; border-radius: 0.5rem; }
 .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 0.5rem; padding-top: 0.5rem; }
 .stat .val { font-weight: 800; }
 .stat .label { font-size: 0.75rem; color: rgb(var(--color-text-secondary)); }
-.likes-float { position: absolute; top: -14px; right: -14px; background: white; color: rgb(var(--color-text-primary)); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 0.75rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; will-change: transform; animation: bobY 3s ease-in-out infinite; }
-.likes-float .sub { opacity: 0.7; margin-left: 4px; }
+.likes-float { position: absolute; top: -14px; right: -14px; background: white; color: rgb(var(--color-text-primary)); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 0.75rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; display: grid; grid-template-columns: 22px auto; align-items: center; column-gap: 8px; row-gap: 0; will-change: transform; animation: bobY 3s ease-in-out infinite; }
+.likes-float .main-text { grid-column: 2; font-weight: 700; line-height: 1.1; }
+.likes-float .sub { grid-column: 2; opacity: 0.7; margin: 0; display: block; line-height: 1.1; }
+/* Ensure the icon is vertically centered between the two lines */
+.likes-float .lk-icon,
+.likes-float .fl-icon,
+.likes-float .vw-icon { grid-column: 1; grid-row: 1 / span 2; align-self: center; justify-self: center; }
 .delivered-badge { position: absolute; bottom: -22px; left: -34px; background: #e0f2fe; color: #0c4a6e; border: 1px solid #bae6fd; border-radius: 0.75rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; box-shadow: 0 10px 20px rgba(14,165,233,0.2); display: inline-flex; align-items: center; gap: 6px; will-change: transform; animation: bobY 3s ease-in-out infinite; }
 .delivered-badge .sub { opacity: 0.8; margin-left: 4px; }
 /* Icon circles for floating badges */
 .lf-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 9999px; background: #ffe4e6; color: #ef4444; box-shadow: 0 0 0 1px rgba(0,0,0,0.06); font-size: 12px; }
 .db-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 9999px; background: #dbeafe; color: #1d4ed8; box-shadow: 0 0 0 1px rgba(0,0,0,0.06); font-size: 12px; }
+.vw-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 9999px; background: #ede9fe; color: #7c3aed; box-shadow: 0 0 0 1px rgba(0,0,0,0.06); font-size: 12px; }
 @keyframes bobY { 0% { transform: translateY(0); } 50% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
 
 .social-update { display: flex; align-items: center; gap: 0.5rem; justify-content: center; margin-top: 2rem; padding: 0.5rem; color: rgb(var(--color-text-secondary)); background: #ffffff; border-top: 1px solid rgba(0,0,0,0.08); }
@@ -325,8 +331,12 @@ html.dark .floating-icon { opacity: 0.14; }
 .gs-checklist { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 8px; }
 .gs-checklist li { display: flex; align-items: center; gap: 8px; }
 .check { color: #10b981; font-weight: 800; }
+.plus { font-weight: 800; color: rgb(var(--color-text-primary)); }
 .gs-right-sub { margin-top: 6px; font-weight: 800; }
 .gs-right-text { color: rgba(17,24,39,0.7); }
+
+/* Divider above the explanation section */
+.gs-divider { height: 1px; background: rgba(17,24,39,0.08); margin: 12px 0 10px; }
 
 /* Promo bar */
 .promo-bar {
