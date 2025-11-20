@@ -17,7 +17,7 @@ export default function Footer() {
           <div className="footer-lang">
             <button className="lang-btn" aria-label="Change language">
               <span className="flag" aria-hidden>
-                🇺🇸
+                <img src="/flag-eng.PNG" alt="English flag" />
               </span>
               <span className="lang-label">English</span>
               <span className="caret" aria-hidden>▾</span>
@@ -89,6 +89,9 @@ export default function Footer() {
           <p className="copyright">
             Copyright © {year} Likes.io. All Rights Reserved. — Last Page Ltd. (HE470127), Nicosia, Cyprus.
           </p>
+          <div className="payments">
+            <img src="/debit.PNG" alt="Payment methods" />
+          </div>
         </div>
       </div>
     </footer>

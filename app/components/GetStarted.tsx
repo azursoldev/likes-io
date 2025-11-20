@@ -137,7 +137,7 @@ export default function GetStarted() {
 
         <div className="gs-grid">
           {/* Left card */}
-          <div className="gs-left card-lg">
+          <div className="gs-left card-lg boxgray">
             <div className="gs-tabs">
               {PLATFORM_TABS[platform].map((tab) => (
                 <button key={tab} className={`gs-tab ${packType === tab ? "active" : ""}`} onClick={() => setPackType(tab)}>
