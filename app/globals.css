@@ -84,7 +84,7 @@ body {
 .hero-title { font-size: clamp(2.2rem, 2rem + 2.8vw, 3.75rem); font-weight: 800; }
 .accent { color: rgb(var(--color-brand)); }
 .hero-sub { max-width: 46ch; color: rgb(var(--color-text-secondary)); font-size:18px; }
-.reviews-pill { display: inline-flex; align-items: center; gap: 10px; background: #fff; border: 1px solid rgba(17,24,39,0.10); border-radius: 9999px; padding: 8px 12px; color: rgba(17,24,39,0.85); margin: 1rem 0; box-shadow: 0 8px 16px rgba(17,24,39,0.08); }
+.reviews-pill { display: inline-flex; align-items: center; gap: 10px; background: #fff; border: 1px solid rgba(17,24,39,0.10); border-radius: 9999px; padding: 8px 12px; color: rgba(17,24,39,0.85); margin: 1rem 0; box-shadow: 0 8px 16px rgba(17,24,39,0.08);    margin-bottom: 2rem; }
 html.dark .reviews-pill { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); box-shadow: 0 8px 18px rgba(0,0,0,0.35); color: #fff; }
 .reviews-pill .star { color: #10B981; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 9999px; background: rgba(16,185,129,0.12); box-shadow: inset 0 0 0 1px rgba(16,185,129,0.18); font-size: 14px; }
 .reviews-pill .score { font-weight: 700; color: rgba(17,24,39,0.85); }
@@ -275,8 +275,29 @@ html.dark .notif { border-color: rgba(255,255,255,0.15); }
 .badge { position: absolute; top: -4px; right: -4px; background: #EF4444; color: white; font-size: 10px; padding: 2px 5px; border-radius: 9999px; }
 .currency { color: rgb(var(--color-text-primary)); opacity: 0.9; }
 .login { color: rgb(var(--color-text-primary)); text-decoration: none; }
-.signup { padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1.5px solid rgb(var(--color-brand)); background: white; color: rgb(var(--color-text-primary)); }
+ .signup {
+  font-size:14px;
+    padding: 0.7rem 1.5rem;
+    border-radius: 0.5rem;
+    border: 2px solid rgb(var(--color-brand));
+    background: white;
+    color: rgb(var(--color-brand));
+    font-weight: 700;
+    transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
 html.dark .signup { background: transparent; color: white; }
+ .signup:hover, .signup:focus-visible {
+    background: rgb(var(--color-brand));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 12px 24px rgba(249,115,22,0.25);
+    transform: translateY(-2px);
+ }
+ html.dark .signup:hover, html.dark .signup:focus-visible {
+    background: rgb(var(--color-brand));
+    color: #fff;
+    border-color: transparent;
+ }
 
 /* Cards & grid */
 .services { padding: 2rem 0; }
@@ -407,9 +428,9 @@ html.dark .floating-icon { opacity: 0.14; }
 
 /* Featured on strip */
 .featured-on {
-  padding: 40px 0 16px;
-  background: #ffffff;
-  border-top: 1px solid rgba(17,24,39,0.06);
+    padding: 30px 0 30px;
+    border-top: 1px solid rgba(17, 24, 39, 0.06);
+    background: #FBFBFC;
 }
 .featured-label {
   text-align: center;
@@ -426,7 +447,7 @@ html.dark .floating-icon { opacity: 0.14; }
 }
 .featured-brands .brand {
   font-weight: 800;
-  font-size: 22px;
+  font-size: 21px;
   letter-spacing: 0.01em;
   color: rgba(17,24,39,0.7);
 }
