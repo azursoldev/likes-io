@@ -18,26 +18,32 @@ export default function QuickStartSection() {
           <div className="qs-right">
             <div className="qs-actions">
               <a href="#" className="qs-btn grad-orange">
+                <span className="qs-icon"><img src="/instagram-11.png" alt="Instagram" width={18} height={18} /></span>
                 <span className="qs-label">BUY INSTAGRAM FOLLOWERS</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
               <a href="#" className="qs-btn grad-red">
+                <span className="qs-icon"><img src="/instagram-11.png" alt="Instagram" width={18} height={18} /></span>
                 <span className="qs-label">BUY INSTAGRAM LIKES</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
               <a href="#" className="qs-btn grad-pink">
+                <span className="qs-icon"><img src="/instagram-11.png" alt="Instagram" width={18} height={18} /></span>
                 <span className="qs-label">BUY INSTAGRAM VIEWS</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
               <a href="#" className="qs-btn grad-purple">
+                <span className="qs-icon"><img src="/tiktok-9.png" alt="TikTok" width={18} height={18} /></span>
                 <span className="qs-label">BUY TIKTOK LIKES</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
               <a href="#" className="qs-btn grad-violet">
+                <span className="qs-icon"><img src="/tiktok-9.png" alt="TikTok" width={18} height={18} /></span>
                 <span className="qs-label">BUY TIKTOK VIEWS</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
               <a href="#" className="qs-btn grad-magenta">
+                <span className="qs-icon"><img src="/tiktok-9.png" alt="TikTok" width={18} height={18} /></span>
                 <span className="qs-label">BUY TIKTOK FOLLOWERS</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
