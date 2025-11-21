@@ -14,9 +14,36 @@ export default function Header() {
             <span className="logo-dot">.io</span>
           </div>
           <nav className="nav">
-            <a href="#instagram">Instagram <span className="caret">▾</span></a>
-            <a href="#tiktok">TikTok <span className="caret">▾</span></a>
-            <a href="#youtube">YouTube <span className="caret">▾</span></a>
+            <div className="nav-item">
+              <a href="#instagram" className="nav-link">Instagram <span className="caret">▾</span></a>
+              <div className="nav-dropdown-wrap">
+                <div className="nav-dropdown">
+                  <a href="#">Buy Instagram Likes</a>
+                  <a href="#">Buy Instagram Followers</a>
+                  <a href="#">Buy Instagram Views</a>
+                </div>
+              </div>
+            </div>
+            <div className="nav-item">
+              <a href="#tiktok" className="nav-link">TikTok <span className="caret">▾</span></a>
+              <div className="nav-dropdown-wrap">
+                <div className="nav-dropdown">
+                  <a href="#">Buy TikTok Likes</a>
+                  <a href="#">Buy TikTok Followers</a>
+                  <a href="#">Buy TikTok Views</a>
+                </div>
+              </div>
+            </div>
+            <div className="nav-item">
+              <a href="#youtube" className="nav-link">YouTube <span className="caret">▾</span></a>
+              <div className="nav-dropdown-wrap">
+                <div className="nav-dropdown">
+                  <a href="#">Buy YouTube Views</a>
+                  <a href="#">Buy YouTube Subscribers</a>
+                  <a href="#">Buy YouTube Likes</a>
+                </div>
+              </div>
+            </div>
             <a href="#faq">FAQ</a>
             <a href="#blog">Blog</a>
           </nav>
