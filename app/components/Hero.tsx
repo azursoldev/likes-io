@@ -25,6 +25,19 @@ export default function Hero() {
     const id = setInterval(() => setFIndex((i) => (i + 1) % floatUpdates.length), 5000);
     return () => clearInterval(id);
   }, []);
+  const currentUpdate = floatUpdates[fIndex];
+  const iconSrc =
+    currentUpdate.iconClass === "lf-icon"
+      ? "/heart-3.svg"
+      : currentUpdate.iconClass === "vw-icon"
+      ? "/eye-2.svg"
+      : "/avatar.svg";
+  const iconAlt =
+    currentUpdate.iconClass === "lf-icon"
+      ? "Likes"
+      : currentUpdate.iconClass === "vw-icon"
+      ? "Views"
+      : "Followers";
   return (
     <section className="hero-section">
       <div className="container hero-grid">
@@ -79,14 +92,16 @@ export default function Hero() {
               </div>
             </div>
             <div className="delivered-badge">
-              <span className="db-icon" aria-hidden>👤</span>
+              <span className="db-icon" aria-hidden><img src="/avatar.svg" alt="User" width={16} height={16} /></span>
               <span className="main-text">+500 Followers</span>
               <span className="sub">delivered</span>
             </div>
             <div className="likes-float">
-              <span className={floatUpdates[fIndex].iconClass} aria-hidden>{floatUpdates[fIndex].icon}</span>
-              <span className="main-text">{floatUpdates[fIndex].text}</span>
-              <span className="sub">{floatUpdates[fIndex].sub}</span>
+              <span className={currentUpdate.iconClass} aria-hidden>
+                <img src={iconSrc} alt={iconAlt} width={16} height={16} />
+              </span>
+              <span className="main-text">{currentUpdate.text}</span>
+              <span className="sub">{currentUpdate.sub}</span>
             </div>
           </div>
         </div>

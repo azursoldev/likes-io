@@ -40,21 +40,15 @@ export default function PlatformSection() {
     switch (name) {
       case "instagram":
         return (
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H7zm5 3a5 5 0 110 10 5 5 0 010-10zm6.5-1.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
-          </svg>
+          <img src="/instagram.svg" alt="Instagram" width={24} height={24} />
         );
       case "tiktok":
         return (
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M14 3v4.6c1.3 1 2.9 1.6 4.6 1.6V13c-1.9-.1-3.6-.8-4.6-1.9V14a5 5 0 11-5-5c.3 0 .7 0 1 .1V6.5c-2.7-.3-5 1.7-5.4 4.3A6 6 0 1014 14V3z"/>
-          </svg>
+         <img src="/tiktok-10.svg" alt="TikTok" width={24} height={24} />
         );
       case "youtube":
         return (
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="#fff" d="M10 8l6 4-6 4V8z"/>
-          </svg>
+          <img src="/youtube-9.svg" alt="YouTube" width={24} height={24} />
         );
       default:
         return null;

@@ -121,15 +121,15 @@ export default function GetStarted() {
           <h3 className="font-heading">Get Started Instantly</h3>
           <div className="gs-platforms">
             <button className={`pill ${platform === "instagram" ? "active" : ""}`} onClick={() => setPlatform("instagram")}>
-              <span className="pill-icon"><PillIcon name="instagram" /></span>
+              <span className="pill-icon"><img src="/instagram-11.png" alt="Instagram" width={12} height={12} /></span>
               Instagram
             </button>
             <button className={`pill ${platform === "tiktok" ? "active" : ""}`} onClick={() => setPlatform("tiktok")}>
-              <span className="pill-icon"><PillIcon name="tiktok" /></span>
+              <span className="pill-icon"><img src="/tiktok-9.png" alt="Tiktok" width={12} height={12} /></span>
               TikTok
             </button>
             <button className={`pill ${platform === "youtube" ? "active" : ""}`} onClick={() => setPlatform("youtube")}>
-              <span className="pill-icon"><PillIcon name="youtube" /></span>
+              <span className="pill-icon"><img src="/youtube-7.png" alt="Youtube" width={12} height={12} /></span>
               YouTube
             </button>
           </div>
