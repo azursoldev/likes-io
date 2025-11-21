@@ -41,7 +41,7 @@ export default function Hero() {
             organically.
           </p>
           <div className="reviews-pill">
-            <span className="star">★</span>
+            <span className="star"><img src="/trustpilot.svg" alt="Star" width={20} height={20} /></span>
             <span className="score">5.0</span>
             <span className="sep">•</span>
             <span className="count">1,442+ Reviews</span>

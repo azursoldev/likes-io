@@ -90,7 +90,7 @@ export default function Footer() {
             Copyright © {year} Likes.io. All Rights Reserved. — Last Page Ltd. (HE470127), Nicosia, Cyprus.
           </p>
           <div className="payments">
-            <img src="/debit.PNG" alt="Payment methods" />
+            <img src="/likes.io payment methods .svg" alt="Payment methods" />
           </div>
         </div>
       </div>
