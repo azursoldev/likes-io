@@ -141,7 +141,14 @@ export default function GetStarted() {
             <div className="gs-tabs">
               {PLATFORM_TABS[platform].map((tab) => (
                 <button key={tab} className={`gs-tab ${packType === tab ? "active" : ""}`} onClick={() => setPackType(tab)}>
-                  <span className="icon">{tab === "likes" ? "❤" : tab === "followers" ? "👤" : tab === "subscribers" ? "👥" : "👁️"}</span>
+                  <span className="icon">
+                    <img
+                      src={tab === "likes" ? "/heart-3.svg" : tab === "followers" ? "/avatar.svg" : tab === "subscribers" ? "/avatar.svg" : "/eye-2.svg"}
+                      alt={tab === "likes" ? "Likes" : tab === "followers" ? "Followers" : tab === "subscribers" ? "Subscribers" : "Views"}
+                      width={16}
+                      height={16}
+                    />
+                  </span>
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
