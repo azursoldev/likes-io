@@ -10,15 +10,17 @@ export default function Header() {
       <header className="site-header">
         <div className="container header-inner">
           <div className="brand">
+            <a href="/" className="brand-logo">
             <span className="logo-text">Likes</span>
             <span className="logo-dot">.io</span>
+            </a>
           </div>
           <nav className="nav">
             <div className="nav-item">
               <a href="#instagram" className="nav-link">Instagram <span className="caret">▾</span></a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
-                  <a href="#">Buy Instagram Likes</a>
+                  <a href="/instagram/likes">Buy Instagram Likes</a>
                   <a href="#">Buy Instagram Followers</a>
                   <a href="#">Buy Instagram Views</a>
                 </div>
