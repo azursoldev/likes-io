@@ -2,6 +2,12 @@ import './globals.css';
 import ScrollTopButton from './components/ScrollTopButton';
 import type { Metadata } from 'next';
 
+import { config } from '@fortawesome/fontawesome-svg-core'
+import '@fortawesome/fontawesome-svg-core/styles.css'
+config.autoAddCss = false
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faThumbsUp } from '@fortawesome/free-solid-svg-icons'
+
 export const metadata: Metadata = {
   title: 'Likes.io: Buy Instagram, TikTok & YouTube Engagement | Real & Instant',
   description:
@@ -14,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head />
       <body>
+
         {children}
         <ScrollTopButton />
       </body>

@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
 
 export default function Hero() {
   // Social update rotation every 3 seconds
@@ -54,7 +56,9 @@ export default function Hero() {
             organically.
           </p>
           <div className="reviews-pill">
-            <span className="star"><img src="/trustpilot.svg" alt="Star" width={20} height={20} /></span>
+            <span className="star" aria-hidden>
+              <FontAwesomeIcon icon={faStar} />
+            </span>
             <span className="score">5.0</span>
             <span className="sep">•</span>
             <span className="count">1,442+ Reviews</span>

@@ -1,39 +1,49 @@
+"use client";
+import Script from "next/script";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
 export default function ServiceHero({
   title,
   subtitle,
   rating = "4.9/5",
-  reviews = "based on 1,352+ reviews",
+  basedon = "based on",
+  reviewss = "1,352+ reviews",
 }: {
   title: string;
   subtitle: string;
   rating?: string;
-  reviews?: string;
+  basedon?: string;
+  reviewss?: string;
 }) {
   return (
     <section className="hero-section service-hero">
+      
       <div className="container hero-grid">
         <div className="hero-left">
-          <h1 className="font-heading hero-title">{title}</h1>
-          <p className="hero-sub" style={{ textAlign: "center" }}>{subtitle}</p>
+          <h1 className="font-heading hero-title" style={{ margin: "0" }}>{title}</h1>
+          <p className="hero-sub" style={{ textAlign: "center", maxWidth: "56rem" }}>{subtitle}</p>
           <div className="reviews-pill" style={{ justifyContent: "center" }}>
-            <span className="star" aria-hidden>
-              <img src="/trustpilot.svg" alt="Star" width={20} height={20} />
+            <div className="stars-container">
+                 <span className="star" aria-hidden>
+              <FontAwesomeIcon icon={faStar} />
             </span>
-            <span className="star" aria-hidden>
-              <img src="/trustpilot.svg" alt="Star" width={20} height={20} />
+             <span className="star" aria-hidden>
+              <FontAwesomeIcon icon={faStar} />
             </span>
-            <span className="star" aria-hidden>
-              <img src="/trustpilot.svg" alt="Star" width={20} height={20} />
+             <span className="star" aria-hidden>
+              <FontAwesomeIcon icon={faStar} />
             </span>
-            <span className="star" aria-hidden>
-              <img src="/trustpilot.svg" alt="Star" width={20} height={20} />
+             <span className="star" aria-hidden>
+              <FontAwesomeIcon icon={faStar} />
             </span>
-            <span className="star" aria-hidden>
-              <img src="/trustpilot.svg" alt="Star" width={20} height={20} />
+             <span className="star" aria-hidden>
+              <FontAwesomeIcon icon={faStar} />
             </span>
+            </div>
+            
             <span className="score">{rating}</span>
-            <span className="sep">•</span>
-            <span className="count">{reviews}</span>
+            <span className="sep">{basedon}</span>
+            <span className="count">{reviewss}</span>
           </div>
         </div>
       </div>
