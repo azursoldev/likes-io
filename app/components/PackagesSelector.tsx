@@ -69,6 +69,7 @@ export default function PackagesSelector() {
       <div className="container">
         <div className="packages-card">
           <div className="pkg-tabs">
+            <div className="pkg-tabs-inner">
             {tabs.map((t) => (
               <button
                 key={t.id}
@@ -79,6 +80,7 @@ export default function PackagesSelector() {
                 {t.label}
               </button>
             ))}
+            </div>
           </div>
 
           <div className="pkg-grid">
