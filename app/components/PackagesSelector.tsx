@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faPlus, faMinus, faLock, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
 
 type Package = {
   qty: number | string;
@@ -49,16 +51,17 @@ export default function PackagesSelector() {
   }, [activeTab]);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
+  // Keep selection in sync with the active tab
+  useEffect(() => {
+    setSelectedIndex(defaultIndex);
+  }, [defaultIndex]);
+
   // Ensure selected index follows tab change
   const visiblePackages = packagesByTab[activeTab];
   const selected = visiblePackages[selectedIndex] ?? visiblePackages[defaultIndex];
 
   function handleTabClick(id: (typeof tabs)[number]["id"]) {
     setActiveTab(id);
-    // Reset selection to default for tab
-    const list = packagesByTab[id];
-    const idx = list.findIndex((p) => p.qty === 500);
-    setSelectedIndex(idx >= 0 ? idx : 0);
   }
 
   return (
@@ -86,10 +89,25 @@ export default function PackagesSelector() {
                 onClick={() => setSelectedIndex(i)}
                 type="button"
               >
+                {i === selectedIndex && (
+                  <span className="pkg-check" aria-hidden>
+                    <FontAwesomeIcon icon={faCheck} />
+                  </span>
+                )}
                 <div className="pkg-val">{p.qty}</div>
                 <div className="pkg-label">Likes</div>
                 <div className="pkg-sub">{p.perLike}</div>
                 {p.offText && <div className="pkg-off">{p.offText}</div>}
+                {typeof p.qty === "string" && p.qty.includes("+") && (
+                  <>
+                    <span className="pkg-minus" aria-hidden>
+                      <FontAwesomeIcon icon={faMinus} />
+                    </span>
+                    <span className="pkg-plus" aria-hidden>
+                      <FontAwesomeIcon icon={faPlus} />
+                    </span>
+                  </>
+                )}
               </button>
             ))}
           </div>
@@ -104,8 +122,14 @@ export default function PackagesSelector() {
               Buy {selected?.qty} Likes Now
             </button>
             <div className="pkg-safety">
-              <span>✅ 100% Safe Delivery</span>
-              <span>🔒 Secure Checkout</span>
+              <span className="safety-item">
+                <FontAwesomeIcon icon={faShieldHalved} />
+                <span>100% Safe Delivery</span>
+              </span>
+              <span className="safety-item">
+                <FontAwesomeIcon icon={faLock} />
+                <span>Secure Checkout</span>
+              </span>
             </div>
           </div>
         </div>
