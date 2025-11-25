@@ -23,7 +23,8 @@ export default function Page() {
         title="Buy Instagram Likes & Go Viral"
         subtitle="Get high-quality, real likes delivered instantly to your posts. Boost credibility, trigger the algorithm, and get your content seen by millions on the Explore Page."
         rating="4.9/5"
-        reviews="based on 1,352+ reviews"
+        basedon="based on"
+        reviewss="1,352+ reviews"
       />
       <AssuranceCard />
       <PackagesSelector />
