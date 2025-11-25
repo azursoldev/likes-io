@@ -28,8 +28,8 @@ export default function ReviewsSection() {
   const CARD_W = 344; // card width used for sliding (desktop)
   const GAP = 24; // spacing between cards in the track
   const VISIBLE = 3; // show three cards per view
-  const STEP_W = CARD_W + GAP; // pixels to move per step
-  const MAX_INDEX = Math.max(0, total - VISIBLE); // last valid starting index
+  const STEP_W = CARD_W + GAP; // pixels to move per step (one card at a time)
+  const MAX_INDEX = Math.max(0, total - 1); // allow scrolling to show last card
 
   const next = () => setIndex((i) => Math.min(i + 1, MAX_INDEX));
   const prev = () => setIndex((i) => Math.max(i - 1, 0));
@@ -70,7 +70,7 @@ export default function ReviewsSection() {
 
         <div className="reviews-dots">
           {Array.from({ length: total }).map((_, i) => (
-            <button key={i} className={`dot ${i === index ? "active" : ""}`} aria-label={`Go to slide ${i+1}`} onClick={() => setIndex(Math.min(i, MAX_INDEX))} />
+            <button key={i} className={`dot ${i === index ? "active" : ""}`} aria-label={`Go to slide ${i+1}`} onClick={() => setIndex(i)} />
           ))}
         </div>
       </div>

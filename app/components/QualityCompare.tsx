@@ -9,7 +9,7 @@ export default function QualityCompare() {
               <h4 className="qc-col-title">High-Quality Likes</h4>
               <p className="qc-sub">Great for giving your posts a quick and affordable boost.</p>
               <ul className="qc-list">
-                <li>REAL likes from REAL people</li>
+                <li><strong>REAL</strong> likes from <strong>REAL</strong> people</li>
                 <li>Guaranteed Instant Delivery</li>
                 <li>Option to split likes on multiple pictures</li>
                 <li>No password required</li>
@@ -22,13 +22,13 @@ export default function QualityCompare() {
               <h4 className="qc-col-title">Premium Likes</h4>
               <p className="qc-sub">Our best offering for maximum impact and organic growth.</p>
               <ul className="qc-list">
-                <li>REAL likes from ACTIVE users</li>
-                <li>Maximum chance to reach the Explore Page</li>
-                <li>Helps attract organic engagement</li>
+                <li><strong>REAL</strong> likes from <strong>ACTIVE</strong> users</li>
+                <li><strong>Maximum chance to reach the Explore Page</strong></li>
+                <li><strong>Helps attract organic engagement</strong></li>
                 <li>Guaranteed Instant Delivery</li>
                 <li>Option to split likes on multiple pictures</li>
                 <li>No password required</li>
-                <li>Priority 24/7 support</li>
+                <li><strong>Priority 24/7 support</strong></li>
               </ul>
             </div>
           </div>
