@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
 
 export default function ReviewsSection() {
   const [index, setIndex] = useState(0);
@@ -58,7 +60,11 @@ export default function ReviewsSection() {
                     </div>
                   </div>
                   <div className="stars">
-                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faStar} />
                   </div>
                   <p className="review-text">{r.text}</p>
                 </article>
