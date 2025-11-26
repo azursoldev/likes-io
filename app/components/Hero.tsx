@@ -113,11 +113,11 @@ export default function Hero() {
       <div className="social-update fadeup" key={uIndex}>
         <span className="pill">
           <span className="ig-logo" aria-hidden="true" />
-          <span className="handle">{updates[uIndex].handle}</span>
+          <span className="handle">{updates[uIndex].handle}</span>      
+          <span className="muted">just purchased</span>
+          <b className="accent-num">{updates[uIndex].item}</b>
+          <span className="time">{updates[uIndex].time}</span>
         </span>
-        <span className="muted">just purchased</span>
-        <b className="accent-num">{updates[uIndex].item}</b>
-        <span className="time">{updates[uIndex].time}</span>
       </div>
     </section>
   );
