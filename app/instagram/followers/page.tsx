@@ -4,6 +4,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import ServiceHero from "../../components/ServiceHero";
 import AssuranceCard from "../../components/AssuranceCard";
+import LearnMoreSection from "../../components/LearnMoreSection";
 import PackagesSelector, { type PackageTabConfig } from "../../components/PackagesSelector";
 import QualityCompare from "../../components/QualityCompare";
 import FeaturedOn from "../../components/FeaturedOn";
@@ -155,6 +156,7 @@ export default function Page() {
         reviewss="1,823+ reviews"
       />
       <AssuranceCard />
+      <LearnMoreSection text="Learn More About Instagram Followers" />
       <PackagesSelector
         tabsConfig={INSTAGRAM_FOLLOWER_TABS}
         metricLabel="Followers"
