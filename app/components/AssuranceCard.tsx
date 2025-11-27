@@ -4,7 +4,7 @@ export default function AssuranceCard() {
       <div className="container">
         <div className="assurance-card">
           <div className="assurance-icon" aria-hidden>
-            <img src="/secure11.png" alt="Secure" width={28} height={28} />
+            <img src="/secure-2.svg" alt="Secure" width={28} height={28} />
           </div>
           <p className="assurance-text">
             Join over a million satisfied customers, including artists, companies, and top
