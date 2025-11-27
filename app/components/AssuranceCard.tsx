@@ -11,7 +11,7 @@ export default function AssuranceCard() {
             influencers. Our services are <b>100% discreet, secure, and delivered naturally</b> to
             ensure your account is always safe.
           </p>
-        </div>
+        </div> 
       </div>
     </section>
   );
