@@ -1,36 +1,69 @@
-export default function QualityCompare() {
+type CompareColumn = {
+  title: string;
+  subtitle: string;
+  bullets: string[];
+  highlight?: boolean;
+  badge?: string;
+};
+
+type QualityCompareProps = {
+  title?: string;
+  columns?: CompareColumn[];
+};
+
+const DEFAULT_COLUMNS: CompareColumn[] = [
+  {
+    title: "High-Quality Likes",
+    subtitle: "Great for giving your posts a quick and affordable boost.",
+    bullets: [
+      "<strong>REAL</strong> likes from <strong>REAL</strong> people",
+      "Guaranteed Instant Delivery",
+      "Option to split likes on multiple pictures",
+      "No password required",
+      "Fast Delivery (gradual or instant)",
+      "24/7 support",
+    ],
+  },
+  {
+    title: "Premium Likes",
+    subtitle: "Our best offering for maximum impact and organic growth.",
+    bullets: [
+      "<strong>REAL</strong> likes from <strong>ACTIVE</strong> users",
+      "<strong>Maximum chance to reach the Explore Page</strong>",
+      "<strong>Helps attract organic engagement</strong>",
+      "Guaranteed Instant Delivery",
+      "Option to split likes on multiple pictures",
+      "No password required",
+      "<strong>Priority 24/7 support</strong>",
+    ],
+    highlight: true,
+    badge: "RECOMMENDED",
+  },
+];
+
+export default function QualityCompare({ title = "Compare Like Quality", columns = DEFAULT_COLUMNS }: QualityCompareProps) {
   return (
     <section className="quality-compare">
       <div className="container">
-        <h3 className="qc-section-title">Compare Like Quality</h3>
+        <h3 className="qc-section-title">{title}</h3>
         <div className="qc-card">
           <div className="qc-columns">
-            <div className="qc-col">
-              <h4 className="qc-col-title">High-Quality Likes</h4>
-              <p className="qc-sub">Great for giving your posts a quick and affordable boost.</p>
-              <ul className="qc-list">
-                <li><strong>REAL</strong> likes from <strong>REAL</strong> people</li>
-                <li>Guaranteed Instant Delivery</li>
-                <li>Option to split likes on multiple pictures</li>
-                <li>No password required</li>
-                <li>Fast Delivery (gradual or instant)</li>
-                <li>24/7 support</li>
-              </ul>
-            </div>
-            <div className="qc-col premium">
-              <span className="qc-recommended" aria-hidden="true">RECOMMENDED</span>
-              <h4 className="qc-col-title">Premium Likes</h4>
-              <p className="qc-sub">Our best offering for maximum impact and organic growth.</p>
-              <ul className="qc-list">
-                <li><strong>REAL</strong> likes from <strong>ACTIVE</strong> users</li>
-                <li><strong>Maximum chance to reach the Explore Page</strong></li>
-                <li><strong>Helps attract organic engagement</strong></li>
-                <li>Guaranteed Instant Delivery</li>
-                <li>Option to split likes on multiple pictures</li>
-                <li>No password required</li>
-                <li><strong>Priority 24/7 support</strong></li>
-              </ul>
-            </div>
+            {columns.map((col) => (
+              <div key={col.title} className={`qc-col ${col.highlight ? "premium" : ""}`}>
+                {col.badge && (
+                  <span className="qc-recommended" aria-hidden="true">
+                    {col.badge}
+                  </span>
+                )}
+                <h4 className="qc-col-title">{col.title}</h4>
+                <p className="qc-sub">{col.subtitle}</p>
+                <ul className="qc-list">
+                  {col.bullets.map((bullet, idx) => (
+                    <li key={`${col.title}-${idx}`} dangerouslySetInnerHTML={{ __html: bullet }} />
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
       </div>

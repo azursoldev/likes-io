@@ -1,9 +1,16 @@
 "use client";
 import { useMemo, useState } from "react";
 
-type FAQ = { q: string; a: string };
+export type FAQItem = { q: string; a: string };
 
-const FAQS: FAQ[] = [
+type FAQSectionProps = {
+  faqs?: FAQItem[];
+  title?: string;
+  subtitle?: string;
+  pageSize?: number;
+};
+
+const DEFAULT_FAQS: FAQItem[] = [
   {
     q: "Is it safe to buy Instagram likes for my account?",
     a: "Yes. We use safe delivery methods and quality profiles that comply with platform guidelines to minimize risk and maintain account health.",
@@ -32,7 +39,6 @@ const FAQS: FAQ[] = [
     q: "Do I need to provide my password?",
     a: "Never. We will never ask for your password. We only need your username and the post link(s) to deliver engagement.",
   },
-  // Additional FAQs to demonstrate pagination
   { q: "Can I cancel or change my order after purchase?", a: "Contact support immediately. If delivery hasn't started, we can adjust or cancel." },
   { q: "Are likes permanent?", a: "Minor fluctuations can occur. Premium packages include better retention and stability." },
   { q: "Which payment methods do you accept?", a: "We accept major cards and secure payment options shown at checkout." },
@@ -40,18 +46,21 @@ const FAQS: FAQ[] = [
   { q: "Can I buy likes for private accounts?", a: "Delivery requires the post to be publicly viewable. Make your account public during delivery." },
 ];
 
-export default function FAQSection() {
-  const PAGE_SIZE = 7;
+export default function FAQSection({
+  faqs = DEFAULT_FAQS,
+  title = "Frequently Asked Questions",
+  subtitle = "Have questions? We've got answers. If you don't see your question here, feel free to contact us.",
+  pageSize = 7,
+}: FAQSectionProps) {
   const [page, setPage] = useState(1);
-  const [open, setOpen] = useState<number | null>(null); // absolute index within FAQS
+  const [open, setOpen] = useState<number | null>(null); // absolute index within faqs
 
-  const pageCount = Math.max(1, Math.ceil(FAQS.length / PAGE_SIZE));
-  const start = (page - 1) * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
-  const items = useMemo(() => FAQS.slice(start, end), [page]);
+  const pageCount = Math.max(1, Math.ceil(faqs.length / pageSize));
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const items = useMemo(() => faqs.slice(start, end), [faqs, start, end]);
 
-  const toggle = (absoluteIndex: number) =>
-    setOpen((cur) => (cur === absoluteIndex ? null : absoluteIndex));
+  const toggle = (absoluteIndex: number) => setOpen((cur) => (cur === absoluteIndex ? null : absoluteIndex));
 
   const goTo = (p: number) => {
     const next = Math.min(Math.max(1, p), pageCount);
@@ -62,32 +71,27 @@ export default function FAQSection() {
   return (
     <section className="faq">
       <div className="container">
-        <h2 className="faq-title">Frequently Asked Questions</h2>
-        <p className="faq-sub">
-          Have questions? We've got answers. If you don't see your question here, feel free to contact us.
-        </p>
+        <h2 className="faq-title">{title}</h2>
+        <p className="faq-sub">{subtitle}</p>
 
         <div className="faq-list">
           {items.map((item, idx) => {
             const absoluteIndex = start + idx;
             const isOpen = open === absoluteIndex;
             return (
-            <article key={absoluteIndex} className={`faq-item ${isOpen ? "open" : ""}`}> 
-              <button
-                className="faq-head"
-                onClick={() => toggle(absoluteIndex)}
-                aria-expanded={isOpen}
-              >
-                <span className="faq-q">{item.q}</span>
-                <span className="faq-toggle">{isOpen ? "−" : "+"}</span>
-              </button>
-              {isOpen && (
-                <div className="faq-body">
-                  <p>{item.a}</p>
-                </div>
-              )}
-            </article>
-          );})}
+              <article key={absoluteIndex} className={`faq-item ${isOpen ? "open" : ""}`}>
+                <button className="faq-head" onClick={() => toggle(absoluteIndex)} aria-expanded={isOpen}>
+                  <span className="faq-q">{item.q}</span>
+                  <span className="faq-toggle">{isOpen ? "−" : "+"}</span>
+                </button>
+                {isOpen && (
+                  <div className="faq-body">
+                    <p>{item.a}</p>
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </div>
 
         <div className="faq-pagination" aria-label="FAQ pagination">

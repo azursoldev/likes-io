@@ -1,5 +1,7 @@
 "use client";
 import PromoBar from "./PromoBar";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 
 export default function Header() {
   // Dark mode toggle removed per request
@@ -17,7 +19,11 @@ export default function Header() {
           </div>
           <nav className="nav">
             <div className="nav-item">
-              <a href="#instagram" className="nav-link">Instagram <span className="caret">▾</span></a>
+              <a href="#instagram" className="nav-link">
+                Instagram
+                <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
+                <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
+              </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
                   <a href="/instagram/likes">Buy Instagram Likes</a>
@@ -27,17 +33,25 @@ export default function Header() {
               </div>
             </div>
             <div className="nav-item">
-              <a href="#tiktok" className="nav-link">TikTok <span className="caret">▾</span></a>
+              <a href="#tiktok" className="nav-link">
+                TikTok
+                <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
+                <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
+              </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
-                  <a href="#">Buy TikTok Likes</a>
+                  <a href="/tiktok/likes">Buy TikTok Likes</a>
                   <a href="#">Buy TikTok Followers</a>
                   <a href="#">Buy TikTok Views</a>
                 </div>
               </div>
             </div>
             <div className="nav-item">
-              <a href="#youtube" className="nav-link">YouTube <span className="caret">▾</span></a>
+              <a href="#youtube" className="nav-link">
+                YouTube
+                <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
+                <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
+              </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
                   <a href="#">Buy YouTube Views</a>

@@ -3,28 +3,45 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 
-export default function ReviewsSection() {
+export type ReviewItem = {
+  handle: string;
+  role: string;
+  text: string;
+};
+
+type ReviewsSectionProps = {
+  title?: string;
+  subtitle?: string;
+  reviews?: ReviewItem[];
+};
+
+const DEFAULT_REVIEWS: ReviewItem[] = [
+  {
+    handle: "@sarahL",
+    role: "Verified Buyer",
+    text:
+      "Likes.io changed the game for my channel. The growth felt natural and the engagement was top-notch. I saw results within the first 24 hours!",
+  },
+  {
+    handle: "@MikeP_Fitness",
+    role: "Verified Buyer",
+    text:
+      "As a business, establishing social proof is key. The immediate trust we got from buying followers helped us increase conversions by 30%. Incredibly simple and effective.",
+  },
+  {
+    handle: "@JessT_Art",
+    role: "Verified Buyer",
+    text:
+      "I was skeptical at first, but the quality of the likes is undeniable. It helped my art reach a much wider audience than I could have managed on my own. Highly recommended!",
+  },
+];
+
+export default function ReviewsSection({
+  title = "Loved by Creators Worldwide",
+  subtitle = "Real reviews from creators and brands who've seen incredible growth with our service.",
+  reviews = DEFAULT_REVIEWS,
+}: ReviewsSectionProps) {
   const [index, setIndex] = useState(0);
-  const reviews = [
-    {
-      handle: "@sarahL",
-      role: "Verified Buyer",
-      text:
-        "Likes.io changed the game for my channel. The growth felt natural and the engagement was top-notch. I saw results within the first 24 hours!",
-    },
-    {
-      handle: "@MikeP_Fitness",
-      role: "Verified Buyer",
-      text:
-        "As a business, establishing social proof is key. The immediate trust we got from buying followers helped us increase conversions by 30%. Incredibly simple and effective.",
-    },
-    {
-      handle: "@JessT_Art",
-      role: "Verified Buyer",
-      text:
-        "I was skeptical at first, but the quality of the likes is undeniable. It helped my art reach a much wider audience than I could have managed on my own. Highly recommended!",
-    },
-  ];
 
   const total = reviews.length;
   const CARD_W = 344; // card width used for sliding (desktop)
@@ -39,10 +56,8 @@ export default function ReviewsSection() {
   return (
     <section className="reviews">
       <div className="container">
-        <h2 className="reviews-title">Loved by Creators Worldwide</h2>
-        <p className="reviews-sub">
-          Real reviews from creators and brands who've seen incredible growth with our service.
-        </p>
+        <h2 className="reviews-title">{title}</h2>
+        <p className="reviews-sub">{subtitle}</p>
 
         <div className="reviews-wrap">
           <button className={`reviews-nav left ${index === 0 ? "disabled" : ""}`} aria-label="Previous" aria-disabled={index===0} onClick={prev}>←</button>

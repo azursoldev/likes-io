@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faPlus, faMinus, faLock, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
 
-type Package = {
+export type PackageOption = {
   qty: number | string;
   perLike: string;
   price: string;
@@ -13,14 +13,24 @@ type Package = {
   offText?: string;
 };
 
-export default function PackagesSelector() {
-  const tabs = [
-    { id: "high", label: "High-Quality Likes" },
-    { id: "premium", label: "Premium Likes" },
-  ] as const;
+export type PackageTabConfig = {
+  id: string;
+  label: string;
+  packages: PackageOption[];
+};
 
-  const packagesByTab: Record<(typeof tabs)[number]["id"], Package[]> = {
-    high: [
+type PackagesSelectorProps = {
+  tabsConfig?: PackageTabConfig[];
+  metricLabel?: string;
+  defaultQtyTarget?: PackageOption["qty"];
+  ctaTemplate?: string;
+};
+
+const DEFAULT_TABS: PackageTabConfig[] = [
+  {
+    id: "high",
+    label: "High-Quality Likes",
+    packages: [
       { qty: 50, perLike: "$0.3599 / like", price: "$2.99", offText: "5% OFF" },
       { qty: 100, perLike: "$0.2899 / like", price: "$8.99", offText: "8% OFF" },
       { qty: 250, perLike: "$0.0899 / like", price: "$22.49", offText: "12% OFF" },
@@ -30,7 +40,11 @@ export default function PackagesSelector() {
       { qty: "5K", perLike: "$0.1000 / like", price: "$99.00", offText: "10% OFF" },
       { qty: "10,000+", perLike: "$0.0700 / like", price: "$—", offText: "CUSTOM" },
     ],
-    premium: [
+  },
+  {
+    id: "premium",
+    label: "Premium Likes",
+    packages: [
       { qty: 50, perLike: "$0.4200 / like", price: "$3.49", offText: "5% OFF" },
       { qty: 100, perLike: "$0.3200 / like", price: "$9.99", offText: "8% OFF" },
       { qty: 250, perLike: "$0.1200 / like", price: "$29.99", offText: "12% OFF" },
@@ -40,29 +54,52 @@ export default function PackagesSelector() {
       { qty: "5K", perLike: "$0.1050 / like", price: "$109.00", offText: "10% OFF" },
       { qty: "10,000+", perLike: "$0.0800 / like", price: "$—", offText: "CUSTOM" },
     ],
-  };
+  },
+];
 
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["id"]>("high");
+const DEFAULT_METRIC = "Likes";
+const DEFAULT_CTA_TEMPLATE = "Buy {qty} {metric} Now";
+
+export default function PackagesSelector({
+  tabsConfig,
+  metricLabel = DEFAULT_METRIC,
+  defaultQtyTarget = 500,
+  ctaTemplate = DEFAULT_CTA_TEMPLATE,
+}: PackagesSelectorProps) {
+  const tabs = useMemo(() => (tabsConfig && tabsConfig.length ? tabsConfig : DEFAULT_TABS), [tabsConfig]);
+  const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? "");
+
+  useEffect(() => {
+    if (!tabs.length) {
+      return;
+    }
+    if (!tabs.some((tab) => tab.id === activeTab)) {
+      setActiveTab(tabs[0].id);
+    }
+  }, [tabs, activeTab]);
+
+  const activeTabData = tabs.find((t) => t.id === activeTab) ?? tabs[0];
+  const visiblePackages = activeTabData?.packages ?? [];
+
   const defaultIndex = useMemo(() => {
-    // Try to default to the 500 likes package if present
-    const list = packagesByTab[activeTab];
-    const idx = list.findIndex((p) => p.qty === 500);
+    if (!visiblePackages.length) return 0;
+    if (typeof defaultQtyTarget === "undefined") return 0;
+    const idx = visiblePackages.findIndex((p) => p.qty === defaultQtyTarget);
     return idx >= 0 ? idx : 0;
-  }, [activeTab]);
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  }, [visiblePackages, defaultQtyTarget]);
 
-  // Keep selection in sync with the active tab
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
   useEffect(() => {
     setSelectedIndex(defaultIndex);
   }, [defaultIndex]);
 
-  // Ensure selected index follows tab change
-  const visiblePackages = packagesByTab[activeTab];
   const selected = visiblePackages[selectedIndex] ?? visiblePackages[defaultIndex];
-
-  function handleTabClick(id: (typeof tabs)[number]["id"]) {
-    setActiveTab(id);
-  }
+  const formatButtonLabel = (pkg?: PackageOption) => {
+    if (!pkg) return `Buy ${metricLabel}`;
+    return ctaTemplate.replace("{qty}", String(pkg.qty)).replace("{metric}", metricLabel);
+  };
+  const buttonLabel = formatButtonLabel(selected);
 
   return (
     <section className="packages">
@@ -74,7 +111,7 @@ export default function PackagesSelector() {
               <button
                 key={t.id}
                 className={`pkg-tab ${activeTab === t.id ? "active" : ""}`}
-                onClick={() => handleTabClick(t.id)}
+                  onClick={() => setActiveTab(t.id)}
                 type="button"
               >
                 {t.label}
@@ -87,7 +124,9 @@ export default function PackagesSelector() {
             {visiblePackages.map((p, i) => (
               <button
                 key={`${activeTab}-${p.qty}-${i}`}
-                className={`pkg-item ${i === selectedIndex ? "active" : ""} ${typeof p.qty === "string" && p.qty.includes("+") ? "custom" : ""}`}
+                className={`pkg-item ${i === selectedIndex ? "active" : ""} ${
+                  typeof p.qty === "string" && p.qty.includes("+") ? "custom" : ""
+                }`}
                 onClick={() => setSelectedIndex(i)}
                 type="button"
               >
@@ -97,7 +136,7 @@ export default function PackagesSelector() {
                   </span>
                 )}
                 <div className="pkg-val">{p.qty}</div>
-                <div className="pkg-label">Likes</div>
+                <div className="pkg-label">{metricLabel}</div>
                 <div className="pkg-sub">{p.perLike}</div>
                 {p.offText && <div className="pkg-off">{p.offText}</div>}
                 {typeof p.qty === "string" && p.qty.includes("+") && (
@@ -121,7 +160,7 @@ export default function PackagesSelector() {
               {selected?.save && <div className="price-save">{selected.save}</div>}
             </div>
             <button className="btn buy-btn" type="button">
-              Buy {selected?.qty} Likes Now
+              {buttonLabel}
             </button>
             <div className="pkg-safety">
               <span className="safety-item">
