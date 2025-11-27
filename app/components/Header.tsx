@@ -28,7 +28,7 @@ export default function Header() {
                 <div className="nav-dropdown">
                   <a href="/instagram/likes">Buy Instagram Likes</a>
                   <a href="/instagram/followers">Buy Instagram Followers</a>
-                  <a href="#">Buy Instagram Views</a>
+                  <a href="/instagram/views">Buy Instagram Views</a>
                 </div>
               </div>
             </div>
@@ -42,7 +42,7 @@ export default function Header() {
                 <div className="nav-dropdown">
                   <a href="/tiktok/likes">Buy TikTok Likes</a>
                   <a href="/tiktok/followers">Buy TikTok Followers</a>
-                  <a href="#">Buy TikTok Views</a>
+                  <a href="/tiktok/views">Buy TikTok Views</a>
                 </div>
               </div>
             </div>
