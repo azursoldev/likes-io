@@ -27,7 +27,7 @@ export default function Header() {
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
                   <a href="/instagram/likes">Buy Instagram Likes</a>
-                  <a href="#">Buy Instagram Followers</a>
+                  <a href="/instagram/followers">Buy Instagram Followers</a>
                   <a href="#">Buy Instagram Views</a>
                 </div>
               </div>
