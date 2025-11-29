@@ -60,7 +60,7 @@ export default function Header() {
                 </div>
               </div>
             </div>
-            <a href="#faq">FAQ</a>
+            <a href="/faq">FAQ</a>
             <a href="#blog">Blog</a>
           </nav>
           <div className="header-actions">

@@ -38,7 +38,7 @@ export default function Footer() {
         {/* Top row nav */}
         <div className="footer-top">
           <nav className="footer-top-nav">
-            <a href="#faq">FAQ</a>
+            <a href="/faq">FAQ</a>
             <a href="#blog">Blog</a>
             <a href="#about">About Us</a>
             <a href="#team">Our Team</a>
