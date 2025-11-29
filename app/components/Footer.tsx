@@ -1,5 +1,37 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+
 export default function Footer() {
   const year = new Date().getFullYear();
+  const [showTooltip, setShowTooltip] = useState(false);
+  const langBtnRef = useRef<HTMLButtonElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        langBtnRef.current &&
+        tooltipRef.current &&
+        !langBtnRef.current.contains(event.target as Node) &&
+        !tooltipRef.current.contains(event.target as Node)
+      ) {
+        setShowTooltip(false);
+      }
+    };
+
+    if (showTooltip) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showTooltip]);
+
+  const handleLangClick = () => {
+    setShowTooltip(!showTooltip);
+  };
+
   return (
     <footer className="site-footer">
       <div className="container">
@@ -15,13 +47,26 @@ export default function Footer() {
             <a href="#privacy">Privacy Policy</a>
           </nav>
           <div className="footer-lang">
-            <button className="lang-btn" aria-label="Change language">
-              <span className="flag" aria-hidden>
-                <img src="/flag-eng.PNG" alt="English flag" />
-              </span>
-              <span className="lang-label">English</span>
-              <span className="caret" aria-hidden>▾</span>
-            </button>
+            <div className="lang-wrapper">
+              {showTooltip && (
+                <div className="lang-tooltip" ref={tooltipRef}>
+                  More languages coming soon!
+                </div>
+              )}
+              <button
+                ref={langBtnRef}
+                className={`lang-btn ${showTooltip ? "active" : ""}`}
+                aria-label="Change language"
+                onClick={handleLangClick}
+                type="button"
+              >
+                <span className="flag" aria-hidden>
+                  <img src="/flag-eng.PNG" alt="English flag" />
+                </span>
+                <span className="lang-label">English</span>
+                <span className="caret" aria-hidden>▾</span>
+              </button>
+            </div>
           </div>
         </div>
 
