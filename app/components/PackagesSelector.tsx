@@ -89,17 +89,115 @@ export default function PackagesSelector({
   }, [visiblePackages, defaultQtyTarget]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
+  
+  // Helper to parse initial quantity from custom package (e.g., "10K+" → 10000, "25K+" → 25000)
+  const parseInitialQty = (qtyStr: string): number => {
+    const cleaned = qtyStr.replace(/[+,]/g, "").trim();
+    if (cleaned.includes("K")) {
+      const num = parseFloat(cleaned.replace("K", ""));
+      return Math.round(num * 1000);
+    }
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 10000 : Math.round(num);
+  };
+  
+  const getInitialCustomQty = () => {
+    const customPkg = visiblePackages.find((p) => typeof p.qty === "string" && p.qty.includes("+"));
+    return customPkg ? parseInitialQty(customPkg.qty) : 10000;
+  };
+  
+  const [customQty, setCustomQty] = useState(() => getInitialCustomQty());
 
   useEffect(() => {
     setSelectedIndex(defaultIndex);
-  }, [defaultIndex]);
+    // Update custom quantity if switching to a custom package
+    const newSelected = visiblePackages[defaultIndex];
+    if (newSelected && typeof newSelected.qty === "string" && newSelected.qty.includes("+")) {
+      setCustomQty(parseInitialQty(newSelected.qty));
+    }
+  }, [defaultIndex, visiblePackages]);
 
   const selected = visiblePackages[selectedIndex] ?? visiblePackages[defaultIndex];
-  const formatButtonLabel = (pkg?: PackageOption) => {
-    if (!pkg) return `Buy ${metricLabel}`;
-    return ctaTemplate.replace("{qty}", String(pkg.qty)).replace("{metric}", metricLabel);
+  const isCustomSelected = typeof selected?.qty === "string" && selected.qty.includes("+");
+  
+  // Calculate price for custom quantity
+  const getCustomPrice = () => {
+    if (!isCustomSelected || !selected) return { price: "$—", strike: undefined, save: undefined };
+    
+    // Try to extract price from perLike field
+    let pricePerUnit: number | null = null;
+    const perLikeMatch = selected.perLike.match(/\$([\d.]+)/);
+    if (perLikeMatch) {
+      pricePerUnit = parseFloat(perLikeMatch[1]);
+    } else {
+      // If no price in perLike, use the last non-custom package's pricing
+      const nonCustomPackages = visiblePackages.filter(
+        (p) => typeof p.qty !== "string" || !p.qty.includes("+")
+      );
+      if (nonCustomPackages.length > 0) {
+        const lastPackage = nonCustomPackages[nonCustomPackages.length - 1];
+        const lastPerLikeMatch = lastPackage.perLike.match(/\$([\d.]+)/);
+        if (lastPerLikeMatch) {
+          pricePerUnit = parseFloat(lastPerLikeMatch[1]);
+        }
+      }
+    }
+    
+    if (!pricePerUnit) return { price: "$—", strike: undefined, save: undefined };
+    
+    const totalPrice = (customQty * pricePerUnit).toFixed(2);
+    
+    // Calculate strike price and savings if original package has them
+    let strikePrice: string | undefined;
+    let saveAmount: string | undefined;
+    
+    // Calculate strike price and savings
+    // Use the first package (usually smallest/least discounted) as base for strike price
+    const basePackage = visiblePackages[0];
+    if (basePackage && basePackage.perLike) {
+      const basePerLikeMatch = basePackage.perLike.match(/\$([\d.]+)/);
+      if (basePerLikeMatch) {
+        const basePerUnit = parseFloat(basePerLikeMatch[1]);
+        // Calculate strike as 2x the current price (50% discount) or use package strike if available
+        const strikePerUnit = selected.strike 
+          ? (parseFloat(selected.strike.replace(/[^0-9.]/g, "")) / (typeof selected.qty === "number" ? selected.qty : 10000))
+          : pricePerUnit * 2; // Default to 2x (50% off)
+        const totalStrike = (customQty * strikePerUnit).toFixed(2);
+        strikePrice = `$${totalStrike}`;
+        const save = (parseFloat(totalStrike) - parseFloat(totalPrice)).toFixed(2);
+        if (parseFloat(save) > 0) {
+          saveAmount = `You Save $${save}`;
+        }
+      }
+    }
+    
+    return { price: `$${totalPrice}`, strike: strikePrice, save: saveAmount };
   };
-  const buttonLabel = formatButtonLabel(selected);
+
+  const handleCustomIncrement = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCustomQty((prev) => Math.min(prev + 1000, 1000000));
+  };
+
+  const handleCustomDecrement = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const minQty = selected && typeof selected.qty === "string" && selected.qty.includes("+")
+      ? parseInitialQty(selected.qty)
+      : 10000;
+    setCustomQty((prev) => Math.max(prev - 1000, minQty));
+  };
+
+  const displayQty = isCustomSelected ? customQty.toLocaleString() + "+" : String(selected?.qty ?? "");
+  const customPriceData = isCustomSelected ? getCustomPrice() : null;
+  const displayPrice = customPriceData?.price ?? selected?.price ?? "$—";
+  const displayStrike = customPriceData?.strike ?? selected?.strike;
+  const displaySave = customPriceData?.save ?? selected?.save;
+  const formatButtonLabel = (pkg?: PackageOption, qty?: string) => {
+    if (!pkg) return `Buy ${metricLabel}`;
+    const qtyToUse = qty ?? String(pkg.qty);
+    return ctaTemplate.replace("{qty}", qtyToUse).replace("{metric}", metricLabel);
+  };
+  const buttonLabel = formatButtonLabel(selected, isCustomSelected ? displayQty : undefined);
 
   return (
     <section className="packages">
@@ -127,7 +225,17 @@ export default function PackagesSelector({
                 className={`pkg-item ${i === selectedIndex ? "active" : ""} ${
                   typeof p.qty === "string" && p.qty.includes("+") ? "custom" : ""
                 }`}
-                onClick={() => setSelectedIndex(i)}
+                onClick={() => {
+                  setSelectedIndex(i);
+                  const pkg = visiblePackages[i];
+                  // Set custom quantity based on package base quantity
+                  if (pkg && typeof pkg.qty === "string" && pkg.qty.includes("+")) {
+                    setCustomQty(parseInitialQty(pkg.qty));
+                  } else {
+                    // Reset to default when switching to non-custom package
+                    setCustomQty(10000);
+                  }
+                }}
                 type="button"
               >
                 {i === selectedIndex && (
@@ -135,18 +243,46 @@ export default function PackagesSelector({
                     <FontAwesomeIcon icon={faCheck} />
                   </span>
                 )}
-                <div className="pkg-val">{p.qty}</div>
+                <div className="pkg-val">
+                  {i === selectedIndex && typeof p.qty === "string" && p.qty.includes("+")
+                    ? customQty.toLocaleString() + "+"
+                    : p.qty}
+                </div>
                 <div className="pkg-label">{metricLabel}</div>
                 <div className="pkg-sub">{p.perLike}</div>
                 {p.offText && <div className="pkg-off">{p.offText}</div>}
                 {typeof p.qty === "string" && p.qty.includes("+") && (
                   <>
-                    <span className="pkg-minus" aria-hidden>
+                    <div
+                      className="pkg-minus"
+                      onClick={handleCustomDecrement}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Decrease quantity"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleCustomDecrement(e as any);
+                        }
+                      }}
+                    >
                       <FontAwesomeIcon icon={faMinus} />
-                    </span>
-                    <span className="pkg-plus" aria-hidden>
+                    </div>
+                    <div
+                      className="pkg-plus"
+                      onClick={handleCustomIncrement}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Increase quantity"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleCustomIncrement(e as any);
+                        }
+                      }}
+                    >
                       <FontAwesomeIcon icon={faPlus} />
-                    </span>
+                    </div>
                   </>
                 )}
               </button>
@@ -155,9 +291,9 @@ export default function PackagesSelector({
 
           <div className="pkg-bottom">
             <div className="pkg-price">
-              <div className="price-main">{selected?.price ?? "$—"}</div>
-              {selected?.strike && <div className="price-strike">{selected.strike}</div>}
-              {selected?.save && <div className="price-save">{selected.save}</div>}
+              <div className="price-main">{displayPrice}</div>
+              {displayStrike && <div className="price-strike">{displayStrike}</div>}
+              {displaySave && <div className="price-save">{displaySave}</div>}
             </div>
             <button className="btn buy-btn" type="button">
               {buttonLabel}
