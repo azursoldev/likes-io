@@ -87,7 +87,7 @@ export default function Footer() {
             <span className="logo-dot">.io</span>
           </div>
           <p className="copyright">
-            Copyright © {year} Likes.io. All Rights Reserved. — Last Page Ltd. (HE470127), Nicosia, Cyprus.
+            Copyright © {year} Likes.io. All Rights Reserved.
           </p>
           <div className="payments">
             <img src="/likes.io payment methods .svg" alt="Payment methods" />
