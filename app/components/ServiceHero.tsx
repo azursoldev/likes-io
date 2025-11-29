@@ -7,14 +7,17 @@ export default function ServiceHero({
   subtitle,
   rating = "4.9/5",
   basedon = "based on",
-  reviewss = "1,352+ reviews",
+  reviewss,
+  reviews,
 }: {
   title: string;
   subtitle: string;
   rating?: string;
   basedon?: string;
   reviewss?: string;
+  reviews?: string;
 }) {
+  const reviewText = reviewss || reviews || "1,352+ reviews";
   return (
     <section className="hero-section service-hero">
       
@@ -43,7 +46,7 @@ export default function ServiceHero({
             
             <span className="score">{rating}</span>
             <span className="sep">{basedon}</span>
-            <span className="count">{reviewss}</span>
+            <span className="count">{reviewText}</span>
           </div>
         </div>
       </div>
