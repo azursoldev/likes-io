@@ -101,9 +101,14 @@ export default function PackagesSelector({
     return isNaN(num) ? 10000 : Math.round(num);
   };
   
+  // Type guard to check if qty is a custom string (contains "+")
+  const isCustomQty = (qty: string | number): qty is string => {
+    return typeof qty === "string" && qty.includes("+");
+  };
+  
   const getInitialCustomQty = () => {
-    const customPkg = visiblePackages.find((p) => typeof p.qty === "string" && p.qty.includes("+"));
-    if (customPkg && typeof customPkg.qty === "string") {
+    const customPkg = visiblePackages.find((p) => isCustomQty(p.qty));
+    if (customPkg && isCustomQty(customPkg.qty)) {
       return parseInitialQty(customPkg.qty);
     }
     return 10000;
@@ -115,7 +120,7 @@ export default function PackagesSelector({
     setSelectedIndex(defaultIndex);
     // Update custom quantity if switching to a custom package
     const newSelected = visiblePackages[defaultIndex];
-    if (newSelected && typeof newSelected.qty === "string" && newSelected.qty.includes("+")) {
+    if (newSelected && isCustomQty(newSelected.qty)) {
       setCustomQty(parseInitialQty(newSelected.qty));
     }
   }, [defaultIndex, visiblePackages]);
@@ -184,7 +189,7 @@ export default function PackagesSelector({
 
   const handleCustomDecrement = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const minQty = selected && typeof selected.qty === "string" && selected.qty.includes("+")
+    const minQty = selected && isCustomQty(selected.qty)
       ? parseInitialQty(selected.qty)
       : 10000;
     setCustomQty((prev) => Math.max(prev - 1000, minQty));
@@ -232,7 +237,7 @@ export default function PackagesSelector({
                   setSelectedIndex(i);
                   const pkg = visiblePackages[i];
                   // Set custom quantity based on package base quantity
-                  if (pkg && typeof pkg.qty === "string" && pkg.qty.includes("+")) {
+                  if (pkg && isCustomQty(pkg.qty)) {
                     setCustomQty(parseInitialQty(pkg.qty));
                   } else {
                     // Reset to default when switching to non-custom package
