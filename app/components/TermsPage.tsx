@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, ReactElement } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCheck, 
@@ -238,7 +238,7 @@ export default function TermsPage() {
 
   const formatContent = (content: string) => {
     const lines = content.split('\n').filter(line => line.trim() !== '');
-    const elements: JSX.Element[] = [];
+    const elements: ReactElement[] = [];
     let currentParagraph = '';
     let currentList: string[] = [];
     
