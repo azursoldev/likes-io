@@ -40,10 +40,10 @@ export default function Footer() {
           <nav className="footer-top-nav">
             <a href="/faq">FAQ</a>
             <a href="#blog">Blog</a>
-            <a href="#about">About Us</a>
-            <a href="#team">Our Team</a>
-            <a href="#contact">Contact Us</a>
-            <a href="#tos">Terms of Service</a>
+            <a href="/about">About Us</a>
+            <a href="/team">Our Team</a>
+            <a href="/contact">Contact Us</a>
+            <a href="/terms">Terms of Service</a>
             <a href="#privacy">Privacy Policy</a>
           </nav>
           <div className="footer-lang">
@@ -77,25 +77,25 @@ export default function Footer() {
           <div className="f-col">
             <h4>Instagram Services</h4>
             <ul>
-              <li><a href="#">Buy Instagram Likes</a></li>
-              <li><a href="#">Buy Instagram Followers</a></li>
-              <li><a href="#">Buy Instagram Views</a></li>
+              <li><a href="/instagram/likes">Buy Instagram Likes</a></li>
+              <li><a href="/instagram/followers">Buy Instagram Followers</a></li>
+              <li><a href="/instagram/views">Buy Instagram Views</a></li>
             </ul>
           </div>
           <div className="f-col">
             <h4>TikTok Services</h4>
             <ul>
-              <li><a href="#">Buy TikTok Likes</a></li>
-              <li><a href="#">Buy TikTok Followers</a></li>
-              <li><a href="#">Buy TikTok Views</a></li>
+              <li><a href="/tiktok/likes">Buy TikTok Likes</a></li>
+              <li><a href="/tiktok/followers">Buy TikTok Followers</a></li>
+              <li><a href="/tiktok/views">Buy TikTok Views</a></li>
             </ul>
           </div>
           <div className="f-col">
             <h4>YouTube Services</h4>
             <ul>
-              <li><a href="#">Buy YouTube Views</a></li>
-              <li><a href="#">Buy YouTube Subscribers</a></li>
-              <li><a href="#">Buy YouTube Likes</a></li>
+              <li><a href="/youtube/views">Buy YouTube Views</a></li>
+              <li><a href="/youtube/subscribers">Buy YouTube Subscribers</a></li>
+              <li><a href="/youtube/likes">Buy YouTube Likes</a></li>
             </ul>
           </div>
           <div className="f-col">
