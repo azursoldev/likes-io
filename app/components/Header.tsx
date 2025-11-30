@@ -61,7 +61,7 @@ export default function Header() {
               </div>
             </div>
             <a href="/faq">FAQ</a>
-            <a href="#blog">Blog</a>
+            <a href="/blog">Blog</a>
           </nav>
           <div className="header-actions">
             <div className="notif" aria-label="Notifications">
@@ -69,8 +69,8 @@ export default function Header() {
               <span className="badge">3</span>
             </div>
             <div className="currency">USD <span className="caret">▾</span></div>
-            <a className="login" href="#login">Login</a>
-            <button className="signup">Sign up</button>
+            <a className="login" href="/login">Login</a>
+            <a className="signup" href="/signup">Sign up</a>
           </div>
         </div>
       </header>
