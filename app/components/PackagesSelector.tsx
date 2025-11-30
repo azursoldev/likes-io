@@ -106,10 +106,11 @@ export default function PackagesSelector({
     return typeof qty === "string" && qty.includes("+");
   };
   
-  const getInitialCustomQty = () => {
-    const customPkg = visiblePackages.find((p) => isCustomQty(p.qty));
-    if (customPkg && isCustomQty(customPkg.qty)) {
-      return parseInitialQty(customPkg.qty);
+  const getInitialCustomQty = (): number => {
+    for (const pkg of visiblePackages) {
+      if (typeof pkg.qty === "string" && pkg.qty.includes("+")) {
+        return parseInitialQty(pkg.qty);
+      }
     }
     return 10000;
   };
