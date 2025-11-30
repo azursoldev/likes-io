@@ -103,7 +103,10 @@ export default function PackagesSelector({
   
   const getInitialCustomQty = () => {
     const customPkg = visiblePackages.find((p) => typeof p.qty === "string" && p.qty.includes("+"));
-    return customPkg && typeof customPkg.qty === "string" ? parseInitialQty(customPkg.qty as string) : 10000;
+    if (customPkg && typeof customPkg.qty === "string") {
+      return parseInitialQty(customPkg.qty);
+    }
+    return 10000;
   };
   
   const [customQty, setCustomQty] = useState(() => getInitialCustomQty());
@@ -113,7 +116,7 @@ export default function PackagesSelector({
     // Update custom quantity if switching to a custom package
     const newSelected = visiblePackages[defaultIndex];
     if (newSelected && typeof newSelected.qty === "string" && newSelected.qty.includes("+")) {
-      setCustomQty(parseInitialQty(newSelected.qty as string));
+      setCustomQty(parseInitialQty(newSelected.qty));
     }
   }, [defaultIndex, visiblePackages]);
 
@@ -182,7 +185,7 @@ export default function PackagesSelector({
   const handleCustomDecrement = (e: React.MouseEvent) => {
     e.stopPropagation();
     const minQty = selected && typeof selected.qty === "string" && selected.qty.includes("+")
-      ? parseInitialQty(selected.qty as string)
+      ? parseInitialQty(selected.qty)
       : 10000;
     setCustomQty((prev) => Math.max(prev - 1000, minQty));
   };
@@ -230,7 +233,7 @@ export default function PackagesSelector({
                   const pkg = visiblePackages[i];
                   // Set custom quantity based on package base quantity
                   if (pkg && typeof pkg.qty === "string" && pkg.qty.includes("+")) {
-                    setCustomQty(parseInitialQty(pkg.qty as string));
+                    setCustomQty(parseInitialQty(pkg.qty));
                   } else {
                     // Reset to default when switching to non-custom package
                     setCustomQty(10000);
