@@ -403,7 +403,7 @@ export default function TermsPage() {
               <div
                 key={section.id}
                 id={section.id}
-                ref={(el) => (sectionRefs.current[section.id] = el)}
+                ref={(el) => { sectionRefs.current[section.id] = el; }}
                 className="terms-section"
               >
                 <div className="terms-section-header">
