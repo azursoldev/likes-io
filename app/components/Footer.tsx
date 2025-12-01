@@ -101,9 +101,9 @@ export default function Footer() {
           <div className="f-col">
             <h4>Tools & Resources</h4>
             <ul>
-              <li><a href="#">Free Instagram Likes</a></li>
+              <li><a href="/free-instagram-likes">Free Instagram Likes</a></li>
               <li><a href="#">Free Instagram Followers</a></li>
-              <li><a href="#">Reviews</a></li>
+              <li><a href="/reviews">Reviews</a></li>
             </ul>
           </div>
           <div className="f-col">
@@ -116,7 +116,7 @@ export default function Footer() {
           <div className="f-col">
             <h4>Affiliate Program</h4>
             <ul>
-              <li><a href="#">Become an Affiliate</a></li>
+              <li><a href="/affiliate">Become an Affiliate</a></li>
               <li>
                 <a href="#" className="login-link">Log in</a>
                 <span className="login-note"> to view stats.</span>

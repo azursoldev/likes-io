@@ -877,6 +877,1017 @@ section.hero-section .reviews-pill span.sep {
     cursor: pointer;
 }
 
+  /* Reviews Page */
+  .reviews-page {
+    padding: 60px 0 80px;
+    background: #fff;
+  }
+  .reviews-page .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .reviews-page-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .reviews-page-title {
+    font-size: 48px;
+    font-weight: 800;
+    color: rgb(17, 24, 39);
+    margin: 0 0 12px;
+    line-height: 1.2;
+  }
+  .reviews-page-subtitle {
+    font-size: 18px;
+    color: rgb(75, 85, 99);
+    margin: 0 0 32px;
+  }
+  .reviews-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .reviews-stars-large {
+    display: flex;
+    gap: 6px;
+    color: #facc15;
+  }
+  .reviews-stars-large .star-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .reviews-rating-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin: 0;
+  }
+  .reviews-trust-banner {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin: 0 auto 32px;
+    max-width: 800px;
+    font-size: 15px;
+    color: rgb(75, 85, 99);
+    text-align: center;
+  }
+  .reviews-summary {
+    background: #f9fafb;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 0 auto 48px;
+    max-width: 900px;
+  }
+  .reviews-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .reviews-summary-header .sparkle-icon {
+    color: rgb(var(--color-brand));
+    width: 18px;
+    height: 18px;
+  }
+  .reviews-summary-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin: 0;
+  }
+  .reviews-summary-note {
+    font-size: 13px;
+    color: rgb(107, 114, 128);
+    margin: 0 0 16px;
+  }
+  .reviews-summary-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: rgb(55, 65, 81);
+    margin: 0;
+  }
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 960px) {
+    .reviews-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 640px) {
+    .reviews-grid {
+      grid-template-columns: 1fr;
+    }
+    .reviews-page-title {
+      font-size: 36px;
+    }
+  }
+  .review-card-page {
+    background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .review-card-page:hover {
+    box-shadow: 0 4px 16px rgba(17, 24, 39, 0.12);
+    transform: translateY(-2px);
+  }
+  .review-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .review-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: rgb(107, 114, 128);
+  }
+  .review-meta {
+    flex: 1;
+  }
+  .review-username {
+    font-size: 15px;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin-bottom: 4px;
+  }
+  .review-verified {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: rgb(107, 114, 128);
+  }
+  .review-verified .verified-check {
+    width: 14px;
+    height: 14px;
+    color: #fff;
+    background: #10b981;
+    border-radius: 50%;
+    padding: 2px;
+  }
+  .review-stars {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    color: #facc15;
+  }
+  .review-stars .star-icon-small {
+    width: 16px;
+    height: 16px;
+  }
+  .review-text-page {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgb(55, 65, 81);
+    margin: 0;
+  }
+  .reviews-write-button-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+  .reviews-write-button {
+    background: rgb(var(--color-brand));
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  }
+  .reviews-write-button:hover {
+    background: rgb(234, 88, 12);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+  }
+  .reviews-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 80px;
+  }
+  .pagination-btn {
+    min-width: 44px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    background: #fff;
+    color: rgb(17, 24, 39);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .pagination-btn:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: rgba(17, 24, 39, 0.2);
+  }
+  .pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .pagination-number.active {
+    background: rgb(var(--color-brand));
+    color: #fff;
+    border-color: rgb(var(--color-brand));
+  }
+  .pagination-number.active:hover {
+    background: rgb(234, 88, 12);
+  }
+  .reviews-faq-section {
+    padding-top: 60px;
+    border-top: 1px solid rgba(17, 24, 39, 0.1);
+  }
+  .reviews-faq-title {
+    text-align: center;
+    font-size: 36px;
+    font-weight: 800;
+    color: rgb(17, 24, 39);
+    margin: 0 0 12px;
+  }
+  .reviews-faq-subtitle {
+    text-align: center;
+    font-size: 16px;
+    color: rgb(75, 85, 99);
+    margin: 0 0 40px;
+  }
+  .reviews-faq-list {
+    display: grid;
+    gap: 12px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .reviews-faq-item {
+    background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+    transition: all 0.2s ease;
+  }
+  .reviews-faq-item:hover {
+    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.1);
+  }
+  .reviews-faq-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: rgb(17, 24, 39);
+    text-align: left;
+  }
+  .reviews-faq-question {
+    flex: 1;
+  }
+  .reviews-faq-toggle {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    color: rgb(17, 24, 39);
+    background: #fff;
+    font-size: 20px;
+    font-weight: 400;
+    flex-shrink: 0;
+  }
+  .reviews-faq-item.open .reviews-faq-toggle {
+    background: rgba(17, 24, 39, 0.05);
+  }
+  .reviews-faq-body {
+    padding: 0 20px 20px;
+    color: rgb(75, 85, 99);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .reviews-faq-body p {
+    margin: 0;
+  }
+
+  /* Affiliate Page */
+  .affiliate-page {
+    padding: 80px 0 100px;
+    background: #fff;
+  }
+  .affiliate-page .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .affiliate-hero {
+    text-align: center;
+    margin-bottom: 80px;
+  }
+  .affiliate-hero-title {
+    font-size: 48px;
+    font-weight: 800;
+    color: rgb(17, 24, 39);
+    margin: 0 0 20px;
+    line-height: 1.2;
+  }
+  .affiliate-hero-subtitle {
+    font-size: 20px;
+    color: rgb(75, 85, 99);
+    margin: 0;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+  @media (max-width: 640px) {
+    .affiliate-hero-title {
+      font-size: 36px;
+    }
+    .affiliate-hero-subtitle {
+      font-size: 18px;
+    }
+  }
+  .affiliate-benefits {
+    margin-bottom: 80px;
+  }
+  .affiliate-benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  @media (max-width: 960px) {
+    .affiliate-benefits-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .affiliate-benefit-card {
+    background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .affiliate-benefit-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12);
+  }
+  .affiliate-benefit-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgb(var(--color-brand));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    color: #fff;
+    font-size: 28px;
+  }
+  .affiliate-benefit-text {
+    font-size: 16px;
+    line-height: 1.7;
+    color: rgb(55, 65, 81);
+    margin: 0;
+  }
+  .affiliate-how-it-works {
+    margin-bottom: 80px;
+  }
+  .affiliate-section-title {
+    font-size: 36px;
+    font-weight: 800;
+    color: rgb(17, 24, 39);
+    text-align: center;
+    margin: 0 0 12px;
+  }
+  .affiliate-section-subtitle {
+    font-size: 18px;
+    color: rgb(75, 85, 99);
+    text-align: center;
+    margin: 0 0 48px;
+  }
+  .affiliate-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  @media (max-width: 960px) {
+    .affiliate-steps {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+  .affiliate-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .affiliate-step-number {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgb(var(--color-brand));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 24px;
+  }
+  .affiliate-step-content {
+    flex: 1;
+  }
+  .affiliate-step-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin: 0 0 12px;
+  }
+  .affiliate-step-description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgb(75, 85, 99);
+    margin: 0;
+  }
+  .affiliate-faqs {
+    margin-bottom: 80px;
+  }
+  .affiliate-faq-list {
+    display: grid;
+    gap: 12px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .affiliate-faq-item {
+    background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+    transition: all 0.2s ease;
+  }
+  .affiliate-faq-item:hover {
+    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.1);
+  }
+  .affiliate-faq-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: rgb(17, 24, 39);
+    text-align: left;
+  }
+  .affiliate-faq-question {
+    flex: 1;
+  }
+  .affiliate-faq-toggle {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    color: rgb(17, 24, 39);
+    background: #fff;
+    font-size: 20px;
+    font-weight: 400;
+    flex-shrink: 0;
+  }
+  .affiliate-faq-item.open .affiliate-faq-toggle {
+    background: rgba(17, 24, 39, 0.05);
+  }
+  .affiliate-faq-body {
+    padding: 0 20px 20px;
+    color: rgb(75, 85, 99);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .affiliate-faq-body p {
+    margin: 0;
+  }
+  .affiliate-form-section {
+    background: #f9fafb;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 20px;
+    padding: 48px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  @media (max-width: 640px) {
+    .affiliate-form-section {
+      padding: 32px 24px;
+    }
+  }
+  .affiliate-form {
+    display: grid;
+    gap: 24px;
+  }
+  .affiliate-form-field {
+    display: grid;
+    gap: 8px;
+  }
+  .affiliate-form-field label {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgb(17, 24, 39);
+  }
+  .affiliate-submit-btn {
+    background: rgb(var(--color-brand));
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    margin-top: 8px;
+  }
+  .affiliate-submit-btn:hover {
+    background: rgb(234, 88, 12);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+  }
+  .affiliate-submit-btn:active {
+    transform: translateY(0);
+  }
+
+  /* Free Instagram Likes Page */
+  .free-likes-page {
+    padding: 60px 0 80px;
+    background: #fff;
+  }
+  .free-likes-page .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .free-likes-hero {
+    text-align: center;
+    margin-bottom: 80px;
+  }
+  .free-likes-title {
+    font-size: 48px;
+    font-weight: 800;
+    color: rgb(17, 24, 39);
+    margin: 0 0 20px;
+    line-height: 1.2;
+  }
+  .free-likes-description {
+    font-size: 18px;
+    color: rgb(75, 85, 99);
+    margin: 0 0 32px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+  .free-likes-rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+  .free-likes-stars {
+    display: flex;
+    gap: 4px;
+    color: #facc15;
+  }
+  .free-likes-stars .star-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .free-likes-rating-text {
+    font-size: 16px;
+    color: rgb(75, 85, 99);
+    font-weight: 600;
+  }
+  .free-likes-form-card {
+    background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+  }
+  @media (max-width: 640px) {
+    .free-likes-form-card {
+      padding: 24px;
+    }
+    .free-likes-title {
+      font-size: 36px;
+    }
+  }
+  .free-likes-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40px;
+    gap: 12px;
+  }
+  .progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    flex: 1;
+  }
+  .progress-step-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: rgb(107, 114, 128);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+  }
+  .progress-step.active .progress-step-circle {
+    background: rgb(var(--color-brand));
+    color: #fff;
+    border-color: rgb(var(--color-brand));
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  }
+  .progress-step-label {
+    font-size: 13px;
+    color: rgb(107, 114, 128);
+    font-weight: 600;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .progress-step.active .progress-step-label {
+    color: rgb(var(--color-brand));
+    font-weight: 700;
+  }
+  .progress-line {
+    flex: 1;
+    height: 2px;
+    background: #e5e7eb;
+    margin: 0 8px;
+    margin-top: -24px;
+    max-width: 80px;
+  }
+  .progress-step.active ~ .progress-step .progress-line {
+    background: #e5e7eb;
+  }
+  .free-likes-form {
+    display: grid;
+    gap: 20px;
+  }
+  .free-likes-form-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgb(17, 24, 39);
+    text-align: left;
+  }
+  .free-likes-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .free-likes-input-wrapper .input-icon {
+    position: absolute;
+    left: 16px;
+    color: rgb(107, 114, 128);
+    width: 20px;
+    height: 20px;
+  }
+  .free-likes-input {
+    width: 100%;
+    height: 56px;
+    padding: 0 16px 0 48px;
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    border-radius: 12px;
+    font-size: 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .free-likes-input:focus {
+    outline: none;
+    border-color: rgb(var(--color-brand));
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  }
+  .free-likes-continue-btn {
+    background: linear-gradient(90deg, #f97316, #ef4444);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  }
+  .free-likes-continue-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+  }
+  .free-likes-continue-btn:active {
+    transform: translateY(0);
+  }
+  .free-likes-trust-badges {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(17, 24, 39, 0.08);
+  }
+  @media (max-width: 640px) {
+    .free-likes-trust-badges {
+      grid-template-columns: 1fr;
+    }
+  }
+  .trust-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+  .trust-badge .trust-icon {
+    width: 24px;
+    height: 24px;
+    color: rgb(var(--color-brand));
+  }
+  .trust-badge span {
+    font-size: 13px;
+    color: rgb(75, 85, 99);
+    font-weight: 600;
+  }
+  .free-likes-post-selection {
+    display: grid;
+    gap: 24px;
+  }
+  .free-likes-post-selection-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin: 0;
+    text-align: center;
+  }
+  .free-likes-posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 640px) {
+    .free-likes-posts-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .free-likes-post-item {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .free-likes-post-item:hover {
+    transform: scale(1.02);
+  }
+  .free-likes-post-placeholder {
+    aspect-ratio: 1;
+    background: #e5e7eb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 8px;
+    transition: all 0.2s ease;
+  }
+  .free-likes-post-item.selected .free-likes-post-placeholder {
+    border: 2px solid rgb(var(--color-brand));
+    background: rgba(249, 115, 22, 0.05);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  }
+  .free-likes-post-label {
+    font-size: 12px;
+    color: rgb(75, 85, 99);
+    font-weight: 600;
+  }
+  .free-likes-post-item.selected .free-likes-post-label {
+    color: rgb(var(--color-brand));
+    font-weight: 700;
+  }
+  .progress-step.completed .progress-step-circle {
+    background: rgb(var(--color-brand));
+    color: #fff;
+  }
+  .progress-line.active {
+    background: rgb(var(--color-brand));
+  }
+  .free-likes-continue-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .free-likes-continue-btn:disabled:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  }
+  .free-likes-activate-form {
+    display: grid;
+    gap: 24px;
+  }
+  .free-likes-activate-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin: 0;
+    text-align: center;
+  }
+  .free-likes-selected-post-info {
+    background: #f9fafb;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .free-likes-selected-post-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(107, 114, 128);
+    flex-shrink: 0;
+  }
+  .free-likes-selected-post-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  .free-likes-selected-post-details {
+    flex: 1;
+  }
+  .free-likes-selected-post-label {
+    font-size: 13px;
+    color: rgb(107, 114, 128);
+    margin-bottom: 4px;
+  }
+  .free-likes-boosting-for {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .boosting-text {
+    font-size: 14px;
+    color: rgb(17, 24, 39);
+    font-weight: 600;
+  }
+  .boosting-username {
+    font-size: 18px;
+    color: rgb(var(--color-brand));
+    font-weight: 700;
+  }
+  .free-likes-email-field {
+    margin-top: 8px;
+  }
+  .free-likes-get-likes-btn {
+    background: linear-gradient(90deg, #f97316, #ef4444);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 18px 32px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    width: 100%;
+  }
+  .free-likes-get-likes-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+  }
+  .free-likes-get-likes-btn:active {
+    transform: translateY(0);
+  }
+  .free-likes-success {
+    display: grid;
+    gap: 24px;
+    text-align: center;
+  }
+  .free-likes-success-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #10b981;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+  .free-likes-success-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+  .free-likes-success-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin: 0;
+  }
+  .free-likes-success-message {
+    font-size: 16px;
+    color: rgb(75, 85, 99);
+    margin: 0;
+    line-height: 1.6;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .free-likes-premium-cta {
+    background: #fef3c7;
+    border: 1px solid rgb(var(--color-brand));
+    border-radius: 12px;
+    padding: 20px;
+    text-align: left;
+    margin-top: 8px;
+  }
+  .premium-cta-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin-bottom: 8px;
+  }
+  .premium-cta-text {
+    font-size: 15px;
+    color: rgb(75, 85, 99);
+    line-height: 1.6;
+  }
+  .free-likes-start-over {
+    background: transparent;
+    border: none;
+    color: rgb(17, 24, 39);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 8px;
+    transition: color 0.2s ease;
+  }
+  .free-likes-start-over:hover {
+    color: rgb(var(--color-brand));
+  }
+
   /* FAQ section */
   .faq {padding: 40px 0 60px;background: #f9fafb;}
   .faq-title {text-align: center;font-size: clamp(28px, 5vw, 32px);font-weight: 800;color: rgb(var(--color-text-primary));margin-bottom: 0;}
