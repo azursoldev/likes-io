@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faCheck, faSparkles } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faCheck } from "@fortawesome/free-solid-svg-icons";
 
 type Review = {
   username: string;
@@ -126,7 +126,7 @@ export default function ReviewsPage() {
           {/* Review Summary */}
           <div className="reviews-summary">
             <div className="reviews-summary-header">
-              <FontAwesomeIcon icon={faSparkles} className="sparkle-icon" />
+              <FontAwesomeIcon icon={faStar} className="sparkle-icon" />
               <h3 className="reviews-summary-title">Review summary</h3>
             </div>
             <p className="reviews-summary-note">Based on reviews, created with AI</p>
