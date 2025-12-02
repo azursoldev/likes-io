@@ -37,8 +37,10 @@ export default function LoginPage() {
         <div className="login-left">
           <div className="login-left-content">
             <div className="login-logo">
-              <span className="login-logo-dot">.</span>
-              <span className="login-logo-text">io</span>
+              <a href="/" className="brand-logo">
+                <span className="logo-text">Likes</span>
+                <span className="logo-dot">.io</span>
+              </a>
             </div>
             <p className="login-promo-text">
               Sign in to access your dashboard, manage your orders, and continue boosting your social media presence.
@@ -134,15 +136,15 @@ export default function LoginPage() {
               <div className="login-social">
                 <button type="button" className="login-social-btn">
                   <FontAwesomeIcon icon={faGoogle} />
-                  <span>Google</span>
+                  
                 </button>
                 <button type="button" className="login-social-btn">
                   <FontAwesomeIcon icon={faFacebook} />
-                  <span>Facebook</span>
+                 
                 </button>
                 <button type="button" className="login-social-btn">
                   <span className="login-social-icon">J</span>
-                  <span>Other</span>
+                 
                 </button>
               </div>
 

@@ -31,12 +31,21 @@ export default function SignupPage() {
   return (
     <section className="signup-page">
       <div className="signup-container">
-        <div className="signup-form-card">
-          <h1 className="signup-title">Create Your Account</h1>
-          <p className="signup-subtitle">
-            Already have an account? <a href="/login" className="signup-signin-link">Sign in</a>
-          </p>
+        {/* Logo Section */}
+        <div className="signup-logo-section">
+          <a href="/" className="brand-logo">
+            <span className="logo-text">Likes</span>
+            <span className="logo-dot">.io</span>
+          </a>
+        </div>
 
+        {/* Title Section */}
+        <h1 className="signup-title">Create Your Account</h1>
+        <p className="signup-subtitle">
+          Already have an account? <a href="/login" className="signup-signin-link">Sign in</a>
+        </p>
+
+        <div className="signup-form-card">
           <form className="signup-form" onSubmit={handleSubmit}>
             <div className="signup-input-group">
               <label htmlFor="email" className="signup-label">Email address</label>
