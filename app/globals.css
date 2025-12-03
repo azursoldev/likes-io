@@ -25,6 +25,21 @@
     min-height: 100vh;
   }
   
+  /* Page wrapper for footer at bottom */
+  .page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .page-wrapper > section {
+    flex: 1 0 auto;
+  }
+  .page-wrapper > footer,
+  .page-wrapper .site-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+  }
+  
   .container {
     max-width: 1280px;
     margin: 0 auto;
@@ -2618,7 +2633,7 @@ section.hero-section .reviews-pill span.sep {
   /* End Contact Page */
   
   /* Login Page */
-  .login-page {min-height: calc(100vh - 200px);padding: 30px 20px;background: #f9fafb;}
+  .login-page {padding: 30px 20px;background: #f9fafb;}
   .login-container {display: grid;grid-template-columns: 1fr 1fr;max-width: 56rem;margin: 0 auto;border-radius: 20px;overflow: hidden;box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);min-height: 600px;}
   
   .login-left {background: rgb(17, 24, 39);display: flex;align-items: baseline;justify-content: start;padding: 50px 40px;position: relative;}
