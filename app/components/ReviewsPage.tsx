@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faCheck } from "@fortawesome/free-solid-svg-icons";
+import WriteReviewModal from "./WriteReviewModal";
 
 type Review = {
   username: string;
@@ -93,6 +94,7 @@ export default function ReviewsPage() {
   const startIndex = (currentPage - 1) * reviewsPerPage;
   const currentReviews = reviews.slice(startIndex, startIndex + reviewsPerPage);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -165,7 +167,10 @@ export default function ReviewsPage() {
 
         {/* Write Review Button */}
         <div className="reviews-write-button-container">
-          <button className="reviews-write-button">
+          <button
+            className="reviews-write-button"
+            onClick={() => setIsModalOpen(true)}
+          >
             Write Your Review →
           </button>
         </div>
@@ -230,6 +235,12 @@ export default function ReviewsPage() {
           </div>
         </div>
       </div>
+
+      {/* Write Review Modal */}
+      <WriteReviewModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </section>
   );
 }
