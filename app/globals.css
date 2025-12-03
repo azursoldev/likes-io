@@ -2110,7 +2110,7 @@ section.hero-section .reviews-pill span.sep {
   html.dark .pager-num.active { background: rgb(var(--color-brand)); }
   
   /* FAQ Page */
-  .faq-page { padding: 60px 0 80px; background: #fff; min-height: 80vh; }
+  .faq-page { padding: 60px 0 60px; background: #fff; }
   .faq-page-header { text-align: center; margin-bottom: 48px; }
   .faq-page-title { font-size: clamp(32px, 5vw, 42px); font-weight: 800; color: rgb(17, 24, 39); margin: 0; display: inline-flex; align-items: center; gap: 12px; }
   .faq-emoji { font-size: 1.2em; }
@@ -2351,7 +2351,7 @@ section.hero-section .reviews-pill span.sep {
   /* End Login Page */
   
   /* Signup Page */
-  .signup-page {min-height: calc(100vh - 200px);padding: 60px 20px;background: #f9fafb;}
+  .signup-page {padding: 60px 20px;background: #f9fafb;}
   .signup-container { max-width: 500px; margin: 0 auto; }
   .signup-logo-section {text-align: center;margin-bottom: 20px;}
   .signup-logo-section .brand-logo { text-decoration: none; display: inline-block; }
