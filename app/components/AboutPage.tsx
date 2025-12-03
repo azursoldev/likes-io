@@ -14,14 +14,14 @@ import {
 export default function AboutPage() {
   return (
     <section className="about-page">
-      <div className="container">
+      <div className="blog-container">
         {/* Hero Section */}
-        <div className="about-hero">
-          <h1 className="about-title">About Likes.io</h1>
-          <p className="about-description">
+        <section className="blog-hero-section">
+          <h1 className="blog-title">About Likes.io</h1>
+          <p className="blog-subtitle">
             We're a team of digital strategists, engineers, and creatives passionate about empowering creators and brands to achieve their full potential on social media.
           </p>
-        </div>
+        </section>
 
         {/* Our Story Section */}
         <div className="about-story">
