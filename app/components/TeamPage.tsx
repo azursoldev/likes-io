@@ -69,14 +69,15 @@ const teamMembers: TeamMember[] = [
 export default function TeamPage() {
   return (
     <section className="team-page">
-      <div className="container">
-        <div className="team-hero">
-          <h1 className="team-title">Meet Our Team</h1>
-          <p className="team-subtitle">
+      <div className="team-container">
+        {/* Hero Section */}
+        <section className="blog-hero-section">
+          <h1 className="blog-title">Meet Our Team</h1>
+          <p className="blog-subtitle">
             We're a passionate group of strategists, engineers, and creatives dedicated to helping you succeed in the digital world.
           </p>
-        </div>
-
+        </section>
+        <div className="team-grid-container">
         <div className="team-grid">
           {teamMembers.map((member, index) => (
             <div key={index} className="team-card">
@@ -104,6 +105,8 @@ export default function TeamPage() {
             </div>
           ))}
         </div>
+        </div>
+       
       </div>
     </section>
   );
