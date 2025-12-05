@@ -32,15 +32,16 @@ export default function ContactPage() {
 
   return (
     <section className="contact-page">
-      <div className="container">
+      <div className="contact-container">
         <div className="contact-hero">
           <h1 className="contact-title">Get in Touch</h1>
           <p className="contact-description">
             We're here to help. Whether you have a question about our services, a billing inquiry, or just want to say hello, we'd love to hear from you.
           </p>
         </div>
-
-        <div className="contact-content">
+        
+          <div className="contact-grid-container">
+          <div className="contact-content">
           {/* Left Card - We're Here to Help */}
           <div className="contact-help-card">
             <h2 className="contact-card-title">We're Here to Help</h2>
@@ -99,32 +100,34 @@ export default function ContactPage() {
           <div className="contact-form-card">
             <h2 className="contact-card-title">Send a Message</h2>
             <form className="contact-form" onSubmit={handleSubmit}>
-              <div className="contact-form-group">
-                <label htmlFor="name" className="contact-form-label">Full Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  className="contact-form-input"
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+              <div className="contact-form-row">
+                <div className="contact-form-group">
+                  <label htmlFor="name" className="contact-form-label">Full Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    className="contact-form-input"
+                    placeholder="John Doe"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
 
-              <div className="contact-form-group">
-                <label htmlFor="email" className="contact-form-label">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  className="contact-form-input"
-                  placeholder="you@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="contact-form-group">
+                  <label htmlFor="email" className="contact-form-label">Email Address</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    className="contact-form-input"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="contact-form-group">
@@ -166,6 +169,9 @@ export default function ContactPage() {
             </form>
           </div>
         </div>
+          </div>
+        
+        
       </div>
     </section>
   );
