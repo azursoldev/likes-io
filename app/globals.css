@@ -742,6 +742,10 @@ section.hero-section .reviews-pill span.sep {
 }
 
   /* Reviews Page */
+  .reviews-page-header2 {
+    background: #F9FAFB;
+    padding-top: 70px;
+}
   .reviews-page {
     padding: 60px 0 80px;
     background: #fff;
@@ -837,24 +841,20 @@ section.hero-section .reviews-pill span.sep {
     margin: 0;
   }
   .reviews-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 24px;
-    grid-gap: 24px;
-    grid-gap: 24px;
-    grid-gap: 24px;
-    grid-gap: 24px;
-    grid-gap: 24px;
-    gap: 24px;
     margin-bottom: 40px;
   }
+  .reviews-grid .container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
   @media (max-width: 960px) {
-    .reviews-grid {
+    .reviews-grid .container {
       grid-template-columns: repeat(2, 1fr);
     }
   }
   @media (max-width: 640px) {
-    .reviews-grid {
+    .reviews-grid .container {
       grid-template-columns: 1fr;
     }
     .reviews-page-title {
@@ -932,9 +932,11 @@ section.hero-section .reviews-pill span.sep {
     margin: 0;
   }
   .reviews-write-button-container {
+    margin-bottom: 32px;
+  }
+  .reviews-write-button-container .container {
     display: flex;
     justify-content: center;
-    margin-bottom: 32px;
   }
   .reviews-write-button {
     background: rgb(var(--color-brand));
@@ -954,11 +956,13 @@ section.hero-section .reviews-pill span.sep {
     box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
   }
   .reviews-pagination {
+    margin-bottom: 80px;
+  }
+  .reviews-pagination .container {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
-    margin-bottom: 80px;
   }
   .pagination-btn {
     min-width: 44px;

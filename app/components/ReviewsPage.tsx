@@ -102,9 +102,9 @@ export default function ReviewsPage() {
 
   return (
     <section className="reviews-page">
-      <div className="container">
-        {/* Header Section */}
-        <div className="reviews-page-header">
+      {/* Header Section */}
+      <div className="reviews-page-header">
+        <div className="container">
           <h1 className="reviews-page-title">Our Customer Reviews</h1>
           <p className="reviews-page-subtitle">
             See what 123 real customers are saying about our services.
@@ -119,6 +119,12 @@ export default function ReviewsPage() {
             </div>
             <p className="reviews-rating-text">4.9 out of 5 stars</p>
           </div>
+        </div>
+      </div>
+
+      <div className="reviews-page-header2">
+        <div className="container">
+          
 
           {/* Trust Statement */}
           <div className="reviews-trust-banner">
@@ -140,9 +146,11 @@ export default function ReviewsPage() {
             </p>
           </div>
         </div>
+      </div>
 
-        {/* Review Cards Grid */}
-        <div className="reviews-grid">
+      {/* Review Cards Grid */}
+      <div className="reviews-grid">
+        <div className="container">
           {currentReviews.map((review, index) => (
             <div key={index} className="review-card-page">
               <div className="review-card-top">
@@ -164,9 +172,11 @@ export default function ReviewsPage() {
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Write Review Button */}
-        <div className="reviews-write-button-container">
+      {/* Write Review Button */}
+      <div className="reviews-write-button-container">
+        <div className="container">
           <button
             className="reviews-write-button"
             onClick={() => setIsModalOpen(true)}
@@ -174,9 +184,11 @@ export default function ReviewsPage() {
             Write Your Review →
           </button>
         </div>
+      </div>
 
-        {/* Pagination */}
-        <div className="reviews-pagination">
+      {/* Pagination */}
+      <div className="reviews-pagination">
+        <div className="container">
           <button
             className="pagination-btn"
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -204,9 +216,11 @@ export default function ReviewsPage() {
             Next →
           </button>
         </div>
+      </div>
 
-        {/* FAQ Section */}
-        <div className="reviews-faq-section">
+      {/* FAQ Section */}
+      <div className="reviews-faq-section">
+        <div className="container">
           <h2 className="reviews-faq-title">Frequently Asked Questions</h2>
           <p className="reviews-faq-subtitle">
             Have questions? We've got answers. If you don't see your question here, feel free to contact us.
@@ -244,5 +258,3 @@ export default function ReviewsPage() {
     </section>
   );
 }
-
-
