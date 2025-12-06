@@ -89,17 +89,20 @@ export default function AffiliatePage() {
 
   return (
     <section className="affiliate-page">
-      <div className="container">
+      
         {/* Hero Section */}
         <div className="affiliate-hero">
-          <h1 className="affiliate-hero-title">Partner with Likes.io & Earn</h1>
-          <p className="affiliate-hero-subtitle">
+          <div className="container">
+            <h1 className="affiliate-hero-title">Partner with Likes.io & Earn</h1>
+            <p className="affiliate-hero-subtitle">
             Join our affiliate program to earn generous commissions by promoting the #1 social media growth service on the market.
-          </p>
+            </p>
+          </div>
         </div>
 
         {/* Benefits Section */}
         <div className="affiliate-benefits">
+          <div className="container">
           <div className="affiliate-benefits-grid">
             {benefits.map((benefit, index) => (
               <div key={index} className="affiliate-benefit-card">
@@ -110,10 +113,12 @@ export default function AffiliatePage() {
               </div>
             ))}
           </div>
+          </div>
         </div>
 
         {/* How It Works Section */}
         <div className="affiliate-how-it-works">
+          <div className="container">
           <h2 className="affiliate-section-title">How It Works</h2>
           <p className="affiliate-section-subtitle">Getting started is as easy as 1, 2, 3.</p>
           <div className="affiliate-steps">
@@ -127,10 +132,12 @@ export default function AffiliatePage() {
               </div>
             ))}
           </div>
+          </div>
         </div>
 
         {/* Affiliate FAQs Section */}
         <div className="affiliate-faqs">
+          <div className="container">
           <h2 className="affiliate-section-title">Affiliate FAQs</h2>
           <div className="affiliate-faq-list">
             {affiliateFAQs.map((faq, index) => (
@@ -154,10 +161,12 @@ export default function AffiliatePage() {
               </div>
             ))}
           </div>
+          </div>
         </div>
 
         {/* Become an Affiliate Form Section */}
         <div className="affiliate-form-section">
+          <div className="container">
           <h2 className="affiliate-section-title">Become an Affiliate Today</h2>
           <p className="affiliate-section-subtitle">Fill out the form below to get started.</p>
           <form className="affiliate-form" onSubmit={handleSubmit}>
@@ -204,8 +213,9 @@ export default function AffiliatePage() {
               Join Now
             </button>
           </form>
+          </div>
         </div>
-      </div>
+      
     </section>
   );
 }
