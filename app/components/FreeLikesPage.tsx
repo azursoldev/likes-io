@@ -111,9 +111,9 @@ export default function FreeLikesPage() {
 
   return (
     <section className="free-likes-page">
-      <div className="container">
-        {/* Hero Section */}
-        <div className="free-likes-hero">
+      {/* Hero Section */}
+      <div className="free-likes-hero">
+        <div className="container">
           <h1 className="free-likes-title">Get 50 Free Instagram Likes</h1>
           <p className="free-likes-description">
             Experience our high-quality service for free. No password required. See real results in minutes and understand why thousands trust us for their growth.
@@ -129,8 +129,12 @@ export default function FreeLikesPage() {
             <span className="free-likes-rating-text">4.9/5 based on 451+ reviews</span>
           </div>
 
-          {/* Form Card */}
-          <div className="free-likes-form-card">
+          
+        </div>
+      </div>
+      {/* Form Card */}
+      <div className="free-likes-form-card-wrapper">
+      <div className="free-likes-form-card">
             {/* Progress Indicator */}
             <div className="free-likes-progress">
               <div className={`progress-step ${currentStep >= 1 || isSuccess ? 'active' : ''} ${currentStep > 1 || isSuccess ? 'completed' : ''}`}>
@@ -302,30 +306,28 @@ export default function FreeLikesPage() {
               </div>
             </div>
           </div>
-        </div>
+          </div>  
+      {/* How It Works Section */}
+      <HowItWorksSection
+        title="How It Works"
+        subtitle="Our free trial process is simple, secure, and designed to show you the quality of our service in just a few clicks."
+        steps={freeLikesSteps}
+      />
 
-        {/* How It Works Section */}
-        <HowItWorksSection
-          title="How It Works"
-          subtitle="Our free trial process is simple, secure, and designed to show you the quality of our service in just a few clicks."
-          steps={freeLikesSteps}
-        />
+      {/* Reviews Section */}
+      <ReviewsSection
+        title="Loved by Creators Worldwide"
+        subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
+        reviews={freeLikesReviews}
+      />
 
-        {/* Reviews Section */}
-        <ReviewsSection
-          title="Loved by Creators Worldwide"
-          subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
-          reviews={freeLikesReviews}
-        />
-
-        {/* FAQ Section */}
-        <FAQSection
-          title="Frequently Asked Questions"
-          subtitle="Have questions? We've got answers. If you don't see your question here, feel free to contact us."
-          faqs={freeLikesFAQs}
-          pageSize={6}
-        />
-      </div>
+      {/* FAQ Section */}
+      <FAQSection
+        title="Frequently Asked Questions"
+        subtitle="Have questions? We've got answers. If you don't see your question here, feel free to contact us."
+        faqs={freeLikesFAQs}
+        pageSize={6}
+      />
     </section>
   );
 }
