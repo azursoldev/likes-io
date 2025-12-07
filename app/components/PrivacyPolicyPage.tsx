@@ -22,9 +22,9 @@ type PrivacySection = {
 const sections: PrivacySection[] = [
   {
     id: "data-collection",
-    title: "Data Collection",
+    title: "Information We Collect",
     icon: faTriangleExclamation,
-    content: `**Information We Collect**
+    content: `**1. Information We Collect**
 
 We collect information that you provide directly to us when you use our Service. This includes:
 
@@ -35,9 +35,9 @@ We collect information that you provide directly to us when you use our Service.
   },
   {
     id: "data-usage",
-    title: "Data Usage",
+    title: "How We Use Your Information",
     icon: faCheck,
-    content: `**How We Use Your Information**
+    content: `**2. How We Use Your Information**
 
 We use the information we collect to:
 
@@ -50,9 +50,9 @@ We use the information we collect to:
   },
   {
     id: "data-sharing",
-    title: "Data Sharing",
+    title: "Information Sharing",
     icon: faArrowRight,
-    content: `**Information Sharing**
+    content: `**3. Information Sharing**
 
 **We do not sell your personal information.**
 
@@ -69,7 +69,7 @@ We do not share your information with third parties for their marketing purposes
     id: "data-security",
     title: "Data Security",
     icon: faLock,
-    content: `**Data Security**
+    content: `**4. Data Security**
 
 We implement robust security measures to protect your personal information:
 
@@ -82,9 +82,9 @@ While we strive to protect your personal information, no method of transmission 
   },
   {
     id: "your-rights",
-    title: "Your Rights",
+    title: "Your Choices & Rights",
     icon: faHand,
-    content: `**Your Choices & Rights**
+    content: `**5. Your Choices & Rights**
 
 You have the following rights regarding your personal information:
 
@@ -96,9 +96,9 @@ You have the following rights regarding your personal information:
   },
   {
     id: "policy-changes",
-    title: "Policy Changes",
+    title: "Changes to This Policy",
     icon: faClock,
-    content: `**Changes to This Policy**
+    content: `**6. Changes to This Policy**
 
 We may update this Privacy Policy from time to time to reflect changes in our practices, technology, legal requirements, or other factors. When we make changes, we will:
 
@@ -112,12 +112,9 @@ We encourage you to review this Privacy Policy periodically to stay informed abo
     id: "contact-us",
     title: "Contact Us",
     icon: faCommentDots,
-    content: `**Contact Us**
+    content: `**7. Contact Us**
 
-If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:
-
-- **Email:** [contact us](/contact)
-- **Website:** Visit our [contact page](/contact) for more ways to reach us
+If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please [contact us](/contact).
 
 We are committed to addressing your privacy concerns and will respond to your inquiries as promptly as possible.`,
   },
@@ -148,13 +145,60 @@ export default function PrivacyPolicyPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const formatContent = (content: string) => {
+  const extractMainHeading = (content: string): string | null => {
+    const lines = content.split("\n").filter((line) => line.trim());
+    const firstLine = lines[0]?.trim();
+    if (firstLine?.match(/^\*\*\d+\.\s+.*\*\*$/)) {
+      return firstLine.replace(/\*\*/g, "");
+    }
+    return null;
+  };
+
+  const formatContent = (content: string, skipFirstHeading: boolean = false) => {
     const lines = content.split("\n").filter((line) => line.trim());
     const result: React.ReactNode[] = [];
     let currentParagraph: string[] = [];
+    let currentList: string[] = [];
+    let firstHeadingSkipped = false;
     
     lines.forEach((line, lineIndex) => {
       const trimmedLine = line.trim();
+      
+      // Check for numbered headings (e.g., **1. Title**)
+      if (trimmedLine.match(/^\*\*\d+\.\s+.*\*\*$/)) {
+        // Skip the first numbered heading if skipFirstHeading is true
+        if (skipFirstHeading && !firstHeadingSkipped) {
+          firstHeadingSkipped = true;
+          return;
+        }
+        if (currentParagraph.length > 0) {
+          result.push(
+            <p key={`para-${lineIndex}`} className="privacy-text">
+              {formatInlineText(currentParagraph.join(" "))}
+            </p>
+          );
+          currentParagraph = [];
+        }
+        if (currentList.length > 0) {
+          result.push(
+            <ul key={`ul-${lineIndex}`} className="privacy-list">
+              {currentList.map((item, idx) => (
+                <li key={idx} className="privacy-list-item">
+                  {formatInlineText(item)}
+                </li>
+              ))}
+            </ul>
+          );
+          currentList = [];
+        }
+        const headerText = trimmedLine.slice(2, -2);
+        result.push(
+          <h3 key={`header-${lineIndex}`} className="privacy-section-title">
+            {headerText}
+          </h3>
+        );
+        return;
+      }
       
       if (trimmedLine.startsWith("**") && trimmedLine.endsWith("**") && !trimmedLine.includes("\n")) {
         // Header text
@@ -166,11 +210,23 @@ export default function PrivacyPolicyPage() {
           );
           currentParagraph = [];
         }
+        if (currentList.length > 0) {
+          result.push(
+            <ul key={`ul-${lineIndex}`} className="privacy-list">
+              {currentList.map((item, idx) => (
+                <li key={idx} className="privacy-list-item">
+                  {formatInlineText(item)}
+                </li>
+              ))}
+            </ul>
+          );
+          currentList = [];
+        }
         const headerText = trimmedLine.slice(2, -2);
         result.push(
-          <h3 key={`header-${lineIndex}`} className="privacy-section-title">
+          <h4 key={`header-${lineIndex}`} className="privacy-subheading">
             {headerText}
-          </h3>
+          </h4>
         );
       } else if (trimmedLine.startsWith("-")) {
         // List item
@@ -183,12 +239,20 @@ export default function PrivacyPolicyPage() {
           currentParagraph = [];
         }
         const listText = trimmedLine.replace(/^-\s*/, "");
-        result.push(
-          <div key={`list-${lineIndex}`} className="privacy-list-item">
-            {formatInlineText(listText)}
-          </div>
-        );
+        currentList.push(listText);
       } else {
+        if (currentList.length > 0) {
+          result.push(
+            <ul key={`ul-${lineIndex}`} className="privacy-list">
+              {currentList.map((item, idx) => (
+                <li key={idx} className="privacy-list-item">
+                  {formatInlineText(item)}
+                </li>
+              ))}
+            </ul>
+          );
+          currentList = [];
+        }
         currentParagraph.push(trimmedLine);
       }
     });
@@ -200,18 +264,46 @@ export default function PrivacyPolicyPage() {
         </p>
       );
     }
+    if (currentList.length > 0) {
+      result.push(
+        <ul key="ul-final" className="privacy-list">
+          {currentList.map((item, idx) => (
+            <li key={idx} className="privacy-list-item">
+              {formatInlineText(item)}
+            </li>
+          ))}
+        </ul>
+      );
+    }
     
     return result;
   };
 
   const formatInlineText = (text: string) => {
-    const parts = text.split(/(\*\*.*?\*\*)/g);
+    // Split by markdown links first, then by bold text
+    const linkPattern = /(\[.*?\]\(.*?\))/g;
+    const parts = text.split(linkPattern);
+    
     return parts.map((part, index) => {
-      if (part.startsWith("**") && part.endsWith("**")) {
-        return <strong key={index}>{part.slice(2, -2)}</strong>;
+      // Handle markdown links [text](url)
+      const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
+      if (linkMatch) {
+        return (
+          <Link key={index} href={linkMatch[2]} className="privacy-link">
+            {linkMatch[1]}
+          </Link>
+        );
       }
-      return part;
-    });
+      
+      // Handle bold text **text**
+      const boldParts = part.split(/(\*\*.*?\*\*)/g);
+      return boldParts.map((boldPart, boldIndex) => {
+        if (boldPart.startsWith("**") && boldPart.endsWith("**")) {
+          return <strong key={`${index}-${boldIndex}`}>{boldPart.slice(2, -2)}</strong>;
+        }
+        return <span key={`${index}-${boldIndex}`}>{boldPart}</span>;
+      });
+    }).flat();
   };
 
   const scrollToSection = (id: string) => {
@@ -271,22 +363,24 @@ export default function PrivacyPolicyPage() {
 
           {/* Main Content Sections */}
           <main className="privacy-main">
-            {sections.map((section, index) => (
-              <div key={section.id} id={section.id} className="privacy-section">
-                <div className="privacy-section-header">
-                  <div className="privacy-section-icon">
-                    <FontAwesomeIcon icon={section.icon} />
+            {sections.map((section, index) => {
+              const mainHeading = extractMainHeading(section.content);
+              const displayHeading = mainHeading || `${index + 1}. ${section.title}`;
+              
+              return (
+                <div key={section.id} id={section.id} className="privacy-section">
+                  <div className="privacy-section-header">
+                    <div className="privacy-section-icon">
+                      <FontAwesomeIcon icon={section.icon} />
+                    </div>
+                    <h2 className="privacy-section-heading">{displayHeading}</h2>
                   </div>
-                  <div>
-                    <span className="privacy-section-number">{index + 1}.</span>
-                    <h2 className="privacy-section-heading">{section.title}</h2>
+                  <div className="privacy-section-body">
+                    {formatContent(section.content, !!mainHeading)}
                   </div>
                 </div>
-                <div className="privacy-section-body">
-                  {formatContent(section.content)}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </main>
         </div>
       </div>

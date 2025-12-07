@@ -236,17 +236,32 @@ export default function TermsPage() {
     }
   };
 
-  const formatContent = (content: string) => {
+  const extractMainHeading = (content: string): string | null => {
+    const lines = content.split('\n').filter(line => line.trim() !== '');
+    const firstLine = lines[0]?.trim();
+    if (firstLine?.match(/^\*\*\d+\.\s+.*\*\*$/)) {
+      return firstLine.replace(/\*\*/g, '');
+    }
+    return null;
+  };
+
+  const formatContent = (content: string, skipFirstHeading: boolean = false) => {
     const lines = content.split('\n').filter(line => line.trim() !== '');
     const elements: ReactElement[] = [];
     let currentParagraph = '';
     let currentList: string[] = [];
+    let firstHeadingSkipped = false;
     
     lines.forEach((line, index) => {
       const trimmed = line.trim();
       
       // Check for numbered headings (e.g., **1. Title**)
       if (trimmed.match(/^\*\*\d+\.\s+.*\*\*$/)) {
+        // Skip the first numbered heading if skipFirstHeading is true
+        if (skipFirstHeading && !firstHeadingSkipped) {
+          firstHeadingSkipped = true;
+          return;
+        }
         if (currentParagraph) {
           elements.push(<p key={`p-${index}`} className="terms-text">{currentParagraph.trim()}</p>);
           currentParagraph = '';
@@ -377,7 +392,7 @@ export default function TermsPage() {
           </p>
         </div>
       </div>
-
+      <div className="terms-container">
       <div className="container">
         <div className="terms-content">
           <aside className="terms-sidebar">
@@ -399,26 +414,31 @@ export default function TermsPage() {
           </aside>
 
           <main className="terms-main">
-            {sections.map((section, index) => (
-              <div
-                key={section.id}
-                id={section.id}
-                ref={(el) => { sectionRefs.current[section.id] = el; }}
-                className="terms-section"
-              >
-                <div className="terms-section-header">
-                  <div className="terms-section-icon">
-                    <FontAwesomeIcon icon={section.icon} />
+            {sections.map((section, index) => {
+              const mainHeading = extractMainHeading(section.content);
+              const displayHeading = mainHeading || `${index + 1}. ${section.title}`;
+              
+              return (
+                <div
+                  key={section.id}
+                  id={section.id}
+                  ref={(el) => { sectionRefs.current[section.id] = el; }}
+                  className="terms-section"
+                >
+                  <div className="terms-section-header">
+                    <div className="terms-section-icon">
+                      <FontAwesomeIcon icon={section.icon} />
+                    </div>
+                    <h2 className="terms-section-heading">{displayHeading}</h2>
                   </div>
-                  <div className="terms-section-number">{index + 1}.</div>
-                  <h2 className="terms-section-heading">{section.title}</h2>
+                  <div className="terms-section-body">
+                    {formatContent(section.content, !!mainHeading)}
+                  </div>
                 </div>
-                <div className="terms-section-body">
-                  {formatContent(section.content)}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </main>
+        </div>
         </div>
       </div>
     </section>
