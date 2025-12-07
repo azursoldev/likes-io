@@ -3346,7 +3346,7 @@ h3.affiliate-benefit-title {
   .privacy-section-number { font-size: 28px; font-weight: 700; color: rgb(17, 24, 39); flex-shrink: 0; line-height: 1.2; white-space: nowrap; margin-right: 8px; }
   .privacy-section-heading {font-size: 21px;font-weight: 700;color: rgb(17, 24, 39);margin: 0;line-height: 28px;}
   
-  .privacy-section-body {padding-left: 73px;}
+  .privacy-section-body {padding-left: 73px;} 
   
   @media (max-width: 968px) {
     .privacy-section-body { padding-left: 0; }
