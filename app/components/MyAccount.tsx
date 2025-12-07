@@ -13,7 +13,7 @@ import {
   faArrowRight,
   faTag,
   faShoppingCart,
-  faFileCheck,
+  faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -130,7 +130,7 @@ export default function MyAccount() {
                 </a>
                 <a href="/dashboard/orders" className="my-account-action-card">
                   <div className="action-card-content">
-                    <FontAwesomeIcon icon={faFileCheck} className="action-card-icon" />
+                    <FontAwesomeIcon icon={faCircleCheck} className="action-card-icon" />
                     <h3 className="action-card-title">View Order History</h3>
                     <p className="action-card-desc">Track your previous and current orders.</p>
                   </div>
