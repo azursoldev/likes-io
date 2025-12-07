@@ -2,6 +2,10 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "../dashboard/dashboard.css";
+
+const handleLogout = () => {
+  window.location.href = "/login";
+};
 import {
   faTh,
   faList,
@@ -113,7 +117,14 @@ export default function HelpSupportDashboard() {
                 <FontAwesomeIcon icon={faGear} />
                 <span>Settings</span>
               </a>
-              <a href="/login" className="dashboard-sidebar-link">
+              <a 
+                href="/login" 
+                className="dashboard-sidebar-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleLogout();
+                }}
+              >
                 <FontAwesomeIcon icon={faSignOutAlt} />
                 <span>Log Out</span>
               </a>
