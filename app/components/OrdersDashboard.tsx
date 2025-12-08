@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import "../dashboard/dashboard.css";
+import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

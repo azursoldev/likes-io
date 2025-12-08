@@ -1,5 +1,5 @@
 "use client";
-import "../dashboard/dashboard.css";
+import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-
+          <div className="admin-content">
           <section className="admin-stats-row">
             {stats.map((stat) => (
               <div className="admin-stat-card" key={stat.title}>
@@ -136,6 +136,7 @@ export default function AdminDashboard() {
               <div className="admin-placeholder-chart">Chart Placeholder</div>
             </div>
           </section>
+          </div>
         </main>
       </div>
     </div>

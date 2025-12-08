@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import "../dashboard/dashboard.css";
+import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -116,7 +116,7 @@ export default function TestimonialsDashboard() {
     <div className="admin-wrapper">
       <PromoBar />
       <div className="admin-body">
-        <AdminSidebar />
+        <AdminSidebar activePage="testimonials" />
 
         <main className="admin-main">
           <div className="admin-toolbar-wrapper">

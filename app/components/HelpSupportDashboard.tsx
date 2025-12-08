@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import "../dashboard/dashboard.css";
+import "../admin/dashboard.css";
 
 const handleLogout = () => {
   window.location.href = "/login";

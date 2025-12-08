@@ -1,5 +1,5 @@
 "use client";
-import "../dashboard/dashboard.css";
+import "../admin/dashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShoppingCart,
@@ -39,7 +39,7 @@ type NavSection = {
 };
 
 type AdminSidebarProps = {
-  activePage?: "dashboard" | "revenue" | "users" | "orders" | "services" | "blog" | "reviewModeration";
+  activePage?: "dashboard" | "revenue" | "users" | "orders" | "services" | "blog" | "reviewModeration" | "testimonials" | "affiliate" | "settings" | "support";
 };
 
 export default function AdminSidebar({ activePage }: AdminSidebarProps) {
@@ -47,19 +47,19 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
     {
       title: "Core",
       items: [
-        { label: "Dashboard", icon: faGauge, active: activePage === "dashboard", href: "/dashboard" },
-        { label: "Revenue", icon: faCreditCard, active: activePage === "revenue", href: "/dashboard/revenue" },
-        { label: "Users", icon: faUsers, active: activePage === "users", href: "/dashboard/users" },
-        { label: "Orders", icon: faShoppingCart, active: activePage === "orders", href: "/dashboard/orders" },
+        { label: "Dashboard", icon: faGauge, active: activePage === "dashboard", href: "/admin" },
+        { label: "Revenue", icon: faCreditCard, active: activePage === "revenue", href: "/admin/revenue" },
+        { label: "Users", icon: faUsers, active: activePage === "users", href: "/admin/users" },
+        { label: "Orders", icon: faShoppingCart, active: activePage === "orders", href: "/admin/orders" },
       ],
     },
     {
       title: "Content",
       items: [
-        { label: "Services", icon: faWrench, active: activePage === "services", href: "/dashboard/services" },
-        { label: "Blog", icon: faNewspaper, active: activePage === "blog", href: "/dashboard/blog" },
-        { label: "Review Moderation", icon: faCheckCircle, active: activePage === "reviewModeration", href: "/dashboard/review-moderation" },
-        { label: "Published Testimonials", icon: faQuoteLeft, href: "/dashboard/testimonials" },
+        { label: "Services", icon: faWrench, active: activePage === "services", href: "/admin/services" },
+        { label: "Blog", icon: faNewspaper, active: activePage === "blog", href: "/admin/blog" },
+        { label: "Review Moderation", icon: faCheckCircle, active: activePage === "reviewModeration", href: "/admin/review-moderation" },
+        { label: "Published Testimonials", icon: faQuoteLeft, active: activePage === "testimonials", href: "/admin/testimonials" },
         { label: "FAQ", icon: faQuestionCircle },
         { label: "Team", icon: faUserGroup },
       ],
@@ -68,7 +68,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
       title: "Marketing",
       items: [
         { label: "Notifications", icon: faBell },
-        { label: "Affiliates", icon: faHandshake },
+        { label: "Affiliates", icon: faHandshake, active: activePage === "affiliate", href: "/admin/affiliate" },
         { label: "Payouts", icon: faMoneyBillWave },
         { label: "Social Proof", icon: faThumbsUp },
         { label: "Featured On", icon: faStar },
@@ -78,7 +78,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
     {
       title: "Configuration",
       items: [
-        { label: "Site Settings", icon: faGear },
+        { label: "Site Settings", icon: faGear, active: activePage === "settings", href: "/admin/settings" },
         { label: "Currency Rates", icon: faDollarSign },
         { label: "SMM Panel", icon: faSliders },
         { label: "System Status", icon: faServer },

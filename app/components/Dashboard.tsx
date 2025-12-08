@@ -1,6 +1,6 @@
 "use client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import "../dashboard/dashboard.css";
+import "../admin/dashboard.css";
 
 const handleLogout = () => {
   // Handle logout logic - clear session, redirect to login, etc.
