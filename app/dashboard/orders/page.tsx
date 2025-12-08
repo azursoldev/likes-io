@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import OrderHistory from "../../components/OrderHistory";
+import OrdersDashboard from "../../components/OrdersDashboard";
 
 export const metadata: Metadata = {
-  title: "Order History | Likes.io",
-  description: "View your order history and track all your purchases on Likes.io",
+  title: "Orders | Likes.io",
+  description: "Monitor and manage all customer orders.",
 };
 
 export default function Page() {
-  return <OrderHistory />;
+  return <OrdersDashboard />;
 }
 
