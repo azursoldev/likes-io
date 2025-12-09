@@ -171,7 +171,7 @@ export default function UsersDashboard() {
               </div>
             </div>
           </div>
-
+          <div className="admin-content">
           <div className="users-hero">
             <div className="users-hero-left">
               <h1>Users</h1>
@@ -245,6 +245,7 @@ export default function UsersDashboard() {
                 <button className="pager-btn">Next</button>
               </div>
             </div>
+          </div>
           </div>
         </main>
       </div>
