@@ -1,214 +1,256 @@
 "use client";
+
+import PromoBar from "./PromoBar";
+import AdminSidebar from "./AdminSidebar";
+import AdminToolbar from "./AdminToolbar";
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import "../admin/dashboard.css";
-import {
-  faTh,
-  faList,
-  faLink,
-  faQuestionCircle,
-  faGear,
-  faSignOutAlt,
-} from "@fortawesome/free-solid-svg-icons";
-import Header from "./Header";
-import Footer from "./Footer";
 
 export default function SettingsDashboard() {
-  const [fullName, setFullName] = useState("Zain");
-  const [email, setEmail] = useState("zain@jo.com");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [orderUpdates, setOrderUpdates] = useState(true);
-  const [promotions, setPromotions] = useState(true);
-
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle save profile logic
-  };
-
-  const handleUpdatePassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle update password logic
-  };
-
-  const handleLogout = () => {
-    // Handle logout logic - clear session, redirect to login, etc.
-    // For now, redirect to login page
-    window.location.href = "/login";
-  };
+  const [logoType, setLogoType] = useState("Default SVG");
+  const [exitIntentEnabled, setExitIntentEnabled] = useState(true);
+  const [exitIntentTitle, setExitIntentTitle] = useState("Wait! Don't Go!");
+  const [exitIntentSubtitle, setExitIntentSubtitle] = useState("Here's 15% off your first order, just for sticking around.");
+  const [exitIntentDiscountCode, setExitIntentDiscountCode] = useState("SAVE15");
+  const [newServiceIndicator, setNewServiceIndicator] = useState(true);
+  const [bigPayDisplayName, setBigPayDisplayName] = useState("Card");
+  const [bigPayMerchantId, setBigPayMerchantId] = useState("123");
+  const [bigPayApiKey, setBigPayApiKey] = useState("••••••••");
+  const [bigPayApiSecret, setBigPayApiSecret] = useState("••••••••");
+  const [bigPayTestMode, setBigPayTestMode] = useState(true);
+  const [cryptomusDisplayName, setCryptomusDisplayName] = useState("Card");
+  const [cryptomusMerchantId, setCryptomusMerchantId] = useState("123");
+  const [cryptomusApiKey, setCryptomusApiKey] = useState("••••••••");
+  const [cryptomusTestMode, setCryptomusTestMode] = useState(true);
+  const [supportEmail, setSupportEmail] = useState("support@likes.io");
 
   return (
-    <div className="dashboard-wrapper">
-      <Header />
-
-      <div className="dashboard-container">
-        {/* Left Sidebar */}
-        <aside className="dashboard-sidebar">
-          <div className="dashboard-sidebar-brand">
-            <a href="/" className="brand-logo">
-              <span className="logo-text">Likes</span>
-              <span className="logo-dot">.io</span>
-            </a>
-          </div>
-          <nav className="dashboard-sidebar-nav">
-            <div>
-              <a href="/dashboard" className="dashboard-sidebar-link">
-                <FontAwesomeIcon icon={faTh} />
-                <span>Dashboard</span>
-              </a>
-              <a href="/dashboard/orders" className="dashboard-sidebar-link">
-                <FontAwesomeIcon icon={faList} />
-                <span>Order History</span>
-              </a>
-              <a href="/dashboard/affiliate" className="dashboard-sidebar-link">
-                <FontAwesomeIcon icon={faLink} />
-                <span>Affiliate</span>
-              </a>
-              <a href="/dashboard/support" className="dashboard-sidebar-link">
-                <FontAwesomeIcon icon={faQuestionCircle} />
-                <span>Help & Support</span>
-              </a>
+    <div className="admin-wrapper">
+      <PromoBar />
+      <div className="admin-body">
+        <AdminSidebar activePage="settings" />
+        <main className="admin-main">
+          <AdminToolbar title="Settings" />
+          <div className="settings-page">
+            <div className="settings-header">
+              <h1>Settings</h1>
+              <p>Manage site-wide settings and feature flags.</p>
             </div>
-            <div className="dashboard-sidebar-nav-bottom">
-              <div className="dashboard-sidebar-divider"></div>
-              <a href="/dashboard/settings" className="dashboard-sidebar-link active">
-                <FontAwesomeIcon icon={faGear} />
-                <span>Settings</span>
-              </a>
-              <a 
-                href="/login" 
-                className="dashboard-sidebar-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleLogout();
-                }}
-              >
-                <FontAwesomeIcon icon={faSignOutAlt} />
-                <span>Log Out</span>
-              </a>
+
+            {/* Logo & Branding */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Logo & Branding</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Logo Type
+                  <select className="settings-input" value={logoType} onChange={(e) => setLogoType(e.target.value)}>
+                    <option>Default SVG</option>
+                    <option>Custom Image</option>
+                    <option>Text Only</option>
+                  </select>
+                </label>
+              </div>
             </div>
-          </nav>
-        </aside>
 
-        {/* Main Content */}
-        <main className="dashboard-main">
-          <div className="container">
-            <h1 className="settings-title">Settings</h1>
-
-            <div className="settings-content">
-              {/* Profile Information */}
-              <div className="settings-card">
-                <h2 className="settings-card-title">Profile Information</h2>
-                <form onSubmit={handleSaveProfile} className="settings-form">
-                  <div className="settings-form-group">
-                    <label htmlFor="fullName" className="settings-label">
-                      Full Name
-                    </label>
+            {/* Exit Intent Modal */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Exit Intent Modal</h2>
+              <p className="settings-card-description">Configure the popup that appears when a user is about to leave the site.</p>
+              <div className="settings-form-group">
+                <div className="settings-toggle-group">
+                  <label className="settings-toggle-label">
+                    <span>Enable Exit Intent Modal</span>
+                    <span className="settings-toggle-description">Show a discount offer to users who attempt to leave the page.</span>
+                  </label>
+                  <label className="settings-toggle-switch">
                     <input
-                      type="text"
-                      id="fullName"
-                      className="settings-input"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      type="checkbox"
+                      checked={exitIntentEnabled}
+                      onChange={(e) => setExitIntentEnabled(e.target.checked)}
                     />
-                  </div>
-                  <div className="settings-form-group">
-                    <label htmlFor="email" className="settings-label">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      className="settings-input"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <button type="submit" className="settings-btn">
-                    Save Changes
-                  </button>
-                </form>
-              </div>
-
-              {/* Change Password */}
-              <div className="settings-card">
-                <h2 className="settings-card-title">Change Password</h2>
-                <form onSubmit={handleUpdatePassword} className="settings-form">
-                  <div className="settings-form-group">
-                    <label htmlFor="currentPassword" className="settings-label">
-                      Current Password
-                    </label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      className="settings-input"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                    />
-                  </div>
-                  <div className="settings-form-group">
-                    <label htmlFor="newPassword" className="settings-label">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      className="settings-input"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                  </div>
-                  <button type="submit" className="settings-btn">
-                    Update Password
-                  </button>
-                </form>
-              </div>
-
-              {/* Notifications */}
-              <div className="settings-card">
-                <h2 className="settings-card-title">Notifications</h2>
-                <div className="settings-notifications">
-                  <div className="settings-notification-item">
-                    <div className="settings-notification-content">
-                      <h3 className="settings-notification-title">Order updates</h3>
-                      <p className="settings-notification-desc">
-                        Get notified when your order status changes.
-                      </p>
-                    </div>
-                    <label className="settings-toggle">
-                      <input
-                        type="checkbox"
-                        checked={orderUpdates}
-                        onChange={(e) => setOrderUpdates(e.target.checked)}
-                      />
-                      <span className="settings-toggle-slider"></span>
-                    </label>
-                  </div>
-                  <div className="settings-notification-item">
-                    <div className="settings-notification-content">
-                      <h3 className="settings-notification-title">Promotions and news</h3>
-                      <p className="settings-notification-desc">
-                        Receive special offers and product updates.
-                      </p>
-                    </div>
-                    <label className="settings-toggle">
-                      <input
-                        type="checkbox"
-                        checked={promotions}
-                        onChange={(e) => setPromotions(e.target.checked)}
-                      />
-                      <span className="settings-toggle-slider"></span>
-                    </label>
-                  </div>
+                    <span className="settings-toggle-slider"></span>
+                  </label>
                 </div>
+                {exitIntentEnabled && (
+                  <>
+                    <label className="settings-label">
+                      Title
+                      <input
+                        type="text"
+                        className="settings-input"
+                        value={exitIntentTitle}
+                        onChange={(e) => setExitIntentTitle(e.target.value)}
+                      />
+                    </label>
+                    <label className="settings-label">
+                      Subtitle
+                      <input
+                        type="text"
+                        className="settings-input"
+                        value={exitIntentSubtitle}
+                        onChange={(e) => setExitIntentSubtitle(e.target.value)}
+                      />
+                    </label>
+                    <label className="settings-label">
+                      Discount Code
+                      <input
+                        type="text"
+                        className="settings-input"
+                        value={exitIntentDiscountCode}
+                        onChange={(e) => setExitIntentDiscountCode(e.target.value)}
+                      />
+                    </label>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Feature Flags */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Feature Flags</h2>
+              <p className="settings-card-description">Enable or disable features across the website in real-time.</p>
+              <div className="settings-form-group">
+                <div className="settings-toggle-group">
+                  <div>
+                    <span className="settings-feature-name">New Service Indicator</span>
+                    <span className="settings-feature-description">Display a 'NEW' tag on recently added services.</span>
+                  </div>
+                  <label className="settings-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={newServiceIndicator}
+                      onChange={(e) => setNewServiceIndicator(e.target.checked)}
+                    />
+                    <span className="settings-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Credit Card Gateway (BigPay) */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Credit Card Gateway (BigPay)</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Display Name
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={bigPayDisplayName}
+                    onChange={(e) => setBigPayDisplayName(e.target.value)}
+                  />
+                  <span className="settings-helper-text">The name shown to customers at checkout.</span>
+                </label>
+                <label className="settings-label">
+                  Merchant ID
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={bigPayMerchantId}
+                    onChange={(e) => setBigPayMerchantId(e.target.value)}
+                  />
+                </label>
+                <label className="settings-label">
+                  API Key
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={bigPayApiKey}
+                    onChange={(e) => setBigPayApiKey(e.target.value)}
+                  />
+                </label>
+                <label className="settings-label">
+                  API Secret
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={bigPayApiSecret}
+                    onChange={(e) => setBigPayApiSecret(e.target.value)}
+                  />
+                </label>
+                <div className="settings-toggle-group">
+                  <label className="settings-toggle-label">
+                    <span>Test Mode</span>
+                    <span className="settings-toggle-description">Enable to process test transactions without actual charges.</span>
+                  </label>
+                  <label className="settings-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={bigPayTestMode}
+                      onChange={(e) => setBigPayTestMode(e.target.checked)}
+                    />
+                    <span className="settings-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Crypto Gateway (Cryptomus) */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Crypto Gateway (Cryptomus)</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Display Name
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={cryptomusDisplayName}
+                    onChange={(e) => setCryptomusDisplayName(e.target.value)}
+                  />
+                  <span className="settings-helper-text">The name shown to customers at checkout.</span>
+                </label>
+                <label className="settings-label">
+                  Merchant ID
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={cryptomusMerchantId}
+                    onChange={(e) => setCryptomusMerchantId(e.target.value)}
+                  />
+                </label>
+                <label className="settings-label">
+                  API Key
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={cryptomusApiKey}
+                    onChange={(e) => setCryptomusApiKey(e.target.value)}
+                  />
+                </label>
+                <div className="settings-toggle-group">
+                  <label className="settings-toggle-label">
+                    <span>Test Mode</span>
+                    <span className="settings-toggle-description">Enable to process test transactions without actual charges.</span>
+                  </label>
+                  <label className="settings-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={cryptomusTestMode}
+                      onChange={(e) => setCryptomusTestMode(e.target.checked)}
+                    />
+                    <span className="settings-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Site Configuration */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Site Configuration</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Support Email
+                  <input
+                    type="email"
+                    className="settings-input"
+                    value={supportEmail}
+                    onChange={(e) => setSupportEmail(e.target.value)}
+                  />
+                </label>
               </div>
             </div>
           </div>
         </main>
       </div>
-
-      <Footer />
     </div>
   );
 }
-
