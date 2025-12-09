@@ -1,10 +1,35 @@
 "use client";
+import { useState, useRef, useEffect } from "react";
 import PromoBar from "./PromoBar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 
 export default function Header() {
-  // Dark mode toggle removed per request
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
+  const currencyRef = useRef<HTMLDivElement>(null);
+
+  const currencies = ["USD", "EUR"];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (currencyRef.current && !currencyRef.current.contains(event.target as Node)) {
+        setIsCurrencyOpen(false);
+      }
+    };
+
+    if (isCurrencyOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isCurrencyOpen]);
+
+  const handleCurrencySelect = (currency: string) => {
+    setSelectedCurrency(currency);
+    setIsCurrencyOpen(false);
+  };
 
   return (
     <>
@@ -68,7 +93,34 @@ export default function Header() {
               <img src="/alarm-2.svg" alt="Notifications" className="icon" width={20} height={20} />
               <span className="badge">3</span>
             </div>
-            <div className="currency">USD <span className="caret">▾</span></div>
+            <div className="currency-selector" ref={currencyRef}>
+              <div 
+                className="currency-trigger" 
+                onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
+                role="button"
+                tabIndex={0}
+                aria-haspopup="listbox"
+                aria-expanded={isCurrencyOpen}
+              >
+                {selectedCurrency} 
+                <span className="caret">{isCurrencyOpen ? "▴" : "▾"}</span>
+              </div>
+              {isCurrencyOpen && (
+                <div className="currency-dropdown">
+                  {currencies.map((currency) => (
+                    <div
+                      key={currency}
+                      className={`currency-option ${selectedCurrency === currency ? "active" : ""}`}
+                      onClick={() => handleCurrencySelect(currency)}
+                      role="option"
+                      aria-selected={selectedCurrency === currency}
+                    >
+                      {currency}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <a className="login" href="/login">Login</a>
             <a className="signup" href="/signup">Sign up</a>
           </div>
