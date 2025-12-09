@@ -1,4 +1,5 @@
 "use client";
+import { useState, useRef, useEffect } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
@@ -9,35 +10,49 @@ import {
   faArrowUpRightDots,
   faChartLine,
   faBell,
+  faUser,
+  faSignOutAlt,
+  faChevronDown,
+  faBars,
+  faTimes,
+  faDollarSign,
+  faArrowUp,
+  faArrowDown,
+  faClipboardList,
+  faCloud,
 } from "@fortawesome/free-solid-svg-icons";
 
 const stats = [
   {
     title: "Daily Revenue",
     value: "$0.00",
-    delta: "+5.24% vs last week",
-    icon: faArrowUpRightDots,
+    delta: "5.2% vs last week",
+    icon: faDollarSign,
+    iconColor: "#16a34a",
     trend: "up",
   },
   {
     title: "Total Revenue",
     value: "$62.46",
-    delta: "+12.5% vs last week",
+    delta: "12.5% vs last week",
     icon: faChartLine,
+    iconColor: "#2563eb",
     trend: "up",
   },
   {
     title: "Total Orders",
     value: "6",
-    delta: "+8.2% vs last week",
-    icon: faShoppingCart,
+    delta: "8.2% vs last week",
+    icon: faClipboardList,
+    iconColor: "#f97316",
     trend: "up",
   },
   {
     title: "New Users",
     value: "45",
-    delta: "-2.1% vs last week",
-    icon: faUserPlus,
+    delta: "2.1% vs last week",
+    icon: faCloud,
+    iconColor: "#9333ea",
     trend: "down",
   },
 ];
@@ -51,17 +66,51 @@ const orders = [
 ];
 
 export default function AdminDashboard() {
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    if (isUserDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isUserDropdownOpen]);
+
+  const handleLogout = () => {
+    // Handle logout logic here
+    window.location.href = "/login";
+  };
+
   return (
     <div className="admin-wrapper">
       <PromoBar />
 
       <div className="admin-body">
-        <AdminSidebar activePage="dashboard" />
+        <div className={`admin-sidebar-overlay ${isSidebarOpen ? "active" : ""}`} onClick={() => setIsSidebarOpen(false)}></div>
+        <div className={`admin-sidebar-wrapper ${isSidebarOpen ? "open" : ""}`}>
+          <AdminSidebar activePage="dashboard" />
+        </div>
 
         <main className="admin-main">
           <div className="admin-toolbar-wrapper">
             <div className="admin-toolbar">
               <div className="admin-toolbar-left">
+                <button 
+                  className="admin-sidebar-toggle"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  aria-label="Toggle sidebar"
+                >
+                  <FontAwesomeIcon icon={isSidebarOpen ? faTimes : faBars} />
+                </button>
                 <h1>Dashboard</h1>
               </div>
               <div className="admin-toolbar-right">
@@ -72,12 +121,34 @@ export default function AdminDashboard() {
                 <button className="admin-icon-btn" aria-label="Notifications">
                   <FontAwesomeIcon icon={faBell} />
                 </button>
-                <div className="admin-user-chip">
-                  <div className="chip-avatar">AU</div>
-                  <div className="chip-meta">
-                    <span className="chip-name">Admin User</span>
-                    <span className="chip-role">Administrator</span>
+                <div className="admin-user-chip-wrapper" ref={userDropdownRef}>
+                  <div 
+                    className="admin-user-chip" 
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    role="button"
+                    tabIndex={0}
+                    aria-haspopup="menu"
+                    aria-expanded={isUserDropdownOpen}
+                  >
+                    <div className="chip-avatar">AU</div>
+                    <div className="chip-meta">
+                      <span className="chip-name">Admin User</span>
+                      <span className="chip-role">Administrator</span>
+                    </div>
+                    <FontAwesomeIcon icon={faChevronDown} className="chip-chevron" />
                   </div>
+                  {isUserDropdownOpen && (
+                    <div className="admin-user-dropdown">
+                      <a href="/my-account" className="admin-dropdown-item">
+                        <FontAwesomeIcon icon={faUser} className="dropdown-icon" />
+                        <span>My Profile</span>
+                      </a>
+                      <button onClick={handleLogout} className="admin-dropdown-item">
+                        <FontAwesomeIcon icon={faSignOutAlt} className="dropdown-icon" />
+                        <span>Log Out</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -86,14 +157,23 @@ export default function AdminDashboard() {
           <section className="admin-stats-row">
             {stats.map((stat) => (
               <div className="admin-stat-card" key={stat.title}>
-                <div className="admin-stat-top">
+                <div className="admin-stat-header">
                   <div className="admin-stat-title">{stat.title}</div>
-                  <div className="admin-stat-icon">
+                  <div className="admin-stat-icon" style={{ backgroundColor: stat.iconColor }}>
                     <FontAwesomeIcon icon={stat.icon} />
                   </div>
                 </div>
-                <div className="admin-stat-value">{stat.value}</div>
-                <div className={`admin-stat-delta ${stat.trend === "up" ? "delta-up" : "delta-down"}`}>{stat.delta}</div>
+                <div className="admin-stat-content">
+                  <div className="admin-stat-value">{stat.value}</div>
+                  <div className={`admin-stat-delta ${stat.trend === "up" ? "delta-up" : "delta-down"}`}>
+                    {stat.trend === "up" ? (
+                      <FontAwesomeIcon icon={faArrowUp} className="delta-arrow" />
+                    ) : (
+                      <FontAwesomeIcon icon={faArrowDown} className="delta-arrow" />
+                    )}
+                    {stat.delta}
+                  </div>
+                </div>
               </div>
             ))}
           </section>
