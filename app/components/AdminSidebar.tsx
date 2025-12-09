@@ -39,7 +39,29 @@ type NavSection = {
 };
 
 type AdminSidebarProps = {
-  activePage?: "dashboard" | "revenue" | "users" | "orders" | "services" | "blog" | "reviewModeration" | "testimonials" | "affiliate" | "settings" | "support";
+  activePage?:
+    | "dashboard"
+    | "revenue"
+    | "users"
+    | "orders"
+    | "services"
+    | "blog"
+    | "reviewModeration"
+    | "testimonials"
+    | "faq"
+    | "team"
+    | "notifications"
+    | "payouts"
+    | "affiliate"
+  | "socialProof"
+  | "featuredOn"
+  | "homepageContent"
+  | "settings"
+  | "currencyRates"
+  | "smmPanel"
+  | "systemStatus"
+  | "iconManagement"
+    | "support";
 };
 
 export default function AdminSidebar({ activePage }: AdminSidebarProps) {
@@ -57,32 +79,32 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
       title: "Content",
       items: [
         { label: "Services", icon: faWrench, active: activePage === "services", href: "/admin/services" },
-        { label: "Blog", icon: faNewspaper, active: activePage === "blog", href: "/admin/blog" },
         { label: "Review Moderation", icon: faCheckCircle, active: activePage === "reviewModeration", href: "/admin/review-moderation" },
+        { label: "Blog", icon: faNewspaper, active: activePage === "blog", href: "/admin/blog" },
         { label: "Published Testimonials", icon: faQuoteLeft, active: activePage === "testimonials", href: "/admin/testimonials" },
-        { label: "FAQ", icon: faQuestionCircle },
-        { label: "Team", icon: faUserGroup },
+        { label: "FAQ", icon: faQuestionCircle, active: activePage === "faq", href: "/admin/faq" },
+        { label: "Team", icon: faUserGroup, active: activePage === "team", href: "/admin/team" },
       ],
     },
     {
       title: "Marketing",
       items: [
-        { label: "Notifications", icon: faBell },
+        { label: "Notifications", icon: faBell, active: activePage === "notifications", href: "/admin/notifications" },
         { label: "Affiliates", icon: faHandshake, active: activePage === "affiliate", href: "/admin/affiliate" },
-        { label: "Payouts", icon: faMoneyBillWave },
-        { label: "Social Proof", icon: faThumbsUp },
-        { label: "Featured On", icon: faStar },
-        { label: "Homepage Content", icon: faHome },
+        { label: "Payouts", icon: faMoneyBillWave, active: activePage === "payouts", href: "/admin/payouts" },
+        { label: "Social Proof", icon: faThumbsUp, active: activePage === "socialProof", href: "/admin/social-proof" },
+        { label: "Featured On", icon: faStar, active: activePage === "featuredOn", href: "/admin/featured-on" },
+        { label: "Homepage Content", icon: faHome, active: activePage === "homepageContent", href: "/admin/homepage-content" },
       ],
     },
     {
       title: "Configuration",
       items: [
         { label: "Site Settings", icon: faGear, active: activePage === "settings", href: "/admin/settings" },
-        { label: "Currency Rates", icon: faDollarSign },
-        { label: "SMM Panel", icon: faSliders },
-        { label: "System Status", icon: faServer },
-        { label: "Icon Management", icon: faIcons },
+        { label: "Currency Rates", icon: faDollarSign, active: activePage === "currencyRates", href: "/admin/currency-rates" },
+        { label: "SMM Panel", icon: faSliders, active: activePage === "smmPanel", href: "/admin/smm-panel" },
+        { label: "System Status", icon: faServer, active: activePage === "systemStatus", href: "/admin/system-status" },
+        { label: "Icon Management", icon: faIcons, active: activePage === "iconManagement", href: "/admin/icon-management" },
       ],
     },
   ];

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import AffiliateDashboard from "../../components/AffiliateDashboard";
+import AffiliatesDashboard from "../../components/AffiliatesDashboard";
 
 export const metadata: Metadata = {
-  title: "Affiliate | Likes.io",
-  description: "View your affiliate statistics and earnings on Likes.io",
+  title: "Affiliates | Likes.io",
+  description: "Manage affiliates, referral links, and commissions.",
 };
 
 export default function Page() {
-  return <AffiliateDashboard />;
+  return <AffiliatesDashboard />;
 }
-
