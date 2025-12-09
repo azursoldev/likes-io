@@ -28,7 +28,6 @@ import {
   faCheck,
   faClock,
   faPaperPlane,
-  faStar,
   faArrowLeft,
   faArrowRight,
   faArrowUp,
