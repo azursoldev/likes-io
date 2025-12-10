@@ -145,52 +145,27 @@ export default function TestimonialsDashboard() {
             </div>
           </div>
 
-          <div className="testimonials-hero">
-            <div className="testimonials-hero-left">
-              <h1>Testimonial Management</h1>
-              <p>Manage your testimonials, approve or delete them, or publish them on your site.</p>
-            </div>
-          </div>
-
-          <div className="testimonials-action-bar">
-            <div className="testimonials-search-container">
-              <div className="testimonials-search-input">
-                <FontAwesomeIcon icon={faSearch} className="testimonials-search-icon" />
-                <input
-                  type="text"
-                  placeholder="Go Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  aria-label="Search testimonials"
-                />
+          <div className="admin-content">
+            <div className="testimonials-hero">
+              <div className="testimonials-hero-left">
+                <h1>Testimonial Management</h1>
+                <p>Manage your testimonials, approve or delete them, or add new ones.</p>
               </div>
-              <button className="testimonials-icon-btn" aria-label="Filter">
-                <FontAwesomeIcon icon={faFilter} />
-              </button>
-              <button className="testimonials-icon-btn" aria-label="Sort">
-                <FontAwesomeIcon icon={faSort} />
-              </button>
+              <div className="testimonials-hero-right">
+                <button className="testimonials-add-btn">
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Add Testimonial</span>
+                </button>
+              </div>
             </div>
-            <button className="testimonials-add-btn">
-              <FontAwesomeIcon icon={faPlus} />
-              <span>Add Testimonial</span>
-            </button>
-          </div>
 
-          <div className="testimonials-table-wrapper">
+            <div className="testimonials-table-wrapper">
             <table className="testimonials-table">
               <thead>
                 <tr>
-                  <th>
-                    <FontAwesomeIcon icon={faUser} className="testimonials-th-icon" />
-                    Author
-                  </th>
+                  <th>Name</th>
                   <th>Testimonial</th>
-                  <th>
-                    <FontAwesomeIcon icon={faStar} className="testimonials-th-icon" />
-                    Rating
-                  </th>
-                  <th>Date</th>
+                  <th>Rating</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -210,22 +185,18 @@ export default function TestimonialsDashboard() {
                       <p className="testimonials-text">{testimonial.testimonial}</p>
                     </td>
                     <td className="testimonials-rating-cell">
-                      <div className="testimonials-rating-content">
-                        <span className="testimonials-rating-value">{testimonial.rating}</span>
-                        <FontAwesomeIcon icon={faStar} className="testimonials-rating-star" />
-                      </div>
-                    </td>
-                    <td className="testimonials-date-cell">
-                      <span>{testimonial.date}</span>
+                      <span className="testimonials-rating-value">
+                        {testimonial.rating % 1 === 0 ? testimonial.rating.toFixed(0) : testimonial.rating.toFixed(1)}/5
+                      </span>
                     </td>
                     <td className="testimonials-status-cell">
-                      <button
-                        className={`testimonials-status-btn ${
+                      <span
+                        className={`testimonials-status-badge ${
                           testimonial.status === "approved" ? "status-approved" : "status-pending"
                         }`}
                       >
                         {testimonial.status === "approved" ? "Approved" : "Pending"}
-                      </button>
+                      </span>
                     </td>
                     <td className="testimonials-actions-cell">
                       <button
@@ -248,15 +219,7 @@ export default function TestimonialsDashboard() {
             {filteredTestimonials.length === 0 && (
               <div className="no-testimonials-message">No testimonials found.</div>
             )}
-          </div>
-
-          <div className="testimonials-pagination">
-            <button className="testimonials-pagination-btn" disabled>
-              ‹
-            </button>
-            <button className="testimonials-pagination-btn active">1</button>
-            <button className="testimonials-pagination-btn">2</button>
-            <button className="testimonials-pagination-btn">›</button>
+            </div>
           </div>
         </main>
       </div>

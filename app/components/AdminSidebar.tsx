@@ -112,8 +112,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
   return (
     <aside className="admin-sidebar">
       <div className="admin-logo-block">
-        <span className="dot">•</span>
-        <span className="logo-text">io</span>
+        <span className="logo-text-full">likes.io</span>
       </div>
       <nav>
         {navSections.map((section) => (
