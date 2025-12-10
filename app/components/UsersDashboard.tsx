@@ -3,6 +3,7 @@ import { useState } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
+import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -147,30 +148,7 @@ export default function UsersDashboard() {
         <AdminSidebar activePage="users" />
 
         <main className="admin-main">
-          <div className="admin-toolbar-wrapper">
-            <div className="admin-toolbar-container">
-              <div className="admin-toolbar">
-                <div className="admin-toolbar-left">
-                </div>
-                <div className="admin-toolbar-right">
-                  <div className="admin-search-pill">
-                    <span className="search-icon">🔍</span>
-                    <input placeholder="Search..." aria-label="Search" />
-                  </div>
-                  <button className="admin-icon-btn" aria-label="Notifications">
-                    <FontAwesomeIcon icon={faBell} />
-                  </button>
-                  <div className="admin-user-chip">
-                    <div className="chip-avatar">AU</div>
-                    <div className="chip-meta">
-                      <span className="chip-name">Admin User</span>
-                      <span className="chip-role">Administrator</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AdminToolbar title="Users" />
           <div className="admin-content">
           <div className="users-hero">
             <div className="users-hero-left">
@@ -228,7 +206,7 @@ export default function UsersDashboard() {
                     </td>
                     <td className="actions-col">
                       <button className="link-btn" onClick={() => handleEditClick(user)}>Edit</button>
-                      <button className="link-btn" onClick={() => handleAddFundsClick(user)}>Add Funds</button>
+                      <button className="link-btn add-funds" onClick={() => handleAddFundsClick(user)}>Add Funds</button>
                       <button className="link-btn danger" onClick={() => handleDeleteClick(user)}>Delete</button>
                     </td>
                   </tr>

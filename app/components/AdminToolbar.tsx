@@ -1,6 +1,6 @@
 "use client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell } from "@fortawesome/free-solid-svg-icons";
+import { faBell, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import "../dashboard/dashboard.css";
 
 type AdminToolbarProps = {
@@ -17,7 +17,7 @@ export default function AdminToolbar({ title }: AdminToolbarProps) {
           </div>
           <div className="admin-toolbar-right">
             <div className="admin-search-pill">
-              <span className="search-icon">🔍</span>
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="search-icon" />
               <input placeholder="Search..." aria-label="Search" />
             </div>
             <button className="admin-icon-btn" aria-label="Notifications">

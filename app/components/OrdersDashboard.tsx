@@ -129,7 +129,7 @@ export default function OrdersDashboard() {
               </div>
             </div>
           </div>
-
+         <div className="admin-content">
           <div className="orders-hero">
             <div className="orders-hero-left">
               <h1>Orders</h1>
@@ -222,6 +222,7 @@ export default function OrdersDashboard() {
                 <button className="pager-btn">Next</button>
               </div>
             </div>
+          </div>
           </div>
         </main>
       </div>

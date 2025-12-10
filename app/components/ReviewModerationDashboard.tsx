@@ -98,14 +98,14 @@ export default function ReviewModerationDashboard() {
               </div>
             </div>
           </div>
-
+        <div className="admin-content">
           <div className="review-hero">
             <div className="review-hero-left">
               <h1>Review Moderation</h1>
               <p>Approve or decline new user-submitted reviews.</p>
             </div>
           </div>
-
+          </div>
           <div className="review-table-wrapper">
             <table className="review-table">
               <thead>

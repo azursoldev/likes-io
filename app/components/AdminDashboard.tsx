@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
@@ -10,9 +10,6 @@ import {
   faArrowUpRightDots,
   faChartLine,
   faBell,
-  faUser,
-  faSignOutAlt,
-  faChevronDown,
   faBars,
   faTimes,
   faDollarSign,
@@ -66,29 +63,7 @@ const orders = [
 ];
 
 export default function AdminDashboard() {
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const userDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
-        setIsUserDropdownOpen(false);
-      }
-    };
-
-    if (isUserDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [isUserDropdownOpen]);
-
-  const handleLogout = () => {
-    // Handle logout logic here
-    window.location.href = "/login";
-  };
 
   return (
     <div className="admin-wrapper">
@@ -121,34 +96,12 @@ export default function AdminDashboard() {
                 <button className="admin-icon-btn" aria-label="Notifications">
                   <FontAwesomeIcon icon={faBell} />
                 </button>
-                <div className="admin-user-chip-wrapper" ref={userDropdownRef}>
-                  <div 
-                    className="admin-user-chip" 
-                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                    role="button"
-                    tabIndex={0}
-                    aria-haspopup="menu"
-                    aria-expanded={isUserDropdownOpen}
-                  >
-                    <div className="chip-avatar">AU</div>
-                    <div className="chip-meta">
-                      <span className="chip-name">Admin User</span>
-                      <span className="chip-role">Administrator</span>
-                    </div>
-                    <FontAwesomeIcon icon={faChevronDown} className="chip-chevron" />
+                <div className="admin-user-chip">
+                  <div className="chip-avatar">AU</div>
+                  <div className="chip-meta">
+                    <span className="chip-name">Admin User</span>
+                    <span className="chip-role">Administrator</span>
                   </div>
-                  {isUserDropdownOpen && (
-                    <div className="admin-user-dropdown">
-                      <a href="/my-account" className="admin-dropdown-item">
-                        <FontAwesomeIcon icon={faUser} className="dropdown-icon" />
-                        <span>My Profile</span>
-                      </a>
-                      <button onClick={handleLogout} className="admin-dropdown-item">
-                        <FontAwesomeIcon icon={faSignOutAlt} className="dropdown-icon" />
-                        <span>Log Out</span>
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

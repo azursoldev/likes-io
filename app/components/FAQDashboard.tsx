@@ -193,12 +193,12 @@ export default function FAQDashboard() {
 
         <main className="admin-main">
           <AdminToolbar title="FAQ Management" />
-
+        <div className="admin-content">
           <div className="faq-intro">
             <h1>FAQ Management</h1>
             <p>Manage FAQs for the homepage and the main FAQ page.</p>
-          </div>
-
+         
+        </div>
       <div className="faq-home-card">
         <div className="faq-home-header">
           <h2>Homepage FAQs</h2>
@@ -250,6 +250,7 @@ export default function FAQDashboard() {
             />
           ))}
         </div>
+      </div>
       </div>
         </main>
       </div>

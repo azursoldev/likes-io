@@ -296,7 +296,7 @@ export default function ServicesDashboard() {
               </div>
             </div>
           </div>
-
+         <div className="admin-content">
           <div className="services-hero">
             <div className="services-hero-left">
               <h1>Services & Pricing</h1>
@@ -314,7 +314,6 @@ export default function ServicesDashboard() {
               </p>
             </div>
           </div>
-
           <div className="services-header-actions">
             <button className="services-add-btn" onClick={handleAddServiceClick}>
               <FontAwesomeIcon icon={faPlus} />
@@ -322,6 +321,7 @@ export default function ServicesDashboard() {
             </button>
           </div>
 
+        </div>
           <div className="services-list">
             {services.map((service) => (
               <div key={service.id} className="service-card">

@@ -84,13 +84,15 @@ export default function RevenueDashboard() {
             <section className="revenue-stats-row">
               {summaryCards.map((card) => (
                 <div className="revenue-stat-card" key={card.title}>
-                  <div className="revenue-stat-top">
+                  <div className="revenue-stat-row">
                     <div className="revenue-stat-icon">
                       <FontAwesomeIcon icon={faDollarSign} />
                     </div>
-                    <div className="revenue-stat-title">{card.title}</div>
+                    <div className="revenue-stat-text">
+                      <div className="revenue-stat-title">{card.title}</div>
+                      <div className="revenue-stat-value">{card.value}</div>
+                    </div>
                   </div>
-                  <div className="revenue-stat-value">{card.value}</div>
                 </div>
               ))}
             </section>

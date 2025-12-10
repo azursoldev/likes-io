@@ -188,11 +188,12 @@ export default function BlogDashboard() {
               </div>
             </div>
           </div>
-
+          <div className="admin-content">
           <div className="blog-hero">
             <div className="blog-hero-left">
               <h1>Blog Management</h1>
               <p>Create, edit, and manage all blog posts.</p>
+            </div>
             </div>
             <div className="blog-hero-right">
               <button className="blog-add-btn">
@@ -206,7 +207,6 @@ export default function BlogDashboard() {
             <table className="blog-table">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Title</th>
                   <th>Author</th>
                   <th>Date</th>
@@ -217,9 +217,6 @@ export default function BlogDashboard() {
               <tbody>
                 {posts.map((post) => (
                   <tr key={post.id}>
-                    <td className="blog-id-cell">
-                      <span>{post.id}</span>
-                    </td>
                     <td className="blog-title-cell">
                       <div className="blog-title-content">
                         <h3 className="blog-post-title">{post.title}</h3>
