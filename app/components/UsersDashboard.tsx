@@ -150,80 +150,80 @@ export default function UsersDashboard() {
         <main className="admin-main">
           <AdminToolbar title="Users" />
           <div className="admin-content">
-          <div className="users-hero">
-            <div className="users-hero-left">
-              <h1>Users</h1>
-              <p>Manage all registered user accounts on the platform.</p>
-            </div>
-          </div>
-
-          <div className="users-card">
-            <div className="users-card-top">
-              <div className="admin-search-pill">
-                <FontAwesomeIcon icon={faSearch} />
-                <input placeholder="Search users..." aria-label="Search users" />
+            <div className="users-hero">
+              <div className="users-hero-left">
+                <h1>Users</h1>
+                <p>Manage all registered user accounts on the platform.</p>
               </div>
-              <button className="users-add-btn" onClick={handleAddUserClick}>
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Add User</span>
-              </button>
             </div>
-            <table className="users-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Joined Date</th>
-                  <th>Orders</th>
-                  <th>Wallet Balance</th>
-                  <th>Status</th>
-                  <th className="actions-col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <div className="user-cell">
-                        <div className="user-avatar">{user.name.charAt(0)}</div>
-                        <span>{user.name}</span>
-                      </div>
-                    </td>
-                    <td>{user.email}</td>
-                    <td>{user.joined}</td>
-                    <td>{user.orders}</td>
-                    <td>
-                      <span className="rev-payment wallet-cell">
-                        <FontAwesomeIcon icon={faSackDollar} />
-                        <span className="rev-pay-label">{user.wallet}</span>
-                      </span>
-                    </td>
-                    <td>
-                      <label className="toggle-switch">
-                        <input type="checkbox" defaultChecked={user.status === "active"} />
-                        <span className="toggle-slider" />
-                      </label>
-                    </td>
-                    <td className="actions-col">
-                      <button className="link-btn" onClick={() => handleEditClick(user)}>Edit</button>
-                      <button className="link-btn add-funds" onClick={() => handleAddFundsClick(user)}>Add Funds</button>
-                      <button className="link-btn danger" onClick={() => handleDeleteClick(user)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
 
-            <div className="users-footer">
-              <span className="users-footer-text">Showing 1 to 5 of 5 users</span>
-              <div className="users-pagination">
-                <button className="pager-btn" disabled>
-                  Previous
+            <div className="users-card">
+              <div className="users-card-top">
+                <div className="admin-search-pill">
+                  <FontAwesomeIcon icon={faSearch} />
+                  <input placeholder="Search users..." aria-label="Search users" />
+                </div>
+                <button className="users-add-btn" onClick={handleAddUserClick}>
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Add User</span>
                 </button>
-                <button className="pager-btn">Next</button>
+              </div>
+              <table className="users-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Joined Date</th>
+                    <th>Orders</th>
+                    <th>Wallet Balance</th>
+                    <th>Status</th>
+                    <th className="actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.id}>
+                      <td>
+                        <div className="user-cell">
+                          <div className="user-avatar">{user.name.charAt(0)}</div>
+                          <span>{user.name}</span>
+                        </div>
+                      </td>
+                      <td>{user.email}</td>
+                      <td>{user.joined}</td>
+                      <td>{user.orders}</td>
+                      <td>
+                        <span className="rev-payment wallet-cell">
+                          <FontAwesomeIcon icon={faSackDollar} />
+                          <span className="rev-pay-label">{user.wallet}</span>
+                        </span>
+                      </td>
+                      <td>
+                        <label className="toggle-switch">
+                          <input type="checkbox" defaultChecked={user.status === "active"} />
+                          <span className="toggle-slider" />
+                        </label>
+                      </td>
+                      <td className="actions-col">
+                        <button className="link-btn" onClick={() => handleEditClick(user)}>Edit</button>
+                        <button className="link-btn add-funds" onClick={() => handleAddFundsClick(user)}>Add Funds</button>
+                        <button className="link-btn danger" onClick={() => handleDeleteClick(user)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="users-footer">
+                <span className="users-footer-text">Showing 1 to 5 of 5 users</span>
+                <div className="users-pagination">
+                  <button className="pager-btn" disabled>
+                    Previous
+                  </button>
+                  <button className="pager-btn">Next</button>
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </main>
       </div>

@@ -171,6 +171,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 24px;
+  grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
 }
@@ -935,6 +936,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
   grid-gap: 28px;
+  grid-gap: 28px;
   gap: 28px;
   width: 100%;
   max-width: 100%;
@@ -1266,16 +1268,11 @@
 
 .admin-toolbar-container {
   width: 100%;
-  max-width: 1296.8px;
   height: auto;
   background: #fff;
-  /* border-radius: 12px; */
-  /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); */
   margin: 0 auto;
   display: flex;
   align-items: center;
-  /* padding: 0 21px; */
-  /* box-sizing: border-box; */
 }
 
 .admin-toolbar {
@@ -1335,7 +1332,7 @@
 
 /* Revenue Page */
 .revenue-content {
-  max-width: 1200px;
+  /* max-width: 1200px; */
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1364,6 +1361,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
 }
@@ -2871,6 +2869,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -2928,6 +2927,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -3601,6 +3601,7 @@
 .my-account-actions-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
   width: 742px;
@@ -4338,6 +4339,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 20px;
+  grid-gap: 20px;
   gap: 20px;
 }
 
@@ -4412,6 +4414,7 @@
 .step-row {
   display: grid;
   grid-template-columns: 1fr 1fr 180px 40px;
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   align-items: start;
@@ -4491,6 +4494,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -4544,6 +4548,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -5999,6 +6004,7 @@
 .modal-row {
   display: grid;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
@@ -6194,6 +6200,7 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   margin-bottom: 16px;
@@ -6909,6 +6916,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -7053,6 +7061,7 @@
 .homepage-benefit-fields {
   display: grid;
   grid-template-columns: 150px 1fr 1fr;
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   flex: 1 1;
@@ -7344,6 +7353,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -7401,6 +7411,7 @@
 .smm-panel-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
 }
@@ -7698,6 +7709,7 @@
 .icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -8041,6 +8053,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 24px;
+  grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
 }
@@ -8050,6 +8063,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
   grid-gap: 28px;
+  grid-gap: 28px;
   gap: 28px;
   width: 100%;
   max-width: 100%;
@@ -8057,15 +8071,7 @@
 }
 
 
-/* Revenue Page */
-.revenue-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-}
+
 
 .revenue-header h2 {
   margin: 0 0 4px 0;
@@ -8088,6 +8094,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
 }
@@ -8178,6 +8185,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -8187,6 +8195,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -8212,6 +8221,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   width: 742px;
   box-sizing: border-box;
@@ -8231,6 +8241,7 @@
 .add-service-two-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -8295,6 +8306,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 180px 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -8309,6 +8321,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -8318,6 +8331,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -8361,6 +8375,7 @@
 .modal-row {
   display: grid;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
@@ -8401,6 +8416,7 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   margin-bottom: 16px;
@@ -8488,6 +8504,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -8502,6 +8519,7 @@
 .homepage-benefit-fields {
   display: grid;
   grid-template-columns: 150px 1fr 1fr;
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   flex: 1 1;
@@ -8534,6 +8552,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -8546,6 +8565,7 @@
 .smm-panel-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
 }
@@ -8566,6 +8586,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -8575,6 +8596,7 @@
 .dashboard-services-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
@@ -8599,6 +8621,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
   grid-gap: 28px;
+  grid-gap: 28px;
   gap: 28px;
   width: 100%;
   max-width: 100%;
@@ -8611,15 +8634,7 @@
 
 
 
-/* Revenue Page */
-.revenue-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-}
+
 
 .revenue-header h2 {
   margin: 0 0 4px 0;
@@ -8642,6 +8657,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
 }
@@ -8672,6 +8688,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -8681,6 +8698,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -8706,6 +8724,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   width: 742px;
   box-sizing: border-box;
@@ -8725,6 +8744,7 @@
 .add-service-two-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -8789,6 +8809,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 180px 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -8803,6 +8824,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -8812,6 +8834,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -8855,6 +8878,7 @@
 .modal-row {
   display: grid;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
@@ -8895,6 +8919,7 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   margin-bottom: 16px;
@@ -8982,6 +9007,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -8996,6 +9022,7 @@
 .homepage-benefit-fields {
   display: grid;
   grid-template-columns: 150px 1fr 1fr;
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   flex: 1 1;
@@ -9028,6 +9055,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -9040,6 +9068,7 @@
 .smm-panel-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
 }
@@ -9059,6 +9088,7 @@
 .icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -9178,6 +9208,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 24px;
+  grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
 }
@@ -9200,6 +9231,7 @@
 .popular-topics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
+  grid-gap: 28px;
   grid-gap: 28px;
   grid-gap: 28px;
   grid-gap: 28px;
@@ -9481,20 +9513,7 @@
   box-sizing: border-box;
 }
 
-.admin-toolbar-container {
-  width: 1296.8px;
-  max-width: 1296.8px;
-  height: 70px;
-  box-sizing: border-box;
-  background: #fff;
-  /* border-radius: 12px; */
-  /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); */
-  margin: 0;
-  display: flex;
-  align-items: center;
-  /* padding: 0 21px; */
-  /* box-sizing: border-box; */
-}
+
 
 .admin-toolbar {
   display: flex;
@@ -9525,15 +9544,7 @@
 
 
 
-/* Revenue Page */
-.revenue-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-}
+
 
 .revenue-header h2 {
   margin: 0 0 4px 0;
@@ -9557,6 +9568,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
@@ -10273,6 +10285,7 @@
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -10358,6 +10371,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
@@ -10659,6 +10673,7 @@
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   width: 742px;
   box-sizing: border-box;
@@ -10891,6 +10906,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 20px;
+  grid-gap: 20px;
   gap: 20px;
 }
 
@@ -10954,6 +10970,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 180px 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -10968,6 +10985,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -10977,6 +10995,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -11640,6 +11659,7 @@
   grid-gap: 24px;
   grid-gap: 24px;
   grid-gap: 24px;
+  grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
 }
@@ -11681,6 +11701,7 @@
   grid-gap: 28px;
   grid-gap: 28px;
   grid-gap: 28px;
+  grid-gap: 28px;
   gap: 28px;
   width: 100%;
   max-width: 100%;
@@ -11693,15 +11714,7 @@
 
 
 
-/* Revenue Page */
-.revenue-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-}
+
 
 .revenue-header h2 {
   margin: 0 0 4px 0;
@@ -11724,6 +11737,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
@@ -11790,6 +11804,7 @@
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -11799,6 +11814,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
@@ -11841,6 +11857,7 @@
 .my-account-actions-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
@@ -12110,6 +12127,7 @@
   grid-gap: 20px;
   grid-gap: 20px;
   grid-gap: 20px;
+  grid-gap: 20px;
   gap: 20px;
 }
 
@@ -12191,6 +12209,7 @@
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -12223,6 +12242,7 @@
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -12232,6 +12252,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   grid-gap: 20px;
   grid-gap: 20px;
@@ -12721,6 +12742,7 @@
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
@@ -12761,6 +12783,7 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
@@ -12882,6 +12905,7 @@
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -12896,6 +12920,7 @@
 .homepage-benefit-fields {
   display: grid;
   grid-template-columns: 150px 1fr 1fr;
+  grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
@@ -12962,6 +12987,7 @@
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -12974,6 +13000,7 @@
 .smm-panel-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 24px;
   grid-gap: 24px;
   grid-gap: 24px;
   grid-gap: 24px;
@@ -13010,6 +13037,7 @@
 .icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
@@ -13071,6 +13099,7 @@
   grid-gap: 24px;
   grid-gap: 24px;
   grid-gap: 24px;
+  grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
 }
@@ -13111,6 +13140,7 @@
   grid-gap: 28px;
   grid-gap: 28px;
   grid-gap: 28px;
+  grid-gap: 28px;
   gap: 28px;
   width: 100%;
   max-width: 100%;
@@ -13123,15 +13153,7 @@
 
 
 
-/* Revenue Page */
-.revenue-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-}
+
 
 .revenue-header h2 {
   margin: 0 0 4px 0;
@@ -13154,6 +13176,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
@@ -13473,6 +13496,7 @@
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -13482,6 +13506,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
@@ -13523,6 +13548,7 @@
 .my-account-actions-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
   grid-gap: 16px;
@@ -13790,6 +13816,7 @@
   grid-gap: 20px;
   grid-gap: 20px;
   grid-gap: 20px;
+  grid-gap: 20px;
   gap: 20px;
 }
 
@@ -13870,6 +13897,7 @@
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -13901,6 +13929,7 @@
   grid-gap: 12px;
   grid-gap: 12px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -13910,6 +13939,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   grid-gap: 20px;
   grid-gap: 20px;
@@ -14381,6 +14411,7 @@
 .modal-row {
   display: grid;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
@@ -14421,6 +14452,7 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   margin-bottom: 16px;
@@ -14508,6 +14540,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -14522,6 +14555,7 @@
 .homepage-benefit-fields {
   display: grid;
   grid-template-columns: 150px 1fr 1fr;
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   flex: 1 1;
@@ -14554,6 +14588,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -14566,6 +14601,7 @@
 .smm-panel-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
 }
@@ -14586,6 +14622,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -14593,6 +14630,7 @@
 .dashboard-services-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
@@ -14617,6 +14655,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
   grid-gap: 28px;
+  grid-gap: 28px;
   gap: 28px;
   width: 100%;
   max-width: 100%;
@@ -14629,15 +14668,7 @@
 
 
 
-/* Revenue Page */
-.revenue-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-}
+
 
 .revenue-header h2 {
   margin: 0 0 4px 0;
@@ -14660,6 +14691,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
 }
@@ -14945,6 +14977,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -14954,6 +14987,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -14978,6 +15012,7 @@
 .my-account-actions-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
   width: 742px;
@@ -15211,6 +15246,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 20px;
+  grid-gap: 20px;
   gap: 20px;
 }
 
@@ -15274,6 +15310,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 180px 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -15288,6 +15325,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -15297,6 +15335,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -15751,6 +15790,7 @@
 .modal-row {
   display: grid;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
@@ -15791,6 +15831,7 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   margin-bottom: 16px;
@@ -15878,6 +15919,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -15892,6 +15934,7 @@
 .homepage-benefit-fields {
   display: grid;
   grid-template-columns: 150px 1fr 1fr;
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   flex: 1 1;
@@ -15924,6 +15967,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -15936,6 +15980,7 @@
 .smm-panel-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
 }
@@ -15956,6 +16001,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -15965,6 +16011,7 @@
 .dashboard-services-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
@@ -15989,6 +16036,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
   grid-gap: 28px;
+  grid-gap: 28px;
   gap: 28px;
   width: 100%;
   max-width: 100%;
@@ -16001,15 +16049,7 @@
 
 
 
-/* Revenue Page */
-.revenue-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-}
+
 
 .revenue-header h2 {
   margin: 0 0 4px 0;
@@ -16032,6 +16072,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
 }
@@ -16316,6 +16357,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -16325,6 +16367,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -16349,6 +16392,7 @@
 .my-account-actions-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
   width: 742px;
@@ -16582,6 +16626,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 20px;
+  grid-gap: 20px;
   gap: 20px;
 }
 
@@ -16645,6 +16690,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 180px 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -16659,6 +16705,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -16668,6 +16715,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -17122,6 +17170,7 @@
 .modal-row {
   display: grid;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
@@ -17162,6 +17211,7 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   margin-bottom: 16px;
@@ -17249,6 +17299,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -17263,6 +17314,7 @@
 .homepage-benefit-fields {
   display: grid;
   grid-template-columns: 150px 1fr 1fr;
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   flex: 1 1;
@@ -17295,6 +17347,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -17307,6 +17360,7 @@
 .smm-panel-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
 }
@@ -17327,6 +17381,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -17336,6 +17391,7 @@
 .dashboard-services-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
   max-width: 100%;
@@ -17359,6 +17415,7 @@
 .popular-topics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
+  grid-gap: 28px;
   grid-gap: 28px;
   gap: 28px;
   width: 100%;
@@ -17595,19 +17652,7 @@
   background: #fff;
 }
 
-.admin-toolbar-container {
-  width: 100%;
-  max-width: 1296.8px;
-  height: auto;
-  background: #fff;
-  /* border-radius: 12px; */
-  /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); */
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  /* padding: 0 21px; */
-  /* box-sizing: border-box; */
-}
+
 
 .admin-toolbar {
   display: flex;
@@ -17638,15 +17683,7 @@
 
 
 
-/* Revenue Page */
-.revenue-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-}
+
 
 .revenue-header h2 {
   margin: 0 0 4px 0;
@@ -17669,6 +17706,7 @@
 .revenue-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
 }
@@ -17943,6 +17981,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -17952,6 +17991,7 @@
 .admin-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -17976,6 +18016,7 @@
 .my-account-actions-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
   width: 742px;
@@ -18214,6 +18255,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 20px;
+  grid-gap: 20px;
   gap: 20px;
 }
 
@@ -18277,6 +18319,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 180px 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -18295,6 +18338,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 40px;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   align-items: start;
 }
@@ -18304,6 +18348,7 @@
 .add-service-pricing-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
   grid-gap: 20px;
   gap: 20px;
 }
@@ -19014,6 +19059,7 @@
 .modal-row {
   display: grid;
   grid-gap: 12px;
+  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
@@ -19054,6 +19100,7 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   margin-bottom: 16px;
@@ -19141,6 +19188,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -19163,6 +19211,7 @@
 .homepage-benefit-fields {
   display: grid;
   grid-template-columns: 150px 1fr 1fr;
+  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   flex: 1 1;
@@ -19195,6 +19244,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 16px;
+  grid-gap: 16px;
   gap: 16px;
 }
 
@@ -19207,6 +19257,7 @@
 .smm-panel-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 24px;
   grid-gap: 24px;
   gap: 24px;
 }
@@ -19226,6 +19277,7 @@
 .icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-gap: 16px;
   grid-gap: 16px;
   gap: 16px;
 }
@@ -19403,6 +19455,7 @@ td.blog-author-cell {
   font-weight: 400;
   color: rgb(75, 85, 99);
 }
+
 
 
 
