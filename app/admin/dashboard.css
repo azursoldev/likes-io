@@ -8606,16 +8606,6 @@
 
 
 
-/
-
-
-
-
-
-
-
-
-
 
 .popular-topics-grid {
   display: grid;
@@ -8835,59 +8825,15 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 20px;
-  grid-gap: 20px;
   gap: 20px;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 .modal-row {
   display: grid;
   grid-gap: 12px;
-  grid-gap: 12px;
   gap: 12px;
   width: 100%;
 }
-
-
-
-
-
-
 
 .team-name {
   font-weight: 600;
@@ -8919,7 +8865,6 @@
 .notif-header-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  grid-gap: 12px;
   grid-gap: 12px;
   gap: 12px;
   margin-bottom: 16px;
@@ -16336,22 +16281,6 @@
 .users-add-btn:hover {
   background: #0f172a;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 .admin-stats-row {
   display: grid;
