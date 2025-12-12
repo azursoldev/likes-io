@@ -1,5 +1,6 @@
 import './globals.css';
 import ScrollTopButton from './components/ScrollTopButton';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import type { Metadata } from 'next';
 
 import { config } from '@fortawesome/fontawesome-svg-core'
@@ -20,9 +21,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head />
       <body suppressHydrationWarning>
-
-        {children}
-        <ScrollTopButton />
+        <CurrencyProvider>
+          {children}
+          <ScrollTopButton />
+        </CurrencyProvider>
       </body>
     </html>
   );

@@ -1,11 +1,13 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { useCurrency } from "../contexts/CurrencyContext";
 
 type PackType = "likes" | "followers" | "views" | "subscribers";
 type Platform = "instagram" | "tiktok" | "youtube";
 type Quality = "hq" | "premium";
 
 export default function GetStarted() {
+  const { formatPrice } = useCurrency();
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [packType, setPackType] = useState<PackType>("likes");
   const [quality, setQuality] = useState<Quality>("premium");
@@ -166,8 +168,8 @@ export default function GetStarted() {
                   <span className="qty-label"> {LABELS[packType]}</span>
                 </div>
                 <div className="gs-price">
-                  <span className="price">${price.toFixed(2)}</span>
-                  <span className="old">${oldPrice.toFixed(2)}</span>
+                  <span className="price">{formatPrice(price)}</span>
+                  <span className="old">{formatPrice(oldPrice)}</span>
                 </div>
               </div>
               <input

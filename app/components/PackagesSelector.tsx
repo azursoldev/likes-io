@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faPlus, faMinus, faLock, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
+import { useCurrency } from "../contexts/CurrencyContext";
 
 export type PackageOption = {
   qty: number | string;
@@ -66,8 +68,37 @@ export default function PackagesSelector({
   defaultQtyTarget = 500,
   ctaTemplate = DEFAULT_CTA_TEMPLATE,
 }: PackagesSelectorProps) {
+  const pathname = usePathname();
+  const { formatPrice, getCurrencySymbol } = useCurrency();
+  const platform = pathname?.includes("/tiktok/") ? "tiktok" : pathname?.includes("/youtube/") ? "youtube" : "instagram";
   const tabs = useMemo(() => (tabsConfig && tabsConfig.length ? tabsConfig : DEFAULT_TABS), [tabsConfig]);
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? "");
+
+  // Helper to parse price from string (e.g., "$2.99" -> 2.99)
+  const parsePrice = (priceStr: string): number => {
+    if (priceStr === "$—" || priceStr === "—") return 0;
+    const cleaned = priceStr.replace(/[^0-9.]/g, "");
+    return parseFloat(cleaned) || 0;
+  };
+
+  // Helper to format perLike text with currency
+  const formatPerLike = (perLikeStr: string): string => {
+    const match = perLikeStr.match(/\$([\d.]+)\s*\/\s*(.+)/);
+    if (match) {
+      const price = parseFloat(match[1]);
+      const unit = match[2];
+      const formattedPrice = formatPrice(price);
+      return `${formattedPrice} / ${unit}`;
+    }
+    // If no match, try to find any price in the string
+    const priceMatch = perLikeStr.match(/\$([\d.]+)/);
+    if (priceMatch) {
+      const price = parseFloat(priceMatch[1]);
+      const formattedPrice = formatPrice(price);
+      return perLikeStr.replace(/\$[\d.]+/, formattedPrice);
+    }
+    return perLikeStr;
+  };
 
   useEffect(() => {
     if (!tabs.length) {
@@ -131,7 +162,10 @@ export default function PackagesSelector({
   
   // Calculate price for custom quantity
   const getCustomPrice = () => {
-    if (!isCustomSelected || !selected) return { price: "$—", strike: undefined, save: undefined };
+    if (!isCustomSelected || !selected) {
+      const symbol = getCurrencySymbol();
+      return { price: `${symbol}—`, strike: undefined, save: undefined };
+    }
     
     // Try to extract price from perLike field
     let pricePerUnit: number | null = null;
@@ -152,9 +186,13 @@ export default function PackagesSelector({
       }
     }
     
-    if (!pricePerUnit) return { price: "$—", strike: undefined, save: undefined };
+    if (!pricePerUnit) {
+      const symbol = getCurrencySymbol();
+      return { price: `${symbol}—`, strike: undefined, save: undefined };
+    }
     
-    const totalPrice = (customQty * pricePerUnit).toFixed(2);
+    const totalPrice = customQty * pricePerUnit;
+    const formattedPrice = formatPrice(totalPrice);
     
     // Calculate strike price and savings if original package has them
     let strikePrice: string | undefined;
@@ -169,18 +207,19 @@ export default function PackagesSelector({
         const basePerUnit = parseFloat(basePerLikeMatch[1]);
         // Calculate strike as 2x the current price (50% discount) or use package strike if available
         const strikePerUnit = selected.strike 
-          ? (parseFloat(selected.strike.replace(/[^0-9.]/g, "")) / (typeof selected.qty === "number" ? selected.qty : 10000))
+          ? (parsePrice(selected.strike) / (typeof selected.qty === "number" ? selected.qty : 10000))
           : pricePerUnit * 2; // Default to 2x (50% off)
-        const totalStrike = (customQty * strikePerUnit).toFixed(2);
-        strikePrice = `$${totalStrike}`;
-        const save = (parseFloat(totalStrike) - parseFloat(totalPrice)).toFixed(2);
-        if (parseFloat(save) > 0) {
-          saveAmount = `You Save $${save}`;
+        const totalStrike = customQty * strikePerUnit;
+        strikePrice = formatPrice(totalStrike);
+        const save = totalStrike - totalPrice;
+        if (save > 0) {
+          const symbol = getCurrencySymbol();
+          saveAmount = `You Save ${symbol}${save.toFixed(2)}`;
         }
       }
     }
     
-    return { price: `$${totalPrice}`, strike: strikePrice, save: saveAmount };
+    return { price: formattedPrice, strike: strikePrice, save: saveAmount };
   };
 
   const handleCustomIncrement = (e: React.MouseEvent) => {
@@ -198,9 +237,38 @@ export default function PackagesSelector({
 
   const displayQty = isCustomSelected ? customQty.toLocaleString() + "+" : String(selected?.qty ?? "");
   const customPriceData = isCustomSelected ? getCustomPrice() : null;
-  const displayPrice = customPriceData?.price ?? selected?.price ?? "$—";
-  const displayStrike = customPriceData?.strike ?? selected?.strike;
-  const displaySave = customPriceData?.save ?? selected?.save;
+  
+  // Format prices using currency context
+  const formatDisplayPrice = (priceStr: string): string => {
+    if (priceStr === "$—" || priceStr === "—") {
+      const symbol = getCurrencySymbol();
+      return `${symbol}—`;
+    }
+    const price = parsePrice(priceStr);
+    return formatPrice(price);
+  };
+
+  const formatDisplayStrike = (strikeStr?: string): string | undefined => {
+    if (!strikeStr) return undefined;
+    const price = parsePrice(strikeStr);
+    return formatPrice(price);
+  };
+
+  const formatDisplaySave = (saveStr?: string): string | undefined => {
+    if (!saveStr) return undefined;
+    // Extract the price from "You Save $X.XX"
+    const match = saveStr.match(/\$([\d.]+)/);
+    if (match) {
+      const price = parseFloat(match[1]);
+      const symbol = getCurrencySymbol();
+      return saveStr.replace(/\$[\d.]+/, `${symbol}${price.toFixed(2)}`);
+    }
+    return saveStr;
+  };
+
+  const displayPrice = customPriceData?.price ?? (selected?.price ? formatDisplayPrice(selected.price) : `${getCurrencySymbol()}—`);
+  const displayStrike = customPriceData?.strike ?? (selected?.strike ? formatDisplayStrike(selected.strike) : undefined);
+  const displaySave = customPriceData?.save ?? (selected?.save ? formatDisplaySave(selected.save) : undefined);
   const formatButtonLabel = (pkg?: PackageOption, qty?: string) => {
     if (!pkg) return `Buy ${metricLabel}`;
     const qtyToUse = qty ?? String(pkg.qty);
@@ -258,7 +326,7 @@ export default function PackagesSelector({
                     : p.qty}
                 </div>
                 <div className="pkg-label">{metricLabel}</div>
-                <div className="pkg-sub">{p.perLike}</div>
+                <div className="pkg-sub">{formatPerLike(p.perLike)}</div>
                 {p.offText && <div className="pkg-off">{p.offText}</div>}
                 {typeof p.qty === "string" && p.qty.includes("+") && (
                   <>
@@ -304,9 +372,12 @@ export default function PackagesSelector({
               {displayStrike && <div className="price-strike">{displayStrike}</div>}
               {displaySave && <div className="price-save">{displaySave}</div>}
             </div>
-            <button className="btn buy-btn" type="button">
+            <a 
+              href={`/${platform}/${metricLabel.toLowerCase() === "subscribers" ? "subscribers" : metricLabel.toLowerCase()}/checkout?qty=${displayQty}&price=${parsePrice(displayPrice)}&type=${encodeURIComponent(activeTabData?.label || 'High-Quality')}`}
+              className="btn buy-btn"
+            >
               {buttonLabel}
-            </button>
+            </a>
             <div className="pkg-safety">
               <span className="safety-item">
                 <FontAwesomeIcon icon={faShieldHalved} />
