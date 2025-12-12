@@ -3,13 +3,14 @@ import { useState, useRef, useEffect } from "react";
 import PromoBar from "./PromoBar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons";
+import { useCurrency } from "../contexts/CurrencyContext";
 
 export default function Header() {
-  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const { currency, setCurrency } = useCurrency();
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const currencyRef = useRef<HTMLDivElement>(null);
 
-  const currencies = ["USD", "EUR"];
+  const currencies = ["USD", "EUR"] as const;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -26,8 +27,8 @@ export default function Header() {
     }
   }, [isCurrencyOpen]);
 
-  const handleCurrencySelect = (currency: string) => {
-    setSelectedCurrency(currency);
+  const handleCurrencySelect = (selectedCurrency: typeof currencies[number]) => {
+    setCurrency(selectedCurrency);
     setIsCurrencyOpen(false);
   };
 
@@ -102,20 +103,20 @@ export default function Header() {
                 aria-haspopup="listbox"
                 aria-expanded={isCurrencyOpen}
               >
-                {selectedCurrency} 
+                {currency} 
                 <span className="caret">{isCurrencyOpen ? "▴" : "▾"}</span>
               </div>
               {isCurrencyOpen && (
                 <div className="currency-dropdown">
-                  {currencies.map((currency) => (
+                  {currencies.map((currencyItem) => (
                     <div
-                      key={currency}
-                      className={`currency-option ${selectedCurrency === currency ? "active" : ""}`}
-                      onClick={() => handleCurrencySelect(currency)}
+                      key={currencyItem}
+                      className={`currency-option ${currency === currencyItem ? "active" : ""}`}
+                      onClick={() => handleCurrencySelect(currencyItem)}
                       role="option"
-                      aria-selected={selectedCurrency === currency}
+                      aria-selected={currency === currencyItem}
                     >
-                      {currency}
+                      {currencyItem}
                     </div>
                   ))}
                 </div>
