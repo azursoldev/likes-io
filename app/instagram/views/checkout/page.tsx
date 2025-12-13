@@ -8,7 +8,7 @@ import {
   faThumbsUp, 
   faCoffee, 
   faClock, 
-  faShieldCheck,
+  faShield,
   faShieldHalved,
   faLock,
   faAngleDown
@@ -98,7 +98,7 @@ function CheckoutContent() {
                 <span>10+ years in the marketing business.</span>
               </div>
               <div className="checkout-feature-item">
-                <FontAwesomeIcon icon={faShieldCheck} className="checkout-feature-icon" />
+                <FontAwesomeIcon icon={faShield} className="checkout-feature-icon" />
                 <span>PCI DSS compliant payment system using 256-bit encryption.</span>
               </div>
             </div>
