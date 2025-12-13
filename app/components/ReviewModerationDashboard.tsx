@@ -105,7 +105,7 @@ export default function ReviewModerationDashboard() {
               <p>Approve or decline new user-submitted reviews.</p>
             </div>
           </div>
-          </div>
+          
           <div className="review-table-wrapper">
             <table className="review-table">
               <thead>
@@ -153,6 +153,7 @@ export default function ReviewModerationDashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
           </div>
         </main>
       </div>

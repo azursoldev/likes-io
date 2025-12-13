@@ -189,19 +189,20 @@ export default function BlogDashboard() {
             </div>
           </div>
           <div className="admin-content">
-          <div className="blog-hero">
-            <div className="blog-hero-left">
-              <h1>Blog Management</h1>
-              <p>Create, edit, and manage all blog posts.</p>
-            </div>
-            </div>
-            <div className="blog-hero-right">
+            <div className="blog-hero">
+              <div className="blog-hero-left">
+                <h1>Blog Management</h1>
+                <p>Create, edit, and manage all blog posts.</p>
+              </div>
+              <div className="blog-hero-right">
               <button className="blog-add-btn">
                 <FontAwesomeIcon icon={faPlus} />
                 <span>New Post</span>
               </button>
             </div>
-          </div>
+            </div>
+          
+          
 
           <div className="blog-table-wrapper">
             <table className="blog-table">
@@ -252,6 +253,7 @@ export default function BlogDashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
           </div>
         </main>
       </div>

@@ -60,53 +60,54 @@ export default function AffiliatesDashboard() {
         <main className="admin-main">
           <AdminToolbar title="Affiliates" />
 
-          <div className="aff-header">
-            <div>
-              <h2>Affiliates</h2>
-              <p>Manage affiliates, referral links, and commissions.</p>
+          <div className="admin-content">
+            <div className="aff-header">
+              <div>
+                <h2>Affiliates</h2>
+                <p>Manage affiliates, referral links, and commissions.</p>
+              </div>
+              <button className="aff-add-btn" onClick={() => setShowModal(true)}>
+                <FontAwesomeIcon icon={faPlus} />
+                <span>Add Affiliate</span>
+              </button>
             </div>
-            <button className="aff-add-btn" onClick={() => setShowModal(true)}>
-              <FontAwesomeIcon icon={faPlus} />
-              <span>Add Affiliate</span>
-            </button>
-          </div>
 
-          <div className="aff-table-card">
-            <table className="aff-table">
-              <thead>
-                <tr>
-                  <th>Affiliate</th>
-                  <th>Referral Link</th>
-                  <th>Clicks / Signups</th>
-                  <th>Sales Value</th>
-                  <th>Commission / Earnings</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {affiliates.map((a) => (
-                  <tr key={a.id}>
-                    <td>{a.name}</td>
-                    <td>{a.referralLink}</td>
-                    <td>{a.clicks}</td>
-                    <td>{a.salesValue}</td>
-                    <td>{a.commission}</td>
-                    <td>
-                      <span className={`aff-status ${a.status === "Active" ? "on" : "off"}`}>
-                        {a.status}
-                      </span>
-                    </td>
-                    <td className="team-actions">
-                      <button className="team-edit">Edit</button>
-                      <button className="team-delete">Delete</button>
-                    </td>
+            <div className="aff-table-card">
+              <table className="aff-table">
+                <thead>
+                  <tr>
+                    <th>Affiliate</th>
+                    <th>Referral Link</th>
+                    <th>Clicks / Signups</th>
+                    <th>Sales Value</th>
+                    <th>Commission / Earnings</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {affiliates.map((a) => (
+                    <tr key={a.id}>
+                      <td>{a.name}</td>
+                      <td>{a.referralLink}</td>
+                      <td>{a.clicks}</td>
+                      <td>{a.salesValue}</td>
+                      <td>{a.commission}</td>
+                      <td>
+                        <span className={`aff-status ${a.status === "Active" ? "on" : "off"}`}>
+                          {a.status}
+                        </span>
+                      </td>
+                      <td className="team-actions">
+                        <button className="team-edit">Edit</button>
+                        <button className="team-delete">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-
           {showModal && (
             <div className="faq-modal-backdrop">
               <div className="faq-modal">

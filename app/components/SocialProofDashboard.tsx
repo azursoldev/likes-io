@@ -113,7 +113,7 @@ export default function SocialProofDashboard() {
           <div className="social-proof-page">
             <div className="social-proof-header">
               <div>
-                <h1>Social Proof Ticker</h1>
+                <h2>Social Proof Ticker</h2>
                 <p>Manage the recent purchase notifications shown on the homepage.</p>
               </div>
               <button className="social-proof-add-btn" onClick={handleStartAdd}>

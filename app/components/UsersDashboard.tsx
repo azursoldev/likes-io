@@ -152,7 +152,7 @@ export default function UsersDashboard() {
           <div className="admin-content">
             <div className="users-hero">
               <div className="users-hero-left">
-                <h1>Users</h1>
+                <h2>Users</h2>
                 <p>Manage all registered user accounts on the platform.</p>
               </div>
             </div>

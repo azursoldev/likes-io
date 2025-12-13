@@ -141,53 +141,54 @@ export default function TeamDashboard() {
 
         <main className="admin-main">
           <AdminToolbar title="Team Members" />
-
-          <div className="team-page-header">
-            <div className="team-header-text">
-              <h2>Team Members</h2>
-              <p>Manage the team profiles shown on the 'Our Team' page.</p>
+          <div className="admin-content">
+            <div className="team-page-header">
+              <div className="team-header-text">
+                <h2>Team Members</h2>
+                <p>Manage the team profiles shown on the 'Our Team' page.</p>
+              </div>
+              <div className="team-header-actions">
+                <button className="team-add-btn" onClick={() => setShowModal(true)}>
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Add Team Member</span>
+                </button>
+              </div>
             </div>
-            <div className="team-header-actions">
-              <button className="team-add-btn" onClick={() => setShowModal(true)}>
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Add Team Member</span>
-              </button>
-            </div>
-          </div>
 
-          <div className="team-table-card">
-            <table className="team-table">
-              <thead>
-                <tr>
-                  <th>Member</th>
-                  <th>Role</th>
-                  <th>Bio</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr key={member.id}>
-                    <td>
-                      <div className="team-member-cell">
-                        <div className="team-avatar">👤</div>
-                        <span className="team-name">{member.name}</span>
-                      </div>
-                    </td>
-                    <td>{member.role}</td>
-                    <td>{member.bio}</td>
-                    <td className="team-actions">
-                      <button className="team-edit" onClick={() => handleEdit(member)}>
-                        Edit
-                      </button>
-                      <button className="team-delete" onClick={() => handleDelete(member.id)}>
-                        Delete
-                      </button>
-                    </td>
+            <div className="team-table-card">
+              <table className="team-table">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Role</th>
+                    <th>Bio</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {members.map((member) => (
+                    <tr key={member.id}>
+                      <td>
+                        <div className="team-member-cell">
+                          <div className="team-avatar">👤</div>
+                          <span className="team-name">{member.name}</span>
+                        </div>
+                      </td>
+                      <td>{member.role}</td>
+                      <td>{member.bio}</td>
+                      <td className="team-actions">
+                        <button className="team-edit" onClick={() => handleEdit(member)}>
+                          Edit
+                        </button>
+                        <button className="team-delete" onClick={() => handleDelete(member.id)}>
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </main>
       </div>

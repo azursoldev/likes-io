@@ -116,7 +116,7 @@ export default function FeaturedOnDashboard() {
           <div className="featured-page">
             <div className="featured-header">
               <div>
-                <h1>As Featured On</h1>
+                <h2>As Featured On</h2>
                 <p>Manage the logos displayed in the 'As Featured On' section.</p>
               </div>
               <button className="featured-add-btn" onClick={handleStartAdd}>

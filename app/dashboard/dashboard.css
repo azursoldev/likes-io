@@ -1110,18 +1110,7 @@
   font-size: 12px;
 }
 
-.admin-icon-btn {
-  border: none;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
+
 
 .admin-user {
   display: flex;
@@ -2882,10 +2871,8 @@
   align-items: center;
   gap: 8px;
   background: #fff;
-  border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 6px 10px;
-  min-width: 180px;
 }
 
 .chip-avatar {

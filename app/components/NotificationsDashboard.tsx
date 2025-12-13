@@ -132,130 +132,131 @@ export default function NotificationsDashboard() {
 
         <main className="admin-main">
           <AdminToolbar title="Notifications" />
-
-          <div className="notif-intro">
-            <h1>Notifications & Banners</h1>
-            <p>Manage sitewide promotional banners and user bell notifications.</p>
-          </div>
-
-          <div className="notif-section-card">
-            <div className="notif-section-header">
-              <h3>Header Notification Counts</h3>
+          <div className="admin-content">
+            <div className="notif-intro">
+              <h1>Notifications & Banners</h1>
+              <p>Manage sitewide promotional banners and user bell notifications.</p>
             </div>
-            <div className="notif-header-card">
-              <div className="notif-card">
-                <div className="notif-card-title">Inbox Count</div>
+
+            <div className="notif-section-card">
+              <div className="notif-section-header">
+                <h3>Header Notification Counts</h3>
+              </div>
+              <div className="notif-header-card">
+                <div className="notif-card">
+                  <div className="notif-card-title">Inbox Count</div>
+                  <input
+                    type="number"
+                    className="notif-input"
+                    value={inboxCount}
+                    onChange={(e) => setInboxCount(Number(e.target.value))}
+                  />
+                </div>
+                <div className="notif-card">
+                  <div className="notif-card-title">Team Count</div>
+                  <input
+                    type="number"
+                    className="notif-input"
+                    value={teamCount}
+                    onChange={(e) => setTeamCount(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="notif-section-card">
+              <div className="notif-section-header">
+                <h3>Promotional Banner</h3>
+              </div>
+              <div className="notif-toggle-row">
+                <label className="notif-toggle-label">
+                  Enable Banner
+                  <input
+                    type="checkbox"
+                    checked={bannerEnabled}
+                    onChange={(e) => setBannerEnabled(e.target.checked)}
+                  />
+                  <span className={`notif-toggle ${bannerEnabled ? "on" : ""}`} />
+                </label>
+              </div>
+
+              <div className="notif-field">
+                <label>Countdown Duration (in hours)</label>
                 <input
                   type="number"
-                  className="notif-input"
-                  value={inboxCount}
-                  onChange={(e) => setInboxCount(Number(e.target.value))}
+                  className="notif-input notif-size"
+                  value={durationHours}
+                  onChange={(e) => setDurationHours(Number(e.target.value))}
                 />
               </div>
-              <div className="notif-card">
-                <div className="notif-card-title">Team Count</div>
-                <input
-                  type="number"
-                  className="notif-input"
-                  value={teamCount}
-                  onChange={(e) => setTeamCount(Number(e.target.value))}
-                />
-              </div>
-            </div>
-          </div>
 
-          <div className="notif-section-card">
-            <div className="notif-section-header">
-              <h3>Promotional Banner</h3>
-            </div>
-            <div className="notif-toggle-row">
-              <label className="notif-toggle-label">
-                Enable Banner
-                <input
-                  type="checkbox"
-                  checked={bannerEnabled}
-                  onChange={(e) => setBannerEnabled(e.target.checked)}
-                />
-                <span className={`notif-toggle ${bannerEnabled ? "on" : ""}`} />
-              </label>
-            </div>
-
-            <div className="notif-field">
-              <label>Countdown Duration (in hours)</label>
-              <input
-                type="number"
-                className="notif-input notif-size"
-                value={durationHours}
-                onChange={(e) => setDurationHours(Number(e.target.value))}
-              />
-            </div>
-
-            <div className="notif-field">
-              <label>Banner Messages (will rotate)</label>
-              <div className="notif-banner-list">
-                {bannerMessages.map((msg) => (
-                  <div key={msg.id} className="notif-banner-pill">
-                    <span>🔥</span>
-                    <input
-                      className="notif-banner-input notif-size"
-                      value={msg.text}
-                      onChange={(e) => updateBannerMessage(msg.id, e.target.value)}
-                      placeholder="New promotion!"
-                    />
-                    <button className="notif-pill-close" onClick={() => removeBannerMessage(msg.id)}>
-                      <FontAwesomeIcon icon={faXmark} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button className="notif-add-link" onClick={addBannerMessage}>
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Add Message</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="notif-section-card">
-            <div className="notif-section-header">
-              <h3>Bell Icon Notifications</h3>
-              <button className="notif-add-btn" onClick={addBellNotification}>
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Add Notification</span>
-              </button>
-            </div>
-
-            <div className="notif-table-wrapper">
-              <table className="notif-table">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Icon</th>
-                    <th>Priority</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bellNotifications.map((n) => (
-                    <tr key={n.id}>
-                      <td>{n.title}</td>
-                      <td>{n.description}</td>
-                      <td>{n.icon}</td>
-                    <td>
-                      <span className={`notif-pill priority-${n.priority.toLowerCase()}`}>{n.priority}</span>
-                    </td>
-                    <td className="team-actions">
-                      <button className="team-edit" onClick={() => handleStartEditNotification(n)}>
-                        Edit
+              <div className="notif-field">
+                <label>Banner Messages (will rotate)</label>
+                <div className="notif-banner-list">
+                  {bannerMessages.map((msg) => (
+                    <div key={msg.id} className="notif-banner-pill">
+                      <span>🔥</span>
+                      <input
+                        className="notif-banner-input notif-size"
+                        value={msg.text}
+                        onChange={(e) => updateBannerMessage(msg.id, e.target.value)}
+                        placeholder="New promotion!"
+                      />
+                      <button className="notif-pill-close" onClick={() => removeBannerMessage(msg.id)}>
+                        <FontAwesomeIcon icon={faXmark} />
                       </button>
-                      <button className="team-delete" onClick={() => removeBellNotification(n.id)}>
-                        Delete
-                      </button>
-                    </td>
-                    </tr>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+                <button className="notif-add-link" onClick={addBannerMessage}>
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Add Message</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="notif-section-card">
+              <div className="notif-section-header">
+                <h3>Bell Icon Notifications</h3>
+                <button className="notif-add-btn" onClick={addBellNotification}>
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Add Notification</span>
+                </button>
+              </div>
+
+              <div className="notif-table-wrapper">
+                <table className="notif-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Description</th>
+                      <th>Icon</th>
+                      <th>Priority</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bellNotifications.map((n) => (
+                      <tr key={n.id}>
+                        <td>{n.title}</td>
+                        <td>{n.description}</td>
+                        <td>{n.icon}</td>
+                      <td>
+                        <span className={`notif-pill priority-${n.priority.toLowerCase()}`}>{n.priority}</span>
+                      </td>
+                      <td className="team-actions">
+                        <button className="team-edit" onClick={() => handleStartEditNotification(n)}>
+                          Edit
+                        </button>
+                        <button className="team-delete" onClick={() => removeBellNotification(n.id)}>
+                          Delete
+                        </button>
+                      </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </main>

@@ -321,7 +321,7 @@ export default function ServicesDashboard() {
             </button>
           </div>
 
-        </div>
+       
           <div className="services-list">
             {services.map((service) => (
               <div key={service.id} className="service-card">
@@ -345,6 +345,7 @@ export default function ServicesDashboard() {
                 </div>
               </div>
             ))}
+          </div>
           </div>
         </main>
       </div>
