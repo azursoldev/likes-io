@@ -18,18 +18,46 @@ function PostsSelectionContent() {
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [postLink, setPostLink] = useState("");
+  const [linkError, setLinkError] = useState("");
   
   const username = searchParams.get("username") || "";
   const qty = searchParams.get("qty") || "5K";
   const priceValue = parseFloat(searchParams.get("price") || "34.99");
   const packageType = searchParams.get("type") || "High-Quality";
 
+  // Validate TikTok video URL
+  const isValidTikTokUrl = (url: string): boolean => {
+    if (!url.trim()) return false;
+    
+    // TikTok URL pattern: /@username/video/...
+    const tiktokPattern = /^https?:\/\/(www\.)?(vm\.)?tiktok\.com\/@[A-Za-z0-9_.]+\/video\/\d+\/?/i;
+    return tiktokPattern.test(url.trim());
+  };
+
+  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPostLink(value);
+    
+    // Validate on change
+    if (value.trim() && !isValidTikTokUrl(value)) {
+      setLinkError("Please enter a valid TikTok video URL");
+    } else {
+      setLinkError("");
+    }
+  };
+
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (postLink.trim()) {
+    if (isValidTikTokUrl(postLink)) {
       // Navigate to final checkout step
       router.push(`/tiktok/views/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`);
+    } else {
+      setLinkError("Please enter a valid TikTok video URL");
     }
+  };
+
+  const handleDetailsClick = () => {
+    router.push(`/tiktok/views/checkout?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
   };
 
   return (
@@ -39,7 +67,11 @@ function PostsSelectionContent() {
         <div className="posts-selection-container">
           {/* Progress Indicator */}
           <div className="checkout-progress">
-            <div className="progress-step completed">
+            <div 
+              className="progress-step completed" 
+              onClick={handleDetailsClick}
+              style={{ cursor: "pointer" }}
+            >
               <div className="progress-step-icon">
                 <FontAwesomeIcon icon={faCheck} />
               </div>
@@ -48,7 +80,7 @@ function PostsSelectionContent() {
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            <div className="progress-step active">
+            <div className="progress-step active" style={{ cursor: "default" }}>
               <div className="progress-step-icon">
                 <span>2</span>
               </div>
@@ -57,7 +89,7 @@ function PostsSelectionContent() {
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            <div className="progress-step">
+            <div className="progress-step" style={{ cursor: "default" }}>
               <div className="progress-step-icon">
                 <span>3</span>
               </div>
@@ -78,12 +110,17 @@ function PostsSelectionContent() {
                       <FontAwesomeIcon icon={faLink} className="posts-input-icon" />
                       <input
                         type="text"
-                        className="posts-input"
+                        className={`posts-input ${linkError ? "posts-input-error" : ""}`}
                         value={postLink}
-                        onChange={(e) => setPostLink(e.target.value)}
+                        onChange={handleLinkChange}
                         placeholder="https://www.tiktok.com/@username/video/..."
                       />
                     </div>
+                    {linkError && (
+                      <p className="posts-error-text" style={{ color: "#e74c3c", fontSize: "0.875rem", marginTop: "0.5rem" }}>
+                        {linkError}
+                      </p>
+                    )}
                     <p className="posts-helper-text">
                       Ensure your account is public. Paste the full URL of the video you want to boost.
                     </p>
@@ -130,7 +167,7 @@ function PostsSelectionContent() {
                     type="button" 
                     className="order-continue-btn"
                     onClick={handleContinue}
-                    disabled={!postLink.trim()}
+                    disabled={!isValidTikTokUrl(postLink)}
                   >
                     Continue to checkout
                   </button>
