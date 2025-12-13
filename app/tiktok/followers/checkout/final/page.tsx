@@ -245,7 +245,7 @@ function FinalCheckoutContent() {
 
                   <button type="submit" className="pay-button">
                     <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                    Pay {formatPrice(totalPrice)}
+                    {paymentMethod === "crypto" ? "Proceed to Cryptomus" : `Pay ${formatPrice(totalPrice)}`}
                   </button>
 
                   <div className="payment-guarantees">
@@ -360,7 +360,7 @@ function FinalCheckoutContent() {
                   <div className="offer-details">
                     <span className="offer-text">50 likes x 10 posts</span>
                     <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(5.99)}</span>
+                      <span className="offer-price-new">For only <span className="offer-price-amount">{formatPrice(5.99)}</span></span>
                       <span className="offer-price-old">{formatPrice(7.99)}</span>
                     </div>
                   </div>
@@ -379,7 +379,7 @@ function FinalCheckoutContent() {
                   <div className="offer-details">
                     <span className="offer-text">100 likes x 10 posts</span>
                     <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
+                      <span className="offer-price-new">For only <span className="offer-price-amount">{formatPrice(11.24)}</span></span>
                       <span className="offer-price-old">{formatPrice(14.99)}</span>
                     </div>
                   </div>
@@ -398,7 +398,7 @@ function FinalCheckoutContent() {
                   <div className="offer-details">
                     <span className="offer-text">1K views</span>
                     <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
+                      <span className="offer-price-new">For only <span className="offer-price-amount">{formatPrice(11.24)}</span></span>
                       <span className="offer-price-old">{formatPrice(14.99)}</span>
                     </div>
                   </div>

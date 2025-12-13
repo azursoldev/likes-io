@@ -18,18 +18,46 @@ function PostsSelectionContent() {
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [postLink, setPostLink] = useState("");
+  const [linkError, setLinkError] = useState("");
   
   const username = searchParams.get("username") || "";
   const qty = searchParams.get("qty") || "500";
   const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
 
+  // Validate Instagram post/reel URL
+  const isValidInstagramUrl = (url: string): boolean => {
+    if (!url.trim()) return false;
+    
+    // Instagram URL patterns: /p/ for posts, /reel/ for reels
+    const instagramPattern = /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+\/?/i;
+    return instagramPattern.test(url.trim());
+  };
+
+  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPostLink(value);
+    
+    // Validate on change
+    if (value.trim() && !isValidInstagramUrl(value)) {
+      setLinkError("Please enter a valid Instagram post or reel URL");
+    } else {
+      setLinkError("");
+    }
+  };
+
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (postLink.trim()) {
+    if (isValidInstagramUrl(postLink)) {
       // Navigate to final checkout step
       router.push(`/instagram/likes/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`);
+    } else {
+      setLinkError("Please enter a valid Instagram post or reel URL");
     }
+  };
+
+  const handleDetailsClick = () => {
+    router.push(`/instagram/likes/checkout?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
   };
 
   return (
@@ -39,7 +67,11 @@ function PostsSelectionContent() {
         <div className="posts-selection-container">
           {/* Progress Indicator */}
           <div className="checkout-progress">
-            <div className="progress-step completed">
+            <div 
+              className="progress-step completed" 
+              onClick={handleDetailsClick}
+              style={{ cursor: "pointer" }}
+            >
               <div className="progress-step-icon">
                 <FontAwesomeIcon icon={faCheck} />
               </div>
@@ -48,7 +80,7 @@ function PostsSelectionContent() {
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            <div className="progress-step active">
+            <div className="progress-step active" style={{ cursor: "default" }}>
               <div className="progress-step-icon">
                 <span>2</span>
               </div>
@@ -57,7 +89,7 @@ function PostsSelectionContent() {
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            <div className="progress-step">
+            <div className="progress-step" style={{ cursor: "default" }}>
               <div className="progress-step-icon">
                 <span>3</span>
               </div>
@@ -78,12 +110,17 @@ function PostsSelectionContent() {
                       <FontAwesomeIcon icon={faLink} className="posts-input-icon" />
                       <input
                         type="text"
-                        className="posts-input"
+                        className={`posts-input ${linkError ? "posts-input-error" : ""}`}
                         value={postLink}
-                        onChange={(e) => setPostLink(e.target.value)}
+                        onChange={handleLinkChange}
                         placeholder="https://www.instagram.com/p/C..."
                       />
                     </div>
+                    {linkError && (
+                      <p className="posts-error-text" style={{ color: "#e74c3c", fontSize: "0.875rem", marginTop: "0.5rem" }}>
+                        {linkError}
+                      </p>
+                    )}
                     <p className="posts-helper-text">
                       Ensure your account is public. Paste the full URL of the post or Reel you want to boost.
                     </p>
@@ -130,7 +167,7 @@ function PostsSelectionContent() {
                     type="button" 
                     className="order-continue-btn"
                     onClick={handleContinue}
-                    disabled={!postLink.trim()}
+                    disabled={!isValidInstagramUrl(postLink)}
                   >
                     Continue to checkout
                   </button>

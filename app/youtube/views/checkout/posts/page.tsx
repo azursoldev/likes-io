@@ -18,18 +18,51 @@ function PostsSelectionContent() {
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [postLink, setPostLink] = useState("");
+  const [linkError, setLinkError] = useState("");
   
   const username = searchParams.get("username") || "";
   const qty = searchParams.get("qty") || "5K";
   const priceValue = parseFloat(searchParams.get("price") || "179.99");
   const packageType = searchParams.get("type") || "High-Quality";
 
+  // Validate YouTube video URL
+  const isValidYouTubeUrl = (url: string): boolean => {
+    if (!url.trim()) return false;
+    
+    // YouTube URL patterns: youtube.com/watch?v=... or youtu.be/...
+    const youtubePatterns = [
+      /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[A-Za-z0-9_-]+/i,
+      /^https?:\/\/youtu\.be\/[A-Za-z0-9_-]+/i,
+      /^https?:\/\/(www\.)?youtube\.com\/embed\/[A-Za-z0-9_-]+/i
+    ];
+    
+    return youtubePatterns.some(pattern => pattern.test(url.trim()));
+  };
+
+  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPostLink(value);
+    
+    // Validate on change
+    if (value.trim() && !isValidYouTubeUrl(value)) {
+      setLinkError("Please enter a valid YouTube video URL");
+    } else {
+      setLinkError("");
+    }
+  };
+
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (postLink.trim()) {
+    if (isValidYouTubeUrl(postLink)) {
       // Navigate to final checkout step
       router.push(`/youtube/views/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`);
+    } else {
+      setLinkError("Please enter a valid YouTube video URL");
     }
+  };
+
+  const handleDetailsClick = () => {
+    router.push(`/youtube/views/checkout?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
   };
 
   return (
@@ -39,7 +72,11 @@ function PostsSelectionContent() {
         <div className="posts-selection-container">
           {/* Progress Indicator */}
           <div className="checkout-progress">
-            <div className="progress-step completed">
+            <div 
+              className="progress-step completed" 
+              onClick={handleDetailsClick}
+              style={{ cursor: "pointer" }}
+            >
               <div className="progress-step-icon">
                 <FontAwesomeIcon icon={faCheck} />
               </div>
@@ -48,7 +85,7 @@ function PostsSelectionContent() {
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            <div className="progress-step active">
+            <div className="progress-step active" style={{ cursor: "default" }}>
               <div className="progress-step-icon">
                 <span>2</span>
               </div>
@@ -57,7 +94,7 @@ function PostsSelectionContent() {
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            <div className="progress-step">
+            <div className="progress-step" style={{ cursor: "default" }}>
               <div className="progress-step-icon">
                 <span>3</span>
               </div>
@@ -78,12 +115,17 @@ function PostsSelectionContent() {
                       <FontAwesomeIcon icon={faLink} className="posts-input-icon" />
                       <input
                         type="text"
-                        className="posts-input"
+                        className={`posts-input ${linkError ? "posts-input-error" : ""}`}
                         value={postLink}
-                        onChange={(e) => setPostLink(e.target.value)}
+                        onChange={handleLinkChange}
                         placeholder="https://www.youtube.com/watch?v=..."
                       />
                     </div>
+                    {linkError && (
+                      <p className="posts-error-text" style={{ color: "#e74c3c", fontSize: "0.875rem", marginTop: "0.5rem" }}>
+                        {linkError}
+                      </p>
+                    )}
                     <p className="posts-helper-text">
                       Ensure your video is public. Paste the full URL of the video you want to boost.
                     </p>
@@ -130,7 +172,7 @@ function PostsSelectionContent() {
                     type="button" 
                     className="order-continue-btn"
                     onClick={handleContinue}
-                    disabled={!postLink.trim()}
+                    disabled={!isValidYouTubeUrl(postLink)}
                   >
                     Continue to checkout
                   </button>

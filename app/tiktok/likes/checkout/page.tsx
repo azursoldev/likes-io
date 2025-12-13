@@ -21,6 +21,7 @@ function CheckoutContent() {
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [username, setUsername] = useState("");
+  const [linkError, setLinkError] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -68,11 +69,34 @@ function CheckoutContent() {
     }
   }, [isPackageOpen]);
 
+  // Validate TikTok video URL
+  const isValidTikTokUrl = (url: string): boolean => {
+    if (!url.trim()) return false;
+    
+    // TikTok URL pattern: /@username/video/...
+    const tiktokPattern = /^https?:\/\/(www\.)?(vm\.)?tiktok\.com\/@[A-Za-z0-9_.]+\/video\/\d+\/?/i;
+    return tiktokPattern.test(url.trim());
+  };
+
+  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUsername(value);
+    
+    // Validate on change
+    if (value.trim() && !isValidTikTokUrl(value)) {
+      setLinkError("Please enter a valid TikTok video URL");
+    } else {
+      setLinkError("");
+    }
+  };
+
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
+    if (isValidTikTokUrl(username)) {
       // Navigate to posts selection page
       router.push(`/tiktok/likes/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+    } else {
+      setLinkError("Please enter a valid TikTok video URL");
     }
   };
 
@@ -120,11 +144,16 @@ function CheckoutContent() {
                 <label className="checkout-label">TikTok video link</label>
                 <input
                   type="text"
-                  className="checkout-input"
+                  className={`checkout-input ${linkError ? "checkout-input-error" : ""}`}
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={handleLinkChange}
                   placeholder="Enter your TikTok video URL"
                 />
+                {linkError && (
+                  <p className="checkout-error-text" style={{ color: "#e74c3c", fontSize: "0.875rem", marginTop: "0.5rem" }}>
+                    {linkError}
+                  </p>
+                )}
               </div>
 
               <div className="checkout-form-group">
@@ -165,7 +194,11 @@ function CheckoutContent() {
               </p>
 
               {/* Continue Button */}
-              <button type="submit" className="checkout-continue-btn">
+              <button 
+                type="submit" 
+                className="checkout-continue-btn"
+                disabled={!isValidTikTokUrl(username)}
+              >
                 Continue
               </button>
 
