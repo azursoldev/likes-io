@@ -12,7 +12,7 @@ pnpm-debug.log*
 coverage/
 
 # Env and editor
-.env*
+
 .DS_Store
 .vscode/
 .idea/
