@@ -267,6 +267,7 @@ export default function BlogDashboard() {
                       excerpt: "",
                       content: "",
                       featuredImageUrl: "",
+                      category: "General",
                       publishDate: new Date().toISOString().slice(0, 10),
                       published: false,
                     });
