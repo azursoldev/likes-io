@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
@@ -14,91 +14,68 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
-type BlogPost = {
+type BlogRow = {
   id: number;
   title: string;
   description: string;
-  authorId: number;
+  author: string;
+  category?: string | null;
   date: string;
   status: boolean;
 };
 
-const blogPosts: BlogPost[] = [
-  {
-    id: 1,
-    title: "The 2024 Instagram Algorithm: A Deep Dive for Creators",
-    description: "Tired of guessing what works? We're pulling back the curtain on the Instagram algorithm. Learn about the key ranking signals for Reels, Stories, and the feed to maximize your reach.",
-    authorId: 1,
-    date: "2024-01-15",
-    status: false,
-  },
-  {
-    id: 2,
-    title: "5 Content Pillars Every Successful Brand Needs on Instagram",
-    description: "Stop posting randomly. Discover how to build a powerful content strategy around 5 key pillars that will attract, engage, and convert your target audience.",
-    authorId: 1,
-    date: "2024-01-10",
-    status: false,
-  },
-  {
-    id: 3,
-    title: "Beyond the Follower Count: The Real Power of Social Proof",
-    description: "Why does social proof matter more than ever? Learn the psychology behind it and how to leverage likes and views to build trust and credibility with new visitors.",
-    authorId: 1,
-    date: "2024-01-05",
-    status: false,
-  },
-  {
-    id: 4,
-    title: "From 1k to 50k Followers in 90 Days: A Likes.io Case Study",
-    description: "We break down the exact strategy a small e-commerce brand used, combining our services with organic tactics, to achieve explosive growth and a 200% increase in sales.",
-    authorId: 1,
-    date: "2023-12-28",
-    status: false,
-  },
-  {
-    id: 5,
-    title: "Is Your Instagram Bio Costing You Followers? How to Fix It.",
-    description: "Your bio is your brand's elevator pitch. We provide a simple, effective template and tips to optimize your bio for maximum impact and follower conversion.",
-    authorId: 1,
-    date: "2023-12-20",
-    status: false,
-  },
-  {
-    id: 6,
-    title: "TikTok vs. Instagram Reels: Where Should You Focus in 2024?",
-    description: "The ultimate showdown. We analyze the pros, cons, and key audience differences between TikTok and Reels to help you decide where to invest your creative energy.",
-    authorId: 1,
-    date: "2023-12-15",
-    status: false,
-  },
-  {
-    id: 7,
-    title: "The Technical Side of Trust: Why Our Service is Safe",
-    description: "Go behind the scenes with our Head of Technology to understand the secure methods we use to deliver engagement, ensuring your account's safety is always the top priority.",
-    authorId: 1,
-    date: "2023-12-10",
-    status: false,
-  },
-];
-
 export default function BlogDashboard() {
-  const [posts, setPosts] = useState(blogPosts);
+  const [posts, setPosts] = useState<BlogRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [selectedPost, setSelectedPost] = useState<BlogRow | null>(null);
   const [editForm, setEditForm] = useState({
     title: "",
     excerpt: "",
     content: "",
     featuredImageUrl: "",
+    category: "General",
     publishDate: "",
     published: false,
   });
 
+  const loadPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch("/api/cms/blog");
+      if (!res.ok) throw new Error("Failed to load blog posts");
+      const data = await res.json();
+      const rows: BlogRow[] = (data.posts || []).map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        description: p.excerpt || "",
+        author: p.author?.name || p.author?.email || "Unknown",
+        category: p.category || "General",
+        date: p.publishedAt || p.createdAt || new Date().toISOString(),
+        status: !!p.isPublished,
+      }));
+      setPosts(rows);
+    } catch (err: any) {
+      console.error("Blog load error", err);
+      setError(err.message || "Failed to load blog posts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPosts();
+  }, []);
+
   const handleToggleStatus = (id: number) => {
-    setPosts(posts.map(post => 
-      post.id === id ? { ...post, status: !post.status } : post
-    ));
+    setPosts(prev =>
+      prev.map(post =>
+        post.id === id ? { ...post, status: !post.status } : post
+      )
+    );
   };
 
   const handleEdit = (id: number) => {
@@ -110,6 +87,7 @@ export default function BlogDashboard() {
         excerpt: post.description,
         content: "",
         featuredImageUrl: "",
+        category: post.category || "General",
         publishDate: post.date,
         published: post.status,
       });
@@ -125,29 +103,113 @@ export default function BlogDashboard() {
       excerpt: "",
       content: "",
       featuredImageUrl: "",
+      category: "General",
       publishDate: "",
       published: false,
     });
   };
 
-  const handleSavePost = () => {
-    if (selectedPost) {
-      setPosts(posts.map(post => 
-        post.id === selectedPost.id ? {
-          ...post,
+  const handleSavePost = async () => {
+    try {
+      setError(null);
+
+      // Create NEW post when no post is selected
+      if (!selectedPost) {
+        const slug = editForm.title
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+
+        const res = await fetch("/api/cms/blog", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: editForm.title,
+            slug,
+            excerpt: editForm.excerpt,
+            content: editForm.content || "Draft content",
+            featuredImage: editForm.featuredImageUrl || null,
+            category: editForm.category || null,
+            tags: null,
+            isPublished: editForm.published,
+            seoMeta: null,
+          }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to create blog post");
+        }
+
+        await loadPosts();
+        handleCloseModal();
+        return;
+      }
+
+      // UPDATE existing post
+      const res = await fetch(`/api/cms/blog?id=${selectedPost.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           title: editForm.title,
-          description: editForm.excerpt,
-          date: editForm.publishDate,
-          status: editForm.published,
-        } : post
-      ));
+          excerpt: editForm.excerpt,
+          content: editForm.content,
+          featuredImage: editForm.featuredImageUrl || null,
+          category: editForm.category || null,
+          tags: null,
+          isPublished: editForm.published,
+          publishedAt: editForm.publishDate || null,
+          seoMeta: null,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update blog post");
+      }
+
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === selectedPost.id
+            ? {
+                ...post,
+                title: editForm.title,
+                description: editForm.excerpt,
+                category: editForm.category,
+                date: editForm.publishDate,
+                status: editForm.published,
+              }
+            : post
+        )
+      );
+
+      handleCloseModal();
+    } catch (err: any) {
+      console.error("Save blog post error", err);
+      setError(err.message || "Failed to save blog post");
     }
-    handleCloseModal();
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this post?")) {
-      setPosts(posts.filter(post => post.id !== id));
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this post?")) {
+      return;
+    }
+
+    try {
+      setError(null);
+      const res = await fetch(`/api/cms/blog?id=${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete blog post");
+      }
+
+      setPosts((prev) => prev.filter((post) => post.id !== id));
+    } catch (err: any) {
+      console.error("Delete blog post error", err);
+      setError(err.message || "Failed to delete blog post");
     }
   };
 
@@ -195,11 +257,26 @@ export default function BlogDashboard() {
                 <p>Create, edit, and manage all blog posts.</p>
               </div>
               <div className="blog-hero-right">
-              <button className="blog-add-btn">
-                <FontAwesomeIcon icon={faPlus} />
-                <span>New Post</span>
-              </button>
-            </div>
+                <button
+                  className="blog-add-btn"
+                  onClick={() => {
+                    // Open empty modal ready to create a new post (client-side only for now)
+                    setSelectedPost(null);
+                    setEditForm({
+                      title: "",
+                      excerpt: "",
+                      content: "",
+                      featuredImageUrl: "",
+                      publishDate: new Date().toISOString().slice(0, 10),
+                      published: false,
+                    });
+                    setShowEditModal(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>New Post</span>
+                </button>
+              </div>
             </div>
           
           
@@ -216,7 +293,21 @@ export default function BlogDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {posts.map((post) => (
+                {loading && (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: "center" }}>
+                      Loading posts...
+                    </td>
+                  </tr>
+                )}
+                {error && !loading && (
+                  <tr>
+                    <td colSpan={5} style={{ color: "#b91c1c" }}>
+                      {error}
+                    </td>
+                  </tr>
+                )}
+                {!loading && !error && posts.map((post) => (
                   <tr key={post.id}>
                     <td className="blog-title-cell">
                       <div className="blog-title-content">
@@ -225,7 +316,7 @@ export default function BlogDashboard() {
                       </div>
                     </td>
                     <td className="blog-author-cell">
-                      <span>ID: {post.authorId}</span>
+                      <span>{post.author}</span>
                     </td>
                     <td className="blog-date-cell">
                       <FontAwesomeIcon icon={faCalendar} className="blog-calendar-icon" />
@@ -289,6 +380,26 @@ export default function BlogDashboard() {
                   value={editForm.excerpt}
                   onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })}
                 />
+              </div>
+
+              <div className="blog-edit-form-group">
+                <label htmlFor="edit-category">Category</label>
+                <select
+                  id="edit-category"
+                  className="blog-edit-input"
+                  value={editForm.category}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, category: e.target.value })
+                  }
+                >
+                  <option value="General">General</option>
+                  <option value="Algorithm Insights">Algorithm Insights</option>
+                  <option value="Instagram Growth">Instagram Growth</option>
+                  <option value="Content Strategy">Content Strategy</option>
+                  <option value="Social Proof">Social Proof</option>
+                  <option value="Case Study">Case Study</option>
+                  <option value="TikTok Tips">TikTok Tips</option>
+                </select>
               </div>
 
               <div className="blog-edit-form-group">

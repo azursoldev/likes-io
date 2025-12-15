@@ -1,13 +1,20 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
-import { getAllBlogPosts, getFeaturedBlogPost } from "../data/blogPosts";
-import type { BlogPost } from "../data/blogPosts";
 
-const BLOG_POSTS = getAllBlogPosts();
-const FEATURED_POST = getFeaturedBlogPost() || BLOG_POSTS[0];
+type UiBlogPost = {
+  id: string;
+  slug: string;
+  category: string;
+  title: string;
+  description: string;
+  author: string;
+  authorAvatar?: string;
+  date: string;
+  readTime: string;
+};
 
 const CATEGORIES = [
   "All Posts",
@@ -22,27 +29,73 @@ const CATEGORIES = [
 export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Posts");
+  const [posts, setPosts] = useState<UiBlogPost[]>([]);
+  const [featuredPost, setFeaturedPost] = useState<UiBlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch("/api/cms/blog?published=true");
+        if (!res.ok) {
+          throw new Error("Failed to load blog posts");
+        }
+        const data = await res.json();
+        const mapped: UiBlogPost[] = (data.posts || []).map((p: any) => {
+          const dt = p.publishedAt ? new Date(p.publishedAt) : new Date();
+          const authorBase = p.author?.name || p.author?.email || "L";
+          return {
+            id: String(p.id),
+            slug: p.slug,
+            category: p.category || "Blog",
+            title: p.title,
+            description: p.excerpt || "",
+            author: p.author?.name || p.author?.email || "Likes.io Team",
+            authorAvatar: authorBase.charAt(0).toUpperCase(),
+            date: dt.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            readTime: "5 min read",
+          };
+        });
+        setPosts(mapped);
+        setFeaturedPost(mapped[0] ?? null);
+      } catch (err: any) {
+        console.error("Blog page load error", err);
+        setError(err.message || "Failed to load blog posts");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void load();
+  }, []);
 
   const filteredPosts = useMemo(() => {
-    let posts = BLOG_POSTS;
+    let list = posts;
 
     // Filter by category tabs
     if (activeCategory !== "All Posts") {
-      posts = posts.filter((post) => post.category === activeCategory);
+      list = list.filter((post) => post.category === activeCategory);
     }
 
     // Filter by search query
     const query = searchQuery.trim().toLowerCase();
     if (query) {
-      posts = posts.filter(
+      list = list.filter(
         (post) =>
           post.title.toLowerCase().includes(query) ||
           post.description.toLowerCase().includes(query)
       );
     }
 
-    return posts;
-  }, [activeCategory, searchQuery]);
+    return list;
+  }, [posts, activeCategory, searchQuery]);
 
   return (
     <div className="blog-page">
@@ -56,37 +109,55 @@ export default function BlogPage() {
         </section>
 
         {/* Section 1: Featured Article */}
-        <section className="blog-section blog-section-featured">
-          <Link href={`/blog/${FEATURED_POST.slug}`} className="blog-featured-link">
-            <div className="blog-featured">
-              <div className="blog-featured-image">
-                <div className="blog-featured-image-placeholder">
-                  {FEATURED_POST.title}
-                </div>
-                <div className="blog-featured-overlay">
-                  <span className="blog-featured-category">{FEATURED_POST.category}</span>
-                  <h2 className="blog-featured-title">{FEATURED_POST.title}</h2>
-                </div>
-              </div>
-              <div className="blog-featured-content">
-                <span className="blog-category-badge">{FEATURED_POST.category}</span>
-                <h2 className="blog-featured-content-title">{FEATURED_POST.title}</h2>
-                <p className="blog-featured-description">{FEATURED_POST.description}</p>
-                <div className="blog-author">
-                  <div className="blog-author-avatar">
-                    {FEATURED_POST.authorAvatar || FEATURED_POST.author.charAt(0)}
+        {featuredPost && (
+          <section className="blog-section blog-section-featured">
+            <Link
+              href={`/blog/${featuredPost.slug}`}
+              className="blog-featured-link"
+            >
+              <div className="blog-featured">
+                <div className="blog-featured-image">
+                  <div className="blog-featured-image-placeholder">
+                    {featuredPost.title}
                   </div>
-                  <div className="blog-author-info">
-                    <div className="blog-author-name">{FEATURED_POST.author}</div>
-                    <div className="blog-author-meta">
-                      {FEATURED_POST.date} - {FEATURED_POST.readTime}
+                  <div className="blog-featured-overlay">
+                    <span className="blog-featured-category">
+                      {featuredPost.category}
+                    </span>
+                    <h2 className="blog-featured-title">
+                      {featuredPost.title}
+                    </h2>
+                  </div>
+                </div>
+                <div className="blog-featured-content">
+                  <span className="blog-category-badge">
+                    {featuredPost.category}
+                  </span>
+                  <h2 className="blog-featured-content-title">
+                    {featuredPost.title}
+                  </h2>
+                  <p className="blog-featured-description">
+                    {featuredPost.description}
+                  </p>
+                  <div className="blog-author">
+                    <div className="blog-author-avatar">
+                      {featuredPost.authorAvatar ||
+                        featuredPost.author.charAt(0)}
+                    </div>
+                    <div className="blog-author-info">
+                      <div className="blog-author-name">
+                        {featuredPost.author}
+                      </div>
+                      <div className="blog-author-meta">
+                        {featuredPost.date} - {featuredPost.readTime}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        </section>
+            </Link>
+          </section>
+        )}
 
         {/* Section 2: All Blog Posts */}
         <section className="blog-section blog-section-posts">
@@ -117,7 +188,15 @@ export default function BlogPage() {
 
           {/* Blog Posts Grid */}
           <div className="blog-posts-grid">
-            {filteredPosts.map((post) => (
+            {loading && (
+              <p style={{ gridColumn: "1 / -1" }}>Loading blog posts...</p>
+            )}
+            {error && !loading && (
+              <p style={{ gridColumn: "1 / -1", color: "#b91c1c" }}>{error}</p>
+            )}
+            {!loading &&
+              !error &&
+              filteredPosts.map((post) => (
               <Link key={post.id} href={`/blog/${post.slug}`} className="blog-post-card-link">
                 <article className="blog-post-card">
                   <div className="blog-post-image">

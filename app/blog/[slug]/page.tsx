@@ -2,21 +2,16 @@ import type { Metadata } from "next";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import BlogPostPage from "../../components/BlogPostPage";
-import { getBlogPostBySlug, getAllBlogPosts } from "../../data/blogPosts";
-
-export async function generateStaticParams() {
-  const posts = getAllBlogPosts();
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
-}
+import { prisma } from "@/lib/prisma";
 
 type Props = {
   params: { slug: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = getBlogPostBySlug(params.slug);
+  const post = await prisma.blogPost.findUnique({
+    where: { slug: params.slug },
+  });
   
   if (!post) {
     return {
@@ -32,28 +27,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function Page({ params }: Props) {
-  const post = getBlogPostBySlug(params.slug);
-
-  if (!post) {
-    return (
-      <div className="page-wrapper">
-        <Header />
-        <div className="container" style={{ padding: "100px 20px", textAlign: "center" }}>
-          <h1>Post Not Found</h1>
-          <p>The blog post you're looking for doesn't exist.</p>
-          <a href="/blog" style={{ color: "rgb(249, 115, 22)", textDecoration: "none" }}>
-            ← Back to Blog
-          </a>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="page-wrapper">
       <Header />
-      <BlogPostPage post={post} />
+      {/* Client component will fetch and render the post dynamically by slug */}
+      <BlogPostPage slug={params.slug} />
       <Footer />
     </div>
   );

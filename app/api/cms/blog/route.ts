@@ -98,3 +98,101 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Post id is required' },
+        { status: 400 }
+      );
+    }
+
+    const postId = parseInt(id, 10);
+    const body = await request.json();
+
+    const {
+      title,
+      excerpt,
+      content,
+      featuredImage,
+      category,
+      tags,
+      isPublished,
+      seoMeta,
+      publishedAt,
+    } = body;
+
+    const updated = await prisma.blogPost.update({
+      where: { id: postId },
+      data: {
+        title,
+        excerpt,
+        content,
+        featuredImage,
+        category,
+        tags: tags ? (tags as any) : undefined,
+        isPublished,
+        publishedAt: typeof publishedAt === 'string' ? new Date(publishedAt) : publishedAt,
+        seoMeta: seoMeta ? (seoMeta as any) : undefined,
+      },
+    });
+
+    return NextResponse.json({ post: updated });
+  } catch (error: any) {
+    console.error('Update blog post error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to update blog post' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Post id is required' },
+        { status: 400 }
+      );
+    }
+
+    const postId = parseInt(id, 10);
+
+    await prisma.blogPost.delete({
+      where: { id: postId },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Delete blog post error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete blog post' },
+      { status: 500 }
+    );
+  }
+}
+
