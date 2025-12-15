@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pollOrderStatuses } from '@/lib/jobs/order-status-poller';
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     // Verify cron secret if configured
