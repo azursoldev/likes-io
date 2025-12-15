@@ -3,6 +3,11 @@ import { NextResponse } from "next/server"
 
 export default withAuth(
   function middleware(req) {
+    // Allow public access to the admin login page
+    if (req.nextUrl.pathname === "/admin/login") {
+      return NextResponse.next()
+    }
+
     const token = req.nextauth.token
     const isAdmin = token?.role === "ADMIN"
     const isAdminRoute = req.nextUrl.pathname.startsWith("/admin")
@@ -17,6 +22,11 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
+        // Admin login page is always public
+        if (req.nextUrl.pathname === "/admin/login") {
+          return true
+        }
+
         // Admin routes require authentication
         if (req.nextUrl.pathname.startsWith("/admin")) {
           return !!token

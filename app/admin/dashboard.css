@@ -114,6 +114,141 @@
   display: block;
 }
 
+/* ============================= */
+/* Admin Login Page              */
+/* ============================= */
+
+.admin-login-page {
+  min-height: calc(100vh - 140px); /* header + footer */
+  background: #050b17;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 16px;
+}
+
+.admin-login-wrapper {
+  max-width: 520px;
+  width: 100%;
+}
+
+.admin-login-card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  padding: 32px 36px 28px;
+}
+
+.admin-login-title {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.admin-login-icon {
+  display: inline-block;
+  color: #ff6a1a;
+  font-weight: 800;
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.admin-login-title h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px;
+}
+
+.admin-login-title p {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.admin-login-form {
+  margin-top: 12px;
+}
+
+.admin-login-form label {
+  display: block;
+  font-size: 13px;
+  color: #4b5563;
+  margin-bottom: 14px;
+}
+
+.admin-login-form label span {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.admin-login-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.admin-login-form input:focus {
+  border-color: #ff6a1a;
+  box-shadow: 0 0 0 1px rgba(255, 106, 26, 0.35);
+}
+
+.admin-login-error {
+  margin: 6px 0 10px;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.admin-login-submit {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: none;
+  background: #111827;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+
+.admin-login-submit:hover:not(:disabled) {
+  background: #020617;
+}
+
+.admin-login-submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.admin-login-meta {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.admin-login-note {
+  margin-bottom: 4px;
+}
+
+.admin-login-back {
+  display: inline-block;
+  margin-top: 4px;
+  color: #ff6a1a;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.admin-login-back:hover {
+  text-decoration: underline;
+}
+
 .dashboard-content-header {
   display: flex;
   align-items: center;

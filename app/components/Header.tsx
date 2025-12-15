@@ -1,11 +1,13 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
 import PromoBar from "./PromoBar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 import { useCurrency } from "../contexts/CurrencyContext";
 
 export default function Header() {
+  const { status } = useSession();
   const { currency, setCurrency } = useCurrency();
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const currencyRef = useRef<HTMLDivElement>(null);
@@ -122,8 +124,23 @@ export default function Header() {
                 </div>
               )}
             </div>
-            <a className="login" href="/login">Login</a>
-            <a className="signup" href="/signup">Sign up</a>
+            {status === "authenticated" ? (
+              <>
+                <a className="login" href="/dashboard">My account</a>
+                <button
+                  type="button"
+                  className="signup"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <a className="login" href="/login">Login</a>
+                <a className="signup" href="/signup">Sign up</a>
+              </>
+            )}
           </div>
         </div>
       </header>
