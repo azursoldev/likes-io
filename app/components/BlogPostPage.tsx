@@ -166,7 +166,7 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
               <div className="blog-post-meta">
                 <div className="blog-post-meta-item">
                   <FontAwesomeIcon icon={faCalendar} />
-                  <span>Published on {post.publishedDate || post.date}</span>
+                  <span>Published on {post.date}</span>
                 </div>
                 <div className="blog-post-meta-item">
                   <FontAwesomeIcon icon={faClock} />
