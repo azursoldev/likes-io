@@ -2,17 +2,10 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "../admin/dashboard.css";
-
-const handleLogout = () => {
-  window.location.href = "/login";
-};
+import Header from "./Header";
+import Footer from "./Footer";
+import UserSidebar from "./UserSidebar";
 import {
-  faTh,
-  faList,
-  faLink,
-  faQuestionCircle,
-  faGear,
-  faSignOutAlt,
   faSearch,
   faFilter,
   faChevronLeft,
@@ -21,8 +14,6 @@ import {
   faXmark,
   faHeart,
 } from "@fortawesome/free-solid-svg-icons";
-import Header from "./Header";
-import Footer from "./Footer";
 
 type Order = {
   id: string;
@@ -99,53 +90,7 @@ export default function OrderHistory() {
       <Header />
 
       <div className="dashboard-container">
-        {/* Left Sidebar */}
-        <aside className="dashboard-sidebar">
-          <div className="dashboard-sidebar-brand">
-            <a href="/" className="brand-logo">
-              <span className="logo-text">Likes</span>
-              <span className="logo-dot">.io</span>
-            </a>
-          </div>
-          <nav className="dashboard-sidebar-nav">
-            <div>
-              <a href="/dashboard" className="dashboard-sidebar-link">
-                <FontAwesomeIcon icon={faTh} />
-                <span>Dashboard</span>
-              </a>
-              <a href="/dashboard/orders" className="dashboard-sidebar-link active">
-                <FontAwesomeIcon icon={faList} />
-                <span>Order History</span>
-              </a>
-              <a href="/dashboard/affiliate" className="dashboard-sidebar-link">
-                <FontAwesomeIcon icon={faLink} />
-                <span>Affiliate</span>
-              </a>
-              <a href="/dashboard/support" className="dashboard-sidebar-link">
-                <FontAwesomeIcon icon={faQuestionCircle} />
-                <span>Help & Support</span>
-              </a>
-            </div>
-            <div className="dashboard-sidebar-nav-bottom">
-              <div className="dashboard-sidebar-divider"></div>
-              <a href="/dashboard/settings" className="dashboard-sidebar-link">
-                <FontAwesomeIcon icon={faGear} />
-                <span>Settings</span>
-              </a>
-              <a 
-                href="/login" 
-                className="dashboard-sidebar-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleLogout();
-                }}
-              >
-                <FontAwesomeIcon icon={faSignOutAlt} />
-                <span>Log Out</span>
-              </a>
-            </div>
-          </nav>
-        </aside>
+        <UserSidebar active="orders" />
 
         {/* Main Content */}
         <main className="dashboard-main">

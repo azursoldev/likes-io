@@ -1,0 +1,501 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  role          UserRole  @default(USER)
+  isBlocked     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  orders        Order[]
+  reviews       Review[]
+  blogPosts     BlogPost[]
+  
+  @@index([email])
+  @@index([role])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// Order Management
+model Order {
+  id            String      @id @default(cuid())
+  userId       String
+  serviceId    String
+  platform     Platform
+  serviceType  ServiceType
+  quantity     Int
+  price        Float
+  currency     String      @default("USD")
+  status       OrderStatus @default(PENDING_PAYMENT)
+  link         String?
+  japOrderId   String?
+  japStatus    String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service      Service     @relation(fields: [serviceId], references: [id])
+  payment      Payment?
+  reviews      Review[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([platform])
+  @@index([createdAt])
+}
+
+enum Platform {
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+}
+
+enum ServiceType {
+  LIKES
+  FOLLOWERS
+  VIEWS
+  SUBSCRIBERS
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+// Service Management
+model Service {
+  id            String      @id @default(cuid())
+  name          String
+  platform      Platform
+  serviceType   ServiceType
+  japServiceId  String?
+  basePrice     Float
+  markup        Float       @default(0)
+  finalPrice    Float
+  minQuantity   Int?
+  maxQuantity   Int?
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  orders        Order[]
+  
+  @@unique([platform, serviceType, japServiceId])
+  @@index([platform])
+  @@index([serviceType])
+  @@index([isActive])
+}
+
+// Payment Management
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String        @unique
+  gateway       PaymentGateway
+  transactionId String?
+  amount        Float
+  currency      String        @default("USD")
+  status        PaymentStatus @default(PENDING)
+  webhookData   Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@index([status])
+  @@index([gateway])
+  @@index([createdAt])
+}
+
+enum PaymentGateway {
+  CHECKOUT_COM
+  BIGPAYME
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+// Social Media Profile Cache
+model SocialProfile {
+  id            String    @id @default(cuid())
+  platform      Platform
+  username      String
+  profileData   Json
+  posts         Json?
+  cachedAt      DateTime  @default(now())
+  expiresAt     DateTime
+  
+  @@unique([platform, username])
+  @@index([platform, username])
+  @@index([expiresAt])
+}
+
+// Admin Settings
+model AdminSettings {
+  id                    String   @id @default(cuid())
+  japApiUrl             String?
+  japApiKey             String?
+  checkoutApiKey        String?
+  checkoutWebhookSecret String?
+  bigPayMeApiKey        String?
+  bigPayMeWebhookSecret String?
+  rapidApiKey           String?
+  rapidApiInstagramHost String?
+  rapidApiTikTokHost    String?
+  rapidApiYouTubeHost   String?
+  smtpHost              String?
+  smtpUser              String?
+  smtpPass              String?
+  defaultCurrency       String   @default("USD")
+  updatedAt              DateTime @updatedAt
+  
+  @@map("admin_settings")
+}
+
+// CMS Models - Homepage Content
+model HomepageContent {
+  id              String   @id @default(cuid())
+  heroTitle       String
+  heroSubtitle    String
+  heroRating      String?
+  heroReviewCount String?
+  heroCtaButtons  Json?
+  isActive        Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+  
+  @@map("homepage_content")
+}
+
+model HeroSocialUpdate {
+  id          Int      @id @default(autoincrement())
+  handle      String
+  item        String
+  time        String
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  
+  @@index([displayOrder])
+  @@map("hero_social_updates")
+}
+
+model PromoBar {
+  id              String   @id @default(cuid())
+  messages        Json     // Array of strings
+  countdownSeconds Int?
+  isVisible       Boolean  @default(true)
+  displayOrder    Int      @default(0)
+  updatedAt       DateTime @updatedAt
+  
+  @@map("promo_bar")
+}
+
+model FeaturedOn {
+  id          Int      @id @default(autoincrement())
+  brandName   String
+  logoUrl     String?
+  link        String?
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  
+  @@index([displayOrder])
+  @@map("featured_on")
+}
+
+model PlatformSection {
+  id          Int      @id @default(autoincrement())
+  platform    Platform
+  title       String
+  description String
+  tags        Json     // Array of strings
+  ctaText     String
+  isActive    Boolean  @default(true)
+  
+  @@unique([platform])
+  @@map("platform_section")
+}
+
+model GetStartedContent {
+  id          Int      @id @default(autoincrement())
+  platform    Platform
+  packType    ServiceType
+  quality     String   // "hq" | "premium"
+  features    Json     // Array of strings
+  explanation String?
+  pricing     Json?
+  isActive    Boolean  @default(true)
+  
+  @@unique([platform, packType, quality])
+  @@index([platform])
+  @@map("get_started_content")
+}
+
+model InfluenceSection {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  steps       Json     // Array of {title, description, subpoints}
+  isActive    Boolean  @default(true)
+  
+  @@map("influence_section")
+}
+
+model AdvantageSection {
+  id          Int      @id @default(autoincrement())
+  title       String
+  subtitle    String
+  items       Json     // Array of {icon, title, desc}
+  isActive    Boolean  @default(true)
+  
+  @@map("advantage_section")
+}
+
+model QuickStartSection {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  buttons     Json     // Array of {href, label, icon}
+  isActive    Boolean  @default(true)
+  
+  @@map("quick_start_section")
+}
+
+// Service Page Content
+model ServicePageContent {
+  id              Int      @id @default(autoincrement())
+  platform        Platform
+  serviceType     ServiceType
+  heroTitle       String
+  heroSubtitle    String
+  heroRating      String?
+  heroReviewCount String?
+  packages        Json     // Package configurations
+  qualityCompare  Json?    // Quality comparison data
+  howItWorks      Json?     // Steps array
+  isActive        Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([platform, serviceType])
+  @@index([platform, serviceType])
+  @@map("service_page_content")
+}
+
+// FAQ Management
+model FAQ {
+  id          Int         @id @default(autoincrement())
+  question    String
+  answer      String
+  category    String?
+  platform    Platform?
+  serviceType ServiceType?
+  displayOrder Int        @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  
+  @@index([category])
+  @@index([platform, serviceType])
+  @@index([displayOrder])
+  @@map("faqs")
+}
+
+// Testimonials & Reviews
+model Testimonial {
+  id          Int      @id @default(autoincrement())
+  handle      String
+  role        String
+  text        String
+  rating      Int?
+  platform    Platform?
+  isApproved  Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  
+  @@index([isApproved])
+  @@index([isFeatured])
+  @@index([platform])
+  @@index([displayOrder])
+  @@map("testimonials")
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  orderId     String?
+  rating      Int
+  comment     String?
+  isApproved  Boolean  @default(false)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([isApproved])
+  @@index([isPublished])
+  @@map("reviews")
+}
+
+// Blog Management
+model BlogPost {
+  id            Int      @id @default(autoincrement())
+  title         String
+  slug          String   @unique
+  excerpt       String?
+  content       String   @db.Text
+  featuredImage String?
+  authorId      String
+  category      String?
+  tags          Json?    // Array of strings
+  publishedAt   DateTime?
+  isPublished   Boolean  @default(false)
+  seoMeta       Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  @@index([slug])
+  @@index([isPublished])
+  @@index([category])
+  @@index([publishedAt])
+  @@map("blog_posts")
+}
+
+// Team Management
+model TeamMember {
+  id          Int      @id @default(autoincrement())
+  name        String
+  role        String
+  bio         String?  @db.Text
+  photo       String?
+  socialLinks Json?    // {twitter, linkedin, etc.}
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  
+  @@index([displayOrder])
+  @@map("team_members")
+}
+
+// Social Proof
+model SocialProof {
+  id          Int      @id @default(autoincrement())
+  handle      String
+  item        String
+  time        String
+  platform    Platform?
+  isActive    Boolean  @default(true)
+  displayOrder Int     @default(0)
+  
+  @@index([isActive])
+  @@index([displayOrder])
+  @@map("social_proof")
+}
+
+// Notifications/Banners
+model Notification {
+  id          Int      @id @default(autoincrement())
+  title       String
+  message     String
+  type        String   // "info" | "warning" | "success" | "error"
+  isVisible   Boolean  @default(true)
+  targetPages Json?    // Array of page paths
+  scheduledAt DateTime?
+  expiresAt   DateTime?
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  
+  @@index([isVisible])
+  @@index([scheduledAt])
+  @@index([expiresAt])
+  @@map("notifications")
+}
+
+// Currency Rates
+model CurrencyRate {
+  id          Int      @id @default(autoincrement())
+  fromCurrency String
+  toCurrency   String
+  rate         Float
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([fromCurrency, toCurrency])
+  @@index([fromCurrency, toCurrency])
+  @@map("currency_rates")
+}
+
+// Icon/Asset Management
+model IconAsset {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String?
+  url         String
+  alt         String?
+  displayOrder Int     @default(0)
+  createdAt   DateTime @default(now())
+  
+  @@index([category])
+  @@index([displayOrder])
+  @@map("icon_assets")
+}
+
+// Email Templates
+model EmailTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String
+  subject     String
+  body        String   @db.Text
+  variables   Json?    // Array of available variables
+  type        String   // "order_confirmation" | "payment_success" | etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([type])
+  @@index([isActive])
+  @@map("email_templates")
+}
+
+// SEO Settings
+model SEOSettings {
+  id              Int      @id @default(autoincrement())
+  page            String   @unique // Page path or identifier
+  title           String?
+  description     String?
+  keywords        String?
+  ogImage         String?
+  ogTitle         String?
+  ogDescription   String?
+  twitterCard     String?
+  structuredData  Json?
+  updatedAt       DateTime @updatedAt
+  
+  @@index([page])
+  @@map("seo_settings")
+}
+

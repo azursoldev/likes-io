@@ -18,6 +18,10 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "baseUrl": ".",
+    "types": ["@types/node", "@prisma/client"],
+    "paths": {
+      "@/*": ["./*"]
+    },
     "incremental": true,
     "plugins": [
       {

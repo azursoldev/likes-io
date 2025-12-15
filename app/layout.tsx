@@ -1,6 +1,7 @@
 import './globals.css';
 import ScrollTopButton from './components/ScrollTopButton';
 import { CurrencyProvider } from './contexts/CurrencyContext';
+import NextAuthSessionProvider from '@/lib/session-provider';
 import type { Metadata } from 'next';
 
 import { config } from '@fortawesome/fontawesome-svg-core'
@@ -21,10 +22,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head />
       <body suppressHydrationWarning>
-        <CurrencyProvider>
-          {children}
-          <ScrollTopButton />
-        </CurrencyProvider>
+        <NextAuthSessionProvider>
+          <CurrencyProvider>
+            {children}
+            <ScrollTopButton />
+          </CurrencyProvider>
+        </NextAuthSessionProvider>
       </body>
     </html>
   );

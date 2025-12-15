@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faEnvelope, 
@@ -7,17 +8,53 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
     agreeToTerms: false,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log("Form submitted:", formData);
+    setError(null);
+    setSuccess(null);
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      setError("You must agree to the Terms of Service.");
+      return;
+    }
+
+    setLoading(true);
+    fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: formData.email.trim(),
+        password: formData.password,
+      }),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to create account.");
+        }
+        setSuccess("Account created! Redirecting to login...");
+        setTimeout(() => router.push("/login"), 1200);
+      })
+      .catch((err: any) => {
+        setError(err.message || "Something went wrong. Please try again.");
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +83,8 @@ export default function SignupPage() {
         </p>
 
         <div className="signup-form-card">
+          {error && <div className="signup-alert signup-alert-error">{error}</div>}
+          {success && <div className="signup-alert signup-alert-success">{success}</div>}
           <form className="signup-form" onSubmit={handleSubmit}>
             <div className="signup-input-group">
               <label htmlFor="email" className="signup-label">Email address</label>
@@ -115,7 +154,7 @@ export default function SignupPage() {
             </div>
 
             <button type="submit" className="signup-submit-btn">
-              Create Account
+              {loading ? "Creating..." : "Create Account"}
             </button>
           </form>
         </div>

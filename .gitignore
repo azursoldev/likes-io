@@ -16,7 +16,7 @@ coverage/
 .DS_Store
 .vscode/
 .idea/
-
+.md
 # Misc exports or saved pages
 Likes.io_*/
 *.html

@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faEnvelope, 
@@ -9,17 +11,41 @@ import {
 import { faGoogle, faFacebook } from "@fortawesome/free-brands-svg-icons";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
     captcha: false,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log("Form submitted:", formData);
+
+    setError(null);
+
+    if (!formData.captcha) {
+      setError("Please confirm you're not a robot.");
+      return;
+    }
+
+    setLoading(true);
+    const res = await signIn("credentials", {
+      redirect: false,
+      email: formData.email.trim(),
+      password: formData.password,
+    });
+
+    if (res?.error) {
+      setError(res.error || "Invalid credentials.");
+      setLoading(false);
+      return;
+    }
+
+    // On success, go to dashboard
+    router.push("/dashboard");
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,8 +151,10 @@ export default function LoginPage() {
                 <div className="login-captcha-logo">reCAPTCHA</div>
               </div>
 
-              <button type="submit" className="login-submit-btn">
-                Sign in
+              {error && <div className="login-alert login-alert-error">{error}</div>}
+
+              <button type="submit" className="login-submit-btn" disabled={loading}>
+                {loading ? "Signing in..." : "Sign in"}
               </button>
 
               <div className="login-divider">
