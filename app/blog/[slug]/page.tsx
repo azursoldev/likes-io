@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${post.title} | Likes.io Blog`,
-    description: post.description,
+    description: post.excerpt || "",
   };
 }
 
