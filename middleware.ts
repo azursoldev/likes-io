@@ -7,17 +7,8 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token, req }) => {
-        // TEMP: allow all /admin routes without auth
-        // Dashboard routes require authentication
-        if (req.nextUrl.pathname.startsWith("/dashboard")) {
-          return !!token
-        }
-        // My account requires authentication
-        if (req.nextUrl.pathname.startsWith("/my-account")) {
-          return !!token
-        }
-        // Allow all other routes
+      authorized: () => {
+        // TEMP: Allow all routes without authentication
         return true
       },
     },
@@ -25,9 +16,6 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/my-account/:path*",
-  ],
+  matcher: [],
 }
 
