@@ -32,7 +32,29 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Signup error:", error);
+    // Enhanced logging for Vercel debugging
+    console.error("Signup error:", {
+      message: error?.message,
+      code: error?.code,
+      name: error?.name,
+      stack: error?.stack,
+    });
+    
+    // Handle specific Prisma errors
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: "An account with this email already exists." },
+        { status: 409 }
+      );
+    }
+    
+    if (error?.code === 'P1001' || error?.message?.includes('connect') || error?.message?.includes('Can\'t reach database')) {
+      return NextResponse.json(
+        { error: "Database connection error. Please try again later." },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to create account. Please try again." },
       { status: 500 }
