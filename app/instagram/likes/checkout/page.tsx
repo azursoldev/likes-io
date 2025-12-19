@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useEffect, useRef } from "react";
+import { useState, Suspense, useEffect, useRef, useMemo } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -16,12 +16,31 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../contexts/CurrencyContext";
 
+type PackageOption = {
+  qty: number | string;
+  price: string;
+  strike?: string;
+  offText?: string;
+  serviceId?: string;
+};
+
+type PackageTab = {
+  id: string;
+  label: string;
+  packages: PackageOption[];
+};
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
-  const [username, setUsername] = useState("kyliejenner");
+  const [username, setUsername] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
+  const [usernameValid, setUsernameValid] = useState(false);
+  const [packages, setPackages] = useState<PackageTab[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get package info from URL params if available
@@ -32,19 +51,131 @@ function CheckoutContent() {
   const [qty, setQty] = useState(initialQty);
   const [priceValue, setPriceValue] = useState(initialPrice);
   
-  // Format selected package from URL params
-  const currencyCode = getCurrencySymbol() === "€" ? "EUR" : "USD";
-  const selectedPackage = `${qty} Likes / ${formatPrice(priceValue)} ${currencyCode}`;
+  // Fetch packages from CMS
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const response = await fetch("/api/cms/service-pages/instagram/likes");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.packages && Array.isArray(data.packages) && data.packages.length > 0) {
+            setPackages(data.packages);
+            
+            // Try to match initial package from URL params
+            const allPackages: PackageOption[] = [];
+            data.packages.forEach((tab: PackageTab) => {
+              tab.packages.forEach((pkg: PackageOption) => {
+                allPackages.push(pkg);
+              });
+            });
+            
+            // Find matching package from URL params
+            const matchingPackage = allPackages.find((pkg) => {
+              const pkgQty = typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty);
+              const pkgPrice = parseFloat(pkg.price.replace(/[^0-9.]/g, ""));
+              return pkgQty === initialQty && Math.abs(pkgPrice - initialPrice) < 0.01;
+            });
+            
+            if (matchingPackage) {
+              setQty(typeof matchingPackage.qty === "string" ? matchingPackage.qty : String(matchingPackage.qty));
+              setPriceValue(parseFloat(matchingPackage.price.replace(/[^0-9.]/g, "")));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching packages:", error);
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+    
+    fetchPackages();
+  }, []);
 
-  const packagePrices = [2.99, 8.99, 22.49, 17.99, 19.99, 64.99, 99.00];
-  const packageQuantities = [50, 100, 250, 500, "1K", "2.5K", "5K"];
-  
-  const packages = packageQuantities.map((qty, idx) => {
-    if (qty === "10,000+") return "10,000+ Custom";
-    return `${qty} Likes / ${formatPrice(packagePrices[idx])} ${currencyCode}`;
-  });
-  
-  packages.push("10,000+ Custom");
+  // Format selected package
+  const currencyCode = getCurrencySymbol() === "€" ? "EUR" : "USD";
+  const selectedPackage = useMemo(() => {
+    const qtyDisplay = typeof qty === "string" ? qty : String(qty);
+    return `${qtyDisplay} Likes / ${formatPrice(priceValue)} ${currencyCode}`;
+  }, [qty, priceValue, formatPrice, currencyCode]);
+
+  // Build package options list from CMS data (remove duplicates)
+  const packageOptions = useMemo(() => {
+    const optionsMap = new Map<string, { label: string; qty: string | number; price: number; tabLabel: string }>();
+    
+    packages.forEach((tab) => {
+      tab.packages.forEach((pkg) => {
+        const priceNum = parseFloat(pkg.price.replace(/[^0-9.]/g, "") || "0");
+        const qtyDisplay = typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty);
+        
+        // Create a unique key based on quantity and price to avoid duplicates
+        const uniqueKey = `${qtyDisplay}_${priceNum}`;
+        
+        // Only add if not already exists, or if this one has better discount info
+        if (!optionsMap.has(uniqueKey) || pkg.offText) {
+          const offText = pkg.offText ? ` - ${pkg.offText}` : "";
+          optionsMap.set(uniqueKey, {
+            label: `${qtyDisplay} Likes / ${formatPrice(priceNum)} ${currencyCode}${offText}`,
+            qty: pkg.qty,
+            price: priceNum,
+            tabLabel: tab.label,
+          });
+        }
+      });
+    });
+    
+    // Convert map to array and sort by quantity (numeric first, then string)
+    return Array.from(optionsMap.values()).sort((a, b) => {
+      const aQty = typeof a.qty === "string" ? parseFloat(a.qty.replace(/[^0-9.]/g, "")) || 999999 : a.qty;
+      const bQty = typeof b.qty === "string" ? parseFloat(b.qty.replace(/[^0-9.]/g, "")) || 999999 : b.qty;
+      return aQty - bQty;
+    });
+  }, [packages, formatPrice, currencyCode]);
+
+  // Validate Instagram username via API
+  const validateUsername = async (usernameValue: string) => {
+    if (!usernameValue.trim()) {
+      setUsernameError("");
+      setUsernameValid(false);
+      return;
+    }
+
+    setIsValidating(true);
+    setUsernameError("");
+
+    try {
+      const response = await fetch(`/api/instagram/validate-username?username=${encodeURIComponent(usernameValue)}`);
+      const data = await response.json();
+
+      if (response.ok && data.valid) {
+        setUsernameValid(true);
+        setUsernameError("");
+      } else {
+        setUsernameValid(false);
+        setUsernameError(data.error || "Invalid username");
+      }
+    } catch (error) {
+      console.error("Error validating username:", error);
+      setUsernameValid(false);
+      setUsernameError("Failed to validate username. Please try again.");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  // Debounce username validation
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (username.trim()) {
+        validateUsername(username);
+      } else {
+        setUsernameValid(false);
+        setUsernameError("");
+      }
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timeoutId);
+  }, [username]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -64,9 +195,13 @@ function CheckoutContent() {
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
+    if (username.trim() && usernameValid) {
       // Navigate to posts selection page
       router.push(`/instagram/likes/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+    } else if (!username.trim()) {
+      setUsernameError("Please enter your Instagram username");
+    } else if (!usernameValid) {
+      setUsernameError("Please enter a valid Instagram username");
     }
   };
 
@@ -112,13 +247,53 @@ function CheckoutContent() {
             <form className="checkout-form" onSubmit={handleContinue}>
               <div className="checkout-form-group">
                 <label className="checkout-label">Instagram username</label>
-                <input
-                  type="text"
-                  className="checkout-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your Instagram username"
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    className={`checkout-input ${usernameError ? "checkout-input-error" : ""} ${usernameValid ? "checkout-input-valid" : ""}`}
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setUsernameError("");
+                    }}
+                    placeholder="Enter your Instagram username"
+                    disabled={isValidating}
+                  />
+                  {isValidating && (
+                    <span style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "14px",
+                      color: "#666"
+                    }}>
+                      Validating...
+                    </span>
+                  )}
+                  {usernameValid && !isValidating && (
+                    <span style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "14px",
+                      color: "#10b981"
+                    }}>
+                      ✓ Valid
+                    </span>
+                  )}
+                </div>
+                {usernameError && (
+                  <span style={{
+                    display: "block",
+                    marginTop: "6px",
+                    fontSize: "13px",
+                    color: "#ef4444"
+                  }}>
+                    {usernameError}
+                  </span>
+                )}
               </div>
 
               <div className="checkout-form-group">
@@ -128,28 +303,33 @@ function CheckoutContent() {
                     type="button"
                     className="checkout-dropdown"
                     onClick={() => setIsPackageOpen(!isPackageOpen)}
+                    disabled={loadingPackages}
                   >
-                    <span>{selectedPackage}</span>
+                    <span>{loadingPackages ? "Loading packages..." : selectedPackage}</span>
                     <FontAwesomeIcon icon={faAngleDown} className="checkout-dropdown-icon" />
                   </button>
-                  {isPackageOpen && (
+                  {isPackageOpen && !loadingPackages && (
                     <div className="checkout-dropdown-menu">
-                      {packages.map((pkg, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          className="checkout-dropdown-item"
-                          onClick={() => {
-                            if (idx < packageQuantities.length) {
-                              setQty(packageQuantities[idx].toString());
-                              setPriceValue(packagePrices[idx]);
-                            }
-                            setIsPackageOpen(false);
-                          }}
-                        >
-                          {pkg}
-                        </button>
-                      ))}
+                      {packageOptions.length === 0 ? (
+                        <div style={{ padding: "12px", textAlign: "center", color: "#666" }}>
+                          No packages available
+                        </div>
+                      ) : (
+                        packageOptions.map((pkg, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="checkout-dropdown-item"
+                            onClick={() => {
+                              setQty(typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty));
+                              setPriceValue(pkg.price);
+                              setIsPackageOpen(false);
+                            }}
+                          >
+                            {pkg.label}
+                          </button>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>

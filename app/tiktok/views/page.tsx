@@ -2,16 +2,21 @@ import type { Metadata } from "next";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import ServiceHero from "../../components/ServiceHero";
-import AssuranceCard from "../../components/AssuranceCard";
-import PackagesSelector, { type PackageTabConfig } from "../../components/PackagesSelector";
-import QualityCompare from "../../components/QualityCompare";
+import {
+  ServicePageContentProvider,
+  DynamicServiceHero,
+  DynamicAssuranceCard,
+  DynamicPackagesSelector,
+  DynamicQualityCompare,
+  DynamicHowItWorks,
+  DynamicFAQSection,
+} from "../../components/ServicePageContent";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
-import HowItWorksSection from "../../components/HowItWorksSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
-import FAQSection, { type FAQItem } from "../../components/FAQSection";
 import MoreServicesCTA, { type CTAButton } from "../../components/MoreServicesCTA";
+import type { PackageTabConfig } from "../../components/PackagesSelector";
+import type { FAQItem } from "../../components/FAQSection";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
 
@@ -146,44 +151,43 @@ export default function Page() {
   return (
     <>
       <Header />
-      <ServiceHero
-        title="Go Viral on TikTok with Instant Views"
-        subtitle="Amplify your reach and trigger the TikTok algorithm with high-quality video views. Get the social proof you need to go viral and land on the For You Page."
-        rating="4.9/5"
-        basedon="based on"
-        reviewss="15,065+ reviews"
-      />
-      <AssuranceCard />
-      <PackagesSelector
-        tabsConfig={TIKTOK_VIEW_TABS}
-        metricLabel="Views"
-        defaultQtyTarget="5K"
-        ctaTemplate="Buy {qty} TikTok Views Now"
-      />
-      <QualityCompare title="Compare View Quality" columns={QUALITY_COLUMNS} />
-      <FeaturedOn />
-      <AdvantageSection />
-      <HowItWorksSection
-        title="How It Works"
-        subtitle="Our process is simple, fast, and secure. Get the views you need to make your videos stand out."
-        steps={STEPS}
-      />
-      <ReviewsSection
-        title="Loved by Creators Worldwide"
-        subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
-        reviews={REVIEWS}
-      />
-      <FAQSection
-        title="Frequently Asked Questions"
-        subtitle="Have questions? We've got answers. If you don't see your question here, feel free to contact us."
-        faqs={FAQS}
-      />
-      <MoreServicesCTA
-        title="More Growth Services from Likes.io"
-        highlight="Services"
-        body="TikTok views are powerful tools, but they're not the only engagements available from Likes.io. Pair them with our premium like and follower campaigns to round out your engagement metrics."
-        buttons={CTA_BUTTONS}
-      />
+      <ServicePageContentProvider
+        platform="tiktok"
+        serviceType="views"
+        defaultHeroTitle="Go Viral on TikTok with Instant Views"
+        defaultHeroSubtitle="Amplify your reach and trigger the TikTok algorithm with high-quality video views. Get the social proof you need to go viral and land on the For You Page."
+        defaultHeroRating="4.9/5"
+        defaultHeroReviewCount="15,065+ reviews"
+        defaultAssuranceCardText="Join over a million satisfied customers, including artists, companies, and top influencers. Our services are <b>100% discreet, secure, and delivered naturally</b> to ensure your account is always safe."
+        defaultPackages={TIKTOK_VIEW_TABS}
+        defaultQualityCompare={{ title: "Compare View Quality", columns: QUALITY_COLUMNS }}
+        defaultHowItWorks={{
+          title: "How It Works",
+          subtitle: "Our process is simple, fast, and secure. Get the views you need to make your videos stand out.",
+          steps: STEPS,
+        }}
+        defaultFAQs={FAQS}
+      >
+        <DynamicServiceHero />
+        <DynamicAssuranceCard />
+        <DynamicPackagesSelector />
+        <DynamicQualityCompare />
+        <FeaturedOn />
+        <AdvantageSection />
+        <DynamicHowItWorks />
+        <ReviewsSection
+          title="Loved by Creators Worldwide"
+          subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
+          reviews={REVIEWS}
+        />
+        <DynamicFAQSection />
+        <MoreServicesCTA
+          title="More Growth Services from Likes.io"
+          highlight="Services"
+          body="TikTok views are powerful tools, but they're not the only engagements available from Likes.io. Pair them with our premium like and follower campaigns to round out your engagement metrics."
+          buttons={CTA_BUTTONS}
+        />
+      </ServicePageContentProvider>
       <Footer />
     </>
   );

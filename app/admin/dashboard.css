@@ -4706,10 +4706,8 @@
 .price-option-field {
   padding: 6px 10px;
   font-size: 13px;
-  background: #374151;
   border: 1px solid #4b5563;
   border-radius: 4px;
-  color: #fff;
   flex: 0 0 auto;
   width: auto;
 }
@@ -4768,10 +4766,14 @@
   flex: 1 1;
   padding: 8px 12px;
   font-size: 14px;
-  background: #374151;
   border: 1px solid #4b5563;
   border-radius: 4px;
-  color: #fff;
+  transition: border-color 0.2s;
+}
+
+.service-id-input:focus {
+  outline: none;
+  border-color: #ff6b35;
 }
 
 .service-id-input::placeholder {
@@ -4826,10 +4828,8 @@
   flex: 1 1;
   padding: 8px 12px;
   font-size: 14px;
-  background: #374151;
   border: 1px solid #4b5563;
   border-radius: 4px;
-  color: #fff;
 }
 
 .feature-input::placeholder {

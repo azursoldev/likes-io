@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
+import { getServiceMapping } from "@/lib/service-utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faInstagram,
@@ -20,6 +21,7 @@ import {
   faPlus,
   faSearch,
   faBell,
+  faSave,
 } from "@fortawesome/free-solid-svg-icons";
 
 type Service = {
@@ -32,16 +34,14 @@ type Service = {
 
 const services: Service[] = [
   { id: 1, name: "Instagram Likes", platform: "instagram", packages: 9, active: true },
-  { id: 2, name: "Free Instagram Likes", platform: "instagram", packages: 0, active: true },
-  { id: 3, name: "Free Instagram Followers", platform: "instagram", packages: 0, active: true },
-  { id: 4, name: "Instagram Followers", platform: "instagram", packages: 7, active: true },
-  { id: 5, name: "Instagram Views", platform: "instagram", packages: 9, active: true },
-  { id: 6, name: "TikTok Likes", platform: "tiktok", packages: 7, active: true },
-  { id: 7, name: "TikTok Followers", platform: "tiktok", packages: 7, active: true },
-  { id: 8, name: "TikTok Views", platform: "tiktok", packages: 8, active: true },
-  { id: 9, name: "YouTube Views", platform: "youtube", packages: 9, active: true },
-  { id: 10, name: "YouTube Subscribers", platform: "youtube", packages: 9, active: true },
-  { id: 11, name: "YouTube Likes", platform: "youtube", packages: 9, active: true },
+  { id: 2, name: "Instagram Followers", platform: "instagram", packages: 7, active: true },
+  { id: 3, name: "Instagram Views", platform: "instagram", packages: 9, active: true },
+  { id: 4, name: "TikTok Likes", platform: "tiktok", packages: 7, active: true },
+  { id: 5, name: "TikTok Followers", platform: "tiktok", packages: 7, active: true },
+  { id: 6, name: "TikTok Views", platform: "tiktok", packages: 8, active: true },
+  { id: 7, name: "YouTube Views", platform: "youtube", packages: 9, active: true },
+  { id: 8, name: "YouTube Subscribers", platform: "youtube", packages: 9, active: true },
+  { id: 9, name: "YouTube Likes", platform: "youtube", packages: 9, active: true },
 ];
 
 const getPlatformIcon = (platform: string) => {
@@ -57,18 +57,35 @@ export default function ServicesDashboard() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [activeSection, setActiveSection] = useState("configuration");
   const [showBenefitsForm, setShowBenefitsForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  
+  // Form state
+  const [heroTitle, setHeroTitle] = useState("");
+  const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [heroRating, setHeroRating] = useState("");
+  const [heroReviewCount, setHeroReviewCount] = useState("");
+  const [assuranceCardText, setAssuranceCardText] = useState("");
+  const [howItWorksTitle, setHowItWorksTitle] = useState("");
+  const [howItWorksSubtitle, setHowItWorksSubtitle] = useState("");
+  
   const [steps, setSteps] = useState<Array<{ id: number; title: string; description: string; icon: string }>>([]);
   const [faqItems, setFaqItems] = useState<Array<{ id: number; question: string; answer: string }>>([]);
   const [highQualityPriceOptions, setHighQualityPriceOptions] = useState<Array<{ id: number; name: string; item: string; price1: string; price2: string; disc: string; serviceId: string }>>([]);
   const [premiumPriceOptions, setPremiumPriceOptions] = useState<Array<{ id: number; name: string; item: string; price1: string; price2: string; disc: string; serviceId: string }>>([]);
   const [highQualityFeatures, setHighQualityFeatures] = useState<Array<{ id: number; name: string }>>([]);
   const [premiumFeatures, setPremiumFeatures] = useState<Array<{ id: number; name: string }>>([]);
+  const [qualityCompareColumns, setQualityCompareColumns] = useState<Array<{ id: number; title: string; subtitle: string; bullets: string[]; highlight?: boolean; badge?: string }>>([]);
   
   const sectionRefs = {
     configuration: useRef<HTMLDivElement>(null),
     meta: useRef<HTMLDivElement>(null),
+    assurance: useRef<HTMLDivElement>(null),
     benefits: useRef<HTMLDivElement>(null),
     pricing: useRef<HTMLDivElement>(null),
+    qualitycompare: useRef<HTMLDivElement>(null),
     howitworks: useRef<HTMLDivElement>(null),
     faq: useRef<HTMLDivElement>(null),
   };
@@ -78,8 +95,10 @@ export default function ServicesDashboard() {
   const editSectionRefs = {
     configuration: useRef<HTMLDivElement>(null),
     meta: useRef<HTMLDivElement>(null),
+    assurance: useRef<HTMLDivElement>(null),
     benefits: useRef<HTMLDivElement>(null),
     pricing: useRef<HTMLDivElement>(null),
+    qualitycompare: useRef<HTMLDivElement>(null),
     howitworks: useRef<HTMLDivElement>(null),
     faq: useRef<HTMLDivElement>(null),
   };
@@ -88,10 +107,168 @@ export default function ServicesDashboard() {
     setShowAddServiceModal(true);
   };
 
-  const handleEditClick = (service: Service) => {
+  const handleEditClick = async (service: Service) => {
     setSelectedService(service);
     setShowEditModal(true);
     setActiveSection("configuration");
+    setLoading(true);
+    setError(null);
+    
+    // Reset all form state to prevent data from previous service persisting
+    setHeroTitle("");
+    setHeroSubtitle("");
+    setHeroRating("");
+    setHeroReviewCount("");
+    setAssuranceCardText("");
+    setHowItWorksTitle("");
+    setHowItWorksSubtitle("");
+    setSteps([]);
+    setHighQualityPriceOptions([]);
+    setPremiumPriceOptions([]);
+    setHighQualityFeatures([]);
+    setPremiumFeatures([]);
+    setQualityCompareColumns([]);
+    setFaqItems([]);
+    
+    const mapping = getServiceMapping(service.name);
+    if (!mapping) {
+      setError("Could not determine platform/service type for this service");
+      setLoading(false);
+      return;
+    }
+    
+    console.log(`Loading service content for: ${service.name}`, {
+      platform: mapping.platform,
+      serviceType: mapping.serviceType
+    });
+    
+    try {
+      const response = await fetch(`/api/cms/service-pages/${mapping.platform}/${mapping.serviceType}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch service content");
+      }
+      const data = await response.json();
+      
+      console.log(`Loaded data for ${mapping.platform}/${mapping.serviceType}:`, {
+        hasPackages: !!(data.packages && Array.isArray(data.packages) && data.packages.length > 0),
+        packagesCount: data.packages?.length || 0
+      });
+      
+      // Populate form with fetched data or defaults
+      setHeroTitle(data.heroTitle || "");
+      setHeroSubtitle(data.heroSubtitle || "");
+      setHeroRating(data.heroRating || "");
+      setHeroReviewCount(data.heroReviewCount || "");
+      setAssuranceCardText(data.assuranceCardText || "Join over a million satisfied customers, including artists, companies, and top influencers. Our services are 100% discreet, secure, and delivered naturally to ensure your account is always safe.");
+      
+      if (data.howItWorks) {
+        setHowItWorksTitle(data.howItWorks.title || "");
+        setHowItWorksSubtitle(data.howItWorks.subtitle || "");
+        if (data.howItWorks.steps && Array.isArray(data.howItWorks.steps)) {
+          setSteps(data.howItWorks.steps.map((step: any, idx: number) => ({
+            id: idx,
+            title: step.title || "",
+            description: step.description || "",
+            icon: step.icon || "CheckCircle"
+          })));
+        } else {
+          setSteps([]);
+        }
+      } else {
+        setSteps([]);
+      }
+      
+      // Reset packages first, then populate if data exists
+      setHighQualityPriceOptions([]);
+      setPremiumPriceOptions([]);
+      
+      if (data.packages && Array.isArray(data.packages) && data.packages.length > 0) {
+        // Parse packages into price options
+        const highQualityTab = data.packages.find((tab: any) => tab.id === "high" || tab.label?.toLowerCase().includes("high"));
+        const premiumTab = data.packages.find((tab: any) => tab.id === "premium" || tab.label?.toLowerCase().includes("premium"));
+        
+        if (highQualityTab && highQualityTab.packages && Array.isArray(highQualityTab.packages) && highQualityTab.packages.length > 0) {
+          setHighQualityPriceOptions(highQualityTab.packages.map((pkg: any, idx: number) => ({
+            id: Date.now() + idx,
+            name: pkg.offText || "",
+            item: typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty),
+            price1: pkg.price || "",
+            price2: pkg.strike || "",
+            disc: pkg.save || "",
+            serviceId: pkg.serviceId || "" // Load Service ID from saved data
+          })));
+        }
+        
+        if (premiumTab && premiumTab.packages && Array.isArray(premiumTab.packages) && premiumTab.packages.length > 0) {
+          setPremiumPriceOptions(premiumTab.packages.map((pkg: any, idx: number) => ({
+            id: Date.now() + idx + 1000,
+            name: pkg.offText || "",
+            item: typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty),
+            price1: pkg.price || "",
+            price2: pkg.strike || "",
+            disc: pkg.save || "",
+            serviceId: pkg.serviceId || "" // Load Service ID from saved data
+          })));
+        }
+      }
+      
+      // Reset quality compare columns first
+      setQualityCompareColumns([]);
+      setHighQualityFeatures([]);
+      setPremiumFeatures([]);
+      
+      if (data.qualityCompare && data.qualityCompare.columns && Array.isArray(data.qualityCompare.columns) && data.qualityCompare.columns.length > 0) {
+        setQualityCompareColumns(data.qualityCompare.columns.map((col: any, idx: number) => ({
+          id: idx,
+          title: col.title || "",
+          subtitle: col.subtitle || "",
+          bullets: col.bullets || [],
+          // Premium column (index 1) should default to highlighted with RECOMMENDED badge
+          highlight: idx === 1 ? (col.highlight !== undefined ? col.highlight : true) : (col.highlight || false),
+          badge: idx === 1 ? (col.badge || "RECOMMENDED") : (col.badge || "")
+        })));
+        
+        // Extract features from quality compare columns
+        // Convert HTML back to markdown format for editing (so user can edit **text** syntax)
+        const htmlToMarkdown = (html: string): string => {
+          // Convert <strong>text</strong> back to **text**
+          let markdown = html.replace(/<strong>(.+?)<\/strong>/gi, '**$1**');
+          // Also handle case-insensitive and any remaining HTML tags
+          markdown = markdown.replace(/<strong[^>]*>(.+?)<\/strong>/gi, '**$1**');
+          return markdown;
+        };
+        
+        if (data.qualityCompare.columns[0] && data.qualityCompare.columns[0].bullets && Array.isArray(data.qualityCompare.columns[0].bullets)) {
+          setHighQualityFeatures(data.qualityCompare.columns[0].bullets.map((bullet: string, idx: number) => ({
+            id: Date.now() + idx,
+            name: htmlToMarkdown(bullet) // Convert HTML <strong> back to **markdown** for editing
+          })));
+        }
+        if (data.qualityCompare.columns[1] && data.qualityCompare.columns[1].bullets && Array.isArray(data.qualityCompare.columns[1].bullets)) {
+          setPremiumFeatures(data.qualityCompare.columns[1].bullets.map((bullet: string, idx: number) => ({
+            id: Date.now() + idx + 1000,
+            name: htmlToMarkdown(bullet) // Convert HTML <strong> back to **markdown** for editing
+          })));
+        }
+      }
+      
+      // Reset FAQs first
+      setFaqItems([]);
+      
+      // Load FAQs
+      if (data.faqs && Array.isArray(data.faqs) && data.faqs.length > 0) {
+        setFaqItems(data.faqs.map((faq: any, idx: number) => ({
+          id: Date.now() + idx,
+          question: faq.q || faq.question || "",
+          answer: faq.a || faq.answer || ""
+        })));
+      }
+    } catch (err: any) {
+      console.error("Error fetching service content:", err);
+      setError(err.message || "Failed to load service content");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -109,11 +286,252 @@ export default function ServicesDashboard() {
     setShowAddServiceModal(false);
   };
 
-  const handleSaveEditChanges = () => {
-    // Handle save logic here
-    console.log("Saving edited service...", selectedService);
+  const handleSaveEditChanges = async () => {
+    if (!selectedService) return;
+    
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+    
+    const mapping = getServiceMapping(selectedService.name);
+    if (!mapping) {
+      setError("Could not determine platform/service type for this service");
+      setSaving(false);
+      return;
+    }
+    
+    try {
+      // Helper function to parse quantity (handles "1K", "10,000+", etc.)
+      const parseQty = (qtyStr: string): number | string => {
+        const cleaned = qtyStr.trim();
+        // If it contains "K" or "+", return as string
+        if (cleaned.includes("K") || cleaned.includes("+")) {
+          return cleaned;
+        }
+        // Try to parse as number
+        const num = Number(cleaned.replace(/[^0-9.]/g, ""));
+        return isNaN(num) ? cleaned : num;
+      };
+
+      // Helper function to calculate per-unit price
+      const calculatePerLike = (priceStr: string, qty: number | string, unit: string): string => {
+        const price = parseFloat(priceStr.replace(/[^0-9.]/g, "") || "0");
+        if (price === 0) return `$0.0000 / ${unit}`;
+        
+        // If qty is a string (like "1K", "10,000+"), try to parse it
+        let qtyNum: number;
+        if (typeof qty === "string") {
+          if (qty.includes("K")) {
+            qtyNum = parseFloat(qty.replace(/[^0-9.]/g, "")) * 1000;
+          } else if (qty.includes("+")) {
+            // For custom quantities, use a default (e.g., 10000)
+            qtyNum = parseFloat(qty.replace(/[^0-9.]/g, "")) || 10000;
+          } else {
+            qtyNum = parseFloat(qty.replace(/[^0-9.]/g, "")) || 1;
+          }
+        } else {
+          qtyNum = qty || 1;
+        }
+        
+        const perUnit = price / qtyNum;
+        return `$${perUnit.toFixed(4)} / ${unit}`;
+      };
+
+      const unit = mapping.serviceType === "likes" ? "like" : mapping.serviceType === "followers" ? "follower" : mapping.serviceType === "views" ? "view" : "subscriber";
+      
+      // Transform form data to API format
+      // Always include both high-quality and premium packages, even if empty, so both tabs show on frontend
+      const packages = [];
+      
+      // Always add high-quality packages (even if empty)
+      packages.push({
+        id: "high",
+        label: "High-Quality " + (mapping.serviceType === "likes" ? "Likes" : mapping.serviceType === "followers" ? "Followers" : mapping.serviceType === "views" ? "Views" : "Subscribers"),
+        packages: highQualityPriceOptions.length > 0 ? highQualityPriceOptions.map(opt => {
+          const qty = parseQty(opt.item);
+          return {
+            qty,
+            perLike: calculatePerLike(opt.price1, qty, unit),
+            price: opt.price1,
+            strike: opt.price2 || undefined,
+            save: opt.disc || undefined,
+            offText: opt.name || undefined,
+            serviceId: opt.serviceId || undefined // Include Service ID for SMM Panel integration
+          };
+        }) : []
+      });
+      
+      // Always add premium packages (even if empty)
+      packages.push({
+        id: "premium",
+        label: "Premium " + (mapping.serviceType === "likes" ? "Likes" : mapping.serviceType === "followers" ? "Followers" : mapping.serviceType === "views" ? "Views" : "Subscribers"),
+        packages: premiumPriceOptions.length > 0 ? premiumPriceOptions.map(opt => {
+          const qty = parseQty(opt.item);
+          return {
+            qty,
+            perLike: calculatePerLike(opt.price1, qty, unit),
+            price: opt.price1,
+            strike: opt.price2 || undefined,
+            save: opt.disc || undefined,
+            offText: opt.name || undefined,
+            serviceId: opt.serviceId || undefined // Include Service ID for SMM Panel integration
+          };
+        }) : []
+      });
+      
+      // Build qualityCompare from columns, but sync features from Pricing Tiers if they exist
+      let qualityCompareColumnsToSave = [...qualityCompareColumns];
+      
+      // Helper function to convert markdown-style bold (**text**) to HTML (<strong>text</strong>)
+      const convertMarkdownToHTML = (text: string): string => {
+        return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      };
+      
+      // Always sync features from Pricing Tiers to Quality Compare columns
+      // This ensures features are always up-to-date
+      
+      // Sync High-Quality features
+      if (highQualityFeatures.length > 0) {
+        if (qualityCompareColumnsToSave.length > 0) {
+          // Update existing first column (High-Quality) bullets from features
+          qualityCompareColumnsToSave[0] = {
+            ...qualityCompareColumnsToSave[0],
+            bullets: highQualityFeatures.map(f => convertMarkdownToHTML(f.name))
+          };
+        } else {
+          // Create High-Quality column if it doesn't exist
+          qualityCompareColumnsToSave.push({
+            id: 0,
+            title: "High-Quality " + (mapping.serviceType === "likes" ? "Likes" : mapping.serviceType === "followers" ? "Followers" : mapping.serviceType === "views" ? "Views" : "Subscribers"),
+            subtitle: "Great for giving your posts a quick and affordable boost.",
+            bullets: highQualityFeatures.map(f => convertMarkdownToHTML(f.name)),
+            highlight: false,
+            badge: ""
+          });
+        }
+      }
+      
+      // Always ensure Premium column exists if we have premium features
+      if (premiumFeatures.length > 0) {
+        // Find Premium column by id or title
+        const premiumColumnIndex = qualityCompareColumnsToSave.findIndex(
+          col => col.id === 1 || col.title?.toLowerCase().includes("premium")
+        );
+        
+        if (premiumColumnIndex >= 0) {
+          // Update existing Premium column bullets from features, preserving highlight and badge
+          qualityCompareColumnsToSave[premiumColumnIndex] = {
+            ...qualityCompareColumnsToSave[premiumColumnIndex],
+            bullets: premiumFeatures.map(f => convertMarkdownToHTML(f.name)),
+            highlight: qualityCompareColumnsToSave[premiumColumnIndex].highlight !== undefined 
+              ? qualityCompareColumnsToSave[premiumColumnIndex].highlight 
+              : true,
+            badge: qualityCompareColumnsToSave[premiumColumnIndex].badge || "RECOMMENDED"
+          };
+        } else {
+          // Create Premium column if it doesn't exist
+          qualityCompareColumnsToSave.push({
+            id: qualityCompareColumnsToSave.length,
+            title: "Premium " + (mapping.serviceType === "likes" ? "Likes" : mapping.serviceType === "followers" ? "Followers" : mapping.serviceType === "views" ? "Views" : "Subscribers"),
+            subtitle: "Our best offering for maximum impact and organic growth.",
+            bullets: premiumFeatures.map(f => convertMarkdownToHTML(f.name)),
+            highlight: true,
+            badge: "RECOMMENDED"
+          });
+        }
+      }
+      
+      // Sort columns to ensure High-Quality is first, Premium is second
+      const sortedColumns = [...qualityCompareColumnsToSave].sort((a, b) => {
+        const aIsPremium = a.id === 1 || a.title?.toLowerCase().includes("premium");
+        const bIsPremium = b.id === 1 || b.title?.toLowerCase().includes("premium");
+        if (aIsPremium && !bIsPremium) return 1;
+        if (!aIsPremium && bIsPremium) return -1;
+        return (a.id || 0) - (b.id || 0);
+      });
+      
+      const qualityCompare = sortedColumns.length > 0 ? {
+        title: `Compare ${mapping.serviceType === "likes" ? "Like" : mapping.serviceType === "followers" ? "Follower" : mapping.serviceType === "views" ? "View" : "Subscriber"} Quality`,
+        columns: sortedColumns.map((col, idx) => {
+          const isPremium = col.id === 1 || col.title?.toLowerCase().includes("premium");
+          return {
+            title: col.title,
+            subtitle: col.subtitle,
+            bullets: col.bullets && Array.isArray(col.bullets) ? col.bullets : [],
+            // Ensure Premium column always has highlight and badge
+            highlight: isPremium ? (col.highlight !== undefined ? col.highlight : true) : (col.highlight || false),
+            badge: isPremium ? (col.badge || "RECOMMENDED") : (col.badge || "")
+          };
+        })
+      } : null;
+      
+      const howItWorks = {
+        title: howItWorksTitle || "How It Works",
+        subtitle: howItWorksSubtitle || "",
+        steps: steps.map(step => ({
+          title: step.title,
+          description: step.description
+        }))
+      };
+      
+      const faqs = faqItems.map(item => ({
+        q: item.question,
+        a: item.answer
+      }));
+      
+      // Log for debugging - verify correct platform/serviceType is being used
+      console.log(`Saving service content for: ${selectedService.name}`, {
+        platform: mapping.platform,
+        serviceType: mapping.serviceType,
+        packagesCount: packages.length,
+        highQualityPackages: packages[0]?.packages?.length || 0,
+        premiumPackages: packages[1]?.packages?.length || 0
+      });
+      
+      const response = await fetch(`/api/cms/service-pages/${mapping.platform}/${mapping.serviceType}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          heroTitle,
+          heroSubtitle,
+          heroRating,
+          heroReviewCount,
+          assuranceCardText,
+          packages,
+          qualityCompare,
+          howItWorks,
+          faqs,
+          isActive: true
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to save service content");
+      }
+      
+      const responseData = await response.json();
+      
+      // Check if there's a warning about assuranceCardText
+      if (responseData.warning) {
+        setError(responseData.warning);
+        // Still show success for other fields
+        setSuccess(true);
+      } else {
+        setSuccess(true);
+        setError(null);
+      }
+      setTimeout(() => {
     setShowEditModal(false);
     setSelectedService(null);
+        setSuccess(false);
+      }, 1500);
+    } catch (err: any) {
+      console.error("Error saving service content:", err);
+      setError(err.message || "Failed to save service content");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleNavClick = (sectionId: string) => {
@@ -185,17 +603,73 @@ export default function ServicesDashboard() {
   const handleAddFeature = (type: "highQuality" | "premium") => {
     const newFeature = { id: Date.now(), name: "" };
     if (type === "highQuality") {
-      setHighQualityFeatures([...highQualityFeatures, newFeature]);
+      const updatedFeatures = [...highQualityFeatures, newFeature];
+      setHighQualityFeatures(updatedFeatures);
+      // Sync to qualityCompareColumns
+      if (qualityCompareColumns.length > 0) {
+        setQualityCompareColumns(prev => {
+          const newCols = [...prev];
+          if (newCols[0]) {
+            newCols[0] = {
+              ...newCols[0],
+              bullets: updatedFeatures.map(f => f.name)
+            };
+          }
+          return newCols;
+        });
+      }
     } else {
-      setPremiumFeatures([...premiumFeatures, newFeature]);
+      const updatedFeatures = [...premiumFeatures, newFeature];
+      setPremiumFeatures(updatedFeatures);
+      // Sync to qualityCompareColumns
+      if (qualityCompareColumns.length > 1) {
+        setQualityCompareColumns(prev => {
+          const newCols = [...prev];
+          if (newCols[1]) {
+            newCols[1] = {
+              ...newCols[1],
+              bullets: updatedFeatures.map(f => f.name)
+            };
+          }
+          return newCols;
+        });
+      }
     }
   };
 
   const handleRemoveFeature = (type: "highQuality" | "premium", id: number) => {
     if (type === "highQuality") {
-      setHighQualityFeatures(highQualityFeatures.filter(feat => feat.id !== id));
+      const updatedFeatures = highQualityFeatures.filter(feat => feat.id !== id);
+      setHighQualityFeatures(updatedFeatures);
+      // Sync to qualityCompareColumns
+      if (qualityCompareColumns.length > 0) {
+        setQualityCompareColumns(prev => {
+          const newCols = [...prev];
+          if (newCols[0]) {
+            newCols[0] = {
+              ...newCols[0],
+              bullets: updatedFeatures.map(f => f.name)
+            };
+          }
+          return newCols;
+        });
+      }
     } else {
-      setPremiumFeatures(premiumFeatures.filter(feat => feat.id !== id));
+      const updatedFeatures = premiumFeatures.filter(feat => feat.id !== id);
+      setPremiumFeatures(updatedFeatures);
+      // Sync to qualityCompareColumns
+      if (qualityCompareColumns.length > 1) {
+        setQualityCompareColumns(prev => {
+          const newCols = [...prev];
+          if (newCols[1]) {
+            newCols[1] = {
+              ...newCols[1],
+              bullets: updatedFeatures.map(f => f.name)
+            };
+          }
+          return newCols;
+        });
+      }
     }
   };
 
@@ -204,11 +678,56 @@ export default function ServicesDashboard() {
       setHighQualityFeatures(highQualityFeatures.map(feat => 
         feat.id === id ? { ...feat, name: value } : feat
       ));
+      // Also update qualityCompareColumns bullets
+      if (qualityCompareColumns.length > 0) {
+        const updatedFeatures = highQualityFeatures.map(feat => 
+          feat.id === id ? { ...feat, name: value } : feat
+        );
+        setQualityCompareColumns(prev => {
+          const newCols = [...prev];
+          if (newCols[0]) {
+            newCols[0] = {
+              ...newCols[0],
+              bullets: updatedFeatures.map(f => f.name)
+            };
+          }
+          return newCols;
+        });
+      }
     } else {
       setPremiumFeatures(premiumFeatures.map(feat => 
         feat.id === id ? { ...feat, name: value } : feat
       ));
+      // Also update qualityCompareColumns bullets
+      if (qualityCompareColumns.length > 1) {
+        const updatedFeatures = premiumFeatures.map(feat => 
+          feat.id === id ? { ...feat, name: value } : feat
+        );
+        setQualityCompareColumns(prev => {
+          const newCols = [...prev];
+          if (newCols[1]) {
+            newCols[1] = {
+              ...newCols[1],
+              bullets: updatedFeatures.map(f => f.name)
+            };
+          }
+          return newCols;
+        });
+      }
     }
+  };
+
+  const handleQualityCompareColumnChange = (index: number, field: string, value: string | boolean) => {
+    setQualityCompareColumns(prev => {
+      const newCols = [...prev];
+      if (newCols[index]) {
+        newCols[index] = {
+          ...newCols[index],
+          [field]: value
+        };
+      }
+      return newCols;
+    });
   };
 
   useEffect(() => {
@@ -258,8 +777,10 @@ export default function ServicesDashboard() {
   const navSections = [
     { id: "configuration", label: "Configuration" },
     { id: "meta", label: "Meta & Hero" },
+    { id: "assurance", label: "Assurance Card" },
     { id: "benefits", label: "Benefits Section" },
     { id: "pricing", label: "Pricing Tiers" },
+    { id: "qualitycompare", label: "Compare Quality" },
     { id: "howitworks", label: "How It Works" },
     { id: "faq", label: "FAQ" },
   ];
@@ -477,7 +998,7 @@ export default function ServicesDashboard() {
                   <h3 className="add-service-section-title">Pricing Tiers</h3>
                   <div className="add-service-pricing-cards">
                     <div className="add-service-pricing-card">
-                      <h4 className="pricing-card-title">High-Quality Packages</h4>
+                      <h4 className="pricing-card-title">High-Quality Likes Packages</h4>
                       
                       <div className="price-options-list">
                         {highQualityPriceOptions.map((option) => (
@@ -486,37 +1007,39 @@ export default function ServicesDashboard() {
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
-                                value={option.name}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "name", e.target.value)}
-                                placeholder="New"
+                                value={option.item}
+                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "item", e.target.value)}
+                                placeholder="Qty"
                               />
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
-                                value={option.item}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "item", e.target.value)}
-                                placeholder="Item:"
+                                value={option.name}
+                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "name", e.target.value)}
+                                placeholder="Unit"
                               />
                               <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="add-service-input price-option-field"
                                 value={option.price1}
                                 onChange={(e) => handlePriceOptionChange("highQuality", option.id, "price1", e.target.value)}
-                                placeholder="0"
+                                placeholder="Price"
                               />
                               <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="add-service-input price-option-field"
                                 value={option.price2}
                                 onChange={(e) => handlePriceOptionChange("highQuality", option.id, "price2", e.target.value)}
-                                placeholder="0"
+                                placeholder="Orig. $"
                               />
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
                                 value={option.disc}
                                 onChange={(e) => handlePriceOptionChange("highQuality", option.id, "disc", e.target.value)}
-                                placeholder="Disc"
+                                placeholder="Discount"
                               />
                             </div>
                             <div className="smm-integration-row">
@@ -588,37 +1111,39 @@ export default function ServicesDashboard() {
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
-                                value={option.name}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "name", e.target.value)}
-                                placeholder="New"
+                                value={option.item}
+                                onChange={(e) => handlePriceOptionChange("premium", option.id, "item", e.target.value)}
+                                placeholder="Qty"
                               />
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
-                                value={option.item}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "item", e.target.value)}
-                                placeholder="Item:"
+                                value={option.name}
+                                onChange={(e) => handlePriceOptionChange("premium", option.id, "name", e.target.value)}
+                                placeholder="Unit"
                               />
                               <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="add-service-input price-option-field"
                                 value={option.price1}
                                 onChange={(e) => handlePriceOptionChange("premium", option.id, "price1", e.target.value)}
-                                placeholder="0"
+                                placeholder="Price"
                               />
                               <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="add-service-input price-option-field"
                                 value={option.price2}
                                 onChange={(e) => handlePriceOptionChange("premium", option.id, "price2", e.target.value)}
-                                placeholder="0"
+                                placeholder="Orig. $"
                               />
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
                                 value={option.disc}
                                 onChange={(e) => handlePriceOptionChange("premium", option.id, "disc", e.target.value)}
-                                placeholder="Disc"
+                                placeholder="Discount"
                               />
                             </div>
                             <div className="smm-integration-row">
@@ -880,6 +1405,8 @@ export default function ServicesDashboard() {
                         id="edit-hero-title"
                         className="add-service-input"
                         placeholder="New service title"
+                        value={heroTitle}
+                        onChange={(e) => setHeroTitle(e.target.value)}
                       />
                     </div>
                     <div className="add-service-form-group">
@@ -890,10 +1417,50 @@ export default function ServicesDashboard() {
                           id="edit-hero-subtitle"
                           className="add-service-input"
                           placeholder="New service subtitle"
+                          value={heroSubtitle}
+                          onChange={(e) => setHeroSubtitle(e.target.value)}
                         />
                         <FontAwesomeIcon icon={faPencil} className="add-service-input-icon" />
                       </div>
                     </div>
+                    <div className="add-service-form-group">
+                      <label htmlFor="edit-hero-rating">Hero Rating</label>
+                      <input
+                        type="text"
+                        id="edit-hero-rating"
+                        className="add-service-input"
+                        placeholder="4.9/5"
+                        value={heroRating}
+                        onChange={(e) => setHeroRating(e.target.value)}
+                      />
+                    </div>
+                    <div className="add-service-form-group">
+                      <label htmlFor="edit-hero-review-count">Hero Review Count</label>
+                      <input
+                        type="text"
+                        id="edit-hero-review-count"
+                        className="add-service-input"
+                        placeholder="1,352+ reviews"
+                        value={heroReviewCount}
+                        onChange={(e) => setHeroReviewCount(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="add-service-section" ref={editSectionRefs.assurance}>
+                  <h3 className="add-service-section-title">Assurance Card</h3>
+                  <div className="add-service-form-group">
+                    <label htmlFor="edit-assurance-text">Assurance Card Text</label>
+                    <textarea
+                      id="edit-assurance-text"
+                      className="add-service-textarea"
+                      placeholder="Join over a million satisfied customers, including artists, companies, and top influencers. Our services are 100% discreet, secure, and delivered naturally to ensure your account is always safe."
+                      rows={4}
+                      value={assuranceCardText}
+                      onChange={(e) => setAssuranceCardText(e.target.value)}
+                    />
+                    <p className="add-service-helper">This text appears in the assurance card section below the hero section.</p>
                   </div>
                 </div>
 
@@ -941,7 +1508,7 @@ export default function ServicesDashboard() {
                   <h3 className="add-service-section-title">Pricing Tiers</h3>
                   <div className="add-service-pricing-cards">
                     <div className="add-service-pricing-card">
-                      <h4 className="pricing-card-title">High-Quality Packages</h4>
+                      <h4 className="pricing-card-title">High-Quality Likes Packages</h4>
                       
                       <div className="price-options-list">
                         {highQualityPriceOptions.map((option) => (
@@ -950,37 +1517,39 @@ export default function ServicesDashboard() {
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
-                                value={option.name}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "name", e.target.value)}
-                                placeholder="New"
+                                value={option.item}
+                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "item", e.target.value)}
+                                placeholder="Qty"
                               />
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
-                                value={option.item}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "item", e.target.value)}
-                                placeholder="Item:"
+                                value={option.name}
+                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "name", e.target.value)}
+                                placeholder="Unit"
                               />
                               <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="add-service-input price-option-field"
                                 value={option.price1}
                                 onChange={(e) => handlePriceOptionChange("highQuality", option.id, "price1", e.target.value)}
-                                placeholder="0"
+                                placeholder="Price"
                               />
                               <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="add-service-input price-option-field"
                                 value={option.price2}
                                 onChange={(e) => handlePriceOptionChange("highQuality", option.id, "price2", e.target.value)}
-                                placeholder="0"
+                                placeholder="Orig. $"
                               />
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
                                 value={option.disc}
                                 onChange={(e) => handlePriceOptionChange("highQuality", option.id, "disc", e.target.value)}
-                                placeholder="Disc"
+                                placeholder="Discount"
                               />
                             </div>
                             <div className="smm-integration-row">
@@ -1052,37 +1621,39 @@ export default function ServicesDashboard() {
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
-                                value={option.name}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "name", e.target.value)}
-                                placeholder="New"
+                                value={option.item}
+                                onChange={(e) => handlePriceOptionChange("premium", option.id, "item", e.target.value)}
+                                placeholder="Qty"
                               />
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
-                                value={option.item}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "item", e.target.value)}
-                                placeholder="Item:"
+                                value={option.name}
+                                onChange={(e) => handlePriceOptionChange("premium", option.id, "name", e.target.value)}
+                                placeholder="Unit"
                               />
                               <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="add-service-input price-option-field"
                                 value={option.price1}
                                 onChange={(e) => handlePriceOptionChange("premium", option.id, "price1", e.target.value)}
-                                placeholder="0"
+                                placeholder="Price"
                               />
                               <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="add-service-input price-option-field"
                                 value={option.price2}
                                 onChange={(e) => handlePriceOptionChange("premium", option.id, "price2", e.target.value)}
-                                placeholder="0"
+                                placeholder="Orig. $"
                               />
                               <input
                                 type="text"
                                 className="add-service-input price-option-field"
                                 value={option.disc}
                                 onChange={(e) => handlePriceOptionChange("premium", option.id, "disc", e.target.value)}
-                                placeholder="Disc"
+                                placeholder="Discount"
                               />
                             </div>
                             <div className="smm-integration-row">
@@ -1146,6 +1717,114 @@ export default function ServicesDashboard() {
                   </div>
                 </div>
 
+                <div className="add-service-section" ref={editSectionRefs.qualitycompare}>
+                  <h3 className="add-service-section-title">Compare Quality Section</h3>
+                  <div className="add-service-form-group">
+                    <label>Section Title</label>
+                    <input
+                      type="text"
+                      className="add-service-input"
+                      placeholder="Compare Like Quality"
+                      value={qualityCompareColumns.length > 0 ? `Compare ${selectedService?.name.split(' ')[1] || 'Like'} Quality` : ''}
+                      readOnly
+                    />
+                    <p className="add-service-helper">Title is automatically generated based on service type.</p>
+                  </div>
+                  
+                  {qualityCompareColumns.length > 0 && (
+                    <div className="add-service-pricing-cards">
+                      {qualityCompareColumns.map((col, idx) => (
+                        <div key={col.id} className="add-service-pricing-card">
+                          <h4 className="pricing-card-title">{col.title || (idx === 0 ? "High-Quality" : "Premium")}</h4>
+                          
+                          <div className="add-service-form-group">
+                            <label>Column Title</label>
+                            <input
+                              type="text"
+                              className="add-service-input"
+                              value={col.title}
+                              onChange={(e) => handleQualityCompareColumnChange(idx, "title", e.target.value)}
+                              placeholder="High-Quality Likes"
+                            />
+                          </div>
+                          
+                          <div className="add-service-form-group">
+                            <label>Subtitle</label>
+                            <textarea
+                              className="add-service-textarea"
+                              value={col.subtitle}
+                              onChange={(e) => handleQualityCompareColumnChange(idx, "subtitle", e.target.value)}
+                              placeholder="Great for giving your posts a quick and affordable boost."
+                              rows={2}
+                            />
+                          </div>
+                          
+                          <h5 className="pricing-card-subtitle">Features</h5>
+                          <p className="add-service-helper">Features are synced from the Pricing Tiers section above. Edit them there.</p>
+                          
+                          <div className="features-list">
+                            {(idx === 0 ? highQualityFeatures : premiumFeatures).map((feature) => (
+                              <div key={feature.id} className="feature-input-row">
+                                <input
+                                  type="text"
+                                  className="add-service-input feature-input"
+                                  value={feature.name}
+                                  onChange={(e) => handleFeatureChange(idx === 0 ? "highQuality" : "premium", feature.id, e.target.value)}
+                                  placeholder="Feature description"
+                                />
+                                <button
+                                  className="feature-delete-btn"
+                                  onClick={() => handleRemoveFeature(idx === 0 ? "highQuality" : "premium", feature.id)}
+                                  type="button"
+                                >
+                                  Del
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <button className="add-service-add-btn" onClick={() => handleAddFeature(idx === 0 ? "highQuality" : "premium")}>
+                            <FontAwesomeIcon icon={faPlus} />
+                            <span>Add Feature</span>
+                          </button>
+                          
+                          {idx === 1 && (
+                            <>
+                              <div className="add-service-form-group" style={{ marginTop: "16px" }}>
+                                <label>
+                                  <input
+                                    type="checkbox"
+                                    checked={col.highlight || false}
+                                    onChange={(e) => handleQualityCompareColumnChange(idx, "highlight", e.target.checked)}
+                                  />
+                                  <span style={{ marginLeft: "8px" }}>Highlight (Premium badge)</span>
+                                </label>
+                              </div>
+                              
+                              <div className="add-service-form-group">
+                                <label>Badge Text</label>
+                                <input
+                                  type="text"
+                                  className="add-service-input"
+                                  value={col.badge || ""}
+                                  onChange={(e) => handleQualityCompareColumnChange(idx, "badge", e.target.value)}
+                                  placeholder="RECOMMENDED"
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {qualityCompareColumns.length === 0 && (
+                    <div className="add-service-info-box">
+                      <p>Quality Compare section will be created automatically when you add features in the Pricing Tiers section above.</p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="add-service-section" ref={editSectionRefs.howitworks}>
                   <h3 className="add-service-section-title">How It Works</h3>
                   <div className="add-service-form-group">
@@ -1155,7 +1834,8 @@ export default function ServicesDashboard() {
                       id="edit-howitworks-title"
                       className="add-service-input"
                       placeholder="Section Title"
-                      defaultValue="How It Works"
+                      value={howItWorksTitle}
+                      onChange={(e) => setHowItWorksTitle(e.target.value)}
                     />
                   </div>
                   <div className="add-service-form-group">
@@ -1165,6 +1845,8 @@ export default function ServicesDashboard() {
                       id="edit-howitworks-subtitle"
                       className="add-service-input"
                       placeholder="Section Subtitle"
+                      value={howItWorksSubtitle}
+                      onChange={(e) => setHowItWorksSubtitle(e.target.value)}
                     />
                   </div>
                   <div className="add-service-form-group">
@@ -1256,11 +1938,13 @@ export default function ServicesDashboard() {
             </div>
 
             <div className="add-service-modal-footer">
-              <button className="add-service-btn cancel" onClick={handleCloseEditModal}>
+              {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+              {success && <div style={{ color: 'green', marginBottom: '1rem' }}>Content saved successfully!</div>}
+              <button className="add-service-btn cancel" onClick={handleCloseEditModal} disabled={saving}>
                 Cancel
               </button>
-              <button className="add-service-btn save" onClick={handleSaveEditChanges}>
-                Save Changes
+              <button className="add-service-btn save" onClick={handleSaveEditChanges} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

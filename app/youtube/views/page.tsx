@@ -2,16 +2,21 @@ import type { Metadata } from "next";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import ServiceHero from "../../components/ServiceHero";
-import AssuranceCard from "../../components/AssuranceCard";
-import PackagesSelector, { type PackageTabConfig } from "../../components/PackagesSelector";
-import QualityCompare from "../../components/QualityCompare";
+import {
+  ServicePageContentProvider,
+  DynamicServiceHero,
+  DynamicAssuranceCard,
+  DynamicPackagesSelector,
+  DynamicQualityCompare,
+  DynamicHowItWorks,
+  DynamicFAQSection,
+} from "../../components/ServicePageContent";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
-import HowItWorksSection from "../../components/HowItWorksSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
-import FAQSection, { type FAQItem } from "../../components/FAQSection";
 import MoreServicesCTA, { type CTAButton } from "../../components/MoreServicesCTA";
+import type { PackageTabConfig } from "../../components/PackagesSelector";
+import type { FAQItem } from "../../components/FAQSection";
 import { faThumbsUp } from "@fortawesome/free-solid-svg-icons";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
 
@@ -150,44 +155,43 @@ export default function Page() {
   return (
     <>
       <Header />
-      <ServiceHero
-        title="Boost Your Rankings with YouTube Views"
-        subtitle="Boost your video's authority and ranking with high-retention views. Kickstart your video's performance to get suggested by the YouTube algorithm and reach a massive audience."
-        rating="4.95/5"
-        basedon="based on"
-        reviewss="8,976+ reviews"
-      />
-      <AssuranceCard />
-      <PackagesSelector
-        tabsConfig={VIEW_TABS}
-        metricLabel="Views"
-        defaultQtyTarget="5K"
-        ctaTemplate="Buy {qty} YouTube Views Now"
-      />
-      <QualityCompare title="Compare View Quality" columns={QUALITY_COLUMNS} />
-      <FeaturedOn />
-      <AdvantageSection />
-      <HowItWorksSection
-        title="How It Works"
-        subtitle="Our process is fast, safe, and designed to deliver the metrics that matter for your channel's growth."
-        steps={STEPS}
-      />
-      <ReviewsSection
-        title="Loved by Creators Worldwide"
-        subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
-        reviews={REVIEWS}
-      />
-      <FAQSection
-        title="Frequently Asked Questions"
-        subtitle="Have questions? We've got answers. If you don't see your question here, feel free to contact us."
-        faqs={FAQS}
-      />
-      <MoreServicesCTA
-        title="More Growth Services from Likes.io"
-        highlight="Services"
-        body="YouTube views are powerful tools, but they're not the only engagements available from Likes.io. Combine them with our subscriber and like boosts to keep your metrics balanced and brand-ready."
-        buttons={CTA_BUTTONS}
-      />
+      <ServicePageContentProvider
+        platform="youtube"
+        serviceType="views"
+        defaultHeroTitle="Boost Your Rankings with YouTube Views"
+        defaultHeroSubtitle="Boost your video's authority and ranking with high-retention views. Kickstart your video's performance to get suggested by the YouTube algorithm and reach a massive audience."
+        defaultHeroRating="4.95/5"
+        defaultHeroReviewCount="8,976+ reviews"
+        defaultAssuranceCardText="Join over a million satisfied customers, including artists, companies, and top influencers. Our services are <b>100% discreet, secure, and delivered naturally</b> to ensure your account is always safe."
+        defaultPackages={VIEW_TABS}
+        defaultQualityCompare={{ title: "Compare View Quality", columns: QUALITY_COLUMNS }}
+        defaultHowItWorks={{
+          title: "How It Works",
+          subtitle: "Our process is fast, safe, and designed to deliver the metrics that matter for your channel's growth.",
+          steps: STEPS,
+        }}
+        defaultFAQs={FAQS}
+      >
+        <DynamicServiceHero />
+        <DynamicAssuranceCard />
+        <DynamicPackagesSelector />
+        <DynamicQualityCompare />
+        <FeaturedOn />
+        <AdvantageSection />
+        <DynamicHowItWorks />
+        <ReviewsSection
+          title="Loved by Creators Worldwide"
+          subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
+          reviews={REVIEWS}
+        />
+        <DynamicFAQSection />
+        <MoreServicesCTA
+          title="More Growth Services from Likes.io"
+          highlight="Services"
+          body="YouTube views are powerful tools, but they're not the only engagements available from Likes.io. Combine them with our subscriber and like boosts to keep your metrics balanced and brand-ready."
+          buttons={CTA_BUTTONS}
+        />
+      </ServicePageContentProvider>
       <Footer />
     </>
   );

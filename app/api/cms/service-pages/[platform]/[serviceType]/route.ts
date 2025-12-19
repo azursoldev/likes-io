@@ -25,13 +25,40 @@ export async function GET(
       return NextResponse.json({
         heroTitle: `Buy ${params.serviceType} for ${params.platform}`,
         heroSubtitle: `Get real, high-quality ${params.serviceType} for your ${params.platform} account.`,
+        assuranceCardText: "Join over a million satisfied customers, including artists, companies, and top influencers. Our services are 100% discreet, secure, and delivered naturally to ensure your account is always safe.",
         packages: [],
         qualityCompare: null,
         howItWorks: null,
+        faqs: [],
       });
     }
 
-    return NextResponse.json(content);
+    // Parse JSON fields
+    const responseData: any = {
+      ...content,
+      // Explicitly include assuranceCardText (may be undefined if column doesn't exist)
+      assuranceCardText: (content as any).assuranceCardText || null,
+      packages: typeof content.packages === 'string' ? JSON.parse(content.packages) : content.packages,
+      qualityCompare: content.qualityCompare ? (typeof content.qualityCompare === 'string' ? JSON.parse(content.qualityCompare) : content.qualityCompare) : null,
+      howItWorks: content.howItWorks ? (typeof content.howItWorks === 'string' ? JSON.parse(content.howItWorks) : content.howItWorks) : null,
+    };
+    
+    // Fetch FAQs if they exist
+    const faqs = await prisma.fAQ.findMany({
+      where: {
+        platform,
+        serviceType,
+        isActive: true,
+      },
+      orderBy: { displayOrder: 'asc' },
+    });
+    
+    responseData.faqs = faqs.map(faq => ({
+      q: faq.question,
+      a: faq.answer,
+    }));
+
+    return NextResponse.json(responseData);
   } catch (error: any) {
     console.error('Get service page content error:', error);
     return NextResponse.json(
@@ -64,42 +91,118 @@ export async function PUT(
       heroSubtitle,
       heroRating,
       heroReviewCount,
+      assuranceCardText,
       packages,
       qualityCompare,
       howItWorks,
+      faqs,
       isActive = true,
     } = body;
 
-    const content = await prisma.servicePageContent.upsert({
-      where: {
-        platform_serviceType: {
+    // Try upsert with assuranceCardText first
+    // If it fails because the column doesn't exist, retry without it
+    let content;
+    try {
+      content = await prisma.servicePageContent.upsert({
+        where: {
+          platform_serviceType: {
+            platform,
+            serviceType,
+          },
+        },
+        update: {
+          heroTitle,
+          heroSubtitle,
+          heroRating,
+          heroReviewCount,
+          assuranceCardText: assuranceCardText as any,
+          packages: packages as any,
+          qualityCompare: qualityCompare as any,
+          howItWorks: howItWorks as any,
+          isActive,
+        } as any,
+        create: {
           platform,
           serviceType,
-        },
-      },
-      update: {
-        heroTitle,
-        heroSubtitle,
-        heroRating,
-        heroReviewCount,
-        packages: packages as any,
-        qualityCompare: qualityCompare as any,
-        howItWorks: howItWorks as any,
-        isActive,
-      },
-      create: {
-        platform,
-        serviceType,
-        heroTitle,
-        heroSubtitle,
-        heroRating,
-        heroReviewCount,
-        packages: packages as any,
-        qualityCompare: qualityCompare as any,
-        howItWorks: howItWorks as any,
-        isActive,
-      },
-    });
+          heroTitle,
+          heroSubtitle,
+          heroRating,
+          heroReviewCount,
+          assuranceCardText: assuranceCardText as any,
+          packages: packages as any,
+          qualityCompare: qualityCompare as any,
+          howItWorks: howItWorks as any,
+          isActive,
+        } as any,
+      });
+    } catch (error: any) {
+      // If error is about unknown argument, the column doesn't exist yet
+      // Retry without assuranceCardText
+      if (error.message && error.message.includes('Unknown argument')) {
+        console.warn('assuranceCardText column not found in database. Saving other fields, but assuranceCardText will not be saved. Please run: npx prisma db push');
+        
+        // Save without assuranceCardText
+        content = await prisma.servicePageContent.upsert({
+          where: {
+            platform_serviceType: {
+              platform,
+              serviceType,
+            },
+          },
+          update: {
+            heroTitle,
+            heroSubtitle,
+            heroRating,
+            heroReviewCount,
+            packages: packages as any,
+            qualityCompare: qualityCompare as any,
+            howItWorks: howItWorks as any,
+            isActive,
+          },
+          create: {
+            platform,
+            serviceType,
+            heroTitle,
+            heroSubtitle,
+            heroRating,
+            heroReviewCount,
+            packages: packages as any,
+            qualityCompare: qualityCompare as any,
+            howItWorks: howItWorks as any,
+            isActive,
+          },
+        });
+        
+        // Return a warning in the response
+        return NextResponse.json({
+          ...content,
+          warning: 'assuranceCardText was not saved because the database column does not exist. Please run: npx prisma db push',
+        });
+      } else {
+        // Re-throw if it's a different error
+        throw error;
+      }
+    }
+
+    // Update FAQs
+    if (faqs && Array.isArray(faqs)) {
+      // Delete existing FAQs for this service
+      await prisma.fAQ.deleteMany({
+        where: { platform, serviceType },
+      });
+      
+      // Create new FAQs
+      await prisma.fAQ.createMany({
+        data: faqs.map((faq: any, index: number) => ({
+          platform,
+          serviceType,
+          question: faq.q || faq.question,
+          answer: faq.a || faq.answer,
+          displayOrder: index,
+          isActive: true,
+        })),
+      });
+    }
 
     return NextResponse.json(content);
   } catch (error: any) {

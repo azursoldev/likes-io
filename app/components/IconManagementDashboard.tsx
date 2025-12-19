@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
@@ -67,138 +68,179 @@ type IconItem = {
   icon?: any;
   isCustom?: boolean;
   customText?: string;
+  dbId?: number;
+  url?: string;
+  category?: string | null;
 };
 
-const logos: IconItem[] = [
-  { id: 1, name: "LikesLogo", isCustom: true, customText: "Likes" },
-  { id: 2, name: "LikesInCheckoutLogo", isCustom: true, customText: "Likes" },
-  { id: 3, name: "Buzzoid", isCustom: true, customText: "Buzzoid.svg" },
-];
+// Map icon names to FontAwesome icons
+const iconMap: Record<string, any> = {
+  HamburgerIcon: faBars,
+  XIcon: faXmark,
+  ChevronDownIcon: faChevronDown,
+  ChevronRightIcon: faChevronRight,
+  ChevronUpIcon: faChevronUp,
+  HeartIcon: faHeart,
+  UserIcon: faUser,
+  ChatIcon: faComment,
+  EyeIcon: faEye,
+  EyeSlashIcon: faEyeSlash,
+  InformationCircleIcon: faCircleInfo,
+  StarIcon: faStar,
+  BookOpenIcon: faBookOpen,
+  BellIcon: faBell,
+  CheckCircleIcon: faCheckCircle,
+  FireIcon: faFire,
+  ShieldCheckIcon: faShield,
+  AwardIcon: faAward,
+  LifebuoyIcon: faLifeRing,
+  VerifiedIcon: faShield,
+  QuestionMarkCircleIcon: faQuestionCircle,
+  CheckmarkIcon: faCheck,
+  ClockIcon: faClock,
+  SendIcon: faPaperPlane,
+  SparklesIcon: faStar,
+  ArrowLeftIcon: faArrowLeft,
+  ArrowRightIcon: faArrowRight,
+  ArrowUpIcon: faArrowUp,
+  PlusIcon: faPlus,
+  MinusIcon: faMinus,
+  SearchIcon: faSearch,
+  ShareIcon: faShare,
+  MailIcon: faEnvelope,
+  LinkIcon: faLink,
+  SunIcon: faSun,
+  MoonIcon: faMoon,
+  HomeIcon: faHome,
+  PlayCircleIcon: faPlayCircle,
+  HeadphoneIcon: faHeadphones,
+  ThumbsUpIcon: faThumbsUp,
+  RefreshIcon: faRotate,
+  LockClosedIcon: faLock,
+  CreditCardIcon: faCreditCard,
+  CurrencyBitcoinIcon: faBitcoinSign,
+  DashboardIcon: faGauge,
+  OrderHistoryIcon: faList,
+  SettingsIcon: faGear,
+  LogoutIcon: faArrowRightFromBracket,
+  FilterIcon: faFilter,
+  InstagramProfileIcon: faUserCircle,
+  TagIcon: faTag,
+  ClipboardDocumentListIcon: faClipboardList,
+  CubeIcon: faCube,
+  CogIcon: faGear,
+  ChartIcon: faChartBar,
+  CurrencyDollarIcon: faDollarSign,
+  PhotoIcon: faImage,
+  FollowersIcon: faUser,
+  LikesIcon: faHeart,
+  ViewsIcon: faEye,
+  AutomaticLikesIcon: faHeart,
+  TikTokFollowersIcon: faUser,
+  TikTokViewsIcon: faEye,
+  YouTubeSubscribersIcon: faUser,
+  YouTubeLikesIcon: faThumbsUp,
+  YouTubeViewsIcon: faEye,
+  RocketLaunchIcon: faFire,
+  InstagramLikesShortcutIcon: faHeart,
+  InstagramViewsShortcutIcon: faEye,
+  InstagramFollowersShortcutIcon: faUser,
+  TikTokLikesShortcutIcon: faHeart,
+  TikTokFollowersShortcutIcon: faUser,
+  YouTubeLikesShortcutIcon: faThumbsUp,
+  YouTubeSubscribersShortcutIcon: faUser,
+  YouTubeViewsShortcutIcon: faEye,
+};
 
-const generalIcons: IconItem[] = [
-  { id: 1, name: "HamburgerIcon", icon: faBars },
-  { id: 2, name: "XIcon", icon: faXmark },
-  { id: 3, name: "ChevronDownIcon", icon: faChevronDown },
-  { id: 4, name: "ChevronRightIcon", icon: faChevronRight },
-  { id: 5, name: "ChevronUpIcon", icon: faChevronUp },
-  { id: 6, name: "HeartIcon", icon: faHeart },
-  { id: 7, name: "UserIcon", icon: faUser },
-  { id: 8, name: "ChatIcon", icon: faComment },
-  { id: 9, name: "EyeIcon", icon: faEye },
-  { id: 10, name: "EyeSlashIcon", icon: faEyeSlash },
-  { id: 11, name: "InformationCircleIcon", icon: faCircleInfo },
-  { id: 12, name: "StarIcon", icon: faStar },
-  { id: 13, name: "BookOpenIcon", icon: faBookOpen },
-  { id: 14, name: "BellIcon", icon: faBell },
-  { id: 15, name: "CheckCircleIcon", icon: faCheckCircle },
-  { id: 16, name: "FireIcon", icon: faFire },
-  { id: 17, name: "ShieldCheckIcon", icon: faShield },
-  { id: 18, name: "AwardIcon", icon: faAward },
-  { id: 19, name: "LifebuoyIcon", icon: faLifeRing },
-  { id: 20, name: "VerifiedIcon", icon: faShield },
-  { id: 21, name: "QuestionMarkCircleIcon", icon: faQuestionCircle },
-  { id: 22, name: "CheckmarkIcon", icon: faCheck },
-  { id: 23, name: "ClockIcon", icon: faClock },
-  { id: 24, name: "SendIcon", icon: faPaperPlane },
-  { id: 25, name: "SparklesIcon", icon: faStar },
-  { id: 26, name: "ArrowLeftIcon", icon: faArrowLeft },
-  { id: 27, name: "ArrowRightIcon", icon: faArrowRight },
-  { id: 28, name: "ArrowUpIcon", icon: faArrowUp },
-  { id: 29, name: "PlusIcon", icon: faPlus },
-  { id: 30, name: "MinusIcon", icon: faMinus },
-  { id: 31, name: "SearchIcon", icon: faSearch },
-  { id: 32, name: "ShareIcon", icon: faShare },
-  { id: 33, name: "MailIcon", icon: faEnvelope },
-  { id: 34, name: "LinkIcon", icon: faLink },
-  { id: 35, name: "SunIcon", icon: faSun },
-  { id: 36, name: "MoonIcon", icon: faMoon },
-  { id: 37, name: "HomeIcon", icon: faHome },
-  { id: 38, name: "PlayCircleIcon", icon: faPlayCircle },
-  { id: 39, name: "HeadphoneIcon", icon: faHeadphones },
-  { id: 40, name: "ThumbsUpIcon", icon: faThumbsUp },
-  { id: 41, name: "RefreshIcon", icon: faRotate },
-  { id: 42, name: "LockClosedIcon", icon: faLock },
-  { id: 43, name: "CreditCardIcon", icon: faCreditCard },
-  { id: 44, name: "CurrencyBitcoinIcon", icon: faBitcoinSign },
-  { id: 45, name: "DashboardIcon", icon: faGauge },
-  { id: 46, name: "OrderHistoryIcon", icon: faList },
-  { id: 47, name: "SettingsIcon", icon: faGear },
-  { id: 48, name: "LogoutIcon", icon: faArrowRightFromBracket },
-  { id: 49, name: "FilterIcon", icon: faFilter },
-  { id: 50, name: "InstagramProfileIcon", icon: faUserCircle },
-  { id: 51, name: "TagIcon", icon: faTag },
-];
-
-const adminPanelIcons: IconItem[] = [
-  { id: 1, name: "ClipboardDocumentListIcon", icon: faClipboardList },
-  { id: 2, name: "CubeIcon", icon: faCube },
-  { id: 3, name: "CogIcon", icon: faGear },
-  { id: 4, name: "ChartIcon", icon: faChartBar },
-  { id: 5, name: "CurrencyDollarIcon", icon: faDollarSign },
-  { id: 6, name: "PhotoIcon", icon: faImage },
-];
-
-const socialPaymentBrandIcons: IconItem[] = [
-  { id: 1, name: "VisaIcon", isCustom: true, customText: "VISA" },
-  { id: 2, name: "MastercardIcon", isCustom: true, customText: "MC" },
-  { id: 3, name: "AmexIcon", isCustom: true, customText: "AMEX" },
-  { id: 4, name: "DiscoverIcon", isCustom: true, customText: "DIS" },
-  { id: 5, name: "ApplePayIcon", isCustom: true, customText: "AP" },
-  { id: 6, name: "AppleIcon", isCustom: true, customText: "🍎" },
-  { id: 7, name: "FacebookIcon", isCustom: true, customText: "f" },
-  { id: 8, name: "TwitterIcon", isCustom: true, customText: "X" },
-  { id: 9, name: "LinkedInIcon", isCustom: true, customText: "in" },
-  { id: 10, name: "InstagramIcon", isCustom: true, customText: "IG" },
-  { id: 11, name: "OriginalInstagramIcon", isCustom: true, customText: "IG" },
-  { id: 12, name: "OriginalTikTokIcon", isCustom: true, customText: "TT" },
-  { id: 13, name: "OriginalYouTubeIcon", isCustom: true, customText: "YT" },
-  { id: 14, name: "SoundwaveIcon", isCustom: true, customText: "~" },
-  { id: 15, name: "USFlagIcon", isCustom: true, customText: "🇺🇸" },
-];
-
-const servicePlatformIcons: IconItem[] = [
-  { id: 1, name: "InstagramServicesIcon", isCustom: true, customText: "IG" },
-  { id: 2, name: "FollowersIcon", icon: faUser },
-  { id: 3, name: "LikesIcon", icon: faHeart },
-  { id: 4, name: "ViewsIcon", icon: faEye },
-  { id: 5, name: "AutomaticLikesIcon", icon: faHeart },
-  { id: 6, name: "TikTokFollowersIcon", icon: faUser },
-  { id: 7, name: "TikTokViewsIcon", icon: faEye },
-  { id: 8, name: "YouTubeSubscribersIcon", icon: faUser },
-  { id: 9, name: "YouTubeLikesIcon", icon: faThumbsUp },
-  { id: 10, name: "YouTubeViewsIcon", icon: faEye },
-  { id: 11, name: "RocketLaunchIcon", icon: faFire },
-  { id: 12, name: "InstagramLikesShortcutIcon", icon: faHeart },
-  { id: 13, name: "InstagramViewsShortcutIcon", icon: faEye },
-  { id: 14, name: "InstagramFollowersShortcutIcon", icon: faUser },
-  { id: 15, name: "TikTokLikesShortcutIcon", icon: faHeart },
-  { id: 16, name: "TikTokFollowersShortcutIcon", icon: faUser },
-  { id: 17, name: "YouTubeLikesShortcutIcon", icon: faThumbsUp },
-  { id: 18, name: "YouTubeSubscribersShortcutIcon", icon: faUser },
-  { id: 19, name: "YouTubeViewsShortcutIcon", icon: faEye },
-];
+// Helper to convert DB icon to IconItem
+const dbIconToIconItem = (dbIcon: any): IconItem => {
+  const faIcon = iconMap[dbIcon.name];
+  const hasUrl = dbIcon.url && dbIcon.url.trim() !== '';
+  const isCustom = !faIcon || hasUrl;
+  
+  return {
+    id: dbIcon.id,
+    dbId: dbIcon.id,
+    name: dbIcon.name,
+    icon: faIcon,
+    isCustom,
+    customText: dbIcon.alt || dbIcon.name,
+    url: dbIcon.url,
+    category: dbIcon.category,
+  };
+};
 
 export default function IconManagementDashboard() {
-  const handleReplaceClick = (id: number) => {
-    const input = document.getElementById(`icon-file-${id}`) as HTMLInputElement | null;
+  const [icons, setIcons] = useState<IconItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadIcons();
+  }, []);
+
+  const loadIcons = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch("/api/cms/icons");
+      if (!res.ok) throw new Error("Failed to load icons");
+      const data = await res.json();
+      const iconItems = (data.icons || []).map(dbIconToIconItem);
+      setIcons(iconItems);
+    } catch (err: any) {
+      console.error("Icons load error", err);
+      setError(err.message || "Failed to load icons");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReplaceClick = (dbId: number) => {
+    const input = document.getElementById(`icon-file-${dbId}`) as HTMLInputElement | null;
     if (input) input.click();
   };
 
-  const renderReplaceControl = (id: number) => (
+  const handleFileUpload = async (dbId: number, file: File) => {
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+        const dataUrl = base64;
+
+        const res = await fetch(`/api/cms/icons?id=${dbId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: dataUrl }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to update icon");
+        }
+
+        await loadIcons();
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error("Upload error", err);
+      alert(err.message || "Failed to upload icon");
+    }
+  };
+
+  const renderReplaceControl = (item: IconItem) => (
     <>
-      <button className="icon-replace-btn" onClick={() => handleReplaceClick(id)}>
+      <button className="icon-replace-btn" onClick={() => handleReplaceClick(item.dbId!)}>
         Replace
       </button>
       <input
-        id={`icon-file-${id}`}
+        id={`icon-file-${item.dbId}`}
         type="file"
         accept=".svg,.png,.jpg,.jpeg,.webp"
         style={{ display: "none" }}
         onChange={(e) => {
-          // Placeholder: integrate upload logic
-          if (e.target.files && e.target.files[0]) {
-            // eslint-disable-next-line no-console
-            console.log("Selected icon file for", id, e.target.files[0].name);
+          if (e.target.files && e.target.files[0] && item.dbId) {
+            handleFileUpload(item.dbId, e.target.files[0]);
           }
         }}
       />
@@ -206,15 +248,42 @@ export default function IconManagementDashboard() {
   );
 
   const renderIcon = (item: IconItem) => {
-    if (item.isCustom) {
+    // If has URL (image), show image
+    if (item.url && item.url.trim() !== '') {
+      return (
+        <img
+          src={item.url}
+          alt={item.customText || item.name}
+          className="icon-image-display"
+          style={{ maxWidth: "48px", maxHeight: "48px", objectFit: "contain" }}
+        />
+      );
+    }
+    // If custom text, show text
+    if (item.isCustom && item.customText) {
       return (
         <div className="icon-custom-display">
           <span>{item.customText}</span>
         </div>
       );
     }
-    return <FontAwesomeIcon icon={item.icon} className="icon-fa-display" />;
+    // Otherwise show FontAwesome icon
+    if (item.icon) {
+      return <FontAwesomeIcon icon={item.icon} className="icon-fa-display" />;
+    }
+    // Fallback
+    return <div className="icon-custom-display"><span>{item.name}</span></div>;
   };
+
+  // Group icons by category from database
+  const groupedIcons = icons.reduce((acc, icon) => {
+    const category = icon.category || "Uncategorized";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(icon);
+    return acc;
+  }, {} as Record<string, IconItem[]>);
+
+  const categories = Object.keys(groupedIcons).sort();
 
   return (
     <div className="admin-wrapper">
@@ -229,75 +298,44 @@ export default function IconManagementDashboard() {
               <p>View and manage SVG icons used across the site.</p>
             </div>
 
-            {/* Logos */}
-            <div className="icon-section">
-              <h2 className="icon-section-title">Logos</h2>
-              <div className="icon-grid">
-                {logos.map((icon) => (
-                  <div key={icon.id} className="icon-card">
-                    <div className="icon-display">{renderIcon(icon)}</div>
-                    <div className="icon-name">{icon.name}</div>
-                    {renderReplaceControl(icon.id)}
-                  </div>
-                ))}
+            {error && (
+              <div style={{ color: "#b91c1c", marginBottom: "16px", padding: "12px" }}>
+                {error}
               </div>
-            </div>
+            )}
 
-            {/* General UI Icons */}
-            <div className="icon-section">
-              <h2 className="icon-section-title">General UI Icons</h2>
-              <div className="icon-grid">
-                {generalIcons.map((icon) => (
-                  <div key={icon.id} className="icon-card">
-                    <div className="icon-display">{renderIcon(icon)}</div>
-                    <div className="icon-name">{icon.name}</div>
-                    {renderReplaceControl(icon.id)}
-                  </div>
-                ))}
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "40px" }}>
+                Loading icons...
               </div>
-            </div>
-
-            {/* Admin Panel Icons */}
-            <div className="icon-section">
-              <h2 className="icon-section-title">Admin Panel Icons</h2>
-              <div className="icon-grid">
-                {adminPanelIcons.map((icon) => (
-                  <div key={icon.id} className="icon-card">
-                    <div className="icon-display">{renderIcon(icon)}</div>
-                    <div className="icon-name">{icon.name}</div>
-                    {renderReplaceControl(icon.id)}
-                  </div>
-                ))}
+            ) : icons.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px" }}>
+                <p>No icons found. Run the seed script to add default icons:</p>
+                <code style={{ background: "#f3f4f6", padding: "8px", borderRadius: "4px" }}>
+                  node scripts/seed-icons.js
+                </code>
               </div>
-            </div>
-
-            {/* Social, Payment, & Brand Icons */}
-            <div className="icon-section">
-              <h2 className="icon-section-title">Social, Payment, & Brand Icons</h2>
-              <div className="icon-grid">
-                {socialPaymentBrandIcons.map((icon) => (
-                  <div key={icon.id} className="icon-card">
-                    <div className="icon-display">{renderIcon(icon)}</div>
-                    <div className="icon-name">{icon.name}</div>
-                    {renderReplaceControl(icon.id)}
+            ) : (
+              categories.map((category) => {
+                const categoryIcons = groupedIcons[category] || [];
+                if (categoryIcons.length === 0) return null;
+                
+                return (
+                  <div key={category} className="icon-section">
+                    <h2 className="icon-section-title">{category}</h2>
+                    <div className="icon-grid">
+                      {categoryIcons.map((icon) => (
+                        <div key={icon.dbId || icon.id} className="icon-card">
+                          <div className="icon-display">{renderIcon(icon)}</div>
+                          <div className="icon-name">{icon.name}</div>
+                          {icon.dbId && renderReplaceControl(icon)}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Service & Platform Icons */}
-            <div className="icon-section">
-              <h2 className="icon-section-title">Service & Platform Icons</h2>
-              <div className="icon-grid">
-                {servicePlatformIcons.map((icon) => (
-                  <div key={icon.id} className="icon-card">
-                    <div className="icon-display">{renderIcon(icon)}</div>
-                    <div className="icon-name">{icon.name}</div>
-                    {renderReplaceControl(icon.id)}
-                  </div>
-                ))}
-              </div>
-            </div>
+                );
+              })
+            )}
           </div>
         </main>
       </div>

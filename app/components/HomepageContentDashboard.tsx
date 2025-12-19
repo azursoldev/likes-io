@@ -4,8 +4,8 @@ import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faXmark, faImage } from "@fortawesome/free-solid-svg-icons";
-import { useState } from "react";
+import { faPlus, faXmark, faImage, faSave } from "@fortawesome/free-solid-svg-icons";
+import { useState, useEffect } from "react";
 
 type Benefit = {
   id: number;
@@ -41,23 +41,123 @@ const initialBenefits: Benefit[] = [
   },
 ];
 
+// Default values matching the current Hero component
+const DEFAULT_HERO_TITLE = `Real Social Media
+Growth, <span class="accent">Delivered</span>
+<span class="accent"> Instantly!</span>`;
+const DEFAULT_HERO_SUBTITLE = "Get real, high-quality likes, followers, and views to boost your social presence, reach the Explore Page, and grow your brand organically.";
+const DEFAULT_BUTTON1_TEXT = "View Packages";
+const DEFAULT_BUTTON1_LINK = "#services-overview";
+const DEFAULT_BUTTON2_TEXT = "Free Likes Trial";
+const DEFAULT_BUTTON2_LINK = "#free-trial";
+const DEFAULT_REVIEW_COUNT = "1,442+ Reviews";
+const DEFAULT_RATING = "5.0";
+
 export default function HomepageContentDashboard() {
-  const [heroTitle, setHeroTitle] = useState(
-    'Real Social Media Growth, <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">Delivered Instantly!</span>'
-  );
-  const [heroSubtitle, setHeroSubtitle] = useState(
-    "Get real, high-quality likes, followers, and views to boost your social presence, reach the Explore Page, and grow your brand organically."
-  );
-  const [button1Text, setButton1Text] = useState("View Packages");
-  const [button1Link, setButton1Link] = useState("#services-overview");
-  const [button2Text, setButton2Text] = useState("Free Likes Trial");
-  const [button2Link, setButton2Link] = useState("free-instagram-likes");
-  const [reviewCountText, setReviewCountText] = useState("1,442+ Reviews");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  
+  const [heroTitle, setHeroTitle] = useState(DEFAULT_HERO_TITLE);
+  const [heroSubtitle, setHeroSubtitle] = useState(DEFAULT_HERO_SUBTITLE);
+  const [button1Text, setButton1Text] = useState(DEFAULT_BUTTON1_TEXT);
+  const [button1Link, setButton1Link] = useState(DEFAULT_BUTTON1_LINK);
+  const [button2Text, setButton2Text] = useState(DEFAULT_BUTTON2_TEXT);
+  const [button2Link, setButton2Link] = useState(DEFAULT_BUTTON2_LINK);
+  const [reviewCountText, setReviewCountText] = useState(DEFAULT_REVIEW_COUNT);
+  const [rating, setRating] = useState(DEFAULT_RATING);
   const [heroImage, setHeroImage] = useState<File | null>(null);
   const [heroImageName, setHeroImageName] = useState("");
   const [whyChooseTitle, setWhyChooseTitle] = useState("Why Choose Us?");
   const [whyChooseSubtitle, setWhyChooseSubtitle] = useState("Why Buying Instagram Likes is a Game-Changer");
   const [benefits, setBenefits] = useState<Benefit[]>(initialBenefits);
+
+  // Fetch homepage content on mount
+  useEffect(() => {
+    fetchHomepageContent();
+  }, []);
+
+  const fetchHomepageContent = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/cms/homepage');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch homepage content');
+      }
+      
+      const data = await response.json();
+      
+      if (data.content) {
+        // Parse the content from database
+        setHeroTitle(data.content.heroTitle || DEFAULT_HERO_TITLE);
+        setHeroSubtitle(data.content.heroSubtitle || DEFAULT_HERO_SUBTITLE);
+        setRating(data.content.heroRating || DEFAULT_RATING);
+        setReviewCountText(data.content.heroReviewCount || DEFAULT_REVIEW_COUNT);
+        
+        // Parse CTA buttons if they exist
+        if (data.content.heroCtaButtons && Array.isArray(data.content.heroCtaButtons)) {
+          if (data.content.heroCtaButtons[0]) {
+            setButton1Text(data.content.heroCtaButtons[0].text || DEFAULT_BUTTON1_TEXT);
+            setButton1Link(data.content.heroCtaButtons[0].link || DEFAULT_BUTTON1_LINK);
+          }
+          if (data.content.heroCtaButtons[1]) {
+            setButton2Text(data.content.heroCtaButtons[1].text || DEFAULT_BUTTON2_TEXT);
+            setButton2Link(data.content.heroCtaButtons[1].link || DEFAULT_BUTTON2_LINK);
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error('Error fetching homepage content:', err);
+      // Use defaults on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccess(false);
+
+      const heroCtaButtons = [
+        { text: button1Text, link: button1Link },
+        { text: button2Text, link: button2Link },
+      ];
+
+      const response = await fetch('/api/cms/homepage', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          heroTitle,
+          heroSubtitle,
+          heroRating: rating,
+          heroReviewCount: reviewCountText,
+          heroCtaButtons,
+          isActive: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to save (${response.status})`);
+      }
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save homepage content');
+      console.error('Error saving homepage content:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleAddBenefit = () => {
     const newBenefit: Benefit = {
@@ -100,7 +200,47 @@ export default function HomepageContentDashboard() {
 
             {/* Hero Section */}
             <div className="homepage-section-card">
-              <h2 className="section-title">Hero Section</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 className="section-title">Hero Section</h2>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || loading}
+                  className="homepage-save-btn"
+                  style={{
+                    padding: '0.5rem 1.5rem',
+                    backgroundColor: '#4f46e5',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: saving || loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    opacity: saving || loading ? 0.6 : 1,
+                  }}
+                >
+                  <FontAwesomeIcon icon={faSave} />
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+              
+              {error && (
+                <div style={{ padding: '1rem', marginBottom: '1rem', backgroundColor: '#fee', color: '#c33', borderRadius: '4px' }}>
+                  {error}
+                </div>
+              )}
+              
+              {success && (
+                <div style={{ padding: '1rem', marginBottom: '1rem', backgroundColor: '#efe', color: '#3c3', borderRadius: '4px' }}>
+                  Homepage content saved successfully!
+                </div>
+              )}
+              
+              {loading && (
+                <div style={{ padding: '1rem', textAlign: 'center' }}>
+                  Loading...
+                </div>
+              )}
               <div className="homepage-form-grid">
                 <label className="homepage-label">
                   Title (HTML allowed)
@@ -160,15 +300,28 @@ export default function HomepageContentDashboard() {
                     />
                   </label>
                 </div>
-                <label className="homepage-label">
-                  Review Count Text
-                  <input
-                    type="text"
-                    className="homepage-input"
-                    value={reviewCountText}
-                    onChange={(e) => setReviewCountText(e.target.value)}
-                  />
-                </label>
+                <div className="homepage-two-col">
+                  <label className="homepage-label">
+                    Rating
+                    <input
+                      type="text"
+                      className="homepage-input"
+                      value={rating}
+                      onChange={(e) => setRating(e.target.value)}
+                      placeholder="5.0"
+                    />
+                  </label>
+                  <label className="homepage-label">
+                    Review Count Text
+                    <input
+                      type="text"
+                      className="homepage-input"
+                      value={reviewCountText}
+                      onChange={(e) => setReviewCountText(e.target.value)}
+                      placeholder="1,442+ Reviews"
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="homepage-section-divider"></div>

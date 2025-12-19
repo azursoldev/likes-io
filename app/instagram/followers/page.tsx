@@ -2,17 +2,22 @@ import type { Metadata } from "next";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import ServiceHero from "../../components/ServiceHero";
-import AssuranceCard from "../../components/AssuranceCard";
+import {
+  ServicePageContentProvider,
+  DynamicServiceHero,
+  DynamicAssuranceCard,
+  DynamicPackagesSelector,
+  DynamicQualityCompare,
+  DynamicHowItWorks,
+  DynamicFAQSection,
+} from "../../components/ServicePageContent";
 import LearnMoreSection from "../../components/LearnMoreSection";
-import PackagesSelector, { type PackageTabConfig } from "../../components/PackagesSelector";
-import QualityCompare from "../../components/QualityCompare";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
-import HowItWorksSection from "../../components/HowItWorksSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
-import FAQSection, { type FAQItem } from "../../components/FAQSection";
 import MoreServicesCTA, { type CTAButton } from "../../components/MoreServicesCTA";
+import type { PackageTabConfig } from "../../components/PackagesSelector";
+import type { FAQItem } from "../../components/FAQSection";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
 import { faThumbsUp } from "@fortawesome/free-solid-svg-icons";
 
@@ -148,45 +153,44 @@ export default function Page() {
   return (
     <>
       <Header />
-      <ServiceHero
-        title="Buy Instagram Followers & Become an Authority"
-        subtitle="Gain instant credibility with high-quality, real followers delivered safely in minutes. A strong follower count is the ultimate social proof to attract organic growth and unlock new revenue streams."
-        rating="4.98/5"
-        basedon="based on"
-        reviewss="1,823+ reviews"
-      />
-      <AssuranceCard />
-      <LearnMoreSection text="Learn More About Instagram Followers" />
-      <PackagesSelector
-        tabsConfig={INSTAGRAM_FOLLOWER_TABS}
-        metricLabel="Followers"
-        defaultQtyTarget="2.5K"
-        ctaTemplate="Buy {qty} Instagram Followers Now"
-      />
-      <QualityCompare title="Compare Follower Quality" columns={QUALITY_COLUMNS} />
-      <FeaturedOn />
-      <AdvantageSection />
-      <HowItWorksSection
-        title="How It Works"
-        subtitle="Growing your follower count is the fastest way to build credibility and expand your reach. See how simple it is to get started."
-        steps={INSTAGRAM_STEPS}
-      />
-      <ReviewsSection
-        title="Loved by Creators Worldwide"
-        subtitle="Real reviews from creators and brands who've seen incredible growth with our services."
-        reviews={INSTAGRAM_REVIEWS}
-      />
-      <FAQSection
-        title="Frequently Asked Questions"
-        subtitle="Have questions? We've got answers. If you don't see your question here, feel free to contact us."
-        faqs={INSTAGRAM_FAQS}
-      />
-      <MoreServicesCTA
-        title="More Growth Services from Likes.io"
-        highlight="Services"
-        body="Instagram followers are powerful tools, but they're not the only engagements available from Likes.io. Pair them with targeted likes or views to keep your engagement metrics even more balanced."
-        buttons={CTA_BUTTONS}
-      />
+      <ServicePageContentProvider
+        platform="instagram"
+        serviceType="followers"
+        defaultHeroTitle="Buy Instagram Followers & Become an Authority"
+        defaultHeroSubtitle="Gain instant credibility with high-quality, real followers delivered safely in minutes. A strong follower count is the ultimate social proof to attract organic growth and unlock new revenue streams."
+        defaultHeroRating="4.98/5"
+        defaultHeroReviewCount="1,823+ reviews"
+        defaultAssuranceCardText="Join over a million satisfied customers, including artists, companies, and top influencers. Our services are <b>100% discreet, secure, and delivered naturally</b> to ensure your account is always safe."
+        defaultPackages={INSTAGRAM_FOLLOWER_TABS}
+        defaultQualityCompare={{ title: "Compare Follower Quality", columns: QUALITY_COLUMNS }}
+        defaultHowItWorks={{
+          title: "How It Works",
+          subtitle: "Growing your follower count is the fastest way to build credibility and expand your reach. See how simple it is to get started.",
+          steps: INSTAGRAM_STEPS,
+        }}
+        defaultFAQs={INSTAGRAM_FAQS}
+      >
+        <DynamicServiceHero />
+        <DynamicAssuranceCard />
+        <LearnMoreSection text="Learn More About Instagram Followers" />
+        <DynamicPackagesSelector />
+        <DynamicQualityCompare />
+        <FeaturedOn />
+        <AdvantageSection />
+        <DynamicHowItWorks />
+        <ReviewsSection
+          title="Loved by Creators Worldwide"
+          subtitle="Real reviews from creators and brands who've seen incredible growth with our services."
+          reviews={INSTAGRAM_REVIEWS}
+        />
+        <DynamicFAQSection />
+        <MoreServicesCTA
+          title="More Growth Services from Likes.io"
+          highlight="Services"
+          body="Instagram followers are powerful tools, but they're not the only engagements available from Likes.io. Pair them with targeted likes or views to keep your engagement metrics even more balanced."
+          buttons={CTA_BUTTONS}
+        />
+      </ServicePageContentProvider>
       <Footer />
     </>
   );

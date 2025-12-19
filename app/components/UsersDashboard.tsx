@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
@@ -18,7 +18,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 type UserRow = {
-  id: number;
+  id: string;
   name: string;
   email: string;
   joined: string;
@@ -27,18 +27,19 @@ type UserRow = {
   status: "active" | "inactive";
 };
 
-const initialUsers: UserRow[] = [
-  { id: 1, name: "John Doe", email: "john.d@example.com", joined: "2024-08-01", orders: 5, wallet: "$25.50", status: "active" },
-  { id: 2, name: "Jane Smith", email: "jane.s@example.com", joined: "2024-07-28", orders: 2, wallet: "$10.00", status: "inactive" },
-  { id: 3, name: "Mike Johnson", email: "mike.j@example.com", joined: "2024-07-15", orders: 12, wallet: "$150.75", status: "active" },
-  { id: 4, name: "Emily White", email: "emily.w@example.com", joined: "2024-06-20", orders: 8, wallet: "$0.00", status: "inactive" },
-  { id: 5, name: "Chris Green", email: "chris.g@example.com", joined: "2024-05-11", orders: 1, wallet: "$75.20", status: "active" },
-];
-
 const paymentIcon = faMoneyBillWave;
 
 export default function UsersDashboard() {
-  const [users, setUsers] = useState<UserRow[]>(initialUsers);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [statusUpdating, setStatusUpdating] = useState<Set<string>>(new Set());
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [editForm, setEditForm] = useState({ name: "", email: "", status: false });
@@ -47,6 +48,77 @@ export default function UsersDashboard() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ name: "", email: "", status: true });
+
+  // Fetch users from API
+  const fetchUsers = async (page: number = 1, search: string = "") => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "50",
+      });
+      
+      if (search) {
+        params.append("search", search);
+      }
+      
+      const response = await fetch(`/api/admin/users?${params.toString()}`);
+      
+      if (!response.ok) {
+        // Try to get error message from response
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Failed to fetch users (${response.status})`;
+        
+        if (response.status === 401) {
+          throw new Error("Unauthorized: Please log in as an admin to view users.");
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.users) {
+        throw new Error("Invalid response format from server");
+      }
+      
+      setUsers(data.users);
+      setTotalPages(data.pagination?.totalPages || 1);
+      setTotalUsers(data.pagination?.total || 0);
+      setCurrentPage(page);
+    } catch (err: any) {
+      const errorMessage = err.message || "Failed to load users. Please check your connection and try again.";
+      setError(errorMessage);
+      console.error("Error fetching users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch users on mount
+  useEffect(() => {
+    fetchUsers(1, "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced search - reset to page 1 when search changes
+  useEffect(() => {
+    if (searchQuery === "") return; // Don't search on initial mount
+    
+    const timer = setTimeout(() => {
+      fetchUsers(1, searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
 
   const handleEditClick = (user: UserRow) => {
     setSelectedUser(user);
@@ -64,11 +136,41 @@ export default function UsersDashboard() {
     setShowAddFundsModal(true);
   };
 
-  const handleSaveChanges = () => {
-    // Here you would typically update the user data
-    console.log("Saving changes:", editForm);
-    setShowEditModal(false);
-    setSelectedUser(null);
+  const handleSaveChanges = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setActionLoading(true);
+      setActionError(null);
+
+      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: editForm.name,
+          email: editForm.email,
+          status: editForm.status,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to update user (${response.status})`);
+      }
+
+      // Success - refresh the list and close modal
+      setShowEditModal(false);
+      setSelectedUser(null);
+      setActionError(null);
+      await fetchUsers(currentPage, searchQuery);
+    } catch (err: any) {
+      setActionError(err.message || "Failed to update user");
+      console.error("Error updating user:", err);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleAddFunds = () => {
@@ -82,6 +184,7 @@ export default function UsersDashboard() {
     setShowEditModal(false);
     setShowAddFundsModal(false);
     setSelectedUser(null);
+    setActionError(null);
   };
 
   const incrementAmount = () => {
@@ -101,17 +204,40 @@ export default function UsersDashboard() {
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedUser) {
-      setUsers(users.filter((user) => user.id !== selectedUser.id));
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setActionLoading(true);
+      setActionError(null);
+
+      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to delete user (${response.status})`);
+      }
+
+      // Success - refresh the list and close modal
       setShowDeleteModal(false);
       setSelectedUser(null);
+      setActionError(null);
+      await fetchUsers(currentPage, searchQuery);
+    } catch (err: any) {
+      setActionError(err.message || "Failed to delete user");
+      console.error("Error deleting user:", err);
+      // Keep modal open on error so user can see the error message
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleCancelDelete = () => {
     setShowDeleteModal(false);
     setSelectedUser(null);
+    setActionError(null);
   };
 
   const handleAddUserClick = () => {
@@ -119,26 +245,61 @@ export default function UsersDashboard() {
     setShowAddUserModal(true);
   };
 
-  const handleSaveNewUser = () => {
+  const handleSaveNewUser = async () => {
     if (newUserForm.name && newUserForm.email) {
-      const newUser: UserRow = {
-        id: Math.max(...users.map(u => u.id), 0) + 1,
-        name: newUserForm.name,
-        email: newUserForm.email,
-        joined: new Date().toISOString().split('T')[0],
-        orders: 0,
-        wallet: "$0.00",
-        status: newUserForm.status ? "active" : "inactive",
-      };
-      setUsers([...users, newUser]);
+      // TODO: Implement API call to create user
+      // For now, just refresh the list
       setShowAddUserModal(false);
       setNewUserForm({ name: "", email: "", status: true });
+      fetchUsers(currentPage, searchQuery);
     }
   };
 
   const handleCancelAddUser = () => {
     setShowAddUserModal(false);
     setNewUserForm({ name: "", email: "", status: true });
+  };
+
+  const handleStatusToggle = async (user: UserRow, newStatus: boolean) => {
+    // Optimistically update UI
+    setUsers(users.map(u => 
+      u.id === user.id 
+        ? { ...u, status: newStatus ? "active" : "inactive" }
+        : u
+    ));
+
+    // Mark this user as updating
+    setStatusUpdating(prev => new Set(prev).add(user.id));
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to update status (${response.status})`);
+      }
+
+      // Success - status already updated optimistically
+    } catch (err: any) {
+      console.error("Error updating status:", err);
+      // Revert the toggle on error by refreshing the list
+      await fetchUsers(currentPage, searchQuery);
+    } finally {
+      // Remove from updating set
+      setStatusUpdating(prev => {
+        const next = new Set(prev);
+        next.delete(user.id);
+        return next;
+      });
+    }
   };
 
   return (
@@ -161,13 +322,39 @@ export default function UsersDashboard() {
               <div className="users-card-top">
                 <div className="admin-search-pill">
                   <FontAwesomeIcon icon={faSearch} />
-                  <input placeholder="Search users..." aria-label="Search users" />
+                  <input 
+                    placeholder="Search users..." 
+                    aria-label="Search users"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                  />
                 </div>
                 <button className="users-add-btn" onClick={handleAddUserClick}>
                   <FontAwesomeIcon icon={faPlus} />
                   <span>Add User</span>
                 </button>
               </div>
+              
+              {loading && (
+                <div style={{ padding: "2rem", textAlign: "center" }}>
+                  Loading users...
+                </div>
+              )}
+              
+              {error && (
+                <div style={{ padding: "2rem", textAlign: "center", color: "red" }}>
+                  Error: {error}
+                </div>
+              )}
+              
+              {!loading && !error && users.length === 0 && (
+                <div style={{ padding: "2rem", textAlign: "center" }}>
+                  No users found
+                </div>
+              )}
+              
+              {!loading && !error && users.length > 0 && (
+                <>
               <table className="users-table">
                 <thead>
                   <tr>
@@ -200,7 +387,12 @@ export default function UsersDashboard() {
                       </td>
                       <td>
                         <label className="toggle-switch">
-                          <input type="checkbox" defaultChecked={user.status === "active"} />
+                          <input 
+                            type="checkbox" 
+                            checked={user.status === "active"}
+                            onChange={(e) => handleStatusToggle(user, e.target.checked)}
+                            disabled={statusUpdating.has(user.id) || actionLoading}
+                          />
                           <span className="toggle-slider" />
                         </label>
                       </td>
@@ -215,14 +407,28 @@ export default function UsersDashboard() {
               </table>
 
               <div className="users-footer">
-                <span className="users-footer-text">Showing 1 to 5 of 5 users</span>
+                <span className="users-footer-text">
+                  Showing {users.length > 0 ? ((currentPage - 1) * 50 + 1) : 0} to {Math.min(currentPage * 50, totalUsers)} of {totalUsers} users
+                </span>
                 <div className="users-pagination">
-                  <button className="pager-btn" disabled>
+                  <button 
+                    className="pager-btn" 
+                    disabled={currentPage === 1}
+                    onClick={() => fetchUsers(currentPage - 1, searchQuery)}
+                  >
                     Previous
                   </button>
-                  <button className="pager-btn">Next</button>
+                  <button 
+                    className="pager-btn"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => fetchUsers(currentPage + 1, searchQuery)}
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
+                </>
+              )}
             </div>
           </div>
         </main>
@@ -239,6 +445,11 @@ export default function UsersDashboard() {
             </div>
 
             <div className="edit-user-modal-body">
+              {actionError && (
+                <div style={{ padding: "1rem", marginBottom: "1rem", backgroundColor: "#fee", color: "#c33", borderRadius: "4px" }}>
+                  {actionError}
+                </div>
+              )}
               <div className="edit-user-form-group">
                 <label htmlFor="edit-name">Full Name</label>
                 <input
@@ -247,6 +458,7 @@ export default function UsersDashboard() {
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   className="edit-user-input"
+                  disabled={actionLoading}
                 />
               </div>
 
@@ -258,6 +470,7 @@ export default function UsersDashboard() {
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   className="edit-user-input"
+                  disabled={actionLoading}
                 />
               </div>
 
@@ -270,6 +483,7 @@ export default function UsersDashboard() {
                       type="checkbox"
                       checked={editForm.status}
                       onChange={(e) => setEditForm({ ...editForm, status: e.target.checked })}
+                      disabled={actionLoading}
                     />
                     <span className="toggle-slider" />
                   </label>
@@ -278,11 +492,19 @@ export default function UsersDashboard() {
             </div>
 
             <div className="edit-user-modal-footer">
-              <button className="edit-user-btn cancel" onClick={handleCancel}>
+              <button 
+                className="edit-user-btn cancel" 
+                onClick={handleCancel}
+                disabled={actionLoading}
+              >
                 Cancel
               </button>
-              <button className="edit-user-btn save" onClick={handleSaveChanges}>
-                Save Changes
+              <button 
+                className="edit-user-btn save" 
+                onClick={handleSaveChanges}
+                disabled={actionLoading}
+              >
+                {actionLoading ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
@@ -368,17 +590,30 @@ export default function UsersDashboard() {
             </div>
 
             <div className="delete-user-modal-body">
+              {actionError && (
+                <div style={{ padding: "1rem", marginBottom: "1rem", backgroundColor: "#fee", color: "#c33", borderRadius: "4px" }}>
+                  {actionError}
+                </div>
+              )}
               <p>
                 Are you sure you want to delete <strong>{selectedUser.name}</strong>? This action cannot be undone.
               </p>
             </div>
 
             <div className="delete-user-modal-footer">
-              <button className="delete-user-btn cancel" onClick={handleCancelDelete}>
+              <button 
+                className="delete-user-btn cancel" 
+                onClick={handleCancelDelete}
+                disabled={actionLoading}
+              >
                 Cancel
               </button>
-              <button className="delete-user-btn delete" onClick={handleConfirmDelete}>
-                Delete User
+              <button 
+                className="delete-user-btn delete" 
+                onClick={handleConfirmDelete}
+                disabled={actionLoading}
+              >
+                {actionLoading ? "Deleting..." : "Delete User"}
               </button>
             </div>
           </div>

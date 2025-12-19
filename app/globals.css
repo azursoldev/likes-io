@@ -152,6 +152,8 @@ section.hero-section .reviews-pill span.sep {
       font-weight: 700;
       padding: 19px 28px !important;
       font-size: 15px;
+      text-decoration: none;
+      line-height: 15px;
   }
   .hero-section .btn.dark {
     background: linear-gradient(90deg, #f97316, #ef4444);
@@ -62369,6 +62371,24 @@ section.learn-more-section .container {
   font-size: 14px;
   font-weight: 600;
   color: #111827;
+}
+
+.checkout-input-error {
+  border-color: #ef4444 !important;
+}
+
+.checkout-input-error:focus {
+  border-color: #ef4444 !important;
+  outline-color: #ef4444;
+}
+
+.checkout-input-valid {
+  border-color: #10b981 !important;
+}
+
+.checkout-input-valid:focus {
+  border-color: #10b981 !important;
+  outline-color: #10b981;
 }
 
 .checkout-input,

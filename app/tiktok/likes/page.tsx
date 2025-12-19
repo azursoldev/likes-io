@@ -4,16 +4,21 @@ import { faEye } from "@fortawesome/free-regular-svg-icons";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import ServiceHero from "../../components/ServiceHero";
-import AssuranceCard from "../../components/AssuranceCard";
-import PackagesSelector, { type PackageTabConfig } from "../../components/PackagesSelector";
-import QualityCompare from "../../components/QualityCompare";
+import {
+  ServicePageContentProvider,
+  DynamicServiceHero,
+  DynamicAssuranceCard,
+  DynamicPackagesSelector,
+  DynamicQualityCompare,
+  DynamicHowItWorks,
+  DynamicFAQSection,
+} from "../../components/ServicePageContent";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
-import HowItWorksSection from "../../components/HowItWorksSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
-import FAQSection, { type FAQItem } from "../../components/FAQSection";
 import MoreServicesCTA, { type CTAButton } from "../../components/MoreServicesCTA";
+import type { PackageTabConfig } from "../../components/PackagesSelector";
+import type { FAQItem } from "../../components/FAQSection";
 
 export const metadata: Metadata = {
   title: "Buy TikTok Likes | Real & Instant Likes.io",
@@ -162,44 +167,43 @@ export default function Page() {
   return (
     <>
       <Header />
-      <ServiceHero
-        title="Skyrocket Your TikToks with Likes"
-        subtitle="Boost your video's appeal, trigger the algorithm, and land on the 'For You' page with our high-quality, real TikTok likes. Rated #1 for TikTok growth."
-        rating="4.9/5"
-        basedon="based on"
-        reviewss="18,965+ reviews"
-      />
-      <AssuranceCard />
-      <PackagesSelector
-        tabsConfig={TIKTOK_PACKAGE_TABS}
-        metricLabel="Likes"
-        defaultQtyTarget="1K"
-        ctaTemplate="Buy {qty} TikTok Likes Now"
-      />
-      <QualityCompare title="Compare TikTok Like Quality" columns={QUALITY_COLUMNS} />
-      <FeaturedOn />
-      <AdvantageSection />
-      <HowItWorksSection
-        title="How Buying TikTok Likes Works"
-        subtitle="Designed for creators who need results fast. Our streamlined process keeps things simple, safe, and wildly effective."
-        steps={TIKTOK_STEPS}
-      />
-      <ReviewsSection
-        title="Loved by Creators Worldwide"
-        subtitle="Real TikTok creators who used Likes.io to ignite their growth."
-        reviews={TIKTOK_REVIEWS}
-      />
-      <FAQSection
-        title="TikTok Likes FAQs"
-        subtitle="Everything you need to know before you boost your next TikTok."
-        faqs={TIKTOK_FAQS}
-      />
-      <MoreServicesCTA
-        title="More Growth Services from Likes.io"
-        highlight="Services"
-        body="TikTok likes are powerful, but they're just one lever. Pair them with our targeted follower and view campaigns to compound your results in days."
-        buttons={CTA_BUTTONS}
-      />
+      <ServicePageContentProvider
+        platform="tiktok"
+        serviceType="likes"
+        defaultHeroTitle="Skyrocket Your TikToks with Likes"
+        defaultHeroSubtitle="Boost your video's appeal, trigger the algorithm, and land on the 'For You' page with our high-quality, real TikTok likes. Rated #1 for TikTok growth."
+        defaultHeroRating="4.9/5"
+        defaultHeroReviewCount="18,965+ reviews"
+        defaultAssuranceCardText="Join over a million satisfied customers, including artists, companies, and top influencers. Our services are <b>100% discreet, secure, and delivered naturally</b> to ensure your account is always safe."
+        defaultPackages={TIKTOK_PACKAGE_TABS}
+        defaultQualityCompare={{ title: "Compare TikTok Like Quality", columns: QUALITY_COLUMNS }}
+        defaultHowItWorks={{
+          title: "How Buying TikTok Likes Works",
+          subtitle: "Designed for creators who need results fast. Our streamlined process keeps things simple, safe, and wildly effective.",
+          steps: TIKTOK_STEPS,
+        }}
+        defaultFAQs={TIKTOK_FAQS}
+      >
+        <DynamicServiceHero />
+        <DynamicAssuranceCard />
+        <DynamicPackagesSelector />
+        <DynamicQualityCompare />
+        <FeaturedOn />
+        <AdvantageSection />
+        <DynamicHowItWorks />
+        <ReviewsSection
+          title="Loved by Creators Worldwide"
+          subtitle="Real TikTok creators who used Likes.io to ignite their growth."
+          reviews={TIKTOK_REVIEWS}
+        />
+        <DynamicFAQSection />
+        <MoreServicesCTA
+          title="More Growth Services from Likes.io"
+          highlight="Services"
+          body="TikTok likes are powerful, but they're just one lever. Pair them with our targeted follower and view campaigns to compound your results in days."
+          buttons={CTA_BUTTONS}
+        />
+      </ServicePageContentProvider>
       <Footer />
     </>
   );

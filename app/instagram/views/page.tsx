@@ -2,16 +2,21 @@ import type { Metadata } from "next";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import ServiceHero from "../../components/ServiceHero";
-import AssuranceCard from "../../components/AssuranceCard";
-import PackagesSelector, { type PackageTabConfig } from "../../components/PackagesSelector";
-import QualityCompare from "../../components/QualityCompare";
+import {
+  ServicePageContentProvider,
+  DynamicServiceHero,
+  DynamicAssuranceCard,
+  DynamicPackagesSelector,
+  DynamicQualityCompare,
+  DynamicHowItWorks,
+  DynamicFAQSection,
+} from "../../components/ServicePageContent";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
-import HowItWorksSection from "../../components/HowItWorksSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
-import FAQSection, { type FAQItem } from "../../components/FAQSection";
 import MoreServicesCTA, { type CTAButton } from "../../components/MoreServicesCTA";
+import type { PackageTabConfig } from "../../components/PackagesSelector";
+import type { FAQItem } from "../../components/FAQSection";
 import { faThumbsUp } from "@fortawesome/free-solid-svg-icons";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
 
@@ -144,44 +149,43 @@ export default function Page() {
   return (
     <>
       <Header />
-      <ServiceHero
-        title="Buy Instagram Views & Go Viral on Reels"
-        subtitle="Make your Reels and videos go viral. Buying views gives your content the initial velocity it needs to get noticed by the algorithm, pushing it onto Explore and in front of millions."
-        rating="4.95/5"
-        basedon="based on"
-        reviewss="17,249+ reviews"
-      />
-      <AssuranceCard />
-      <PackagesSelector
-        tabsConfig={INSTAGRAM_VIEW_TABS}
-        metricLabel="Views"
-        defaultQtyTarget="1K"
-        ctaTemplate="Buy {qty} Instagram Views Now"
-      />
-      <QualityCompare title="Compare View Quality" columns={QUALITY_COLUMNS} />
-      <FeaturedOn />
-      <AdvantageSection />
-      <HowItWorksSection
-        title="How It Works"
-        subtitle="Our process is simple, fast, and secure. Get the views you need to make your videos dominate feeds and stand out from the crowd."
-        steps={INSTAGRAM_STEPS}
-      />
-      <ReviewsSection
-        title="Loved by Creators Worldwide"
-        subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
-        reviews={INSTAGRAM_REVIEWS}
-      />
-      <FAQSection
-        title="Frequently Asked Questions"
-        subtitle="Have questions? We've got answers. If you don't see your question here, feel free to contact us."
-        faqs={INSTAGRAM_FAQS}
-      />
-      <MoreServicesCTA
-        title="More Growth Services from Likes.io"
-        highlight="Services"
-        body="Instagram views are powerful boosts, but they're not the only engagements available from Likes.io. Combine them with our likes and follower packages to stay balanced and build social proof even faster."
-        buttons={CTA_BUTTONS}
-      />
+      <ServicePageContentProvider
+        platform="instagram"
+        serviceType="views"
+        defaultHeroTitle="Buy Instagram Views & Go Viral on Reels"
+        defaultHeroSubtitle="Make your Reels and videos go viral. Buying views gives your content the initial velocity it needs to get noticed by the algorithm, pushing it onto Explore and in front of millions."
+        defaultHeroRating="4.95/5"
+        defaultHeroReviewCount="17,249+ reviews"
+        defaultAssuranceCardText="Join over a million satisfied customers, including artists, companies, and top influencers. Our services are <b>100% discreet, secure, and delivered naturally</b> to ensure your account is always safe."
+        defaultPackages={INSTAGRAM_VIEW_TABS}
+        defaultQualityCompare={{ title: "Compare View Quality", columns: QUALITY_COLUMNS }}
+        defaultHowItWorks={{
+          title: "How It Works",
+          subtitle: "Our process is simple, fast, and secure. Get the views you need to make your videos dominate feeds and stand out from the crowd.",
+          steps: INSTAGRAM_STEPS,
+        }}
+        defaultFAQs={INSTAGRAM_FAQS}
+      >
+        <DynamicServiceHero />
+        <DynamicAssuranceCard />
+        <DynamicPackagesSelector />
+        <DynamicQualityCompare />
+        <FeaturedOn />
+        <AdvantageSection />
+        <DynamicHowItWorks />
+        <ReviewsSection
+          title="Loved by Creators Worldwide"
+          subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
+          reviews={INSTAGRAM_REVIEWS}
+        />
+        <DynamicFAQSection />
+        <MoreServicesCTA
+          title="More Growth Services from Likes.io"
+          highlight="Services"
+          body="Instagram views are powerful boosts, but they're not the only engagements available from Likes.io. Combine them with our likes and follower packages to stay balanced and build social proof even faster."
+          buttons={CTA_BUTTONS}
+        />
+      </ServicePageContentProvider>
       <Footer />
     </>
   );

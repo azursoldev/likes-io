@@ -3,27 +3,20 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+// Get homepage content (public - no auth required)
+export async function GET(request: NextRequest) {
   try {
-    const content = await prisma.homepageContent.findFirst({
+    const homepageContent = await prisma.homepageContent.findFirst({
       where: { isActive: true },
+      orderBy: { updatedAt: 'desc' },
     });
 
-    if (!content) {
-      // Return default structure
-      return NextResponse.json({
-        heroTitle: 'Real Social Media Growth, Delivered Instantly!',
-        heroSubtitle: 'Get real, high-quality likes, followers, and views to boost your social presence.',
-        heroRating: '5.0',
-        heroReviewCount: '1,442+ Reviews',
-        heroCtaButtons: [
-          { label: 'View Packages', href: '#packages' },
-          { label: 'Free Likes Trial', href: '#trial' },
-        ],
-      });
-    }
-
-    return NextResponse.json(content);
+    return NextResponse.json({
+      content: homepageContent || null,
+    });
   } catch (error: any) {
     console.error('Get homepage content error:', error);
     return NextResponse.json(
@@ -33,56 +26,74 @@ export async function GET() {
   }
 }
 
-export async function PUT(request: NextRequest) {
+// Update homepage content (admin only)
+export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== 'ADMIN') {
+    // Check if user is authenticated
+    if (!session) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized: Please log in to access this resource' },
         { status: 401 }
       );
     }
 
+    // Check if user is an admin
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden: Admin access required' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
-    const {
-      heroTitle,
-      heroSubtitle,
-      heroRating,
-      heroReviewCount,
-      heroCtaButtons,
-      isActive = true,
-    } = body;
+    const { heroTitle, heroSubtitle, heroRating, heroReviewCount, heroCtaButtons, isActive } = body;
 
-    // Get or create homepage content
-    let content = await prisma.homepageContent.findFirst();
+    // Validate required fields
+    if (!heroTitle || !heroSubtitle) {
+      return NextResponse.json(
+        { error: 'Hero title and subtitle are required' },
+        { status: 400 }
+      );
+    }
 
-    if (content) {
-      content = await prisma.homepageContent.update({
-        where: { id: content.id },
+    // Find existing active content or create new
+    let homepageContent = await prisma.homepageContent.findFirst({
+      where: { isActive: true },
+    });
+
+    if (homepageContent) {
+      // Update existing
+      homepageContent = await prisma.homepageContent.update({
+        where: { id: homepageContent.id },
         data: {
           heroTitle,
           heroSubtitle,
-          heroRating,
-          heroReviewCount,
-          heroCtaButtons: heroCtaButtons as any,
-          isActive,
+          heroRating: heroRating || null,
+          heroReviewCount: heroReviewCount || null,
+          heroCtaButtons: heroCtaButtons ? JSON.parse(JSON.stringify(heroCtaButtons)) : null,
+          isActive: isActive !== undefined ? isActive : true,
         },
       });
     } else {
-      content = await prisma.homepageContent.create({
+      // Create new
+      homepageContent = await prisma.homepageContent.create({
         data: {
           heroTitle,
           heroSubtitle,
-          heroRating,
-          heroReviewCount,
-          heroCtaButtons: heroCtaButtons as any,
-          isActive,
+          heroRating: heroRating || null,
+          heroReviewCount: heroReviewCount || null,
+          heroCtaButtons: heroCtaButtons ? JSON.parse(JSON.stringify(heroCtaButtons)) : null,
+          isActive: isActive !== undefined ? isActive : true,
         },
       });
     }
 
-    return NextResponse.json(content);
+    return NextResponse.json({
+      message: 'Homepage content updated successfully',
+      content: homepageContent,
+    });
   } catch (error: any) {
     console.error('Update homepage content error:', error);
     return NextResponse.json(
@@ -91,4 +102,3 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
-

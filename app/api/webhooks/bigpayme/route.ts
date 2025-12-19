@@ -54,11 +54,11 @@ export async function POST(request: NextRequest) {
 
           if (service && service.japServiceId) {
             // Create order in JAP
+            // Note: platform is not needed for JAP API, service ID determines everything
             const japOrder = await japAPI.createOrder(
               service.japServiceId,
               order.link,
-              order.quantity,
-              order.platform
+              order.quantity
             );
 
             // Update order with JAP order ID

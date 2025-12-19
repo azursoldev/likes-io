@@ -71,7 +71,15 @@ export default function PackagesSelector({
   const pathname = usePathname();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const platform = pathname?.includes("/tiktok/") ? "tiktok" : pathname?.includes("/youtube/") ? "youtube" : "instagram";
-  const tabs = useMemo(() => (tabsConfig && tabsConfig.length ? tabsConfig : DEFAULT_TABS), [tabsConfig]);
+  const tabs = useMemo(() => {
+    // Always use tabsConfig from CMS - don't fall back to hardcoded defaults
+    // This ensures all pricing is dynamic and managed through admin dashboard
+    if (!tabsConfig || !Array.isArray(tabsConfig) || tabsConfig.length === 0) {
+      return []; // Return empty array instead of defaults - will show empty state
+    }
+    // Return all tabs from CMS, even if some have empty packages arrays
+    return tabsConfig;
+  }, [tabsConfig]);
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? "");
 
   // Helper to parse price from string (e.g., "$2.99" -> 2.99)
@@ -109,8 +117,25 @@ export default function PackagesSelector({
     }
   }, [tabs, activeTab]);
 
+  // Show empty state if no tabs configured (fully dynamic - no hardcoded defaults)
+  if (!tabs || tabs.length === 0) {
+    return (
+      <section className="packages">
+        <div className="container">
+          <div className="packages-card">
+            <p style={{ textAlign: "center", padding: "2rem", color: "#6b7280" }}>
+              Pricing packages are being configured. Please check back soon.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const activeTabData = tabs.find((t) => t.id === activeTab) ?? tabs[0];
-  const visiblePackages = activeTabData?.packages ?? [];
+  const visiblePackages = (activeTabData?.packages && Array.isArray(activeTabData.packages)) 
+    ? activeTabData.packages 
+    : [];
 
   const defaultIndex = useMemo(() => {
     if (!visiblePackages.length) return 0;

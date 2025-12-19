@@ -2,16 +2,22 @@ import type { Metadata } from "next";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import ServiceHero from "../../components/ServiceHero";
-import AssuranceCard from "../../components/AssuranceCard";
+import {
+  ServicePageContentProvider,
+  DynamicServiceHero,
+  DynamicAssuranceCard,
+  DynamicPackagesSelector,
+  DynamicQualityCompare,
+  DynamicHowItWorks,
+  DynamicFAQSection,
+} from "../../components/ServicePageContent";
 import PackagesSelector, { type PackageTabConfig } from "../../components/PackagesSelector";
 import QualityCompare from "../../components/QualityCompare";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
-import HowItWorksSection from "../../components/HowItWorksSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
-import FAQSection, { type FAQItem } from "../../components/FAQSection";
 import MoreServicesCTA, { type CTAButton } from "../../components/MoreServicesCTA";
+import type { FAQItem } from "../../components/FAQSection";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
 
@@ -144,44 +150,43 @@ export default function Page() {
   return (
     <>
       <Header />
-      <ServiceHero
-        title="Skyrocket Your Influence with TikTok Followers"
-        subtitle="Gain instant authority and unlock TikTok features faster. A stronger follower count is the ultimate social proof, attracting organic growth and brand deals."
-        rating="4.9/5"
-        basedon="based on"
-        reviewss="12,850+ reviews"
-      />
-      <AssuranceCard />
-      <PackagesSelector
-        tabsConfig={TIKTOK_FOLLOWER_TABS}
-        metricLabel="Followers"
-        defaultQtyTarget="1K"
-        ctaTemplate="Buy {qty} TikTok Followers Now"
-      />
-      <QualityCompare title="Compare Follower Quality" columns={QUALITY_COLUMNS} />
-      <FeaturedOn />
-      <AdvantageSection />
-      <HowItWorksSection
-        title="How It Works"
-        subtitle="Our process is straightforward, reliable, and designed for rapid results. Start building your TikTok empire today."
-        steps={TIKTOK_STEPS}
-      />
-      <ReviewsSection
-        title="Loved by Creators Worldwide"
-        subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
-        reviews={TIKTOK_REVIEWS}
-      />
-      <FAQSection
-        title="Frequently Asked Questions"
-        subtitle="Have questions? We've got answers. If you don't see your question here, feel free to contact us."
-        faqs={TIKTOK_FAQS}
-      />
-      <MoreServicesCTA
-        title="More Growth Services from Likes.io"
-        highlight="Services"
-        body="TikTok followers are powerful tools, but they're not the only engagements available from Likes.io. Pair them with our premium like and view boosts to keep your engagement metrics balanced."
-        buttons={CTA_BUTTONS}
-      />
+      <ServicePageContentProvider
+        platform="tiktok"
+        serviceType="followers"
+        defaultHeroTitle="Skyrocket Your Influence with TikTok Followers"
+        defaultHeroSubtitle="Gain instant authority and unlock TikTok features faster. A stronger follower count is the ultimate social proof, attracting organic growth and brand deals."
+        defaultHeroRating="4.9/5"
+        defaultHeroReviewCount="12,850+ reviews"
+        defaultAssuranceCardText="Join over a million satisfied customers, including artists, companies, and top influencers. Our services are <b>100% discreet, secure, and delivered naturally</b> to ensure your account is always safe."
+        defaultPackages={TIKTOK_FOLLOWER_TABS}
+        defaultQualityCompare={{ title: "Compare Follower Quality", columns: QUALITY_COLUMNS }}
+        defaultHowItWorks={{
+          title: "How It Works",
+          subtitle: "Our process is straightforward, reliable, and designed for rapid results. Start building your TikTok empire today.",
+          steps: TIKTOK_STEPS,
+        }}
+        defaultFAQs={TIKTOK_FAQS}
+      >
+        <DynamicServiceHero />
+        <DynamicAssuranceCard />
+        <DynamicPackagesSelector />
+        <DynamicQualityCompare />
+        <FeaturedOn />
+        <AdvantageSection />
+        <DynamicHowItWorks />
+        <ReviewsSection
+          title="Loved by Creators Worldwide"
+          subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
+          reviews={TIKTOK_REVIEWS}
+        />
+        <DynamicFAQSection />
+        <MoreServicesCTA
+          title="More Growth Services from Likes.io"
+          highlight="Services"
+          body="TikTok followers are powerful tools, but they're not the only engagements available from Likes.io. Pair them with our premium like and view boosts to keep your engagement metrics balanced."
+          buttons={CTA_BUTTONS}
+        />
+      </ServicePageContentProvider>
       <Footer />
     </>
   );

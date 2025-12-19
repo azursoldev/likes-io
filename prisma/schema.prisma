@@ -293,6 +293,7 @@ model ServicePageContent {
   heroSubtitle    String
   heroRating      String?
   heroReviewCount String?
+  assuranceCardText String?
   packages        Json     // Package configurations
   qualityCompare  Json?    // Quality comparison data
   howItWorks      Json?     // Steps array

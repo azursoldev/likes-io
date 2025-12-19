@@ -4,16 +4,21 @@ import { faEye } from "@fortawesome/free-regular-svg-icons";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import ServiceHero from "../../components/ServiceHero";
-import AssuranceCard from "../../components/AssuranceCard";
-import PackagesSelector, { type PackageTabConfig } from "../../components/PackagesSelector";
-import QualityCompare from "../../components/QualityCompare";
+import {
+  ServicePageContentProvider,
+  DynamicServiceHero,
+  DynamicAssuranceCard,
+  DynamicPackagesSelector,
+  DynamicQualityCompare,
+  DynamicHowItWorks,
+  DynamicFAQSection,
+} from "../../components/ServicePageContent";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
-import HowItWorksSection from "../../components/HowItWorksSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
-import FAQSection, { type FAQItem } from "../../components/FAQSection";
 import MoreServicesCTA, { type CTAButton } from "../../components/MoreServicesCTA";
+import type { PackageTabConfig } from "../../components/PackagesSelector";
+import type { FAQItem } from "../../components/FAQSection";
 
 export const metadata: Metadata = {
   title: "Buy YouTube Likes | Real & Instant Likes.io",
@@ -153,44 +158,43 @@ export default function Page() {
   return (
     <>
       <Header />
-      <ServiceHero
-        title="Increase Engagement with YouTube Likes"
-        subtitle="Improve your video's like-to-dislike ratio, increase its social proof, and signal to the YouTube algorithm that your content is valuable and engaging."
-        rating="4.9/5"
-        basedon="based on"
-        reviewss="2,989+ reviews"
-      />
-      <AssuranceCard />
-      <PackagesSelector
-        tabsConfig={YOUTUBE_PACKAGE_TABS}
-        metricLabel="Likes"
-        defaultQtyTarget={500}
-        ctaTemplate="Buy {qty} YouTube Likes Now"
-      />
-      <QualityCompare title="Compare Like Quality" columns={QUALITY_COLUMNS} />
-      <FeaturedOn />
-      <AdvantageSection />
-      <HowItWorksSection
-        title="How It Works"
-        subtitle="Boosting your video's like count is a simple and effective way to increase its social proof and appeal."
-        steps={YOUTUBE_STEPS}
-      />
-      <ReviewsSection
-        title="Loved by Creators Worldwide"
-        subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
-        reviews={YOUTUBE_REVIEWS}
-      />
-      <FAQSection
-        title="Frequently Asked Questions"
-        subtitle="Have questions? We've got answers. If you don't see your question here, contact support anytime."
-        faqs={YOUTUBE_FAQS}
-      />
-      <MoreServicesCTA
-        title="More Growth Services from Likes.io"
-        highlight="Services"
-        body="YouTube likes are powerful tools, but they're not the only engagements available from Likes.io. Pair them with our premium view and subscriber campaigns to make every upload pop."
-        buttons={CTA_BUTTONS}
-      />
+      <ServicePageContentProvider
+        platform="youtube"
+        serviceType="likes"
+        defaultHeroTitle="Increase Engagement with YouTube Likes"
+        defaultHeroSubtitle="Improve your video's like-to-dislike ratio, increase its social proof, and signal to the YouTube algorithm that your content is valuable and engaging."
+        defaultHeroRating="4.9/5"
+        defaultHeroReviewCount="2,989+ reviews"
+        defaultAssuranceCardText="Join over a million satisfied customers, including artists, companies, and top influencers. Our services are <b>100% discreet, secure, and delivered naturally</b> to ensure your account is always safe."
+        defaultPackages={YOUTUBE_PACKAGE_TABS}
+        defaultQualityCompare={{ title: "Compare Like Quality", columns: QUALITY_COLUMNS }}
+        defaultHowItWorks={{
+          title: "How It Works",
+          subtitle: "Boosting your video's like count is a simple and effective way to increase its social proof and appeal.",
+          steps: YOUTUBE_STEPS,
+        }}
+        defaultFAQs={YOUTUBE_FAQS}
+      >
+        <DynamicServiceHero />
+        <DynamicAssuranceCard />
+        <DynamicPackagesSelector />
+        <DynamicQualityCompare />
+        <FeaturedOn />
+        <AdvantageSection />
+        <DynamicHowItWorks />
+        <ReviewsSection
+          title="Loved by Creators Worldwide"
+          subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
+          reviews={YOUTUBE_REVIEWS}
+        />
+        <DynamicFAQSection />
+        <MoreServicesCTA
+          title="More Growth Services from Likes.io"
+          highlight="Services"
+          body="YouTube likes are powerful tools, but they're not the only engagements available from Likes.io. Pair them with our premium view and subscriber campaigns to make every upload pop."
+          buttons={CTA_BUTTONS}
+        />
+      </ServicePageContentProvider>
       <Footer />
     </>
   );

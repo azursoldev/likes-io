@@ -3,12 +3,39 @@ import { NextResponse } from "next/server"
 
 export default withAuth(
   function middleware(req) {
+    // Allow public access to the admin login page
+    if (req.nextUrl.pathname === "/admin/login") {
+      return NextResponse.next()
+    }
+
+    const token = req.nextauth.token
+    const isAdmin = token?.role === "ADMIN"
+    const isAdminRoute = req.nextUrl.pathname.startsWith("/admin")
+
+    // TEMP: Allow all /admin routes without auth check
+    // Redirect non-admin users trying to access admin routes
+    // if (isAdminRoute && !isAdmin) {
+    //   return NextResponse.redirect(new URL("/", req.url))
+    // }
+
     return NextResponse.next()
   },
   {
     callbacks: {
-      authorized: () => {
-        // TEMP: Allow all routes without authentication
+      authorized: ({ token, req }) => {
+        // TEMP: Allow all /admin routes without auth
+        if (req.nextUrl.pathname.startsWith("/admin")) {
+          return true
+        }
+        // Dashboard routes require authentication
+        if (req.nextUrl.pathname.startsWith("/dashboard")) {
+          return !!token
+        }
+        // My account requires authentication
+        if (req.nextUrl.pathname.startsWith("/my-account")) {
+          return !!token
+        }
+        // Allow all other routes
         return true
       },
     },
@@ -16,6 +43,10 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: [],
+  matcher: [
+    "/admin/:path*",
+    "/dashboard/:path*",
+    "/my-account/:path*",
+  ],
 }
 

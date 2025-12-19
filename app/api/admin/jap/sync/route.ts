@@ -50,10 +50,13 @@ export async function POST(request: NextRequest) {
         const basePrice = parseFloat(japService.rate?.toString() || '0');
         const finalPrice = basePrice;
 
+        // JAP service ID is a number (service field)
+        const japServiceId = japService.service?.toString() || japService.id?.toString() || '';
+
         // Try to find existing service
         const existing = await prisma.service.findFirst({
           where: {
-            japServiceId: japService.id.toString(),
+            japServiceId: japServiceId,
           },
         });
 
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
               finalPrice,
               minQuantity: japService.min,
               maxQuantity: japService.max,
-              isActive: japService.available,
+              isActive: true, // JAP doesn't have 'available' field in the response
             },
           });
           updatedCount++;
@@ -78,13 +81,13 @@ export async function POST(request: NextRequest) {
               name: japService.name,
               platform: dbPlatform,
               serviceType: dbServiceType,
-              japServiceId: japService.id.toString(),
+              japServiceId: japServiceId,
               basePrice,
               markup: 0,
               finalPrice,
               minQuantity: japService.min,
               maxQuantity: japService.max,
-              isActive: japService.available,
+              isActive: true, // JAP doesn't have 'available' field in the response
             },
           });
           syncedCount++;
