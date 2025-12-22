@@ -4,42 +4,152 @@ import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import { useMemo, useState } from "react";
+import { faPlus, faX } from "@fortawesome/free-solid-svg-icons";
+import { useMemo, useState, useEffect } from "react";
+
+type PageLink = {
+  pagePath: string;
+  link: string;
+  nofollow: boolean;
+};
 
 type FeaturedItem = {
   id: number;
-  preview: string;
-  type: "text" | "image";
-  content: string;
-  pageLinks: string[];
+  brandName: string;
+  logoUrl: string | null;
+  altText: string | null;
+  pageLinks: PageLink[];
+  displayOrder: number;
+  isActive: boolean;
 };
 
-const initialItems: FeaturedItem[] = [
-  { id: 1, preview: "Forbes", type: "text", content: "Forbes", pageLinks: ["/"] },
-  { id: 2, preview: "Business Insider", type: "text", content: "Business Insider", pageLinks: ["/"] },
-  { id: 3, preview: "Entrepreneur", type: "text", content: "Entrepreneur", pageLinks: ["/"] },
-  { id: 4, preview: "WIRED", type: "text", content: "WIRED", pageLinks: ["/"] },
+const DEFAULT_BRANDS = [
+  { brandName: "Forbes", pageLinks: [{ pagePath: "all", link: "/", nofollow: false }], displayOrder: 0 },
+  { brandName: "Business Insider", pageLinks: [{ pagePath: "all", link: "/", nofollow: false }], displayOrder: 1 },
+  { brandName: "Entrepreneur", pageLinks: [{ pagePath: "all", link: "/", nofollow: false }], displayOrder: 2 },
+  { brandName: "WIRED", pageLinks: [{ pagePath: "all", link: "/", nofollow: false }], displayOrder: 3 },
+];
+
+const PAGE_OPTIONS = [
+  { value: "all", label: "All Pages" },
+  { value: "/", label: "Homepage" },
+  { value: "/instagram/likes", label: "Instagram Likes" },
+  { value: "/free-instagram-likes", label: "Free Instagram Likes" },
+  { value: "/free-instagram-followers", label: "Free Instagram Followers" },
+  { value: "/instagram/followers", label: "Instagram Followers" },
+  { value: "/instagram/views", label: "Instagram Views" },
+  { value: "/tiktok/likes", label: "TikTok Likes" },
+  { value: "/tiktok/followers", label: "TikTok Followers" },
+  { value: "/tiktok/views", label: "TikTok Views" },
+  { value: "/youtube/views", label: "YouTube Views" },
+  { value: "/youtube/subscribers", label: "YouTube Subscribers" },
+  { value: "/youtube/likes", label: "YouTube Likes" },
 ];
 
 export default function FeaturedOnDashboard() {
-  const [items, setItems] = useState<FeaturedItem[]>(initialItems);
+  const [items, setItems] = useState<FeaturedItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [preview, setPreview] = useState("");
   const [type, setType] = useState<"text" | "image">("text");
-  const [content, setContent] = useState("");
-  const [pageLinks, setPageLinks] = useState<string[]>([]);
+  const [brandName, setBrandName] = useState("");
+  const [altText, setAltText] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [pageLinks, setPageLinks] = useState<PageLink[]>([{ pagePath: "all", link: "#", nofollow: false }]);
+  const [displayOrder, setDisplayOrder] = useState(0);
   const [logoImage, setLogoImage] = useState<File | null>(null);
   const [logoImageName, setLogoImageName] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
+  // Fetch brands from API
+  useEffect(() => {
+    fetchBrands();
+  }, []);
+
+  const fetchBrands = async (skipAutoSeed = false) => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/cms/featured-on");
+      if (response.ok) {
+        const data = await response.json();
+        const brands = (data.brands || []).map((brand: any) => {
+          // Ensure pageLinks is always an array with proper structure
+          const pageLinks = (brand.pageLinks || []).map((link: any) => ({
+            pagePath: link.pagePath || "all",
+            link: link.link || "#",
+            nofollow: link.nofollow || false,
+          }));
+          
+          return {
+            ...brand,
+            pageLinks: pageLinks,
+          };
+        });
+        
+        console.log('Fetched brands with pageLinks:', brands.map((b: any) => ({
+          id: b.id,
+          brandName: b.brandName,
+          pageLinksCount: b.pageLinks.length,
+          pageLinks: b.pageLinks,
+        })));
+        
+        setItems(brands);
+        
+        // Auto-seed default brands if database is empty
+        if (!skipAutoSeed && brands.length === 0) {
+          await seedDefaultBrands(true);
+        }
+      } else {
+        console.error("Failed to fetch brands");
+      }
+    } catch (error) {
+      console.error("Error fetching brands:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Seed default brands if database is empty
+  const seedDefaultBrands = async (skipFetch = false) => {
+    try {
+      setSaving(true);
+      for (const brand of DEFAULT_BRANDS) {
+        await fetch("/api/cms/featured-on", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(brand),
+        });
+      }
+      if (!skipFetch) {
+        await fetchBrands(true);
+      } else {
+        // Fetch after seeding
+        const response = await fetch("/api/cms/featured-on");
+        if (response.ok) {
+          const data = await response.json();
+          const brands = (data.brands || []).map((brand: any) => ({
+            ...brand,
+            pageLinks: brand.pageLinks || [],
+          }));
+          setItems(brands);
+        }
+      }
+    } catch (error) {
+      console.error("Error seeding default brands:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const resetForm = () => {
-    setPreview("");
     setType("text");
-    setContent("");
-    setPageLinks([]);
+    setBrandName("");
+    setAltText("");
+    setLogoUrl("");
+    setPageLinks([{ pagePath: "all", link: "#", nofollow: false }]);
+    setDisplayOrder(0);
     setLogoImage(null);
     setLogoImageName("");
     setEditingId(null);
@@ -51,60 +161,179 @@ export default function FeaturedOnDashboard() {
   };
 
   const handleStartEdit = (item: FeaturedItem) => {
+    console.log('=== Editing item ===');
+    console.log('Full item:', JSON.stringify(item, null, 2));
+    console.log('Item pageLinks:', item.pageLinks);
+    console.log('Item pageLinks type:', typeof item.pageLinks, Array.isArray(item.pageLinks));
+    console.log('Item pageLinks length:', item.pageLinks?.length);
+    
     setEditingId(item.id);
-    setPreview(item.preview);
-    setType(item.type);
-    setContent(item.content);
-    setPageLinks(item.pageLinks);
+    setBrandName(item.brandName);
+    setAltText(item.altText || "");
+    setLogoUrl(item.logoUrl || "");
+    setType(item.logoUrl ? "image" : "text");
+    setDisplayOrder(item.displayOrder);
+    
+    // Ensure pageLinks is an array and has the correct structure
+    let validPageLinks: PageLink[] = [];
+    
+    if (item.pageLinks && Array.isArray(item.pageLinks) && item.pageLinks.length > 0) {
+      validPageLinks = item.pageLinks.map((link: any) => {
+        const mappedLink = {
+          pagePath: String(link.pagePath || "all"),
+          link: String(link.link || "#"),
+          nofollow: Boolean(link.nofollow !== undefined ? link.nofollow : false),
+        };
+        console.log('Mapped link:', mappedLink);
+        return mappedLink;
+      });
+      console.log('Final validPageLinks:', validPageLinks);
+    } else {
+      // If no pageLinks, create a default one
+      validPageLinks = [{ pagePath: "all", link: "#", nofollow: false }];
+      console.log('No pageLinks found, using default:', validPageLinks);
+    }
+    
+    setPageLinks(validPageLinks);
+    console.log('Set pageLinks state to:', validPageLinks);
+    setLogoImageName(item.logoUrl ? "Current logo" : "");
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (pageLinks.length === 0) return;
-    if (type === "text" && !preview.trim()) return;
-    if (type === "image" && (!logoImage && !logoImageName) && !content.trim()) return;
-
-    const finalPreview = type === "text" ? preview.trim() : logoImageName || content.trim() || "Image";
-    const finalContent = type === "text" ? preview.trim() : content.trim();
-
-    if (editingId !== null) {
-      setItems((prev) =>
-        prev.map((it) =>
-          it.id === editingId
-            ? { ...it, preview: finalPreview, type, content: finalContent, pageLinks }
-            : it
-        )
-      );
-    } else {
-      const next: FeaturedItem = {
-        id: Date.now(),
-        preview: finalPreview,
-        type,
-        content: finalContent,
-        pageLinks,
-      };
-      setItems((prev) => [...prev, next]);
+  const handleSave = async () => {
+    if (!brandName.trim()) {
+      alert("Brand name is required");
+      return;
     }
-    resetForm();
-    setShowModal(false);
+
+    if (type === "image" && !logoUrl && !logoImage) {
+      alert("Please provide a logo URL or upload an image");
+      return;
+    }
+
+    if (pageLinks.length === 0) {
+      alert("At least one page link is required");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      // Ensure pageLinks have the correct structure
+      const validPageLinks = pageLinks.map(link => ({
+        pagePath: link.pagePath || "all",
+        link: link.link || "#",
+        nofollow: link.nofollow || false,
+      }));
+      
+      console.log('Saving brand with pageLinks:', {
+        brandName: brandName.trim(),
+        pageLinksCount: validPageLinks.length,
+        pageLinks: validPageLinks,
+      });
+      
+      const brandData: any = {
+        brandName: brandName.trim(),
+        altText: type === "image" ? (altText.trim() || brandName.trim()) : null,
+        logoUrl: type === "image" ? (logoUrl || (logoImage ? "uploaded" : null)) : null,
+        pageLinks: validPageLinks,
+        displayOrder: displayOrder,
+        isActive: true,
+      };
+      
+      console.log('Brand data being sent:', JSON.stringify(brandData, null, 2));
+
+      if (editingId !== null) {
+        // Update existing brand
+        const response = await fetch("/api/cms/featured-on", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingId, ...brandData }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to update brand");
+        }
+      } else {
+        // Create new brand
+        const response = await fetch("/api/cms/featured-on", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(brandData),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to create brand");
+        }
+      }
+
+      resetForm();
+      setShowModal(false);
+      await fetchBrands(true);
+    } catch (error: any) {
+      console.error("Error saving brand:", error);
+      alert(error.message || "Failed to save brand");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this brand?")) return;
+
+    try {
+      const response = await fetch(`/api/cms/featured-on?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete brand");
+      }
+
+      await fetchBrands(true);
+    } catch (error: any) {
+      console.error("Error deleting brand:", error);
+      alert(error.message || "Failed to delete brand");
+    }
   };
 
   const handleAddPageLink = () => {
-    setPageLinks((prev) => [...prev, ""]);
+    setPageLinks([...pageLinks, { pagePath: "all", link: "#", nofollow: false }]);
   };
 
-  const handleUpdatePageLink = (index: number, value: string) => {
-    setPageLinks((prev) => prev.map((link, i) => (i === index ? value : link)));
+  const handleUpdatePageLink = (index: number, field: keyof PageLink, value: string | boolean) => {
+    setPageLinks(prev => prev.map((link, i) => 
+      i === index ? { ...link, [field]: value } : link
+    ));
   };
 
   const handleRemovePageLink = (index: number) => {
-    setPageLinks((prev) => prev.filter((_, i) => i !== index));
+    if (pageLinks.length > 1) {
+      setPageLinks(prev => prev.filter((_, i) => i !== index));
+    } else {
+      alert("At least one page link is required");
+    }
   };
 
-  const handleDelete = (id: number) => {
-    if (!confirm("Delete this item?")) return;
-    setItems((prev) => prev.filter((it) => it.id !== id));
-  };
+  if (loading) {
+    return (
+      <div className="admin-wrapper">
+        <PromoBar />
+        <div className="admin-body">
+          <AdminSidebar activePage="featuredOn" />
+          <main className="admin-main">
+            <AdminToolbar title="Featured On" />
+            <div className="featured-page">
+              <div style={{ padding: "24px", textAlign: "center" }}>Loading...</div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-wrapper">
@@ -117,11 +346,11 @@ export default function FeaturedOnDashboard() {
             <div className="featured-header">
               <div>
                 <h2>As Featured On</h2>
-                <p>Manage the logos displayed in the 'As Featured On' section.</p>
+                <p>Manage the brands displayed in the 'As Featured On' section.</p>
               </div>
               <button className="featured-add-btn" onClick={handleStartAdd}>
                 <FontAwesomeIcon icon={faPlus} />
-                <span>Add Item</span>
+                <span>Add Brand</span>
               </button>
             </div>
 
@@ -129,32 +358,44 @@ export default function FeaturedOnDashboard() {
               <table className="featured-table">
                 <thead>
                   <tr>
-                    <th>Preview</th>
+                    <th>Brand Name</th>
                     <th>Type</th>
-                    <th>Content / Alt Text</th>
                     <th>Page Links</th>
+                    <th>Order</th>
                     <th className="actions-col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="featured-preview">{item.preview}</td>
-                      <td>
-                        <span className="type-pill">{item.type}</span>
-                      </td>
-                      <td>{item.content}</td>
-                      <td>Linked on {item.pageLinks.length} page(s)</td>
-                      <td className="actions-cell">
-                        <button className="link-btn" onClick={() => handleStartEdit(item)}>
-                          Edit
-                        </button>
-                        <button className="link-btn danger" onClick={() => handleDelete(item.id)}>
-                          Delete
-                        </button>
+                  {items.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: "center", padding: "24px", color: "#6b7280" }}>
+                        No brands added yet. Click "Add Brand" to get started.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    items.map((item) => (
+                      <tr key={item.id}>
+                        <td className="featured-preview">{item.brandName}</td>
+                        <td>
+                          <span className="type-pill">{item.logoUrl ? "Image" : "Text"}</span>
+                        </td>
+                        <td>
+                          {item.pageLinks.length > 0 
+                            ? `${item.pageLinks.length} page(s)` 
+                            : <span style={{ color: "#6b7280" }}>—</span>}
+                        </td>
+                        <td>{item.displayOrder}</td>
+                        <td className="actions-cell">
+                          <button className="link-btn" onClick={() => handleStartEdit(item)}>
+                            Edit
+                          </button>
+                          <button className="link-btn danger" onClick={() => handleDelete(item.id)}>
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -179,32 +420,34 @@ export default function FeaturedOnDashboard() {
               </button>
             </div>
             <div className="faq-modal-body">
+              {/* Type Tabs */}
               <label className="faq-modal-label">
                 Type
-                <div className="type-pill-group">
+                <div className="type-tab-group">
                   <button
                     type="button"
-                    className={`type-pill-btn ${type === "text" ? "active" : ""}`}
+                    className={`type-tab ${type === "text" ? "type-tab-active" : ""}`}
                     onClick={() => setType("text")}
                   >
                     Text
                   </button>
                   <button
                     type="button"
-                    className={`type-pill-btn ${type === "image" ? "active" : ""}`}
+                    className={`type-tab ${type === "image" ? "type-tab-active" : ""}`}
                     onClick={() => setType("image")}
                   >
                     Image
                   </button>
                 </div>
               </label>
+
               {type === "text" ? (
                 <label className="faq-modal-label">
-                  Brand Name
+                  Brand Name *
                   <input
                     className="faq-modal-input featured-dark-input"
-                    value={preview}
-                    onChange={(e) => setPreview(e.target.value)}
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
                     placeholder="e.g., Forbes"
                   />
                 </label>
@@ -239,6 +482,8 @@ export default function FeaturedOnDashboard() {
                           if (file) {
                             setLogoImage(file);
                             setLogoImageName(file.name);
+                            // For now, we'll use the file name as a placeholder
+                            // In production, you'd upload to a storage service
                           }
                         }}
                       />
@@ -250,50 +495,91 @@ export default function FeaturedOnDashboard() {
                         style={{ flex: 1, cursor: "default" }}
                       />
                     </div>
+                    <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                      Or enter a logo URL below
+                    </p>
+                  </label>
+                  <label className="faq-modal-label">
+                    Logo URL
+                    <input
+                      className="faq-modal-input featured-dark-input"
+                      value={logoUrl}
+                      onChange={(e) => setLogoUrl(e.target.value)}
+                      placeholder="https://example.com/logo.png"
+                    />
                   </label>
                   <label className="faq-modal-label">
                     Alt Text
                     <input
                       className="faq-modal-input featured-dark-input"
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
+                      value={altText}
+                      onChange={(e) => setAltText(e.target.value)}
                       placeholder="e.g., Forbes Logo"
                     />
                   </label>
                 </>
               )}
+
+              {/* Page Links Section */}
               <div className="faq-modal-label">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <span style={{ fontSize: "13px", color: "#374151" }}>Page Links</span>
+                  <span style={{ fontSize: "13px", color: "#374151", fontWeight: "500" }}>Page Links</span>
                 </div>
-                {pageLinks.map((link, index) => (
-                  <div key={index} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                {pageLinks.map((pageLink, index) => (
+                  <div key={index} style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "8px" }}>
+                    <select
+                      className="faq-modal-input featured-dark-input"
+                      value={pageLink.pagePath}
+                      onChange={(e) => handleUpdatePageLink(index, "pagePath", e.target.value)}
+                      style={{ flex: "0 0 150px" }}
+                    >
+                      {PAGE_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       className="faq-modal-input featured-dark-input"
-                      value={link}
-                      onChange={(e) => handleUpdatePageLink(index, e.target.value)}
-                      placeholder="e.g., /home"
+                      value={pageLink.link}
+                      onChange={(e) => handleUpdatePageLink(index, "link", e.target.value)}
+                      placeholder="#"
+                      style={{ flex: 1 }}
                     />
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px", color: "#374151" }}>
+                      <input
+                        type="checkbox"
+                        checked={pageLink.nofollow}
+                        onChange={(e) => handleUpdatePageLink(index, "nofollow", e.target.checked)}
+                        style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                      />
+                      <span>Nofollow</span>
+                    </label>
                     <button
                       type="button"
                       onClick={() => handleRemovePageLink(index)}
                       style={{
-                        background: "transparent",
+                        background: "#fee2e2",
                         border: "none",
-                        color: "#ef4444",
+                        color: "#dc2626",
                         cursor: "pointer",
-                        padding: "0 8px",
-                        fontSize: "14px",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: "32px",
+                        height: "32px",
                       }}
+                      title="Remove link"
                     >
-                      Remove
+                      <FontAwesomeIcon icon={faX} style={{ fontSize: "12px" }} />
                     </button>
                   </div>
                 ))}
                 <button
                   type="button"
                   onClick={handleAddPageLink}
-                  className="add-link-btn"
                   style={{
                     background: "transparent",
                     border: "none",
@@ -319,18 +605,16 @@ export default function FeaturedOnDashboard() {
                   resetForm();
                   setShowModal(false);
                 }}
+                disabled={saving}
               >
                 Cancel
               </button>
               <button
                 className="faq-modal-save"
                 onClick={handleSave}
-                disabled={
-                  pageLinks.length === 0 ||
-                  (type === "text" ? !preview.trim() : (!logoImage && !logoImageName) || !content.trim())
-                }
+                disabled={saving || !brandName.trim() || pageLinks.length === 0}
               >
-                Save Item
+                {saving ? "Saving..." : "Save Item"}
               </button>
             </div>
           </div>
@@ -339,4 +623,3 @@ export default function FeaturedOnDashboard() {
     </div>
   );
 }
-

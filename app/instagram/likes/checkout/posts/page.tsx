@@ -23,12 +23,23 @@ function PostsSelectionContent() {
   const qty = searchParams.get("qty") || "500";
   const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
+  const serviceId = searchParams.get("serviceId") || "";
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     if (postLink.trim()) {
-      // Navigate to final checkout step
-      router.push(`/instagram/likes/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`);
+      // Navigate to final checkout step, include serviceId if available
+      const params = new URLSearchParams({
+        username: username,
+        qty: qty,
+        price: String(priceValue),
+        type: packageType,
+        postLink: postLink,
+      });
+      if (serviceId) {
+        params.append("serviceId", serviceId);
+      }
+      router.push(`/instagram/likes/checkout/final?${params.toString()}`);
     }
   };
 

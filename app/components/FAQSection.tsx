@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 export type FAQItem = { q: string; a: string };
 
@@ -8,6 +8,7 @@ type FAQSectionProps = {
   title?: string;
   subtitle?: string;
   pageSize?: number;
+  category?: string; // Optional: fetch FAQs by category (e.g., "homepage")
 };
 
 const DEFAULT_FAQS: FAQItem[] = [
@@ -47,11 +48,50 @@ const DEFAULT_FAQS: FAQItem[] = [
 ];
 
 export default function FAQSection({
-  faqs = DEFAULT_FAQS,
+  faqs: propFaqs,
   title = "Frequently Asked Questions",
   subtitle = "Have questions? We've got answers. If you don't see your question here, feel free to contact us.",
   pageSize = 7,
+  category,
 }: FAQSectionProps) {
+  const [faqs, setFaqs] = useState<FAQItem[]>(propFaqs || DEFAULT_FAQS);
+  const [loading, setLoading] = useState(!propFaqs);
+
+  // Fetch FAQs from API if category is provided or if no faqs prop is provided
+  useEffect(() => {
+    if (propFaqs) {
+      setFaqs(propFaqs);
+      setLoading(false);
+      return;
+    }
+
+    const fetchFAQs = async () => {
+      try {
+        setLoading(true);
+        const url = category 
+          ? `/api/cms/faq?category=${encodeURIComponent(category)}`
+          : "/api/cms/faq";
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          const fetchedFaqs = (data.faqs || []).map((faq: any) => ({
+            q: faq.question,
+            a: faq.answer,
+          }));
+          if (fetchedFaqs.length > 0) {
+            setFaqs(fetchedFaqs);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching FAQs:", error);
+        // Keep default FAQs on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFAQs();
+  }, [category, propFaqs]);
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState<number | null>(null); // absolute index within faqs
 

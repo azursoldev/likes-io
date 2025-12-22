@@ -131,6 +131,7 @@ model Payment {
 enum PaymentGateway {
   CHECKOUT_COM
   BIGPAYME
+  CRYPTOMUS
 }
 
 enum PaymentStatus {
@@ -172,7 +173,26 @@ model AdminSettings {
   smtpUser              String?
   smtpPass              String?
   defaultCurrency       String   @default("USD")
-  updatedAt              DateTime @updatedAt
+  // Cryptomus settings
+  cryptomusMerchantId   String?
+  cryptomusApiKey       String?
+  cryptomusDisplayName  String?
+  cryptomusTestMode     Boolean  @default(false)
+  // BigPay settings
+  bigPayMerchantId      String?
+  bigPayDisplayName     String?
+  bigPayApiSecret       String?
+  bigPayTestMode        Boolean  @default(false)
+  // Exit Intent settings
+  exitIntentEnabled     Boolean  @default(false)
+  exitIntentTitle       String?
+  exitIntentSubtitle   String?
+  exitIntentDiscountCode String?
+  // Feature Flags
+  newServiceIndicator   Boolean  @default(true)
+  // Site Configuration
+  supportEmail          String?
+  updatedAt             DateTime @updatedAt
   
   @@map("admin_settings")
 }
@@ -218,12 +238,26 @@ model FeaturedOn {
   id          Int      @id @default(autoincrement())
   brandName   String
   logoUrl     String?
-  link        String?
+  // link        String?  // Temporarily commented out - uncomment after running migration
+  // altText     String?  // Temporarily commented out - uncomment after running migration
   displayOrder Int     @default(0)
   isActive    Boolean  @default(true)
+  pageLinks   FeaturedOnPageLink[]
   
   @@index([displayOrder])
   @@map("featured_on")
+}
+
+model FeaturedOnPageLink {
+  id          Int      @id @default(autoincrement())
+  featuredOnId Int
+  featuredOn  FeaturedOn @relation(fields: [featuredOnId], references: [id], onDelete: Cascade)
+  pagePath    String   // e.g., "/", "/instagram/likes", "all"
+  link        String?  // e.g., "#", "https://example.com"
+  nofollow    Boolean  @default(false)
+  
+  @@index([featuredOnId])
+  @@map("featured_on_page_links")
 }
 
 model PlatformSection {

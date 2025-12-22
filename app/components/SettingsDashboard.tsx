@@ -3,9 +3,12 @@
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function SettingsDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
   const [logoType, setLogoType] = useState("Default SVG");
   const [exitIntentEnabled, setExitIntentEnabled] = useState(true);
   const [exitIntentTitle, setExitIntentTitle] = useState("Wait! Don't Go!");
@@ -13,15 +16,110 @@ export default function SettingsDashboard() {
   const [exitIntentDiscountCode, setExitIntentDiscountCode] = useState("SAVE15");
   const [newServiceIndicator, setNewServiceIndicator] = useState(true);
   const [bigPayDisplayName, setBigPayDisplayName] = useState("Card");
-  const [bigPayMerchantId, setBigPayMerchantId] = useState("123");
+  const [bigPayMerchantId, setBigPayMerchantId] = useState("");
   const [bigPayApiKey, setBigPayApiKey] = useState("••••••••");
   const [bigPayApiSecret, setBigPayApiSecret] = useState("••••••••");
   const [bigPayTestMode, setBigPayTestMode] = useState(true);
   const [cryptomusDisplayName, setCryptomusDisplayName] = useState("Card");
-  const [cryptomusMerchantId, setCryptomusMerchantId] = useState("123");
+  const [cryptomusMerchantId, setCryptomusMerchantId] = useState("");
   const [cryptomusApiKey, setCryptomusApiKey] = useState("••••••••");
   const [cryptomusTestMode, setCryptomusTestMode] = useState(true);
   const [supportEmail, setSupportEmail] = useState("support@likes.io");
+
+  // Fetch settings on mount
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/admin/settings");
+      if (response.ok) {
+        const data = await response.json();
+        // Set all state from fetched data
+        if (data.cryptomusMerchantId) setCryptomusMerchantId(data.cryptomusMerchantId);
+        if (data.cryptomusApiKey) setCryptomusApiKey(data.cryptomusApiKey);
+        if (data.cryptomusDisplayName) setCryptomusDisplayName(data.cryptomusDisplayName);
+        if (data.cryptomusTestMode !== undefined) setCryptomusTestMode(data.cryptomusTestMode);
+        
+        if (data.bigPayMerchantId) setBigPayMerchantId(data.bigPayMerchantId);
+        if (data.bigPayApiKey) setBigPayApiKey(data.bigPayApiKey);
+        if (data.bigPayApiSecret) setBigPayApiSecret(data.bigPayApiSecret);
+        if (data.bigPayDisplayName) setBigPayDisplayName(data.bigPayDisplayName);
+        if (data.bigPayTestMode !== undefined) setBigPayTestMode(data.bigPayTestMode);
+        
+        if (data.exitIntentEnabled !== undefined) setExitIntentEnabled(data.exitIntentEnabled);
+        if (data.exitIntentTitle) setExitIntentTitle(data.exitIntentTitle);
+        if (data.exitIntentSubtitle) setExitIntentSubtitle(data.exitIntentSubtitle);
+        if (data.exitIntentDiscountCode) setExitIntentDiscountCode(data.exitIntentDiscountCode);
+        
+        if (data.newServiceIndicator !== undefined) setNewServiceIndicator(data.newServiceIndicator);
+        if (data.supportEmail) setSupportEmail(data.supportEmail);
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const response = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cryptomusMerchantId,
+          cryptomusApiKey: cryptomusApiKey.includes('••••') ? undefined : cryptomusApiKey,
+          cryptomusDisplayName,
+          cryptomusTestMode,
+          bigPayMerchantId,
+          bigPayApiKey: bigPayApiKey.includes('••••') ? undefined : bigPayApiKey,
+          bigPayApiSecret: bigPayApiSecret.includes('••••') ? undefined : bigPayApiSecret,
+          bigPayDisplayName,
+          bigPayTestMode,
+          exitIntentEnabled,
+          exitIntentTitle,
+          exitIntentSubtitle,
+          exitIntentDiscountCode,
+          newServiceIndicator,
+          supportEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to save settings");
+      }
+
+      alert("Settings saved successfully!");
+      await fetchSettings(); // Refresh to get masked values
+    } catch (error: any) {
+      console.error("Error saving settings:", error);
+      alert(error.message || "Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="admin-wrapper">
+        <PromoBar />
+        <div className="admin-body">
+          <AdminSidebar activePage="settings" />
+          <main className="admin-main">
+            <AdminToolbar title="Settings" />
+            <div className="admin-content">
+              <div style={{ padding: "24px", textAlign: "center" }}>Loading settings...</div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-wrapper">
@@ -34,6 +132,14 @@ export default function SettingsDashboard() {
             <div className="settings-header">
               <h1>Settings</h1>
               <p>Manage site-wide settings and feature flags.</p>
+              <button 
+                className="settings-btn" 
+                onClick={handleSave}
+                disabled={saving}
+                style={{ marginTop: "16px", padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", cursor: saving ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500" }}
+              >
+                {saving ? "Saving..." : "Save All Settings"}
+              </button>
             </div>
 
             {/* Logo & Branding */}
@@ -205,16 +311,19 @@ export default function SettingsDashboard() {
                     className="settings-input"
                     value={cryptomusMerchantId}
                     onChange={(e) => setCryptomusMerchantId(e.target.value)}
+                    placeholder="e8c0a90f-48c5-4ab0-ae1c-ac6144ae20b9"
                   />
                 </label>
                 <label className="settings-label">
-                  API Key
+                  Payout API Key
                   <input
                     type="password"
                     className="settings-input"
                     value={cryptomusApiKey}
                     onChange={(e) => setCryptomusApiKey(e.target.value)}
+                    placeholder="Enter your Payout API key"
                   />
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
                 </label>
                 <div className="settings-toggle-group">
                   <label className="settings-toggle-label">

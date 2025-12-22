@@ -31,6 +31,7 @@ function FinalCheckoutContent() {
   const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
   const postLink = searchParams.get("postLink") || "";
+  const packageServiceId = searchParams.get("serviceId") || "";
 
   // Get platform and service from pathname
   const pathParts = pathname?.split("/") || [];
@@ -50,6 +51,8 @@ function FinalCheckoutContent() {
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
 
   const offers = [
     { id: "offer1", text: "50 likes x 10 posts", price: 5.99, icon: faHeart },
@@ -71,10 +74,79 @@ function FinalCheckoutContent() {
   const totalPrice = priceValue + offersTotal;
   const currencyCode = currency;
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle payment processing here
-    console.log("Processing payment...");
+    setProcessing(true);
+    setError("");
+
+    try {
+      // Check if user is logged in (we'll check this via the API response)
+      // For now, proceed - the API will return 401 if not authenticated
+      
+      // Validate required fields
+      if (paymentMethod === "card") {
+        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
+          setError("Please fill in all card details");
+          setProcessing(false);
+          return;
+        }
+      }
+
+      if (!username) {
+        setError("Username is required");
+        setProcessing(false);
+        return;
+      }
+
+      // Map service type from path
+      const serviceTypeMap: Record<string, string> = {
+        likes: "LIKES",
+        followers: "FOLLOWERS",
+        views: "VIEWS",
+        subscribers: "SUBSCRIBERS"
+      };
+
+      const serviceType = serviceTypeMap[service] || "LIKES";
+      const platformUpper = platform.toUpperCase();
+
+      // Create order and payment in one call
+      const paymentResponse = await fetch("/api/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: platformUpper,
+          serviceType,
+          quantity: parseInt(qty) || 50,
+          price: totalPrice,
+          link: postLink || null,
+          paymentMethod: paymentMethod, // 'card' or 'crypto'
+          currency: currencyCode,
+          packageServiceId: packageServiceId || undefined, // Service ID from package (JAP Service ID)
+        }),
+      });
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        if (paymentResponse.status === 401) {
+          throw new Error("Please log in to complete your purchase");
+        }
+        throw new Error(errorData.error || "Failed to process payment");
+      }
+
+      const { checkoutUrl, paymentId, paymentStatus } = await paymentResponse.json();
+      
+      if (checkoutUrl) {
+        // For crypto payments, redirect to Cryptomus payment page
+        // For card payments, redirect to Checkout.com
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error("No checkout URL received");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      setError(err.message || "Failed to process payment. Please try again.");
+      setProcessing(false);
+    }
   };
 
   // Get platform icon based on URL
@@ -258,9 +330,28 @@ function FinalCheckoutContent() {
                     </div>
                   </div>
 
-                  <button type="submit" className="pay-button">
+                  {error && (
+                    <div style={{ 
+                      padding: "12px", 
+                      background: "#fef2f2", 
+                      border: "1px solid #fecaca", 
+                      borderRadius: "6px", 
+                      color: "#dc2626",
+                      marginBottom: "16px",
+                      fontSize: "14px"
+                    }}>
+                      {error}
+                    </div>
+                  )}
+                  
+                  <button 
+                    type="submit" 
+                    className="pay-button"
+                    disabled={processing}
+                    style={{ opacity: processing ? 0.6 : 1, cursor: processing ? "not-allowed" : "pointer" }}
+                  >
                     <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                    Pay {formatPrice(totalPrice)}
+                    {processing ? "Processing..." : `Pay ${formatPrice(totalPrice)}`}
                   </button>
 
                   <div className="payment-guarantees">

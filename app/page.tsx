@@ -20,7 +20,7 @@ export default function HomePage() {
       <GetStarted />
       <InfluenceSection />
       {SHOW_REVIEWS && <ReviewsSection />}
-      <FAQSection />
+      <FAQSection category="homepage" />
       <QuickStartSection />
       <Footer />
     </main>

@@ -50,6 +50,7 @@ function CheckoutContent() {
   
   const [qty, setQty] = useState(initialQty);
   const [priceValue, setPriceValue] = useState(initialPrice);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   
   // Fetch packages from CMS
   useEffect(() => {
@@ -79,6 +80,9 @@ function CheckoutContent() {
             if (matchingPackage) {
               setQty(typeof matchingPackage.qty === "string" ? matchingPackage.qty : String(matchingPackage.qty));
               setPriceValue(parseFloat(matchingPackage.price.replace(/[^0-9.]/g, "")));
+              if (matchingPackage.serviceId) {
+                setSelectedServiceId(matchingPackage.serviceId);
+              }
             }
           }
         }
@@ -99,9 +103,9 @@ function CheckoutContent() {
     return `${qtyDisplay} Likes / ${formatPrice(priceValue)} ${currencyCode}`;
   }, [qty, priceValue, formatPrice, currencyCode]);
 
-  // Build package options list from CMS data (remove duplicates)
+  // Build package options list from CMS data (remove duplicates, prioritize ones with serviceId)
   const packageOptions = useMemo(() => {
-    const optionsMap = new Map<string, { label: string; qty: string | number; price: number; tabLabel: string }>();
+    const optionsMap = new Map<string, { label: string; qty: string | number; price: number; tabLabel: string; serviceId?: string }>();
     
     packages.forEach((tab) => {
       tab.packages.forEach((pkg) => {
@@ -111,14 +115,16 @@ function CheckoutContent() {
         // Create a unique key based on quantity and price to avoid duplicates
         const uniqueKey = `${qtyDisplay}_${priceNum}`;
         
-        // Only add if not already exists, or if this one has better discount info
-        if (!optionsMap.has(uniqueKey) || pkg.offText) {
+        // Only add if not already exists, or if this one has better discount info or serviceId
+        const existing = optionsMap.get(uniqueKey);
+        if (!existing || pkg.offText || (pkg.serviceId && !existing.serviceId)) {
           const offText = pkg.offText ? ` - ${pkg.offText}` : "";
           optionsMap.set(uniqueKey, {
             label: `${qtyDisplay} Likes / ${formatPrice(priceNum)} ${currencyCode}${offText}`,
             qty: pkg.qty,
             price: priceNum,
             tabLabel: tab.label,
+            serviceId: pkg.serviceId,
           });
         }
       });
@@ -196,8 +202,17 @@ function CheckoutContent() {
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim() && usernameValid) {
-      // Navigate to posts selection page
-      router.push(`/instagram/likes/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+      // Navigate to posts selection page, include serviceId if available
+      const params = new URLSearchParams({
+        username: username,
+        qty: typeof qty === "string" ? qty : String(qty),
+        price: String(priceValue),
+        type: packageType,
+      });
+      if (selectedServiceId) {
+        params.append("serviceId", selectedServiceId);
+      }
+      router.push(`/instagram/likes/checkout/posts?${params.toString()}`);
     } else if (!username.trim()) {
       setUsernameError("Please enter your Instagram username");
     } else if (!usernameValid) {
@@ -323,6 +338,7 @@ function CheckoutContent() {
                             onClick={() => {
                               setQty(typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty));
                               setPriceValue(pkg.price);
+                              setSelectedServiceId(pkg.serviceId || "");
                               setIsPackageOpen(false);
                             }}
                           >
