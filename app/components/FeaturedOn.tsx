@@ -49,14 +49,16 @@ export default function FeaturedOn() {
   };
 
   // Filter brands based on current page path
-  const getDisplayBrands = () => {
+  const getDisplayBrands = (): FeaturedBrand[] => {
     if (brands.length === 0) {
       return DEFAULT_BRANDS.map((name, index) => ({ 
+        id: index,
         brandName: name, 
         logoUrl: null, 
         altText: name,
         pageLinks: [],
-        displayOrder: index 
+        displayOrder: index,
+        isActive: true
       }));
     }
 
@@ -117,7 +119,7 @@ export default function FeaturedOn() {
               
               return (
                 <a
-                  key={brand.id || index}
+                  key={brand.id ?? index}
                   href={brandLink}
                   className="brand-link"
                   style={{ textDecoration: "none", color: "inherit" }}
@@ -128,7 +130,7 @@ export default function FeaturedOn() {
               );
             }
 
-            return <div key={brand.id || index}>{content}</div>;
+            return <div key={brand.id ?? index}>{content}</div>;
           })}
         </div>
       </div>
