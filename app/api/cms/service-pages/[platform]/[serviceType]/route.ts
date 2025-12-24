@@ -87,6 +87,7 @@ export async function PUT(
     const serviceType = params.serviceType.toUpperCase() as ServiceType;
 
     const {
+      slug,
       heroTitle,
       heroSubtitle,
       heroRating,
@@ -99,8 +100,8 @@ export async function PUT(
       isActive = true,
     } = body;
 
-    // Try upsert with assuranceCardText first
-    // If it fails because the column doesn't exist, retry without it
+    // Try upsert with assuranceCardText and slug first
+    // If it fails because the column doesn't exist, retry without them
     let content;
     try {
       content = await prisma.servicePageContent.upsert({
@@ -111,6 +112,7 @@ export async function PUT(
           },
         },
         update: {
+          slug,
           heroTitle,
           heroSubtitle,
           heroRating,
@@ -124,6 +126,7 @@ export async function PUT(
         create: {
           platform,
           serviceType,
+          slug,
           heroTitle,
           heroSubtitle,
           heroRating,
@@ -136,12 +139,20 @@ export async function PUT(
         } as any,
       });
     } catch (error: any) {
+      // Check for unique constraint violation on slug
+      if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
+        return NextResponse.json(
+          { error: 'This Service URL / Key is already in use. Please choose a different one.' },
+          { status: 400 }
+        );
+      }
+
       // If error is about unknown argument, the column doesn't exist yet
-      // Retry without assuranceCardText
+      // Retry without assuranceCardText and slug
       if (error.message && error.message.includes('Unknown argument')) {
-        console.warn('assuranceCardText column not found in database. Saving other fields, but assuranceCardText will not be saved. Please run: npx prisma db push');
+        console.warn('assuranceCardText or slug column not found in database. Saving other fields. Please run: npx prisma db push');
         
-        // Save without assuranceCardText
+        // Save without assuranceCardText and slug
         content = await prisma.servicePageContent.upsert({
           where: {
             platform_serviceType: {

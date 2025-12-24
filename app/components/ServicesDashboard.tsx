@@ -70,6 +70,7 @@ export default function ServicesDashboard() {
   const [assuranceCardText, setAssuranceCardText] = useState("");
   const [howItWorksTitle, setHowItWorksTitle] = useState("");
   const [howItWorksSubtitle, setHowItWorksSubtitle] = useState("");
+  const [serviceSlug, setServiceSlug] = useState("");
   
   const [steps, setSteps] = useState<Array<{ id: number; title: string; description: string; icon: string }>>([]);
   const [faqItems, setFaqItems] = useState<Array<{ id: number; question: string; answer: string }>>([]);
@@ -160,6 +161,7 @@ export default function ServicesDashboard() {
       setHeroRating(data.heroRating || "");
       setHeroReviewCount(data.heroReviewCount || "");
       setAssuranceCardText(data.assuranceCardText || "Join over a million satisfied customers, including artists, companies, and top influencers. Our services are 100% discreet, secure, and delivered naturally to ensure your account is always safe.");
+      setServiceSlug(data.slug || service.name.toLowerCase().replace(/\s+/g, '-'));
       
       if (data.howItWorks) {
         setHowItWorksTitle(data.howItWorks.title || "");
@@ -492,6 +494,7 @@ export default function ServicesDashboard() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          slug: serviceSlug,
           heroTitle,
           heroSubtitle,
           heroRating,
@@ -1371,7 +1374,8 @@ export default function ServicesDashboard() {
                       id="edit-service-key"
                       className="add-service-input"
                       placeholder="a-unique-service-key"
-                      defaultValue={selectedService.name.toLowerCase().replace(/\s+/g, '-')}
+                      value={serviceSlug}
+                      onChange={(e) => setServiceSlug(e.target.value)}
                     />
                     <p className="add-service-helper">This will be used in the URL. Must be unique, lowercase, with no spaces.</p>
                   </div>

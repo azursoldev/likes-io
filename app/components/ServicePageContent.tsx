@@ -9,7 +9,7 @@ import QualityCompare from "./QualityCompare";
 import HowItWorksSection from "./HowItWorksSection";
 import FAQSection, { type FAQItem } from "./FAQSection";
 
-type ServicePageContentData = {
+export type ServicePageContentData = {
   heroTitle: string;
   heroSubtitle: string;
   heroRating: string;
@@ -28,8 +28,9 @@ export function useServiceContent() {
 }
 
 type ServicePageContentProviderProps = {
-  platform: string;
-  serviceType: string;
+  platform?: string;
+  serviceType?: string;
+  slug?: string;
   defaultHeroTitle: string;
   defaultHeroSubtitle: string;
   defaultHeroRating: string;
@@ -39,12 +40,14 @@ type ServicePageContentProviderProps = {
   defaultQualityCompare?: { title?: string; columns?: any[] };
   defaultHowItWorks?: { title?: string; subtitle?: string; steps?: any[] };
   defaultFAQs?: FAQItem[];
+  initialData?: ServicePageContentData | null;
   children: React.ReactNode;
 };
 
 export function ServicePageContentProvider({
   platform,
   serviceType,
+  slug,
   defaultHeroTitle,
   defaultHeroSubtitle,
   defaultHeroRating,
@@ -54,20 +57,38 @@ export function ServicePageContentProvider({
   defaultQualityCompare,
   defaultHowItWorks,
   defaultFAQs,
+  initialData,
   children,
 }: ServicePageContentProviderProps) {
-  const [content, setContent] = useState<ServicePageContentData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState<ServicePageContentData | null>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
 
   useEffect(() => {
+    if (initialData) {
+        setContent(initialData);
+        setLoading(false);
+        return;
+    }
+
     const fetchContent = async () => {
       try {
+        let url = '';
+        if (slug) {
+          url = `/api/cms/service-pages/slug/${slug}`;
+        } else if (platform && serviceType) {
+          url = `/api/cms/service-pages/${platform}/${serviceType}`;
+        } else {
+          console.warn("ServicePageContentProvider: No slug or platform/serviceType provided");
+          setLoading(false);
+          return;
+        }
+
         // Log for debugging - verify correct platform/serviceType is being fetched
-        console.log(`Fetching service content for: ${platform}/${serviceType}`);
-        const response = await fetch(`/api/cms/service-pages/${platform}/${serviceType}`);
+        console.log(`Fetching service content from: ${url}`);
+        const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
-          console.log(`Received packages for ${platform}/${serviceType}:`, {
+          console.log(`Received packages from ${url}:`, {
             packagesCount: data.packages?.length || 0,
             hasPackages: !!(data.packages && Array.isArray(data.packages) && data.packages.length > 0),
             hasId: !!data.id // Check if this is a real CMS record (has id) or default response
