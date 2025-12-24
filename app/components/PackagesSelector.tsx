@@ -26,6 +26,8 @@ type PackagesSelectorProps = {
   metricLabel?: string;
   defaultQtyTarget?: PackageOption["qty"];
   ctaTemplate?: string;
+  platform?: string;
+  serviceType?: string;
 };
 
 const DEFAULT_TABS: PackageTabConfig[] = [
@@ -67,10 +69,17 @@ export default function PackagesSelector({
   metricLabel = DEFAULT_METRIC,
   defaultQtyTarget = 500,
   ctaTemplate = DEFAULT_CTA_TEMPLATE,
+  platform: propPlatform,
+  serviceType: propServiceType,
 }: PackagesSelectorProps) {
   const pathname = usePathname();
   const { formatPrice, getCurrencySymbol } = useCurrency();
-  const platform = pathname?.includes("/tiktok/") ? "tiktok" : pathname?.includes("/youtube/") ? "youtube" : "instagram";
+  
+  const platform = propPlatform || (pathname?.includes("/tiktok/") ? "tiktok" : pathname?.includes("/youtube/") ? "youtube" : "instagram");
+  
+  // Use propServiceType if available, otherwise derive from metricLabel or pathname
+  const serviceType = propServiceType || (metricLabel.toLowerCase() === "subscribers" ? "subscribers" : metricLabel.toLowerCase());
+
   const tabs = useMemo(() => {
     // Always use tabsConfig from CMS - don't fall back to hardcoded defaults
     // This ensures all pricing is dynamic and managed through admin dashboard
@@ -398,7 +407,7 @@ export default function PackagesSelector({
               {displaySave && <div className="price-save">{displaySave}</div>}
             </div>
             <a 
-              href={`/${platform}/${metricLabel.toLowerCase() === "subscribers" ? "subscribers" : metricLabel.toLowerCase()}/checkout?qty=${displayQty}&price=${parsePrice(displayPrice)}&type=${encodeURIComponent(activeTabData?.label || 'High-Quality')}`}
+              href={`/${platform}/${serviceType}/checkout?qty=${displayQty}&price=${parsePrice(displayPrice)}&type=${encodeURIComponent(activeTabData?.label || 'High-Quality')}`}
               className="btn buy-btn"
             >
               {buttonLabel}

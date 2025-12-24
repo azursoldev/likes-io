@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useNavigation } from "../hooks/useNavigation";
 
 export default function Footer() {
   const year = new Date().getFullYear();
   const [showTooltip, setShowTooltip] = useState(false);
   const langBtnRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const { getLink } = useNavigation();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -77,25 +79,25 @@ export default function Footer() {
           <div className="f-col">
             <h4>Instagram Services</h4>
             <ul>
-              <li><a href="/instagram/likes">Buy Instagram Likes</a></li>
-              <li><a href="/instagram/followers">Buy Instagram Followers</a></li>
-              <li><a href="/instagram/views">Buy Instagram Views</a></li>
+              <li><a href={getLink("instagram", "likes")}>Buy Instagram Likes</a></li>
+              <li><a href={getLink("instagram", "followers")}>Buy Instagram Followers</a></li>
+              <li><a href={getLink("instagram", "views")}>Buy Instagram Views</a></li>
             </ul>
           </div>
           <div className="f-col">
             <h4>TikTok Services</h4>
             <ul>
-              <li><a href="/tiktok/likes">Buy TikTok Likes</a></li>
-              <li><a href="/tiktok/followers">Buy TikTok Followers</a></li>
-              <li><a href="/tiktok/views">Buy TikTok Views</a></li>
+              <li><a href={getLink("tiktok", "likes")}>Buy TikTok Likes</a></li>
+              <li><a href={getLink("tiktok", "followers")}>Buy TikTok Followers</a></li>
+              <li><a href={getLink("tiktok", "views")}>Buy TikTok Views</a></li>
             </ul>
           </div>
           <div className="f-col">
             <h4>YouTube Services</h4>
             <ul>
-              <li><a href="/youtube/views">Buy YouTube Views</a></li>
-              <li><a href="/youtube/subscribers">Buy YouTube Subscribers</a></li>
-              <li><a href="/youtube/likes">Buy YouTube Likes</a></li>
+              <li><a href={getLink("youtube", "views")}>Buy YouTube Views</a></li>
+              <li><a href={getLink("youtube", "subscribers")}>Buy YouTube Subscribers</a></li>
+              <li><a href={getLink("youtube", "likes")}>Buy YouTube Likes</a></li>
             </ul>
           </div>
           <div className="f-col">

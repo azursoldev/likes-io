@@ -324,6 +324,8 @@ model ServicePageContent {
   platform        Platform
   serviceType     ServiceType
   slug            String?  @unique
+  metaTitle       String?
+  metaDescription String?
   heroTitle       String
   heroSubtitle    String
   heroRating      String?

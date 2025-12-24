@@ -141,8 +141,8 @@ const INSTAGRAM_FAQS: FAQItem[] = [
 ];
 
 const CTA_BUTTONS: CTAButton[] = [
-  { href: "/instagram/likes", label: "BUY LIKES", icon: faThumbsUp },
-  { href: "/instagram/followers", label: "BUY FOLLOWERS", icon: faUserPlus },
+  { platform: "instagram", serviceType: "likes", label: "BUY LIKES", icon: faThumbsUp },
+  { platform: "instagram", serviceType: "followers", label: "BUY FOLLOWERS", icon: faUserPlus },
 ];
 
 export default function Page() {

@@ -64,6 +64,8 @@ export default function ServicesDashboard() {
   
   // Form state
   const [heroTitle, setHeroTitle] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroRating, setHeroRating] = useState("");
   const [heroReviewCount, setHeroReviewCount] = useState("");
@@ -117,6 +119,8 @@ export default function ServicesDashboard() {
     
     // Reset all form state to prevent data from previous service persisting
     setHeroTitle("");
+    setMetaTitle("");
+    setMetaDescription("");
     setHeroSubtitle("");
     setHeroRating("");
     setHeroReviewCount("");
@@ -157,6 +161,8 @@ export default function ServicesDashboard() {
       
       // Populate form with fetched data or defaults
       setHeroTitle(data.heroTitle || "");
+      setMetaTitle(data.metaTitle || "");
+      setMetaDescription(data.metaDescription || "");
       setHeroSubtitle(data.heroSubtitle || "");
       setHeroRating(data.heroRating || "");
       setHeroReviewCount(data.heroReviewCount || "");
@@ -496,6 +502,8 @@ export default function ServicesDashboard() {
         body: JSON.stringify({
           slug: serviceSlug,
           heroTitle,
+          metaTitle,
+          metaDescription,
           heroSubtitle,
           heroRating,
           heroReviewCount,
@@ -922,6 +930,8 @@ export default function ServicesDashboard() {
                         id="meta-title"
                         className="add-service-input"
                         placeholder="New service page"
+                        value={metaTitle}
+                        onChange={(e) => setMetaTitle(e.target.value)}
                       />
                     </div>
                     <div className="add-service-form-group">
@@ -931,6 +941,8 @@ export default function ServicesDashboard() {
                         id="meta-description"
                         className="add-service-input"
                         placeholder="Description for new service"
+                        value={metaDescription}
+                        onChange={(e) => setMetaDescription(e.target.value)}
                       />
                     </div>
                     <div className="add-service-form-group">
@@ -1391,6 +1403,8 @@ export default function ServicesDashboard() {
                         id="edit-meta-title"
                         className="add-service-input"
                         placeholder="New service page"
+                        value={metaTitle}
+                        onChange={(e) => setMetaTitle(e.target.value)}
                       />
                     </div>
                     <div className="add-service-form-group">
@@ -1400,6 +1414,8 @@ export default function ServicesDashboard() {
                         id="edit-meta-description"
                         className="add-service-input"
                         placeholder="Description for new service"
+                        value={metaDescription}
+                        onChange={(e) => setMetaDescription(e.target.value)}
                       />
                     </div>
                     <div className="add-service-form-group">

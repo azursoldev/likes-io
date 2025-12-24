@@ -11,15 +11,17 @@ import {
   faHeart,
 } from "@fortawesome/free-regular-svg-icons";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { useNavigation } from "@/app/hooks/useNavigation";
 
 export default function Dashboard() {
+  const { getLink } = useNavigation();
 
   const services = [
     {
       platform: "Instagram",
       type: "Likes",
       icon: faThumbsUp,
-      href: "/instagram/likes",
+      href: getLink("instagram", "likes"),
       text: "Get likes now",
       iconBgClass: "icon-bg-instagram-likes",
     },
@@ -27,7 +29,7 @@ export default function Dashboard() {
       platform: "Instagram",
       type: "Followers",
       icon: faUser,
-      href: "/instagram/followers",
+      href: getLink("instagram", "followers"),
       text: "Get followers now",
       iconBgClass: "icon-bg-instagram-followers",
     },
@@ -35,7 +37,7 @@ export default function Dashboard() {
       platform: "Instagram",
       type: "Views",
       icon: faEye,
-      href: "/instagram/views",
+      href: getLink("instagram", "views"),
       text: "Get views now",
       iconBgClass: "icon-bg-instagram-views",
     },
@@ -43,7 +45,7 @@ export default function Dashboard() {
       platform: "TikTok",
       type: "Likes",
       icon: faHeart,
-      href: "/tiktok/likes",
+      href: getLink("tiktok", "likes"),
       text: "Get likes now",
       iconBgClass: "icon-bg-tiktok",
     },
@@ -51,7 +53,7 @@ export default function Dashboard() {
       platform: "TikTok",
       type: "Followers",
       icon: faUser,
-      href: "/tiktok/followers",
+      href: getLink("tiktok", "followers"),
       text: "Get followers now",
       iconBgClass: "icon-bg-tiktok",
     },
@@ -59,7 +61,7 @@ export default function Dashboard() {
       platform: "TikTok",
       type: "Views",
       icon: faEye,
-      href: "/tiktok/views",
+      href: getLink("tiktok", "views"),
       text: "Get views now",
       iconBgClass: "icon-bg-tiktok",
     },
@@ -67,7 +69,7 @@ export default function Dashboard() {
       platform: "YouTube",
       type: "Likes",
       icon: faThumbsUp,
-      href: "/youtube/likes",
+      href: getLink("youtube", "likes"),
       text: "Get likes now",
       iconBgClass: "icon-bg-youtube",
     },
@@ -75,7 +77,7 @@ export default function Dashboard() {
       platform: "YouTube",
       type: "Subscribers",
       icon: faUser,
-      href: "/youtube/subscribers",
+      href: getLink("youtube", "subscribers"),
       text: "Get subscribers now",
       iconBgClass: "icon-bg-youtube",
     },
@@ -83,7 +85,7 @@ export default function Dashboard() {
       platform: "YouTube",
       type: "Views",
       icon: faEye,
-      href: "/youtube/views",
+      href: getLink("youtube", "views"),
       text: "Get views now",
       iconBgClass: "icon-bg-youtube",
     },

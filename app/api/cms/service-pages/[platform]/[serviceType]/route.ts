@@ -88,6 +88,8 @@ export async function PUT(
 
     const {
       slug,
+      metaTitle,
+      metaDescription,
       heroTitle,
       heroSubtitle,
       heroRating,
@@ -113,6 +115,8 @@ export async function PUT(
         },
         update: {
           slug,
+          metaTitle,
+          metaDescription,
           heroTitle,
           heroSubtitle,
           heroRating,
@@ -127,6 +131,8 @@ export async function PUT(
           platform,
           serviceType,
           slug,
+          metaTitle,
+          metaDescription,
           heroTitle,
           heroSubtitle,
           heroRating,
@@ -147,12 +153,9 @@ export async function PUT(
         );
       }
 
-      // If error is about unknown argument, the column doesn't exist yet
-      // Retry without assuranceCardText and slug
       if (error.message && error.message.includes('Unknown argument')) {
-        console.warn('assuranceCardText or slug column not found in database. Saving other fields. Please run: npx prisma db push');
+        console.warn('One or more columns not found in database. Saving supported fields. Please run: npx prisma db push');
         
-        // Save without assuranceCardText and slug
         content = await prisma.servicePageContent.upsert({
           where: {
             platform_serviceType: {
@@ -184,10 +187,9 @@ export async function PUT(
           },
         });
         
-        // Return a warning in the response
         return NextResponse.json({
           ...content,
-          warning: 'assuranceCardText was not saved because the database column does not exist. Please run: npx prisma db push',
+          warning: 'Some fields were not saved (slug, assuranceCardText, metaTitle, metaDescription). Please run: npx prisma db push',
         });
       } else {
         // Re-throw if it's a different error
@@ -224,4 +226,3 @@ export async function PUT(
     );
   }
 }
-

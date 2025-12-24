@@ -11,6 +11,8 @@ import FAQSection, { type FAQItem } from "./FAQSection";
 
 export type ServicePageContentData = {
   heroTitle: string;
+  metaTitle?: string;
+  metaDescription?: string;
   heroSubtitle: string;
   heroRating: string;
   heroReviewCount: string;
@@ -19,6 +21,8 @@ export type ServicePageContentData = {
   qualityCompare?: { title?: string; columns?: any[] };
   howItWorks?: { title?: string; subtitle?: string; steps?: any[] };
   faqs?: FAQItem[];
+  platform?: string;
+  serviceType?: string;
 };
 
 const ServiceContentContext = createContext<ServicePageContentData | null>(null);
@@ -113,6 +117,8 @@ export function ServicePageContentProvider({
             qualityCompare: isRealCMSRecord ? (data.qualityCompare || defaultQualityCompare) : defaultQualityCompare,
             howItWorks: isRealCMSRecord ? (data.howItWorks || defaultHowItWorks) : defaultHowItWorks,
             faqs: (data.faqs && Array.isArray(data.faqs) && data.faqs.length > 0) ? data.faqs : defaultFAQs,
+            platform: data.platform || platform,
+            serviceType: data.serviceType || serviceType,
           });
         } else {
           // Use defaults if fetch fails
@@ -125,6 +131,8 @@ export function ServicePageContentProvider({
             qualityCompare: defaultQualityCompare,
             howItWorks: defaultHowItWorks,
             faqs: defaultFAQs,
+            platform,
+            serviceType,
           });
         }
       } catch (error) {
@@ -140,6 +148,8 @@ export function ServicePageContentProvider({
           qualityCompare: defaultQualityCompare,
           howItWorks: defaultHowItWorks,
           faqs: defaultFAQs,
+          platform,
+          serviceType,
         });
       } finally {
         setLoading(false);
@@ -184,7 +194,14 @@ export function DynamicPackagesSelector() {
   
   // Determine metricLabel from pathname
   let metricLabel = "Likes"; // default
-  if (pathname) {
+  if (content.serviceType) {
+    // If serviceType is available from context, map it to metricLabel
+    const type = content.serviceType.toLowerCase();
+    if (type === "followers") metricLabel = "Followers";
+    else if (type === "views") metricLabel = "Views";
+    else if (type === "subscribers") metricLabel = "Subscribers";
+    else if (type === "likes") metricLabel = "Likes";
+  } else if (pathname) {
     if (pathname.includes("/followers")) {
       metricLabel = "Followers";
     } else if (pathname.includes("/views")) {
@@ -196,7 +213,14 @@ export function DynamicPackagesSelector() {
     }
   }
   
-  return <PackagesSelector tabsConfig={content.packages} metricLabel={metricLabel} />;
+  return (
+    <PackagesSelector 
+      tabsConfig={content.packages} 
+      metricLabel={metricLabel}
+      platform={content.platform}
+      serviceType={content.serviceType}
+    />
+  );
 }
 
 export function DynamicQualityCompare() {

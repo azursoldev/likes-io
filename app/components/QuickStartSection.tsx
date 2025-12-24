@@ -1,4 +1,10 @@
+"use client";
+
+import { useNavigation } from "@/app/hooks/useNavigation";
+
 export default function QuickStartSection() {
+  const { getLink } = useNavigation();
+
   return (
     <section className="quickstart">
       <div className="container">
@@ -17,32 +23,32 @@ export default function QuickStartSection() {
 
           <div className="qs-right">
             <div className="qs-actions">
-              <a href="#" className="qs-btn grad-orange">
+              <a href={getLink("instagram", "followers")} className="qs-btn grad-orange">
                 <span className="qs-icon"><img src="/instagram-11.png" alt="Instagram" width={18} height={18} /></span>
                 <span className="qs-label">BUY INSTAGRAM FOLLOWERS</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
-              <a href="#" className="qs-btn grad-red">
+              <a href={getLink("instagram", "likes")} className="qs-btn grad-red">
                 <span className="qs-icon"><img src="/instagram-11.png" alt="Instagram" width={18} height={18} /></span>
                 <span className="qs-label">BUY INSTAGRAM LIKES</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
-              <a href="#" className="qs-btn grad-pink">
+              <a href={getLink("instagram", "views")} className="qs-btn grad-pink">
                 <span className="qs-icon"><img src="/instagram-11.png" alt="Instagram" width={18} height={18} /></span>
                 <span className="qs-label">BUY INSTAGRAM VIEWS</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
-              <a href="#" className="qs-btn grad-purple">
+              <a href={getLink("tiktok", "likes")} className="qs-btn grad-purple">
                 <span className="qs-icon"><img src="/tiktok-9.png" alt="TikTok" width={18} height={18} /></span>
                 <span className="qs-label">BUY TIKTOK LIKES</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
-              <a href="#" className="qs-btn grad-violet">
+              <a href={getLink("tiktok", "views")} className="qs-btn grad-violet">
                 <span className="qs-icon"><img src="/tiktok-9.png" alt="TikTok" width={18} height={18} /></span>
                 <span className="qs-label">BUY TIKTOK VIEWS</span>
                 <span className="arrow" aria-hidden="true"></span>
               </a>
-              <a href="#" className="qs-btn grad-magenta">
+              <a href={getLink("tiktok", "followers")} className="qs-btn grad-magenta">
                 <span className="qs-icon"><img src="/tiktok-9.png" alt="TikTok" width={18} height={18} /></span>
                 <span className="qs-label">BUY TIKTOK FOLLOWERS</span>
                 <span className="arrow" aria-hidden="true"></span>

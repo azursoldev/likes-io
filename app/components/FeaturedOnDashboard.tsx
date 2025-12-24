@@ -23,6 +23,8 @@ type FeaturedItem = {
   isActive: boolean;
 };
 
+import { useNavigation } from "../hooks/useNavigation";
+
 const DEFAULT_BRANDS = [
   { brandName: "Forbes", pageLinks: [{ pagePath: "all", link: "/", nofollow: false }], displayOrder: 0 },
   { brandName: "Business Insider", pageLinks: [{ pagePath: "all", link: "/", nofollow: false }], displayOrder: 1 },
@@ -30,23 +32,25 @@ const DEFAULT_BRANDS = [
   { brandName: "WIRED", pageLinks: [{ pagePath: "all", link: "/", nofollow: false }], displayOrder: 3 },
 ];
 
-const PAGE_OPTIONS = [
-  { value: "all", label: "All Pages" },
-  { value: "/", label: "Homepage" },
-  { value: "/instagram/likes", label: "Instagram Likes" },
-  { value: "/free-instagram-likes", label: "Free Instagram Likes" },
-  { value: "/free-instagram-followers", label: "Free Instagram Followers" },
-  { value: "/instagram/followers", label: "Instagram Followers" },
-  { value: "/instagram/views", label: "Instagram Views" },
-  { value: "/tiktok/likes", label: "TikTok Likes" },
-  { value: "/tiktok/followers", label: "TikTok Followers" },
-  { value: "/tiktok/views", label: "TikTok Views" },
-  { value: "/youtube/views", label: "YouTube Views" },
-  { value: "/youtube/subscribers", label: "YouTube Subscribers" },
-  { value: "/youtube/likes", label: "YouTube Likes" },
-];
-
 export default function FeaturedOnDashboard() {
+  const { getLink } = useNavigation();
+
+  const pageOptions = useMemo(() => [
+    { value: "all", label: "All Pages" },
+    { value: "/", label: "Homepage" },
+    { value: getLink("instagram", "likes"), label: "Instagram Likes" },
+    { value: "/free-instagram-likes", label: "Free Instagram Likes" },
+    { value: "/free-instagram-followers", label: "Free Instagram Followers" },
+    { value: getLink("instagram", "followers"), label: "Instagram Followers" },
+    { value: getLink("instagram", "views"), label: "Instagram Views" },
+    { value: getLink("tiktok", "likes"), label: "TikTok Likes" },
+    { value: getLink("tiktok", "followers"), label: "TikTok Followers" },
+    { value: getLink("tiktok", "views"), label: "TikTok Views" },
+    { value: getLink("youtube", "views"), label: "YouTube Views" },
+    { value: getLink("youtube", "subscribers"), label: "YouTube Subscribers" },
+    { value: getLink("youtube", "likes"), label: "YouTube Likes" },
+  ], [getLink]);
+
   const [items, setItems] = useState<FeaturedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -533,7 +537,7 @@ export default function FeaturedOnDashboard() {
                       onChange={(e) => handleUpdatePageLink(index, "pagePath", e.target.value)}
                       style={{ flex: "0 0 150px" }}
                     >
-                      {PAGE_OPTIONS.map(option => (
+                      {pageOptions.map(option => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>

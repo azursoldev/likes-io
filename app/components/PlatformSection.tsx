@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { useNavigation } from "@/app/hooks/useNavigation";
 
 type PlatformCard = {
   key: string;
@@ -6,6 +9,7 @@ type PlatformCard = {
   desc: string;
   tags: string[];
   cta: string;
+  serviceType: string;
 };
 
 const PLATFORMS: PlatformCard[] = [
@@ -16,6 +20,7 @@ const PLATFORMS: PlatformCard[] = [
       "Boost your posts, gain credibility, and reach the Explore Page with our premium Instagram services.",
     tags: ["Likes", "Followers", "Views"],
     cta: "View Instagram Services",
+    serviceType: "likes",
   },
   {
     key: "tiktok",
@@ -24,6 +29,7 @@ const PLATFORMS: PlatformCard[] = [
       "Give your videos the viral push they need to land on the FYP and capture millions of views.",
     tags: ["Likes", "Followers", "Views"],
     cta: "View TikTok Services",
+    serviceType: "likes",
   },
   {
     key: "youtube",
@@ -32,10 +38,13 @@ const PLATFORMS: PlatformCard[] = [
       "Increase your video rankings, watch time, and channel authority to stand out on the world's largest video platform.",
     tags: ["Views", "Subscribers", "Likes"],
     cta: "View YouTube Services",
+    serviceType: "views",
   },
 ];
 
 export default function PlatformSection() {
+  const { getLink } = useNavigation();
+
   const Icon = ({ name }: { name: string }) => {
     switch (name) {
       case "instagram":
@@ -89,10 +98,13 @@ export default function PlatformSection() {
               </div>
 
               <div className="p-cta">
-                <button className="btn btn-dark btn-full">
+                <a 
+                  href={getLink(p.key, p.serviceType)}
+                  className="btn btn-dark btn-full"
+                >
                   {p.cta}
                   <span className="arrow">→</span>
-                </button>
+                </a>
               </div>
             </article>
           ))}

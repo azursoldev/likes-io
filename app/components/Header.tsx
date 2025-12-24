@@ -5,12 +5,14 @@ import PromoBar from "./PromoBar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 import { useCurrency } from "../contexts/CurrencyContext";
+import { useNavigation } from "../hooks/useNavigation";
 
 export default function Header() {
   const { status } = useSession();
   const { currency, setCurrency } = useCurrency();
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const currencyRef = useRef<HTMLDivElement>(null);
+  const { getLink } = useNavigation();
 
   const currencies = ["USD", "EUR"] as const;
 
@@ -54,9 +56,9 @@ export default function Header() {
               </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
-                  <a href="/instagram/likes">Buy Instagram Likes</a>
-                  <a href="/instagram/followers">Buy Instagram Followers</a>
-                  <a href="/instagram/views">Buy Instagram Views</a>
+                  <a href={getLink("instagram", "likes")}>Buy Instagram Likes</a>
+                  <a href={getLink("instagram", "followers")}>Buy Instagram Followers</a>
+                  <a href={getLink("instagram", "views")}>Buy Instagram Views</a>
                 </div>
               </div>
             </div>
@@ -68,9 +70,9 @@ export default function Header() {
               </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
-                  <a href="/tiktok/likes">Buy TikTok Likes</a>
-                  <a href="/tiktok/followers">Buy TikTok Followers</a>
-                  <a href="/tiktok/views">Buy TikTok Views</a>
+                  <a href={getLink("tiktok", "likes")}>Buy TikTok Likes</a>
+                  <a href={getLink("tiktok", "followers")}>Buy TikTok Followers</a>
+                  <a href={getLink("tiktok", "views")}>Buy TikTok Views</a>
                 </div>
               </div>
             </div>
@@ -82,9 +84,9 @@ export default function Header() {
               </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
-                  <a href="/youtube/likes">Buy YouTube Likes</a>
-                  <a href="/youtube/views">Buy YouTube Views</a>
-                  <a href="/youtube/subscribers">Buy YouTube Subscribers</a>
+                  <a href={getLink("youtube", "likes")}>Buy YouTube Likes</a>
+                  <a href={getLink("youtube", "views")}>Buy YouTube Views</a>
+                  <a href={getLink("youtube", "subscribers")}>Buy YouTube Subscribers</a>
                 </div>
               </div>
             </div>

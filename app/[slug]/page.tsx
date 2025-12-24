@@ -38,6 +38,8 @@ async function getServiceContent(slug: string) {
   // Parse JSON fields
   return {
       heroTitle: content.heroTitle,
+      metaTitle: content.metaTitle || undefined,
+      metaDescription: content.metaDescription || undefined,
       heroSubtitle: content.heroSubtitle,
       heroRating: content.heroRating || "4.9/5",
       heroReviewCount: content.heroReviewCount || "1000+ reviews",
@@ -49,6 +51,8 @@ async function getServiceContent(slug: string) {
         q: faq.question,
         a: faq.answer,
       })),
+      platform: content.platform,
+      serviceType: content.serviceType,
   } as ServicePageContentData;
 }
 
@@ -64,8 +68,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
   
   return {
-    title: content.heroTitle, 
-    description: content.heroSubtitle,
+    title: content.metaTitle || content.heroTitle, 
+    description: content.metaDescription || content.heroSubtitle,
   };
 }
 
