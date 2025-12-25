@@ -61,16 +61,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedRating =
+      typeof rating === 'number'
+        ? Math.round(rating)
+        : typeof rating === 'string' && rating.trim() !== ''
+          ? parseInt(rating, 10)
+          : null;
+    const normalizedDisplayOrder =
+      typeof displayOrder === 'number'
+        ? displayOrder
+        : typeof displayOrder === 'string' && displayOrder.trim() !== ''
+          ? parseInt(displayOrder, 10)
+          : 0;
+    const normalizedPlatform = platform ? (platform.toUpperCase() as Platform) : null;
+
     const testimonial = await prisma.testimonial.create({
       data: {
         handle,
         role,
         text,
-        rating: rating ? parseInt(rating) : null,
-        platform: platform ? (platform.toUpperCase() as Platform) : null,
+        rating: normalizedRating,
+        platform: normalizedPlatform,
         isApproved,
         isFeatured,
-        displayOrder: parseInt(displayOrder),
+        displayOrder: normalizedDisplayOrder,
       },
     });
 
@@ -106,13 +120,23 @@ export async function PUT(request: NextRequest) {
     }
 
     if (updateData.platform) {
-      updateData.platform = updateData.platform.toUpperCase();
+      updateData.platform = String(updateData.platform).toUpperCase();
     }
     if (updateData.displayOrder !== undefined) {
-      updateData.displayOrder = parseInt(updateData.displayOrder);
+      updateData.displayOrder =
+        typeof updateData.displayOrder === 'number'
+          ? updateData.displayOrder
+          : typeof updateData.displayOrder === 'string' && updateData.displayOrder.trim() !== ''
+            ? parseInt(updateData.displayOrder, 10)
+            : 0;
     }
     if (updateData.rating !== undefined) {
-      updateData.rating = updateData.rating ? parseInt(updateData.rating) : null;
+      updateData.rating =
+        typeof updateData.rating === 'number'
+          ? Math.round(updateData.rating)
+          : typeof updateData.rating === 'string' && updateData.rating.trim() !== ''
+            ? parseInt(updateData.rating, 10)
+            : null;
     }
 
     const testimonial = await prisma.testimonial.update({
