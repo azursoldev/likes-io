@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { useServiceContent } from "./ServicePageContent";
 
 export type ReviewItem = {
   handle: string;
@@ -39,9 +40,13 @@ const DEFAULT_REVIEWS: ReviewItem[] = [
 export default function ReviewsSection({
   title = "Loved by Creators Worldwide",
   subtitle = "Real reviews from creators and brands who've seen incredible growth with our service.",
-  reviews = DEFAULT_REVIEWS,
+  reviews: propReviews,
 }: ReviewsSectionProps) {
+  const context = useServiceContent();
   const [index, setIndex] = useState(0);
+
+  // Priority: props > context > default
+  const reviews = propReviews || (context?.testimonials && context.testimonials.length > 0 ? context.testimonials : DEFAULT_REVIEWS);
 
   const total = reviews.length;
   const CARD_W = 344; // card width used for sliding (desktop)

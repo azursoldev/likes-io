@@ -40,6 +40,24 @@ export async function GET(
       a: faq.answer,
     }));
 
+    // Fetch Testimonials
+    const testimonials = await prisma.testimonial.findMany({
+      where: {
+        OR: [
+          { platform: content.platform },
+          { platform: null }
+        ],
+        isApproved: true,
+      },
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    responseData.testimonials = testimonials.map(t => ({
+      handle: t.handle,
+      role: t.role,
+      text: t.text,
+    }));
+
     return NextResponse.json(responseData);
   } catch (error: any) {
     console.error('Get service page content by slug error:', error);

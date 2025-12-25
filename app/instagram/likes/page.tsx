@@ -8,6 +8,7 @@ import {
   DynamicQualityCompare,
   DynamicHowItWorks,
   DynamicFAQSection,
+  ServicePageContentData
 } from "../../components/ServicePageContent";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
@@ -18,6 +19,8 @@ import type { FAQItem } from "../../components/FAQSection";
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { Platform, ServiceType } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Buy Instagram Likes",
@@ -109,14 +112,80 @@ const DEFAULT_HOW_IT_WORKS = {
 
 const DEFAULT_FAQS: FAQItem[] = [];
 
-export default function Page() {
-  notFound();
+async function getServiceContent() {
+  const platform = Platform.INSTAGRAM;
+  const serviceType = ServiceType.LIKES;
+
+  const content = await prisma.servicePageContent.findUnique({
+    where: {
+      platform_serviceType: {
+        platform,
+        serviceType,
+      },
+    },
+  });
+
+  const testimonials = await prisma.testimonial.findMany({
+    where: {
+      OR: [
+        { platform },
+        { platform: null }
+      ],
+      isApproved: true,
+    },
+    orderBy: { displayOrder: 'asc' },
+  });
+
+  const testimonialItems = testimonials.map(t => ({
+    handle: t.handle,
+    role: t.role,
+    text: t.text,
+  }));
+
+  if (!content) return { content: null, testimonials: testimonialItems };
+
+  const faqs = await prisma.fAQ.findMany({
+    where: {
+      platform,
+      serviceType,
+      isActive: true,
+    },
+    orderBy: { displayOrder: 'asc' },
+  });
+
+  const parsedContent: ServicePageContentData = {
+      heroTitle: content.heroTitle,
+      metaTitle: content.metaTitle || undefined,
+      metaDescription: content.metaDescription || undefined,
+      heroSubtitle: content.heroSubtitle,
+      heroRating: content.heroRating || "4.9/5",
+      heroReviewCount: content.heroReviewCount || "1000+ reviews",
+      assuranceCardText: content.assuranceCardText || undefined,
+      packages: typeof content.packages === 'string' ? JSON.parse(content.packages) : content.packages,
+      qualityCompare: content.qualityCompare ? (typeof content.qualityCompare === 'string' ? JSON.parse(content.qualityCompare) : content.qualityCompare) : undefined,
+      howItWorks: content.howItWorks ? (typeof content.howItWorks === 'string' ? JSON.parse(content.howItWorks) : content.howItWorks) : undefined,
+      faqs: faqs.map(faq => ({
+        q: faq.question,
+        a: faq.answer,
+      })),
+      testimonials: testimonialItems,
+      platform: content.platform,
+      serviceType: content.serviceType,
+  };
+
+  return { content: parsedContent, testimonials: testimonialItems };
+}
+
+export default async function Page() {
+  const { content, testimonials } = await getServiceContent();
   return (
     <>
       <Header />
       <ServicePageContentProvider
         platform="instagram"
         serviceType="likes"
+        initialData={content}
+        defaultTestimonials={testimonials}
         defaultHeroTitle="Buy Instagram Likes & Go Viral"
         defaultHeroSubtitle="Get high-quality, real likes delivered instantly to your posts. Boost credibility, trigger the algorithm, and get your content seen by millions on the Explore Page."
         defaultHeroRating="4.9/5"

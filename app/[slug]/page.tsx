@@ -35,6 +35,18 @@ async function getServiceContent(slug: string) {
     orderBy: { displayOrder: 'asc' },
   });
 
+  // Fetch Testimonials
+  const testimonials = await prisma.testimonial.findMany({
+    where: {
+      OR: [
+        { platform: content.platform },
+        { platform: null }
+      ],
+      isApproved: true,
+    },
+    orderBy: { displayOrder: 'asc' },
+  });
+
   // Parse JSON fields
   return {
       heroTitle: content.heroTitle,
@@ -50,6 +62,11 @@ async function getServiceContent(slug: string) {
       faqs: faqs.map(faq => ({
         q: faq.question,
         a: faq.answer,
+      })),
+      testimonials: testimonials.map(t => ({
+        handle: t.handle,
+        role: t.role,
+        text: t.text,
       })),
       platform: content.platform,
       serviceType: content.serviceType,
@@ -95,6 +112,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
         defaultQualityCompare={content.qualityCompare}
         defaultHowItWorks={content.howItWorks}
         defaultFAQs={content.faqs}
+        defaultTestimonials={content.testimonials}
       >
         <DynamicServiceHero />
         <DynamicAssuranceCard />

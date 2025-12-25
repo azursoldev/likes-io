@@ -8,6 +8,7 @@ import PackagesSelector, { type PackageTabConfig } from "./PackagesSelector";
 import QualityCompare from "./QualityCompare";
 import HowItWorksSection from "./HowItWorksSection";
 import FAQSection, { type FAQItem } from "./FAQSection";
+import ReviewsSection, { type ReviewItem } from "./ReviewsSection";
 
 export type ServicePageContentData = {
   heroTitle: string;
@@ -21,6 +22,7 @@ export type ServicePageContentData = {
   qualityCompare?: { title?: string; columns?: any[] };
   howItWorks?: { title?: string; subtitle?: string; steps?: any[] };
   faqs?: FAQItem[];
+  testimonials?: ReviewItem[];
   platform?: string;
   serviceType?: string;
 };
@@ -44,6 +46,7 @@ type ServicePageContentProviderProps = {
   defaultQualityCompare?: { title?: string; columns?: any[] };
   defaultHowItWorks?: { title?: string; subtitle?: string; steps?: any[] };
   defaultFAQs?: FAQItem[];
+  defaultTestimonials?: ReviewItem[];
   initialData?: ServicePageContentData | null;
   children: React.ReactNode;
 };
@@ -61,6 +64,7 @@ export function ServicePageContentProvider({
   defaultQualityCompare,
   defaultHowItWorks,
   defaultFAQs,
+  defaultTestimonials,
   initialData,
   children,
 }: ServicePageContentProviderProps) {
@@ -117,6 +121,7 @@ export function ServicePageContentProvider({
             qualityCompare: isRealCMSRecord ? (data.qualityCompare || defaultQualityCompare) : defaultQualityCompare,
             howItWorks: isRealCMSRecord ? (data.howItWorks || defaultHowItWorks) : defaultHowItWorks,
             faqs: (data.faqs && Array.isArray(data.faqs) && data.faqs.length > 0) ? data.faqs : defaultFAQs,
+            testimonials: (data.testimonials && Array.isArray(data.testimonials)) ? data.testimonials : defaultTestimonials,
             platform: data.platform || platform,
             serviceType: data.serviceType || serviceType,
           });
@@ -131,6 +136,7 @@ export function ServicePageContentProvider({
             qualityCompare: defaultQualityCompare,
             howItWorks: defaultHowItWorks,
             faqs: defaultFAQs,
+            testimonials: defaultTestimonials,
             platform,
             serviceType,
           });
@@ -148,6 +154,7 @@ export function ServicePageContentProvider({
           qualityCompare: defaultQualityCompare,
           howItWorks: defaultHowItWorks,
           faqs: defaultFAQs,
+          testimonials: defaultTestimonials,
           platform,
           serviceType,
         });
@@ -157,7 +164,7 @@ export function ServicePageContentProvider({
     };
 
     fetchContent();
-  }, [platform, serviceType, defaultHeroTitle, defaultHeroSubtitle, defaultHeroRating, defaultHeroReviewCount, defaultAssuranceCardText, defaultPackages, defaultQualityCompare, defaultHowItWorks, defaultFAQs]);
+  }, [platform, serviceType, defaultHeroTitle, defaultHeroSubtitle, defaultHeroRating, defaultHeroReviewCount, defaultAssuranceCardText, defaultPackages, defaultQualityCompare, defaultHowItWorks, defaultFAQs, defaultTestimonials]);
 
   if (loading || !content) {
     return <>{children}</>; // Render children with defaults while loading
