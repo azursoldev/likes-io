@@ -33,6 +33,7 @@ export default function TestimonialsDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [formData, setFormData] = useState<Partial<DbTestimonial>>({
@@ -133,6 +134,8 @@ export default function TestimonialsDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create testimonial");
       setShowAddModal(false);
+      setSuccess("Testimonial added");
+      setTimeout(() => setSuccess(null), 1500);
       fetchTestimonials();
     } catch (e: any) {
       setError(e.message || "Failed to create testimonial");
@@ -237,6 +240,8 @@ export default function TestimonialsDashboard() {
                 </button>
               </div>
             </div>
+            {error && <div className="admin-error-banner">{error}</div>}
+            {success && <div className="admin-success-banner">{success}</div>}
 
             <div className="testimonials-table-wrapper">
             <table className="testimonials-table">
@@ -315,7 +320,7 @@ export default function TestimonialsDashboard() {
                   <div className="modal-body">
                     <div className="add-service-form-group">
                       <label>Name/Handle</label>
-                      <input className="add-service-input" value={formData.handle as string} onChange={(e) => setFormData({ ...formData, handle: e.target.value })} />
+                      <input className="add-service-input" required value={formData.handle as string} onChange={(e) => setFormData({ ...formData, handle: e.target.value })} />
                     </div>
                     <div className="add-service-form-group">
                       <label>Role</label>
@@ -323,7 +328,7 @@ export default function TestimonialsDashboard() {
                     </div>
                     <div className="add-service-form-group">
                       <label>Testimonial</label>
-                      <textarea className="add-service-textarea" rows={4} value={formData.text as string} onChange={(e) => setFormData({ ...formData, text: e.target.value })} />
+                      <textarea className="add-service-textarea" rows={4} required value={formData.text as string} onChange={(e) => setFormData({ ...formData, text: e.target.value })} />
                     </div>
                     <div className="add-service-two-columns">
                       <div className="add-service-form-group">
