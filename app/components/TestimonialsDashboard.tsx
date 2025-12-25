@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
@@ -16,100 +16,174 @@ import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 
-type Testimonial = {
+type DbTestimonial = {
   id: number;
-  author: string;
-  testimonial: string;
-  rating: number;
-  date: string; // Relative time like "10m", "1h", "1d", "1w", "1m", "1y"
-  status: "approved" | "pending";
+  handle: string;
+  role?: string | null;
+  text: string;
+  rating?: number | null;
+  platform?: string | null;
+  isApproved: boolean;
+  isFeatured: boolean;
+  displayOrder: number;
 };
 
-const initialTestimonials: Testimonial[] = [
-  {
-    id: 1,
-    author: "@john_doe_official",
-    testimonial: "This is an amazing product, I love it and would highly recommend it to everyone...",
-    rating: 5.0,
-    date: "10m",
-    status: "approved",
-  },
-  {
-    id: 2,
-    author: "Jane Smith",
-    testimonial: "Great service and very helpful customer support. The team really cares about their customers...",
-    rating: 5.0,
-    date: "1h",
-    status: "approved",
-  },
-  {
-    id: 3,
-    author: "@tiktok_creator",
-    testimonial: "Highly recommend this company for anyone looking to boost their social media presence...",
-    rating: 4.5,
-    date: "1d",
-    status: "approved",
-  },
-  {
-    id: 4,
-    author: "Mike Johnson",
-    testimonial: "Excellent results! My engagement has increased significantly since using this service...",
-    rating: 5.0,
-    date: "1w",
-    status: "approved",
-  },
-  {
-    id: 5,
-    author: "@instagram_user",
-    testimonial: "Fast delivery and great quality. Will definitely use again in the future...",
-    rating: 5.0,
-    date: "1m",
-    status: "approved",
-  },
-  {
-    id: 6,
-    author: "Sarah Williams",
-    testimonial: "Good service overall, though there were some minor delays. Still satisfied with the results...",
-    rating: 4.0,
-    date: "1y",
-    status: "pending",
-  },
-  {
-    id: 7,
-    author: "@youtube_creator",
-    testimonial: "Outstanding support and quick turnaround time. Very professional team...",
-    rating: 5.0,
-    date: "2d",
-    status: "approved",
-  },
-  {
-    id: 8,
-    author: "David Brown",
-    testimonial: "The best investment I've made for my social media growth. Results speak for themselves...",
-    rating: 5.0,
-    date: "3d",
-    status: "approved",
-  },
-];
-
 export default function TestimonialsDashboard() {
-  const [testimonials, setTestimonials] = useState(initialTestimonials);
+  const [testimonials, setTestimonials] = useState<DbTestimonial[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this testimonial?")) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [formData, setFormData] = useState<Partial<DbTestimonial>>({
+    handle: "",
+    role: "",
+    text: "",
+    rating: 5,
+    platform: null,
+    isApproved: true,
+    isFeatured: false,
+    displayOrder: 0,
+  });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const seedData = [
+    { handle: "@john_doe_official", text: "This is an amazing product, I love it and would highly recommend it to everyone...", rating: 5, isApproved: true },
+    { handle: "Jane Smith", text: "Great service and very helpful customer support. The team really cares about their customers...", rating: 5, isApproved: true },
+    { handle: "@tiktok_creator", text: "Highly recommend this company for anyone looking to boost their social media presence...", rating: 4.5, isApproved: true },
+    { handle: "Mike Johnson", text: "Excellent results! My engagement has increased significantly since using this service...", rating: 5, isApproved: true },
+    { handle: "@instagram_user", text: "Fast delivery and great quality. Will definitely use again in the future...", rating: 5, isApproved: true },
+    { handle: "Sarah Williams", text: "Good service overall, though there were some minor delays. Still satisfied with the results...", rating: 4, isApproved: false },
+    { handle: "@youtube_creator", text: "Outstanding support and quick turnaround time. Very professional team...", rating: 5, isApproved: true },
+    { handle: "David Brown", text: "The best investment I've made for my social media growth. Results speak for themselves...", rating: 5, isApproved: true },
+  ];
+  const fetchTestimonials = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/cms/testimonials");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to fetch testimonials");
+      const list: DbTestimonial[] = data.testimonials || [];
+      if (list.length === 0) {
+        for (let i = 0; i < seedData.length; i++) {
+          const s = seedData[i];
+          await fetch("/api/cms/testimonials", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              handle: s.handle,
+              text: s.text,
+              rating: s.rating,
+              isApproved: s.isApproved,
+              isFeatured: false,
+              displayOrder: i,
+            }),
+          });
+        }
+        const res2 = await fetch("/api/cms/testimonials");
+        const data2 = await res2.json();
+        setTestimonials(data2.testimonials || []);
+      } else {
+        setTestimonials(list);
+      }
+    } catch (e: any) {
+      setError(e.message || "Failed to fetch testimonials");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+  const openAdd = () => {
+    setFormData({
+      handle: "",
+      role: "",
+      text: "",
+      rating: 5,
+      platform: null,
+      isApproved: true,
+      isFeatured: false,
+      displayOrder: testimonials.length,
+    });
+    setEditingId(null);
+    setShowAddModal(true);
+  };
+  const openEdit = (t: DbTestimonial) => {
+    setFormData({
+      handle: t.handle,
+      role: t.role || "",
+      text: t.text,
+      rating: t.rating || 5,
+      platform: t.platform || null,
+      isApproved: t.isApproved,
+      isFeatured: t.isFeatured,
+      displayOrder: t.displayOrder,
+    });
+    setEditingId(t.id);
+    setShowEditModal(true);
+  };
+  const submitAdd = async () => {
+    try {
+      const res = await fetch("/api/cms/testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create testimonial");
+      setShowAddModal(false);
+      fetchTestimonials();
+    } catch (e: any) {
+      setError(e.message || "Failed to create testimonial");
+    }
+  };
+  const submitEdit = async () => {
+    if (!editingId) return;
+    try {
+      const res = await fetch("/api/cms/testimonials", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingId, ...formData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update testimonial");
+      setShowEditModal(false);
+      setEditingId(null);
+      fetchTestimonials();
+    } catch (e: any) {
+      setError(e.message || "Failed to update testimonial");
+    }
+  };
+  const toggleApprove = async (id: number, approve: boolean) => {
+    try {
+      const res = await fetch(`/api/cms/testimonials/${id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approve }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update approve status");
+      setTestimonials((prev) => prev.map((t) => (t.id === id ? { ...t, isApproved: approve } : t)));
+    } catch (e: any) {
+      setError(e.message || "Failed to update approve status");
+    }
+  };
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this testimonial?")) return;
+    try {
+      const res = await fetch(`/api/cms/testimonials?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete testimonial");
       setTestimonials(testimonials.filter((t) => t.id !== id));
+    } catch (e: any) {
+      setError(e.message || "Failed to delete testimonial");
     }
   };
 
-  const handleEdit = (id: number) => {
-    // Edit functionality can be implemented later
-    console.log("Edit testimonial:", id);
-  };
-
   const filteredTestimonials = testimonials.filter((t) =>
-    t.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.testimonial.toLowerCase().includes(searchQuery.toLowerCase())
+    (t.handle || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (t.text || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -128,7 +202,12 @@ export default function TestimonialsDashboard() {
                 <div className="admin-toolbar-right">
                   <div className="admin-search-pill">
                     <span className="search-icon">🔍</span>
-                    <input placeholder="Search..." aria-label="Search" />
+                    <input
+                      placeholder="Search..."
+                      aria-label="Search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
                   <button className="admin-icon-btn" aria-label="Notifications">
                     <FontAwesomeIcon icon={faBell} />
@@ -152,7 +231,7 @@ export default function TestimonialsDashboard() {
                 <p>Manage your testimonials, approve or delete them, or add new ones.</p>
               </div>
               <div className="testimonials-hero-right">
-                <button className="testimonials-add-btn">
+                <button className="testimonials-add-btn" onClick={openAdd}>
                   <FontAwesomeIcon icon={faPlus} />
                   <span>Add Testimonial</span>
                 </button>
@@ -176,32 +255,38 @@ export default function TestimonialsDashboard() {
                     <td className="testimonials-author-cell">
                       <div className="testimonials-author-content">
                         <div className="testimonials-avatar">
-                          {testimonial.author.charAt(0).toUpperCase()}
+                          {(testimonial.handle || "").charAt(0).toUpperCase()}
                         </div>
-                        <span className="testimonials-author-name">{testimonial.author}</span>
+                        <span className="testimonials-author-name">{testimonial.handle}</span>
                       </div>
                     </td>
                     <td className="testimonials-text-cell">
-                      <p className="testimonials-text">{testimonial.testimonial}</p>
+                      <p className="testimonials-text">{testimonial.text}</p>
                     </td>
                     <td className="testimonials-rating-cell">
                       <span className="testimonials-rating-value">
-                        {testimonial.rating % 1 === 0 ? testimonial.rating.toFixed(0) : testimonial.rating.toFixed(1)}/5
+                        {((testimonial.rating || 0) % 1 === 0 ? (testimonial.rating || 0).toFixed(0) : (testimonial.rating || 0).toFixed(1))}/5
                       </span>
                     </td>
                     <td className="testimonials-status-cell">
                       <span
                         className={`testimonials-status-badge ${
-                          testimonial.status === "approved" ? "status-approved" : "status-pending"
+                          testimonial.isApproved ? "status-approved" : "status-pending"
                         }`}
                       >
-                        {testimonial.status === "approved" ? "Approved" : "Pending"}
+                        {testimonial.isApproved ? "Approved" : "Pending"}
                       </span>
                     </td>
                     <td className="testimonials-actions-cell">
                       <button
                         className="testimonials-edit-btn"
-                        onClick={() => handleEdit(testimonial.id)}
+                        onClick={() => toggleApprove(testimonial.id, !testimonial.isApproved)}
+                      >
+                        {testimonial.isApproved ? "Unapprove" : "Approve"}
+                      </button>
+                      <button
+                        className="testimonials-edit-btn"
+                        onClick={() => openEdit(testimonial)}
                       >
                         Edit
                       </button>
@@ -220,10 +305,89 @@ export default function TestimonialsDashboard() {
               <div className="no-testimonials-message">No testimonials found.</div>
             )}
             </div>
+            {showAddModal && (
+              <div className="modal-overlay">
+                <div className="modal">
+                  <div className="modal-header">
+                    <h3>Add Testimonial</h3>
+                    <button className="modal-close" onClick={() => setShowAddModal(false)}>×</button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="add-service-form-group">
+                      <label>Name/Handle</label>
+                      <input className="add-service-input" value={formData.handle as string} onChange={(e) => setFormData({ ...formData, handle: e.target.value })} />
+                    </div>
+                    <div className="add-service-form-group">
+                      <label>Role</label>
+                      <input className="add-service-input" value={(formData.role as string) || ""} onChange={(e) => setFormData({ ...formData, role: e.target.value })} />
+                    </div>
+                    <div className="add-service-form-group">
+                      <label>Testimonial</label>
+                      <textarea className="add-service-textarea" rows={4} value={formData.text as string} onChange={(e) => setFormData({ ...formData, text: e.target.value })} />
+                    </div>
+                    <div className="add-service-two-columns">
+                      <div className="add-service-form-group">
+                        <label>Rating</label>
+                        <input type="number" step="0.5" className="add-service-input" value={Number(formData.rating)} onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })} />
+                      </div>
+                      <div className="add-service-form-group">
+                        <label>Approved</label>
+                        <select className="add-service-input" value={formData.isApproved ? "true" : "false"} onChange={(e) => setFormData({ ...formData, isApproved: e.target.value === "true" })}>
+                          <option value="true">Approved</option>
+                          <option value="false">Pending</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button className="add-service-btn save" onClick={submitAdd}>Save</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {showEditModal && (
+              <div className="modal-overlay">
+                <div className="modal">
+                  <div className="modal-header">
+                    <h3>Edit Testimonial</h3>
+                    <button className="modal-close" onClick={() => setShowEditModal(false)}>×</button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="add-service-form-group">
+                      <label>Name/Handle</label>
+                      <input className="add-service-input" value={formData.handle as string} onChange={(e) => setFormData({ ...formData, handle: e.target.value })} />
+                    </div>
+                    <div className="add-service-form-group">
+                      <label>Role</label>
+                      <input className="add-service-input" value={(formData.role as string) || ""} onChange={(e) => setFormData({ ...formData, role: e.target.value })} />
+                    </div>
+                    <div className="add-service-form-group">
+                      <label>Testimonial</label>
+                      <textarea className="add-service-textarea" rows={4} value={formData.text as string} onChange={(e) => setFormData({ ...formData, text: e.target.value })} />
+                    </div>
+                    <div className="add-service-two-columns">
+                      <div className="add-service-form-group">
+                        <label>Rating</label>
+                        <input type="number" step="0.5" className="add-service-input" value={Number(formData.rating)} onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })} />
+                      </div>
+                      <div className="add-service-form-group">
+                        <label>Approved</label>
+                        <select className="add-service-input" value={formData.isApproved ? "true" : "false"} onChange={(e) => setFormData({ ...formData, isApproved: e.target.value === "true" })}>
+                          <option value="true">Approved</option>
+                          <option value="false">Pending</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button className="add-service-btn save" onClick={submitEdit}>Save Changes</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
     </div>
   );
 }
-
