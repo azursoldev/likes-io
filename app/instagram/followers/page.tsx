@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -151,13 +150,8 @@ const CTA_BUTTONS: CTAButton[] = [
   { platform: "instagram", serviceType: "views", label: "BUY VIEWS", icon: faEye },
 ];
 
-export default async function Page() {
-  const content = await prisma.servicePageContent.findUnique({
-    where: { platform_serviceType: { platform: "INSTAGRAM", serviceType: "FOLLOWERS" } },
-  });
-  if (content?.slug) {
-    notFound();
-  }
+export default function Page() {
+  notFound();
   return (
     <>
       <Header />

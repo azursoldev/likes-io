@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -149,13 +148,8 @@ const CTA_BUTTONS: CTAButton[] = [
   { href: "/tiktok/followers", label: "BUY TIKTOK FOLLOWERS", icon: faUserPlus },
 ];
 
-export default async function Page() {
-  const content = await prisma.servicePageContent.findUnique({
-    where: { platform_serviceType: { platform: "TIKTOK", serviceType: "VIEWS" } },
-  });
-  if (content?.slug) {
-    notFound();
-  }
+export default function Page() {
+  notFound();
   return (
     <>
       <Header />

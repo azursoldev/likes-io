@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
 
@@ -165,13 +164,8 @@ const CTA_BUTTONS: CTAButton[] = [
   { href: "/tiktok/views", label: "BUY TIKTOK VIEWS", icon: faEye },
 ];
 
-export default async function Page() {
-  const content = await prisma.servicePageContent.findUnique({
-    where: { platform_serviceType: { platform: "TIKTOK", serviceType: "LIKES" } },
-  });
-    if (content?.slug) {
-      notFound();
-    }
+export default function Page() {
+  notFound();
   return (
     <>
       <Header />
