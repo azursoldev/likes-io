@@ -22,6 +22,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Platform, ServiceType } from "@prisma/client";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Buy Instagram Likes",
   description: "Get high-quality, real likes delivered instantly to your posts. Boost credibility, trigger the algorithm, and get your content seen by millions on the Explore Page.",
@@ -116,64 +118,69 @@ async function getServiceContent() {
   const platform = Platform.INSTAGRAM;
   const serviceType = ServiceType.LIKES;
 
-  const content = await prisma.servicePageContent.findUnique({
-    where: {
-      platform_serviceType: {
+  try {
+    const content = await prisma.servicePageContent.findUnique({
+      where: {
+        platform_serviceType: {
+          platform,
+          serviceType,
+        },
+      },
+    });
+
+    const testimonials = await prisma.testimonial.findMany({
+      where: {
+        OR: [
+          { platform },
+          { platform: null }
+        ],
+        isApproved: true,
+      },
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    const testimonialItems = testimonials.map(t => ({
+      handle: t.handle,
+      role: t.role,
+      text: t.text,
+    }));
+
+    if (!content) return { content: null, testimonials: testimonialItems };
+
+    const faqs = await prisma.fAQ.findMany({
+      where: {
         platform,
         serviceType,
+        isActive: true,
       },
-    },
-  });
+      orderBy: { displayOrder: 'asc' },
+    });
 
-  const testimonials = await prisma.testimonial.findMany({
-    where: {
-      OR: [
-        { platform },
-        { platform: null }
-      ],
-      isApproved: true,
-    },
-    orderBy: { displayOrder: 'asc' },
-  });
+    const parsedContent: ServicePageContentData = {
+        heroTitle: content.heroTitle,
+        metaTitle: content.metaTitle || undefined,
+        metaDescription: content.metaDescription || undefined,
+        heroSubtitle: content.heroSubtitle,
+        heroRating: content.heroRating || "4.9/5",
+        heroReviewCount: content.heroReviewCount || "1000+ reviews",
+        assuranceCardText: content.assuranceCardText || undefined,
+        packages: typeof content.packages === 'string' ? JSON.parse(content.packages) : content.packages,
+        qualityCompare: content.qualityCompare ? (typeof content.qualityCompare === 'string' ? JSON.parse(content.qualityCompare) : content.qualityCompare) : undefined,
+        howItWorks: content.howItWorks ? (typeof content.howItWorks === 'string' ? JSON.parse(content.howItWorks) : content.howItWorks) : undefined,
+        faqs: faqs.map(faq => ({
+          q: faq.question,
+          a: faq.answer,
+        })),
+        testimonials: testimonialItems,
+        platform: content.platform,
+        serviceType: content.serviceType,
+    };
 
-  const testimonialItems = testimonials.map(t => ({
-    handle: t.handle,
-    role: t.role,
-    text: t.text,
-  }));
-
-  if (!content) return { content: null, testimonials: testimonialItems };
-
-  const faqs = await prisma.fAQ.findMany({
-    where: {
-      platform,
-      serviceType,
-      isActive: true,
-    },
-    orderBy: { displayOrder: 'asc' },
-  });
-
-  const parsedContent: ServicePageContentData = {
-      heroTitle: content.heroTitle,
-      metaTitle: content.metaTitle || undefined,
-      metaDescription: content.metaDescription || undefined,
-      heroSubtitle: content.heroSubtitle,
-      heroRating: content.heroRating || "4.9/5",
-      heroReviewCount: content.heroReviewCount || "1000+ reviews",
-      assuranceCardText: content.assuranceCardText || undefined,
-      packages: typeof content.packages === 'string' ? JSON.parse(content.packages) : content.packages,
-      qualityCompare: content.qualityCompare ? (typeof content.qualityCompare === 'string' ? JSON.parse(content.qualityCompare) : content.qualityCompare) : undefined,
-      howItWorks: content.howItWorks ? (typeof content.howItWorks === 'string' ? JSON.parse(content.howItWorks) : content.howItWorks) : undefined,
-      faqs: faqs.map(faq => ({
-        q: faq.question,
-        a: faq.answer,
-      })),
-      testimonials: testimonialItems,
-      platform: content.platform,
-      serviceType: content.serviceType,
-  };
-
-  return { content: parsedContent, testimonials: testimonialItems };
+    return { content: parsedContent, testimonials: testimonialItems };
+  } catch (error) {
+    console.error("Error fetching service content:", error);
+    return { content: null, testimonials: [] };
+  }
 }
 
 export default async function Page() {

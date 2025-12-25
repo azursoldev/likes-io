@@ -909,7 +909,7 @@ export default function ServicesDashboard() {
                 <div className="add-service-section" ref={sectionRefs.configuration}>
                   <h3 className="add-service-section-title">Service Configuration</h3>
                   <div className="add-service-form-group">
-                    <label htmlFor="service-key">Service URL / Key (e.g., 'instagram-likes')</label>
+                    <label htmlFor="service-key">Service URL / Key (e.g., 'instagram-followers')</label>
                     <input
                       type="text"
                       id="service-key"
@@ -1380,7 +1380,7 @@ export default function ServicesDashboard() {
                 <div className="add-service-section" ref={editSectionRefs.configuration}>
                   <h3 className="add-service-section-title">Service Configuration</h3>
                   <div className="add-service-form-group">
-                    <label htmlFor="edit-service-key">Service URL / Key (e.g., 'instagram-likes')</label>
+                    <label htmlFor="edit-service-key">Service URL / Key (e.g., '{selectedService.name.toLowerCase().replace(/\s+/g, '-')}')</label>
                     <input
                       type="text"
                       id="edit-service-key"
