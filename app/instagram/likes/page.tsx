@@ -17,6 +17,8 @@ import type { PackageTabConfig } from "../../components/PackagesSelector";
 import type { FAQItem } from "../../components/FAQSection";
 
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Buy Instagram Likes",
@@ -108,7 +110,13 @@ const DEFAULT_HOW_IT_WORKS = {
 
 const DEFAULT_FAQS: FAQItem[] = [];
 
-export default function Page() {
+export default async function Page() {
+  const content = await prisma.servicePageContent.findUnique({
+    where: { platform_serviceType: { platform: "INSTAGRAM", serviceType: "LIKES" } },
+  });
+  if (content?.slug) {
+    notFound();
+  }
   return (
     <>
       <Header />
