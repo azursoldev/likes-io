@@ -4,17 +4,19 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { Platform } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const platform = searchParams.get('platform')?.toUpperCase() as Platform | null;
-    const isApproved = searchParams.get('approved') === 'true';
-    const isFeatured = searchParams.get('featured') === 'true';
+    const approvedParam = searchParams.get('approved');
+    const featuredParam = searchParams.get('featured');
 
     const where: any = {};
     if (platform) where.platform = platform;
-    if (isApproved !== null) where.isApproved = isApproved;
-    if (isFeatured !== null) where.isFeatured = isFeatured;
+    if (approvedParam !== null) where.isApproved = approvedParam === 'true';
+    if (featuredParam !== null) where.isFeatured = featuredParam === 'true';
 
     const testimonials = await prisma.testimonial.findMany({
       where,
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       handle,
-      role,
+      role = "Customer",
       text,
       rating,
       platform,
@@ -67,31 +69,40 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedRating =
-      typeof rating === 'number'
+      typeof rating === 'number' && !isNaN(rating)
         ? Math.round(rating)
         : typeof rating === 'string' && rating.trim() !== ''
           ? parseInt(rating, 10)
           : null;
+    
+    // Ensure normalizedRating is not NaN (parseInt can return NaN)
+    const finalRating = normalizedRating !== null && isNaN(normalizedRating) ? null : normalizedRating;
+
     const normalizedDisplayOrder =
-      typeof displayOrder === 'number'
+      typeof displayOrder === 'number' && !isNaN(displayOrder)
         ? displayOrder
         : typeof displayOrder === 'string' && displayOrder.trim() !== ''
           ? parseInt(displayOrder, 10)
           : 0;
+    
+    // Ensure normalizedDisplayOrder is not NaN
+    const finalDisplayOrder = isNaN(normalizedDisplayOrder) ? 0 : normalizedDisplayOrder;
+
     const normalizedPlatform = platform ? (platform.toUpperCase() as Platform) : null;
+    const finalRole = role && typeof role === 'string' && role.trim() !== '' ? role : "Customer";
 
     let testimonial;
     try {
       testimonial = await prisma.testimonial.create({
         data: {
           handle,
-          role,
+          role: finalRole,
           text,
-          rating: normalizedRating,
+          rating: finalRating,
           platform: normalizedPlatform,
           isApproved,
           isFeatured,
-          displayOrder: normalizedDisplayOrder,
+          displayOrder: finalDisplayOrder,
         },
       });
     } catch (err: any) {
@@ -142,20 +153,27 @@ export async function PUT(request: NextRequest) {
       updateData.platform = String(updateData.platform).toUpperCase();
     }
     if (updateData.displayOrder !== undefined) {
-      updateData.displayOrder =
-        typeof updateData.displayOrder === 'number'
-          ? updateData.displayOrder
-          : typeof updateData.displayOrder === 'string' && updateData.displayOrder.trim() !== ''
-            ? parseInt(updateData.displayOrder, 10)
-            : 0;
+      const val = updateData.displayOrder;
+      const parsed = typeof val === 'number' && !isNaN(val)
+        ? val
+        : typeof val === 'string' && val.trim() !== ''
+          ? parseInt(val, 10)
+          : 0;
+      updateData.displayOrder = isNaN(parsed) ? 0 : parsed;
     }
     if (updateData.rating !== undefined) {
-      updateData.rating =
-        typeof updateData.rating === 'number'
-          ? Math.round(updateData.rating)
-          : typeof updateData.rating === 'string' && updateData.rating.trim() !== ''
-            ? parseInt(updateData.rating, 10)
-            : null;
+      const val = updateData.rating;
+      const parsed = typeof val === 'number' && !isNaN(val)
+        ? Math.round(val)
+        : typeof val === 'string' && val.trim() !== ''
+          ? parseInt(val, 10)
+          : null;
+      updateData.rating = (parsed !== null && isNaN(parsed)) ? null : parsed;
+    }
+    if (updateData.role !== undefined) {
+       if (typeof updateData.role !== 'string' || updateData.role.trim() === '') {
+          updateData.role = "Customer";
+       }
     }
 
     let testimonial;

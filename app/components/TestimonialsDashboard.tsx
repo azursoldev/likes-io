@@ -48,20 +48,20 @@ export default function TestimonialsDashboard() {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const seedData = [
-    { handle: "@john_doe_official", text: "This is an amazing product, I love it and would highly recommend it to everyone...", rating: 5, isApproved: true },
-    { handle: "Jane Smith", text: "Great service and very helpful customer support. The team really cares about their customers...", rating: 5, isApproved: true },
-    { handle: "@tiktok_creator", text: "Highly recommend this company for anyone looking to boost their social media presence...", rating: 4.5, isApproved: true },
-    { handle: "Mike Johnson", text: "Excellent results! My engagement has increased significantly since using this service...", rating: 5, isApproved: true },
-    { handle: "@instagram_user", text: "Fast delivery and great quality. Will definitely use again in the future...", rating: 5, isApproved: true },
-    { handle: "Sarah Williams", text: "Good service overall, though there were some minor delays. Still satisfied with the results...", rating: 4, isApproved: false },
-    { handle: "@youtube_creator", text: "Outstanding support and quick turnaround time. Very professional team...", rating: 5, isApproved: true },
-    { handle: "David Brown", text: "The best investment I've made for my social media growth. Results speak for themselves...", rating: 5, isApproved: true },
+    { handle: "@john_doe_official", role: "Influencer", text: "This is an amazing product, I love it and would highly recommend it to everyone...", rating: 5, isApproved: true },
+    { handle: "Jane Smith", role: "Customer", text: "Great service and very helpful customer support. The team really cares about their customers...", rating: 5, isApproved: true },
+    { handle: "@tiktok_creator", role: "Creator", text: "Highly recommend this company for anyone looking to boost their social media presence...", rating: 4.5, isApproved: true },
+    { handle: "Mike Johnson", role: "Entrepreneur", text: "Excellent results! My engagement has increased significantly since using this service...", rating: 5, isApproved: true },
+    { handle: "@instagram_user", role: "Influencer", text: "Fast delivery and great quality. Will definitely use again in the future...", rating: 5, isApproved: true },
+    { handle: "Sarah Williams", role: "Customer", text: "Good service overall, though there were some minor delays. Still satisfied with the results...", rating: 4, isApproved: false },
+    { handle: "@youtube_creator", role: "Youtuber", text: "Outstanding support and quick turnaround time. Very professional team...", rating: 5, isApproved: true },
+    { handle: "David Brown", role: "Business Owner", text: "The best investment I've made for my social media growth. Results speak for themselves...", rating: 5, isApproved: true },
   ];
   const fetchTestimonials = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/cms/testimonials");
+      const res = await fetch("/api/cms/testimonials", { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch testimonials");
       const list: DbTestimonial[] = data.testimonials || [];
@@ -73,6 +73,7 @@ export default function TestimonialsDashboard() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               handle: s.handle,
+              role: s.role,
               text: s.text,
               rating: s.rating,
               isApproved: s.isApproved,
