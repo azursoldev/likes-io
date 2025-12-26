@@ -23,10 +23,27 @@ type DbTestimonial = {
   text: string;
   rating?: number | null;
   platform?: string | null;
+  serviceType?: string | null;
   isApproved: boolean;
   isFeatured: boolean;
   displayOrder: number;
 };
+
+const SERVICE_OPTIONS = [
+  { label: "General (All Pages)", value: "" },
+  { label: "Instagram (General)", value: "INSTAGRAM" },
+  { label: "Instagram Likes", value: "INSTAGRAM-LIKES" },
+  { label: "Instagram Followers", value: "INSTAGRAM-FOLLOWERS" },
+  { label: "Instagram Views", value: "INSTAGRAM-VIEWS" },
+  { label: "TikTok (General)", value: "TIKTOK" },
+  { label: "TikTok Likes", value: "TIKTOK-LIKES" },
+  { label: "TikTok Followers", value: "TIKTOK-FOLLOWERS" },
+  { label: "TikTok Views", value: "TIKTOK-VIEWS" },
+  { label: "YouTube (General)", value: "YOUTUBE" },
+  { label: "YouTube Views", value: "YOUTUBE-VIEWS" },
+  { label: "YouTube Subscribers", value: "YOUTUBE-SUBSCRIBERS" },
+  { label: "Reviews Page", value: "REVIEWS" },
+];
 
 export default function TestimonialsDashboard() {
   const [testimonials, setTestimonials] = useState<DbTestimonial[]>([]);
@@ -42,6 +59,7 @@ export default function TestimonialsDashboard() {
     text: "",
     rating: 5,
     platform: null,
+    serviceType: null,
     isApproved: true,
     isFeatured: false,
     displayOrder: 0,
@@ -104,6 +122,7 @@ export default function TestimonialsDashboard() {
       text: "",
       rating: 5,
       platform: null,
+      serviceType: null,
       isApproved: true,
       isFeatured: false,
       displayOrder: testimonials.length,
@@ -118,6 +137,7 @@ export default function TestimonialsDashboard() {
       text: t.text,
       rating: t.rating || 5,
       platform: t.platform || null,
+      serviceType: t.serviceType || null,
       isApproved: t.isApproved,
       isFeatured: t.isFeatured,
       displayOrder: t.displayOrder,
@@ -312,10 +332,10 @@ export default function TestimonialsDashboard() {
             )}
             </div>
             {showAddModal && (
-              <div className="modal-overlay">
+              <div className="modal-overlay modal-overlay-testimonial">
                 <div className="modal">
                   <div className="modal-header">
-                    <h3>Add Testimonial</h3>
+                    <h3 className="title-testimonial">Add Testimonial</h3>
                     <button className="modal-close" onClick={() => setShowAddModal(false)}>×</button>
                   </div>
                   <div className="modal-body">
@@ -326,6 +346,28 @@ export default function TestimonialsDashboard() {
                     <div className="add-service-form-group">
                       <label>Role</label>
                       <input className="add-service-input" value={(formData.role as string) || ""} onChange={(e) => setFormData({ ...formData, role: e.target.value })} />
+                    </div>
+                    <div className="add-service-form-group">
+                      <label>Service Page</label>
+                      <select 
+                        className="add-service-input" 
+                        value={formData.platform && formData.serviceType ? `${formData.platform}-${formData.serviceType}` : formData.platform || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (!val) {
+                            setFormData({ ...formData, platform: null, serviceType: null });
+                          } else if (val.includes("-")) {
+                            const [p, s] = val.split("-");
+                            setFormData({ ...formData, platform: p, serviceType: s });
+                          } else {
+                            setFormData({ ...formData, platform: val, serviceType: null });
+                          }
+                        }}
+                      >
+                        {SERVICE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="add-service-form-group">
                       <label>Testimonial</label>
@@ -352,10 +394,10 @@ export default function TestimonialsDashboard() {
               </div>
             )}
             {showEditModal && (
-              <div className="modal-overlay">
+              <div className="modal-overlay modal-overlay-testimonial">
                 <div className="modal">
                   <div className="modal-header">
-                    <h3>Edit Testimonial</h3>
+                    <h3 className="title-testimonial">Edit Testimonial</h3>
                     <button className="modal-close" onClick={() => setShowEditModal(false)}>×</button>
                   </div>
                   <div className="modal-body">
@@ -366,6 +408,28 @@ export default function TestimonialsDashboard() {
                     <div className="add-service-form-group">
                       <label>Role</label>
                       <input className="add-service-input" value={(formData.role as string) || ""} onChange={(e) => setFormData({ ...formData, role: e.target.value })} />
+                    </div>
+                    <div className="add-service-form-group">
+                      <label>Service Page</label>
+                      <select 
+                        className="add-service-input" 
+                        value={formData.platform && formData.serviceType ? `${formData.platform}-${formData.serviceType}` : formData.platform || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (!val) {
+                            setFormData({ ...formData, platform: null, serviceType: null });
+                          } else if (val.includes("-")) {
+                            const [p, s] = val.split("-");
+                            setFormData({ ...formData, platform: p, serviceType: s });
+                          } else {
+                            setFormData({ ...formData, platform: val, serviceType: null });
+                          }
+                        }}
+                      >
+                        {SERVICE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="add-service-form-group">
                       <label>Testimonial</label>

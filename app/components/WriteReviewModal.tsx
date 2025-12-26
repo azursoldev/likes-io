@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -13,28 +13,75 @@ import {
 type WriteReviewModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  defaultService?: string;
 };
 
 export default function WriteReviewModal({
   isOpen,
   onClose,
+  defaultService = "",
 }: WriteReviewModalProps) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    service: "",
+    service: defaultService,
     name: "",
     review: "",
   });
 
+  // Update service when defaultService changes
+  useEffect(() => {
+    if (defaultService) {
+      setFormData(prev => ({ ...prev, service: defaultService }));
+    }
+  }, [defaultService]);
+
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log("Review submitted:", { rating, ...formData });
-    // Close modal after submission
-    onClose();
+    
+    if (rating === 0) {
+      alert("Please select a star rating.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch("/api/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          rating,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Reset form
+        setFormData({
+          service: defaultService || "",
+          name: "",
+          review: "",
+        });
+        setRating(0);
+        onClose();
+        alert("Thank you! Your review has been submitted for approval.");
+      } else {
+        alert(data.error || "Failed to submit review. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (

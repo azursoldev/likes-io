@@ -61,11 +61,12 @@ export async function GET(
     // Fetch Testimonials
     const testimonials = await prisma.testimonial.findMany({
       where: {
-        OR: [
-          { platform },
-          { platform: null }
-        ],
         isApproved: true,
+        OR: [
+          { platform: null },
+          { platform: platform, serviceType: null },
+          { platform: platform, serviceType: serviceType }
+        ],
       },
       orderBy: { displayOrder: 'asc' },
     });

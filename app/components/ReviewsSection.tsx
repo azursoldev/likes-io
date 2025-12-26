@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { useServiceContent } from "./ServicePageContent";
+import WriteReviewModal from "./WriteReviewModal";
 
 export type ReviewItem = {
   handle: string;
@@ -44,9 +45,14 @@ export default function ReviewsSection({
 }: ReviewsSectionProps) {
   const context = useServiceContent();
   const [index, setIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Priority: props > context > default
   const reviews = propReviews || (context?.testimonials && context.testimonials.length > 0 ? context.testimonials : DEFAULT_REVIEWS);
+
+  const defaultService = context?.platform && context?.serviceType 
+    ? `${context.platform.toLowerCase()}-${context.serviceType.toLowerCase()}` 
+    : undefined;
 
   const total = reviews.length;
   const CARD_W = 344; // card width used for sliding (desktop)
@@ -99,7 +105,23 @@ export default function ReviewsSection({
             <button key={i} className={`dot ${i === index ? "active" : ""}`} aria-label={`Go to slide ${i+1}`} onClick={() => setIndex(i)} />
           ))}
         </div>
+
+        <div className="reviews-write-btn-container" style={{ marginTop: "40px", textAlign: "center" }}>
+          <button 
+            className="btn-primary" 
+            style={{ padding: "12px 30px", borderRadius: "50px", fontWeight: "600", fontSize: "16px" }}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Write a Review
+          </button>
+        </div>
       </div>
+
+      <WriteReviewModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        defaultService={defaultService}
+      />
     </section>
   );
 }

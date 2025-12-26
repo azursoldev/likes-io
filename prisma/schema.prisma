@@ -66,6 +66,7 @@ enum Platform {
   INSTAGRAM
   TIKTOK
   YOUTUBE
+  REVIEWS
 }
 
 enum ServiceType {
@@ -368,6 +369,7 @@ model Testimonial {
   text        String
   rating      Int?
   platform    Platform?
+  serviceType ServiceType?
   isApproved  Boolean  @default(false)
   isFeatured  Boolean  @default(false)
   displayOrder Int     @default(0)

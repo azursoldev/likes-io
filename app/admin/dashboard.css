@@ -1,4 +1,4 @@
-﻿/* Dashboard Styles */
+/* Dashboard Styles */
 .dashboard-wrapper {
   min-height: 100vh;
   display: flex;
@@ -5867,7 +5867,15 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+.modal-overlay-testimonial .modal {
+    background: #fff;
+    border-radius: 30px !important;
+}.modal-overlay.modal-overlay-testimonial {}
 
+h3.title-testimonial {
+    margin: 0 !important;
+    font-size: 24px;
+}
 /* FAQ Management Page */
 .faq-page-header {
   display: flex;

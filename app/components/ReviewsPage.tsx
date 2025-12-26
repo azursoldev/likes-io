@@ -1,95 +1,40 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faCheck } from "@fortawesome/free-solid-svg-icons";
 import WriteReviewModal from "./WriteReviewModal";
 
 type Review = {
-  username: string;
+  id: number;
+  handle: string;
   text: string;
+  rating: number;
+  role?: string;
 };
 
-const reviews: Review[] = [
-  {
-    username: "@sarahL",
-    text: "Likes.io changed the game for my channel. The growth felt natural and the engagement was top-notch. I saw results within the first 24 hours!",
-  },
-  {
-    username: "@MikeP_Fitness",
-    text: "...helped us increase conversions by 30%. Incredibly simple and effective.",
-  },
-  {
-    username: "@JessT_Art",
-    text: "...helped my art reach a much wider audience than I could have ever managed on my own. Highly recommended!",
-  },
-  {
-    username: "@TravelTom",
-    text: "The instant delivery on views is no joke. My latest reel got the boost it needed to get pushed by the algorithm. This service is a must-have for any serious creator.",
-  },
-  {
-    username: "@GamerPro",
-    text: "Good service for likes, delivered as promised. The support team was also very helpful when I had a question about splitting likes across multiple posts. Solid experience.",
-  },
-  {
-    username: "@FoodieFinds",
-    text: "My food blog's engagement has skyrocketed. The likes are from high-quality profiles which makes my page look so much more credible. Thank you, Likes.io!",
-  },
-  {
-    username: "@MusicMaven",
-    text: "Finally, a service that delivers followers that stick. My music is reaching more people, and the growth looks completely organic. I couldn't be happier.",
-  },
-  {
-    username: "@StyleByEva",
-    text: "This is the secret weapon every fashion influencer needs. The boost in likes and followers helped me secure a new brand deal. The ROI is incredible!",
-  },
-  {
-    username: "@TechTrends",
-    text: "Simple, fast, and secure. The entire process for buying views was seamless. My tech review channel has gained so much traction from this.",
-  },
-  {
-    username: "@DanceMovesDan",
-    text: "The TikTok likes gave my video the initial push it needed to get on the FYP. Woke up to thousands of organic views. Incredible!",
-  },
-  {
-    username: "@ComedyQueen",
-    text: "Super fast delivery for TikTok likes. It helps my new videos gain momentum right away. Will be using this for all my posts!",
-  },
-  {
-    username: "@DIYHacks",
-    text: "Seeing that high like count immediately makes my videos look more popular and encourages more people to watch. Great service.",
-  },
-];
-
-const faqItems = [
-  {
-    q: "Are these reviews from real customers?",
-    a: "Yes, all reviews are from verified customers who have purchased and used our services. We never fabricate reviews or use fake testimonials.",
-  },
-  {
-    q: "What does the 'Verified Buyer' badge mean?",
-    a: "The 'Verified Buyer' badge indicates that the reviewer has completed a purchase through our platform and their review is authentic.",
-  },
-  {
-    q: "How can I leave a review for my purchase?",
-    a: "After completing a purchase, you'll receive an email invitation to leave a review. You can also visit our contact page to submit your feedback.",
-  },
-  {
-    q: "Why isn't my review showing up on the page immediately?",
-    a: "All reviews go through a moderation process to ensure authenticity and quality. This typically takes 24-48 hours before your review appears.",
-  },
-  {
-    q: "Do you ever edit or remove negative reviews?",
-    a: "We never edit or remove negative reviews. We believe in transparency and only remove reviews that violate our terms (spam, fake, or inappropriate content).",
-  },
-  {
-    q: "How is the average star rating calculated?",
-    a: "The average star rating is calculated from all verified customer reviews, providing an accurate representation of customer satisfaction.",
-  },
-];
-
 export default function ReviewsPage() {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsPerPage = 12;
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch("/api/reviews");
+        const data = await res.json();
+        if (data.reviews) {
+          setReviews(data.reviews);
+        }
+      } catch (error) {
+        console.error("Failed to fetch reviews", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
+
   const totalPages = Math.ceil(reviews.length / reviewsPerPage);
   const startIndex = (currentPage - 1) * reviewsPerPage;
   const currentReviews = reviews.slice(startIndex, startIndex + reviewsPerPage);
@@ -99,6 +44,33 @@ export default function ReviewsPage() {
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
   };
+  
+  const faqItems = [
+    {
+      q: "Are these reviews from real customers?",
+      a: "Yes, all reviews are from verified customers who have purchased and used our services. We never fabricate reviews or use fake testimonials.",
+    },
+    {
+      q: "What does the 'Verified Buyer' badge mean?",
+      a: "The 'Verified Buyer' badge indicates that the reviewer has completed a purchase through our platform and their review is authentic.",
+    },
+    {
+      q: "How can I leave a review for my purchase?",
+      a: "After completing a purchase, you'll receive an email invitation to leave a review. You can also visit our contact page to submit your feedback.",
+    },
+    {
+      q: "Why isn't my review showing up on the page immediately?",
+      a: "All reviews go through a moderation process to ensure authenticity and quality. This typically takes 24-48 hours before your review appears.",
+    },
+    {
+      q: "Do you ever edit or remove negative reviews?",
+      a: "We never edit or remove negative reviews. We believe in transparency and only remove reviews that violate our terms (spam, fake, or inappropriate content).",
+    },
+    {
+      q: "How is the average star rating calculated?",
+      a: "The average star rating is calculated from all verified customer reviews, providing an accurate representation of customer satisfaction.",
+    },
+  ];
 
   return (
     <section className="reviews-page">
@@ -107,7 +79,7 @@ export default function ReviewsPage() {
         <div className="container">
           <h1 className="reviews-page-title">Our Customer Reviews</h1>
           <p className="reviews-page-subtitle">
-            See what 123 real customers are saying about our services.
+            See what {reviews.length || 123} real customers are saying about our services.
           </p>
 
           {/* Overall Rating */}
@@ -151,20 +123,20 @@ export default function ReviewsPage() {
       {/* Review Cards Grid */}
       <div className="reviews-grid">
         <div className="container">
-          {currentReviews.map((review, index) => (
+          {loading ? <p>Loading reviews...</p> : currentReviews.map((review, index) => (
             <div key={index} className="review-card-page">
               <div className="review-card-top">
-                <div className="review-avatar">?</div>
+                <div className="review-avatar">{review.handle.charAt(0).toUpperCase()}</div>
                 <div className="review-meta">
-                  <div className="review-username">{review.username}</div>
+                  <div className="review-username">{review.handle}</div>
                   <div className="review-verified">
                     <FontAwesomeIcon icon={faCheck} className="verified-check" />
-                    Verified Buyer
+                    {review.role || "Verified Buyer"}
                   </div>
                 </div>
               </div>
               <div className="review-stars">
-                {[...Array(5)].map((_, i) => (
+                {[...Array(review.rating || 5)].map((_, i) => (
                   <FontAwesomeIcon key={i} icon={faStar} className="star-icon-small" />
                 ))}
               </div>

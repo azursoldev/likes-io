@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
-import { Platform } from '@prisma/client';
+import { Platform, ServiceType } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       text,
       rating,
       platform,
+      serviceType,
       isApproved = false,
       isFeatured = false,
       displayOrder = 0,
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
     const finalDisplayOrder = isNaN(normalizedDisplayOrder) ? 0 : normalizedDisplayOrder;
 
     const normalizedPlatform = platform ? (platform.toUpperCase() as Platform) : null;
+    const normalizedServiceType = serviceType ? (serviceType.toUpperCase() as ServiceType) : null;
     const finalRole = role && typeof role === 'string' && role.trim() !== '' ? role : "Customer";
 
     let testimonial;
@@ -100,6 +102,7 @@ export async function POST(request: NextRequest) {
           text,
           rating: finalRating,
           platform: normalizedPlatform,
+          serviceType: normalizedServiceType,
           isApproved,
           isFeatured,
           displayOrder: finalDisplayOrder,
@@ -151,6 +154,9 @@ export async function PUT(request: NextRequest) {
 
     if (updateData.platform) {
       updateData.platform = String(updateData.platform).toUpperCase();
+    }
+    if (updateData.serviceType) {
+      updateData.serviceType = String(updateData.serviceType).toUpperCase();
     }
     if (updateData.displayOrder !== undefined) {
       const val = updateData.displayOrder;
