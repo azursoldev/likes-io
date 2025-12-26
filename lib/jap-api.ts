@@ -95,6 +95,7 @@ export class JAPAPI {
       INSTAGRAM: 'Instagram',
       TIKTOK: 'TikTok',
       YOUTUBE: 'YouTube',
+      REVIEWS: 'Reviews',
     };
     return mapping[platform] || platform;
   }
