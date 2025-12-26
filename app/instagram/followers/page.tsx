@@ -11,8 +11,8 @@ import {
   DynamicQualityCompare,
   DynamicHowItWorks,
   DynamicFAQSection,
+  DynamicLearnMoreSection,
 } from "../../components/ServicePageContent";
-import LearnMoreSection from "../../components/LearnMoreSection";
 import FeaturedOn from "../../components/FeaturedOn";
 import AdvantageSection from "../../components/AdvantageSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
@@ -151,7 +151,7 @@ const CTA_BUTTONS: CTAButton[] = [
 ];
 
 export default function Page() {
-  notFound();
+  // notFound();
   return (
     <>
       <Header />
@@ -174,7 +174,7 @@ export default function Page() {
       >
         <DynamicServiceHero />
         <DynamicAssuranceCard />
-        <LearnMoreSection text="Learn More About Instagram Followers" />
+        <DynamicLearnMoreSection defaultText="Learn More About Instagram Followers" />
         <DynamicPackagesSelector />
         <DynamicQualityCompare />
         <FeaturedOn />

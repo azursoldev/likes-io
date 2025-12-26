@@ -36,8 +36,10 @@ export async function GET(
     // Parse JSON fields
     const responseData: any = {
       ...content,
-      // Explicitly include assuranceCardText (may be undefined if column doesn't exist)
+      // Explicitly include assuranceCardText and learnMoreText (may be undefined if column doesn't exist)
       assuranceCardText: (content as any).assuranceCardText || null,
+      learnMoreText: (content as any).learnMoreText || null,
+      learnMoreModalContent: (content as any).learnMoreModalContent || null,
       packages: typeof content.packages === 'string' ? JSON.parse(content.packages) : content.packages,
       qualityCompare: content.qualityCompare ? (typeof content.qualityCompare === 'string' ? JSON.parse(content.qualityCompare) : content.qualityCompare) : null,
       howItWorks: content.howItWorks ? (typeof content.howItWorks === 'string' ? JSON.parse(content.howItWorks) : content.howItWorks) : null,
@@ -114,6 +116,8 @@ export async function PUT(
       heroRating,
       heroReviewCount,
       assuranceCardText,
+      learnMoreText,
+      learnMoreModalContent,
       packages,
       qualityCompare,
       howItWorks,
@@ -141,6 +145,8 @@ export async function PUT(
           heroRating,
           heroReviewCount,
           assuranceCardText: assuranceCardText as any,
+          learnMoreText: learnMoreText as any,
+          learnMoreModalContent: learnMoreModalContent as any,
           packages: packages as any,
           qualityCompare: qualityCompare as any,
           howItWorks: howItWorks as any,
@@ -157,6 +163,8 @@ export async function PUT(
           heroRating,
           heroReviewCount,
           assuranceCardText: assuranceCardText as any,
+          learnMoreText: learnMoreText as any,
+          learnMoreModalContent: learnMoreModalContent as any,
           packages: packages as any,
           qualityCompare: qualityCompare as any,
           howItWorks: howItWorks as any,
@@ -208,7 +216,7 @@ export async function PUT(
         
         return NextResponse.json({
           ...content,
-          warning: 'Some fields were not saved (slug, assuranceCardText, metaTitle, metaDescription). Please run: npx prisma db push',
+          warning: 'Some fields were not saved (slug, assuranceCardText, learnMoreText, metaTitle, metaDescription). Please run: npx prisma db push',
         });
       } else {
         // Re-throw if it's a different error

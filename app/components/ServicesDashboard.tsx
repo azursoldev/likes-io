@@ -70,6 +70,8 @@ export default function ServicesDashboard() {
   const [heroRating, setHeroRating] = useState("");
   const [heroReviewCount, setHeroReviewCount] = useState("");
   const [assuranceCardText, setAssuranceCardText] = useState("");
+  const [learnMoreText, setLearnMoreText] = useState("");
+  const [learnMoreModalContent, setLearnMoreModalContent] = useState("");
   const [howItWorksTitle, setHowItWorksTitle] = useState("");
   const [howItWorksSubtitle, setHowItWorksSubtitle] = useState("");
   const [serviceSlug, setServiceSlug] = useState("");
@@ -125,6 +127,7 @@ export default function ServicesDashboard() {
     setHeroRating("");
     setHeroReviewCount("");
     setAssuranceCardText("");
+    setLearnMoreModalContent("");
     setHowItWorksTitle("");
     setHowItWorksSubtitle("");
     setSteps([]);
@@ -167,6 +170,8 @@ export default function ServicesDashboard() {
       setHeroRating(data.heroRating || "");
       setHeroReviewCount(data.heroReviewCount || "");
       setAssuranceCardText(data.assuranceCardText || "Join over a million satisfied customers, including artists, companies, and top influencers. Our services are 100% discreet, secure, and delivered naturally to ensure your account is always safe.");
+      setLearnMoreText(data.learnMoreText || "");
+      setLearnMoreModalContent(data.learnMoreModalContent || "");
       setServiceSlug(data.slug || service.name.toLowerCase().replace(/\s+/g, '-'));
       
       if (data.howItWorks) {
@@ -508,6 +513,8 @@ export default function ServicesDashboard() {
           heroRating,
           heroReviewCount,
           assuranceCardText,
+          learnMoreText,
+          learnMoreModalContent,
           packages,
           qualityCompare,
           howItWorks,
@@ -1481,6 +1488,34 @@ export default function ServicesDashboard() {
                       onChange={(e) => setAssuranceCardText(e.target.value)}
                     />
                     <p className="add-service-helper">This text appears in the assurance card section below the hero section.</p>
+                  </div>
+                  <div className="add-service-form-group">
+                    <label htmlFor="edit-learn-more-text">Learn More Section Text (Dynamic)</label>
+                    <textarea
+                      id="edit-learn-more-text"
+                      className="add-service-textarea"
+                      placeholder="e.g. Learn More About Instagram Followers"
+                      rows={4}
+                      value={learnMoreText}
+                      onChange={(e) => setLearnMoreText(e.target.value)}
+                    />
+                    <small style={{ color: '#888', marginTop: '5px', display: 'block' }}>
+                      Leave empty to hide this section on the frontend.
+                    </small>
+                  </div>
+                  <div className="add-service-form-group">
+                    <label htmlFor="edit-learn-more-content">Learn More Modal Content</label>
+                    <textarea
+                      id="edit-learn-more-content"
+                      className="add-service-textarea"
+                      placeholder="Content for the modal popup (HTML supported)"
+                      rows={8}
+                      value={learnMoreModalContent}
+                      onChange={(e) => setLearnMoreModalContent(e.target.value)}
+                    />
+                    <small style={{ color: '#888', marginTop: '5px', display: 'block' }}>
+                      HTML tags are supported (e.g. &lt;h3&gt;, &lt;p&gt;).
+                    </small>
                   </div>
                 </div>
 

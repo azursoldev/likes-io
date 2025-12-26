@@ -4,6 +4,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { usePathname } from "next/navigation";
 import ServiceHero from "./ServiceHero";
 import AssuranceCard from "./AssuranceCard";
+import LearnMoreSection from "./LearnMoreSection";
 import PackagesSelector, { type PackageTabConfig } from "./PackagesSelector";
 import QualityCompare from "./QualityCompare";
 import HowItWorksSection from "./HowItWorksSection";
@@ -18,6 +19,8 @@ export type ServicePageContentData = {
   heroRating: string;
   heroReviewCount: string;
   assuranceCardText?: string;
+  learnMoreText?: string;
+  learnMoreModalContent?: string;
   packages?: PackageTabConfig[];
   qualityCompare?: { title?: string; columns?: any[] };
   howItWorks?: { title?: string; subtitle?: string; steps?: any[] };
@@ -113,6 +116,8 @@ export function ServicePageContentProvider({
             heroRating: data.heroRating || defaultHeroRating,
             heroReviewCount: data.heroReviewCount || defaultHeroReviewCount,
             assuranceCardText: data.assuranceCardText || defaultAssuranceCardText,
+            learnMoreText: data.learnMoreText || undefined,
+            learnMoreModalContent: data.learnMoreModalContent || undefined,
             // If it's a real CMS record, use CMS packages (even if empty)
             // If it's a default response (service not saved yet), use defaultPackages
             packages: isRealCMSRecord 
@@ -132,6 +137,7 @@ export function ServicePageContentProvider({
             heroSubtitle: defaultHeroSubtitle,
             heroRating: defaultHeroRating,
             heroReviewCount: defaultHeroReviewCount,
+            learnMoreText: undefined,
             packages: defaultPackages,
             qualityCompare: defaultQualityCompare,
             howItWorks: defaultHowItWorks,
@@ -288,6 +294,37 @@ export function DynamicAssuranceCard() {
   return <AssuranceCard text={content.assuranceCardText} />;
 }
 
+export function DynamicLearnMoreSection({ defaultText }: { defaultText?: string }) {
+  const content = useServiceContent();
+  
+  // Logic: 
+  // 1. If content is loading (content is null), show defaultText if provided?
+  //    Actually, if loading, we probably want to show what was passed as default to the provider?
+  //    But the provider renders children with defaults while loading IF defaults are passed.
+  //    If content is present:
+  //    - If learnMoreText is set (string), show it.
+  //    - If learnMoreText is empty string "", return null (Hidden).
+  //    - If learnMoreText is null/undefined, show defaultText.
+  
+  if (!content) {
+    return defaultText ? <LearnMoreSection text={defaultText} /> : null;
+  }
+
+  // If explicitly empty string, hide it
+  if (content.learnMoreText === "") {
+    return null;
+  }
+
+  // If set, use it. If null/undefined, use defaultText.
+  const textToShow = content.learnMoreText || defaultText;
+
+  if (!textToShow) {
+    return null;
+  }
+  
+  return <LearnMoreSection text={textToShow} modalContent={content.learnMoreModalContent} />;
+}
+
 // Lightweight fetcher for pages that are not wrapped in ServicePageContentProvider
 // to pull only the assurance card text dynamically.
 export function RemoteAssuranceCard({
@@ -320,4 +357,3 @@ export function RemoteAssuranceCard({
 
   return <AssuranceCard text={text} />;
 }
-

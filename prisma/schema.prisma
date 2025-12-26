@@ -332,6 +332,8 @@ model ServicePageContent {
   heroRating      String?
   heroReviewCount String?
   assuranceCardText String?
+  learnMoreText   String?
+  learnMoreModalContent String? @db.Text
   packages        Json     // Package configurations
   qualityCompare  Json?    // Quality comparison data
   howItWorks      Json?     // Steps array

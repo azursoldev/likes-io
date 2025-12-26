@@ -6,15 +6,16 @@ import AboutModal from "./AboutModal";
 
 type LearnMoreSectionProps = {
   text: string;
+  modalContent?: string;
 };
 
-export default function LearnMoreSection({ text }: LearnMoreSectionProps) {
+export default function LearnMoreSection({ text, modalContent }: LearnMoreSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <>
       <LearnMoreLink text={text} onLearnMoreClick={() => setIsModalOpen(true)} />
-      <AboutModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AboutModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} content={modalContent} />
     </>
   );
 }

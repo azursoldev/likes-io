@@ -20,6 +20,7 @@ export async function GET(
     const responseData: any = {
       ...content,
       assuranceCardText: (content as any).assuranceCardText || null,
+      learnMoreText: (content as any).learnMoreText || null,
       packages: typeof content.packages === 'string' ? JSON.parse(content.packages) : content.packages,
       qualityCompare: content.qualityCompare ? (typeof content.qualityCompare === 'string' ? JSON.parse(content.qualityCompare) : content.qualityCompare) : null,
       howItWorks: content.howItWorks ? (typeof content.howItWorks === 'string' ? JSON.parse(content.howItWorks) : content.howItWorks) : null,
