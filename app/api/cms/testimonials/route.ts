@@ -93,29 +93,29 @@ export async function POST(request: NextRequest) {
     const normalizedServiceType = serviceType ? (serviceType.toUpperCase() as ServiceType) : null;
     const finalRole = role && typeof role === 'string' && role.trim() !== '' ? role : "Customer";
 
-    // let testimonial;
-    // try {
-    //   testimonial = await prisma.testimonial.create({
-    //     data: {
-    //       handle,
-    //       role: finalRole,
-    //       text,
-    //       rating: finalRating,
-    //       platform: normalizedPlatform,
-    //       serviceType: normalizedServiceType,
-    //       isApproved,
-    //       isFeatured,
-    //       displayOrder: finalDisplayOrder,
-    //     },
-    //   });
-    // } catch (err: any) {
-    //   const msg = String(err?.message || '');
-    //   if (msg.includes("Can't reach database server")) {
-    //     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
-    //   }
-    //   throw err;
-    // }
-    const testimonial = { id: 'mock-id', handle, role: finalRole, text, rating: finalRating };
+    let testimonial;
+    try {
+      testimonial = await prisma.testimonial.create({
+        data: {
+          handle,
+          role: finalRole,
+          text,
+          rating: finalRating,
+          platform: normalizedPlatform,
+          serviceType: normalizedServiceType,
+          isApproved,
+          isFeatured,
+          displayOrder: finalDisplayOrder,
+        },
+      });
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      if (msg.includes("Can't reach database server")) {
+        return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+      }
+      throw err;
+    }
+    // const testimonial = { id: 'mock-id', handle, role: finalRole, text, rating: finalRating };
 
     return NextResponse.json({ testimonial });
   } catch (error: any) {
@@ -183,20 +183,20 @@ export async function PUT(request: NextRequest) {
        }
     }
 
-    // let testimonial;
-    // try {
-    //   testimonial = await prisma.testimonial.update({
-    //     where: { id: parseInt(id) },
-    //     data: updateData,
-    //   });
-    // } catch (err: any) {
-    //   const msg = String(err?.message || '');
-    //   if (msg.includes("Can't reach database server")) {
-    //     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
-    //   }
-    //   throw err;
-    // }
-    const testimonial = { id: parseInt(id), ...updateData };
+    let testimonial;
+    try {
+      testimonial = await prisma.testimonial.update({
+        where: { id: id },
+        data: updateData,
+      });
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      if (msg.includes("Can't reach database server")) {
+        return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+      }
+      throw err;
+    }
+    // const testimonial = { id: parseInt(id), ...updateData };
 
     return NextResponse.json({ testimonial });
   } catch (error: any) {
@@ -234,17 +234,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // try {
-    //   await prisma.testimonial.delete({
-    //     where: { id: parseInt(id) },
-    //   });
-    // } catch (err: any) {
-    //   const msg = String(err?.message || '');
-    //   if (msg.includes("Can't reach database server")) {
-    //     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
-    //   }
-    //   throw err;
-    // }
+    try {
+      await prisma.testimonial.delete({
+        where: { id: id },
+      });
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      if (msg.includes("Can't reach database server")) {
+        return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+      }
+      throw err;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

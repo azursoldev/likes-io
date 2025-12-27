@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,56 +7,394 @@ datasource db {
   url      = "postgresql://doadmin:AVNS_3QAE8fNMNCwGe-m6az8@db-postgresql-sfo2-44294-do-user-28518962-0.k.db.ondigitalocean.com:25060/defaultdb?sslmode=require"
 }
 
-// User Management
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String?
-  role          UserRole  @default(USER)
-  isBlocked     Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  orders        Order[]
-  reviews       Review[]
-  blogPosts     BlogPost[]
-  
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String?
+  role      UserRole   @default(USER)
+  isBlocked Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  blogPosts BlogPost[]
+  orders    Order[]
+  reviews   Review[]
+
   @@index([email])
   @@index([role])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  serviceId   String
+  platform    Platform
+  serviceType ServiceType
+  quantity    Int
+  price       Float
+  currency    String      @default("USD")
+  status      OrderStatus @default(PENDING_PAYMENT)
+  link        String?
+  japOrderId  String?
+  japStatus   String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  service     Service     @relation(fields: [serviceId], references: [id])
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment     Payment?
+  reviews     Review[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([platform])
+  @@index([createdAt])
+}
+
+model Service {
+  id           String      @id @default(cuid())
+  name         String
+  platform     Platform
+  serviceType  ServiceType
+  japServiceId String?
+  basePrice    Float
+  markup       Float       @default(0)
+  finalPrice   Float
+  minQuantity  Int?
+  maxQuantity  Int?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  orders       Order[]
+
+  @@unique([platform, serviceType, japServiceId])
+  @@index([platform])
+  @@index([serviceType])
+  @@index([isActive])
+}
+
+model Payment {
+  id            String         @id @default(cuid())
+  orderId       String         @unique
+  gateway       PaymentGateway
+  transactionId String?
+  amount        Float
+  currency      String         @default("USD")
+  status        PaymentStatus  @default(PENDING)
+  webhookData   Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([gateway])
+  @@index([createdAt])
+}
+
+model SocialProfile {
+  id          String   @id @default(cuid())
+  platform    Platform
+  username    String
+  profileData Json
+  posts       Json?
+  cachedAt    DateTime @default(now())
+  expiresAt   DateTime
+
+  @@unique([platform, username])
+  @@index([platform, username])
+  @@index([expiresAt])
+}
+
+model AdminSettings {
+  id                     String   @id @default(cuid())
+  japApiUrl              String?
+  japApiKey              String?
+  checkoutApiKey         String?
+  checkoutWebhookSecret  String?
+  bigPayMeApiKey         String?
+  bigPayMeWebhookSecret  String?
+  rapidApiKey            String?
+  rapidApiInstagramHost  String?
+  rapidApiTikTokHost     String?
+  rapidApiYouTubeHost    String?
+  smtpHost               String?
+  smtpUser               String?
+  smtpPass               String?
+  defaultCurrency        String   @default("USD")
+  cryptomusMerchantId    String?
+  cryptomusApiKey        String?
+  cryptomusDisplayName   String?
+  cryptomusTestMode      Boolean  @default(false)
+  bigPayMerchantId       String?
+  bigPayDisplayName      String?
+  bigPayApiSecret        String?
+  bigPayTestMode         Boolean  @default(false)
+  exitIntentEnabled      Boolean  @default(false)
+  exitIntentTitle        String?
+  exitIntentSubtitle     String?
+  exitIntentDiscountCode String?
+  newServiceIndicator    Boolean  @default(true)
+  supportEmail           String?
+  updatedAt              DateTime @updatedAt
+
+  @@map("admin_settings")
+}
+
+model HomepageContent {
+  id              String   @id @default(cuid())
+  heroTitle       String
+  heroSubtitle    String
+  heroRating      String?
+  heroReviewCount String?
+  heroCtaButtons  Json?
+  
+  // Hero Profile Card
+  heroProfileHandle     String?
+  heroProfileRole       String?
+  heroProfileImage      String?
+  heroProfileLikes      String?
+  heroProfileFollowers  String?
+  heroProfileEngagement String?
+  
+  // Platform Section
+  platformTitle    String?
+  platformSubtitle String?
+  platformCards    Json?
+  
+  // Why Choose Us
+  whyChooseTitle    String?
+  whyChooseSubtitle String?
+  benefits          Json?
+  
+  // Influence Section
+  influenceTitle    String?
+  influenceSubtitle String?
+  influenceSteps    Json?
+  influenceImage    String?
+  
+  // Quick Start Section
+  quickStartTitle        String?
+  quickStartDescription1 String?
+  quickStartDescription2 String?
+  quickStartButtons      Json?
+  
+  isActive        Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+
+  @@map("homepage_content")
+}
+
+model HeroSocialUpdate {
+  id           Int     @id @default(autoincrement())
+  handle       String
+  item         String
+  time         String
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
+
+  @@index([displayOrder])
+  @@map("hero_social_updates")
+}
+
+model PromoBar {
+  id               String   @id @default(cuid())
+  messages         Json
+  countdownSeconds Int?
+  isVisible        Boolean  @default(true)
+  displayOrder     Int      @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@map("promo_bar")
+}
+
+model FeaturedOn {
+  id           Int                  @id @default(autoincrement())
+  brandName    String
+  logoUrl      String?
+  displayOrder Int                  @default(0)
+  isActive     Boolean              @default(true)
+  pageLinks    FeaturedOnPageLink[]
+
+  @@index([displayOrder])
+  @@map("featured_on")
+}
+
+model FeaturedOnPageLink {
+  id           Int        @id @default(autoincrement())
+  featuredOnId Int
+  pagePath     String
+  link         String?
+  nofollow     Boolean    @default(false)
+  featuredOn   FeaturedOn @relation(fields: [featuredOnId], references: [id], onDelete: Cascade)
+
+  @@index([featuredOnId])
+  @@map("featured_on_page_links")
+}
+
+model PlatformSection {
+  id          Int      @id @default(autoincrement())
+  platform    Platform @unique
+  title       String
+  description String
+  tags        Json
+  ctaText     String
+  isActive    Boolean  @default(true)
+
+  @@map("platform_section")
+}
+
+model GetStartedContent {
+  id          Int         @id @default(autoincrement())
+  platform    Platform
+  packType    ServiceType
+  quality     String
+  features    Json
+  explanation String?
+  pricing     Json?
+  isActive    Boolean     @default(true)
+
+  @@unique([platform, packType, quality])
+  @@index([platform])
+  @@map("get_started_content")
+}
+
+model InfluenceSection {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  steps       Json
+  isActive    Boolean @default(true)
+
+  @@map("influence_section")
+}
+
+model AdvantageSection {
+  id       Int     @id @default(autoincrement())
+  title    String
+  subtitle String
+  items    Json
+  isActive Boolean @default(true)
+
+  @@map("advantage_section")
+}
+
+model QuickStartSection {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  buttons     Json
+  isActive    Boolean @default(true)
+
+  @@map("quick_start_section")
+}
+
+model ServicePageContent {
+  id                    Int         @id @default(autoincrement())
+  platform              Platform
+  serviceType           ServiceType
+  slug                  String?     @unique
+  metaTitle             String?
+  metaDescription       String?
+  heroTitle             String
+  heroSubtitle          String
+  heroRating            String?
+  heroReviewCount       String?
+  assuranceCardText     String?
+  learnMoreText         String?
+  learnMoreModalContent String?
+  packages              Json
+  qualityCompare        Json?
+  howItWorks            Json?
+  isActive              Boolean     @default(true)
+  updatedAt             DateTime    @updatedAt
+
+  @@unique([platform, serviceType])
+  @@index([platform, serviceType])
+  @@map("service_page_content")
+}
+
+model FAQ {
+  id           String    @id @default(cuid())
+  question     String
+  answer       String
+  category     String?
+  displayOrder Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+
+  @@index([category])
+  @@map("faqs")
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  userId      String?
+  orderId     String?
+  rating      Int
+  comment     String
+  authorName  String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order?   @relation(fields: [orderId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([isPublished])
+  @@index([rating])
+  @@map("reviews")
+}
+
+model Testimonial {
+  id           String       @id @default(cuid())
+  handle       String
+  text         String
+  rating       Int
+  role         String?      @default("Verified Buyer")
+  platform     Platform?
+  serviceType  ServiceType?
+  isApproved   Boolean      @default(false)
+  isFeatured   Boolean      @default(false)
+  displayOrder Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([isApproved])
+  @@index([platform])
+  @@index([serviceType])
+  @@map("testimonials")
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  content     String
+  excerpt     String?
+  coverImage  String?
+  authorId    String
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      User      @relation(fields: [authorId], references: [id])
+
+  @@index([slug])
+  @@index([isPublished])
+}
+
+model LegalPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  sections  Json
+  updatedAt DateTime @updatedAt
+
+  @@map("legal_pages")
 }
 
 enum UserRole {
   USER
   ADMIN
-}
-
-// Order Management
-model Order {
-  id            String      @id @default(cuid())
-  userId       String
-  serviceId    String
-  platform     Platform
-  serviceType  ServiceType
-  quantity     Int
-  price        Float
-  currency     String      @default("USD")
-  status       OrderStatus @default(PENDING_PAYMENT)
-  link         String?
-  japOrderId   String?
-  japStatus    String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  service      Service     @relation(fields: [serviceId], references: [id])
-  payment      Payment?
-  reviews      Review[]
-  
-  @@index([userId])
-  @@index([status])
-  @@index([platform])
-  @@index([createdAt])
 }
 
 enum Platform {
@@ -85,50 +420,6 @@ enum OrderStatus {
   REFUNDED
 }
 
-// Service Management
-model Service {
-  id            String      @id @default(cuid())
-  name          String
-  platform      Platform
-  serviceType   ServiceType
-  japServiceId  String?
-  basePrice     Float
-  markup        Float       @default(0)
-  finalPrice    Float
-  minQuantity   Int?
-  maxQuantity   Int?
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  
-  orders        Order[]
-  
-  @@unique([platform, serviceType, japServiceId])
-  @@index([platform])
-  @@index([serviceType])
-  @@index([isActive])
-}
-
-// Payment Management
-model Payment {
-  id            String        @id @default(cuid())
-  orderId       String        @unique
-  gateway       PaymentGateway
-  transactionId String?
-  amount        Float
-  currency      String        @default("USD")
-  status        PaymentStatus @default(PENDING)
-  webhookData   Json?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
-  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  @@index([status])
-  @@index([gateway])
-  @@index([createdAt])
-}
-
 enum PaymentGateway {
   CHECKOUT_COM
   BIGPAYME
@@ -140,274 +431,4 @@ enum PaymentStatus {
   SUCCESS
   FAILED
   REFUNDED
-}
-
-// Social Media Profile Cache
-model SocialProfile {
-  id            String    @id @default(cuid())
-  platform      Platform
-  username      String
-  profileData   Json
-  posts         Json?
-  cachedAt      DateTime  @default(now())
-  expiresAt     DateTime
-  
-  @@unique([platform, username])
-  @@index([platform, username])
-  @@index([expiresAt])
-}
-
-// Admin Settings
-model AdminSettings {
-  id                    String   @id @default(cuid())
-  japApiUrl             String?
-  japApiKey             String?
-  checkoutApiKey        String?
-  checkoutWebhookSecret String?
-  bigPayMeApiKey        String?
-  bigPayMeWebhookSecret String?
-  rapidApiKey           String?
-  rapidApiInstagramHost String?
-  rapidApiTikTokHost    String?
-  rapidApiYouTubeHost   String?
-  smtpHost              String?
-  smtpUser              String?
-  smtpPass              String?
-  defaultCurrency       String   @default("USD")
-  // Cryptomus settings
-  cryptomusMerchantId   String?
-  cryptomusApiKey       String?
-  cryptomusDisplayName  String?
-  cryptomusTestMode     Boolean  @default(false)
-  // BigPay settings
-  bigPayMerchantId      String?
-  bigPayDisplayName     String?
-  bigPayApiSecret       String?
-  bigPayTestMode        Boolean  @default(false)
-  // Exit Intent settings
-  exitIntentEnabled     Boolean  @default(false)
-  exitIntentTitle       String?
-  exitIntentSubtitle   String?
-  exitIntentDiscountCode String?
-  // Feature Flags
-  newServiceIndicator   Boolean  @default(true)
-  // Site Configuration
-  supportEmail          String?
-  updatedAt             DateTime @updatedAt
-  
-  @@map("admin_settings")
-}
-
-// CMS Models - Homepage Content
-model HomepageContent {
-  id              String   @id @default(cuid())
-  heroTitle       String
-  heroSubtitle    String
-  heroRating      String?
-  heroReviewCount String?
-  heroCtaButtons  Json?
-  isActive        Boolean  @default(true)
-  updatedAt       DateTime @updatedAt
-  
-  @@map("homepage_content")
-}
-
-model HeroSocialUpdate {
-  id          Int      @id @default(autoincrement())
-  handle      String
-  item        String
-  time        String
-  displayOrder Int     @default(0)
-  isActive    Boolean  @default(true)
-  
-  @@index([displayOrder])
-  @@map("hero_social_updates")
-}
-
-model PromoBar {
-  id              String   @id @default(cuid())
-  messages        Json     // Array of strings
-  countdownSeconds Int?
-  isVisible       Boolean  @default(true)
-  displayOrder    Int      @default(0)
-  updatedAt       DateTime @updatedAt
-  
-  @@map("promo_bar")
-}
-
-model FeaturedOn {
-  id          Int      @id @default(autoincrement())
-  brandName   String
-  logoUrl     String?
-  // link        String?  // Temporarily commented out - uncomment after running migration
-  // altText     String?  // Temporarily commented out - uncomment after running migration
-  displayOrder Int     @default(0)
-  isActive    Boolean  @default(true)
-  pageLinks   FeaturedOnPageLink[]
-  
-  @@index([displayOrder])
-  @@map("featured_on")
-}
-
-model FeaturedOnPageLink {
-  id          Int      @id @default(autoincrement())
-  featuredOnId Int
-  featuredOn  FeaturedOn @relation(fields: [featuredOnId], references: [id], onDelete: Cascade)
-  pagePath    String   // e.g., "/", "/instagram/likes", "all"
-  link        String?  // e.g., "#", "https://example.com"
-  nofollow    Boolean  @default(false)
-  
-  @@index([featuredOnId])
-  @@map("featured_on_page_links")
-}
-
-model PlatformSection {
-  id          Int      @id @default(autoincrement())
-  platform    Platform
-  title       String
-  description String
-  tags        Json     // Array of strings
-  ctaText     String
-  isActive    Boolean  @default(true)
-  
-  @@unique([platform])
-  @@map("platform_section")
-}
-
-model GetStartedContent {
-  id          Int      @id @default(autoincrement())
-  platform    Platform
-  packType    ServiceType
-  quality     String   // "hq" | "premium"
-  features    Json     // Array of strings
-  explanation String?
-  pricing     Json?
-  isActive    Boolean  @default(true)
-  
-  @@unique([platform, packType, quality])
-  @@index([platform])
-  @@map("get_started_content")
-}
-
-model InfluenceSection {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  steps       Json     // Array of {title, description, subpoints}
-  isActive    Boolean  @default(true)
-  
-  @@map("influence_section")
-}
-
-model AdvantageSection {
-  id          Int      @id @default(autoincrement())
-  title       String
-  subtitle    String
-  items       Json     // Array of {icon, title, desc}
-  isActive    Boolean  @default(true)
-  
-  @@map("advantage_section")
-}
-
-model QuickStartSection {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  buttons     Json     // Array of {href, label, icon}
-  isActive    Boolean  @default(true)
-  
-  @@map("quick_start_section")
-}
-
-// Service Page Content
-model ServicePageContent {
-  id              Int      @id @default(autoincrement())
-  platform        Platform
-  serviceType     ServiceType
-  slug            String?  @unique
-  metaTitle       String?
-  metaDescription String?
-  heroTitle       String
-  heroSubtitle    String
-  heroRating      String?
-  heroReviewCount String?
-  assuranceCardText String?
-  learnMoreText   String?
-  learnMoreModalContent String? @db.Text
-  packages        Json     // Package configurations
-  qualityCompare  Json?    // Quality comparison data
-  howItWorks      Json?     // Steps array
-  isActive        Boolean  @default(true)
-  updatedAt       DateTime @updatedAt
-  
-  @@unique([platform, serviceType])
-  @@index([platform, serviceType])
-  @@map("service_page_content")
-}
-
-// FAQ Management
-model FAQ {
-  id          String   @id @default(cuid())
-  question    String
-  answer      String   @db.Text
-  category    String?   // e.g., "general", "services", "payments"
-  displayOrder Int     @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime? @updatedAt
-  
-  @@index([category])
-  @@map("faqs")
-}
-
-// Review Moderation
-model Review {
-  id          String   @id @default(cuid())
-  userId      String?
-  orderId     String?
-  rating      Int
-  comment     String   @db.Text
-  authorName  String?  // If not linked to user
-  isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  user        User?    @relation(fields: [userId], references: [id])
-  order       Order?   @relation(fields: [orderId], references: [id])
-  
-  @@index([isPublished])
-  @@index([rating])
-  @@map("reviews")
-}
-
-// Blog
-model BlogPost {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String   @db.Text
-  excerpt     String?  @db.Text
-  coverImage  String?
-  authorId    String
-  isPublished Boolean  @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  author      User     @relation(fields: [authorId], references: [id])
-  
-  @@index([slug])
-  @@index([isPublished])
-  @@map("blog_posts")
-}
-
-// Legal Pages (Terms, Privacy)
-model LegalPage {
-  id        String   @id @default(cuid())
-  slug      String   @unique // "terms" or "privacy"
-  title     String
-  sections  Json     // Array of Section objects
-  updatedAt DateTime @updatedAt
-  
-  @@map("legal_pages")
 }

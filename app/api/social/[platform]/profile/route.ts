@@ -31,9 +31,15 @@ export async function GET(
     return NextResponse.json({ profile });
   } catch (error: any) {
     console.error('Profile API Error:', error);
+    
+    // Check for 404 errors from the underlying API
+    const isNotFound = error.message?.includes('404') || 
+                      error.message?.toLowerCase().includes('not found') ||
+                      error.response?.status === 404;
+                      
     return NextResponse.json(
       { error: error.message || 'Failed to fetch profile' },
-      { status: 500 }
+      { status: isNotFound ? 404 : 500 }
     );
   }
 }

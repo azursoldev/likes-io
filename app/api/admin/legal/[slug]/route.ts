@@ -19,12 +19,16 @@ export async function GET(
 
     const { slug } = params;
 
-    // Use raw query because client is not regenerated
-    const result: any[] = await prisma.$queryRaw`
-      SELECT * FROM "legal_pages" WHERE "slug" = ${slug} LIMIT 1
-    `;
+    // Use Prisma model
+    const legalPage = await prisma.legalPage.findUnique({
+      where: { slug },
+    });
     
-    const legalPage = result[0];
+    // const result: any[] = await prisma.$queryRaw`
+    //   SELECT * FROM "legal_pages" WHERE "slug" = ${slug} LIMIT 1
+    // `;
+    
+    // const legalPage = result[0];
 
     if (!legalPage) {
       // Return defaults if not found in DB
@@ -78,16 +82,29 @@ export async function PUT(
     const now = new Date().toISOString();
     const id = `lp_${Date.now()}`; // Simple ID generation
 
-    // Upsert using raw query
-    await prisma.$executeRaw`
-      INSERT INTO "legal_pages" ("id", "slug", "title", "sections", "updatedAt")
-      VALUES (${id}, ${slug}, ${title}, ${sectionsJson}::jsonb, ${now}::timestamp)
-      ON CONFLICT ("slug") 
-      DO UPDATE SET 
-        "title" = ${title},
-        "sections" = ${sectionsJson}::jsonb,
-        "updatedAt" = ${now}::timestamp
-    `;
+    // Upsert using Prisma model
+    await prisma.legalPage.upsert({
+      where: { slug },
+      update: {
+        title,
+        sections,
+      },
+      create: {
+        slug,
+        title,
+        sections,
+      },
+    });
+
+    // await prisma.$executeRaw`
+    //   INSERT INTO "legal_pages" ("id", "slug", "title", "sections", "updatedAt")
+    //   VALUES (${id}, ${slug}, ${title}, ${sectionsJson}::jsonb, ${now}::timestamp)
+    //   ON CONFLICT ("slug") 
+    //   DO UPDATE SET 
+    //     "title" = ${title},
+    //     "sections" = ${sectionsJson}::jsonb,
+    //     "updatedAt" = ${now}::timestamp
+    // `;
 
     return NextResponse.json({ slug, title, sections });
   } catch (error: any) {

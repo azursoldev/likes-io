@@ -3,16 +3,40 @@ import React, { useState } from "react";
 
 export default function InfluenceSection() {
   const [open, setOpen] = useState<number>(1);
+  const [influenceContent, setInfluenceContent] = useState({
+    title: "Build Your Empire of Influence",
+    subtitle: "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche."
+  });
+
+  React.useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await fetch('/api/cms/homepage');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.content) {
+            setInfluenceContent({
+              title: data.content.influenceTitle || "Build Your Empire of Influence",
+              subtitle: data.content.influenceSubtitle || "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche."
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching influence content:', error);
+      }
+    };
+    
+    fetchContent();
+  }, []);
 
   return (
     <section className="influence">
       <div className="container">
         <div className="influence-grid">
           <div className="influence-left">
-            <h2 className="influence-title">Build Your Empire of Influence</h2>
+            <h2 className="influence-title" dangerouslySetInnerHTML={{ __html: influenceContent.title }} />
             <p className="influence-desc">
-              A high follower count is your digital passport to credibility. It opens
-              doors to brand deals, organic growth, and authority in your niche.
+              {influenceContent.subtitle}
             </p>
 
             {/* Step 1 */}

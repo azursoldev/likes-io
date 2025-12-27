@@ -21,7 +21,7 @@ import LearnMoreSection from "../components/LearnMoreSection";
 
 async function getServiceContent(slug: string) {
   try {
-    const content = await prisma.servicePageContent.findUnique({
+    const content = await prisma.servicePageContent.findFirst({
       where: { slug },
     });
 
@@ -38,18 +38,17 @@ async function getServiceContent(slug: string) {
     });
 
     // Fetch Testimonials
-    // const testimonials = await prisma.testimonial.findMany({
-    //   where: {
-    //     isApproved: true,
-    //     OR: [
-    //       { platform: null },
-    //       { platform: content.platform, serviceType: null },
-    //       { platform: content.platform, serviceType: content.serviceType }
-    //     ],
-    //   },
-    //   orderBy: { displayOrder: 'asc' },
-    // });
-    const testimonials: any[] = [];
+    const testimonials = await prisma.testimonial.findMany({
+      where: {
+        isApproved: true,
+        OR: [
+          { platform: null },
+          { platform: content.platform, serviceType: null },
+          { platform: content.platform, serviceType: content.serviceType }
+        ],
+      },
+      orderBy: { displayOrder: 'asc' },
+    });
 
     // Parse JSON fields
     return {
@@ -71,7 +70,7 @@ async function getServiceContent(slug: string) {
         })),
         testimonials: testimonials.map(t => ({
           handle: t.handle,
-          role: t.role,
+          role: t.role || "Verified Buyer",
           text: t.text,
         })),
         platform: content.platform,
@@ -86,7 +85,7 @@ async function getServiceContent(slug: string) {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   try {
-    const content = await prisma.servicePageContent.findUnique({
+    const content = await prisma.servicePageContent.findFirst({
       where: { slug: params.slug },
     });
 

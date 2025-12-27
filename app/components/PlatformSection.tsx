@@ -45,6 +45,34 @@ const PLATFORMS: PlatformCard[] = [
 export default function PlatformSection() {
   const { getLink } = useNavigation();
 
+  const [platformContent, setPlatformContent] = React.useState({
+    title: "Choose Your Platform to Start Growing",
+    subtitle: "We offer specialized services for the world's leading social media platforms. Select yours to see our packages.",
+    cards: PLATFORMS
+  });
+
+  React.useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await fetch('/api/cms/homepage');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.content) {
+            setPlatformContent({
+              title: data.content.platformTitle || "Choose Your Platform to Start Growing",
+              subtitle: data.content.platformSubtitle || "We offer specialized services for the world's leading social media platforms. Select yours to see our packages.",
+              cards: data.content.platformCards || PLATFORMS
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching platform content:', error);
+      }
+    };
+    
+    fetchContent();
+  }, []);
+
   const Icon = ({ name }: { name: string }) => {
     switch (name) {
       case "instagram":
@@ -66,14 +94,13 @@ export default function PlatformSection() {
   return (
     <section className="platforms">
       <div className="container">
-        <h2 className="platforms-title">Choose Your Platform to Start <br /> Growing</h2>
+        <h2 className="platforms-title" dangerouslySetInnerHTML={{ __html: platformContent.title }} />
         <p className="platforms-subtitle">
-          We offer specialized services for the world's leading social media platforms.
-          Select yours to see our packages.
+          {platformContent.subtitle}
         </p>
 
         <div className="platform-grid">
-          {PLATFORMS.map((p) => (
+          {platformContent.cards.map((p: any) => (
             <article key={p.key} className="p-card">
               <div className="p-top">
                 <div className={`p-icon ${p.key}`}>
@@ -90,7 +117,7 @@ export default function PlatformSection() {
               <p className="p-desc">{p.desc}</p>
 
               <div className="p-tags">
-                {p.tags.map((t) => (
+                {p.tags.map((t: string) => (
                   <span key={t} className="chip">
                     {t}
                   </span>

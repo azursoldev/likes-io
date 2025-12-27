@@ -39,19 +39,19 @@ export async function POST(request: Request) {
     }
 
     // Create testimonial
-    // const testimonial = await prisma.testimonial.create({
-    //   data: {
-    //     handle: name,
-    //     text: review,
-    //     rating: Number(rating),
-    //     role: "Verified Buyer", // Default role
-    //     platform: platform,
-    //     serviceType: serviceType,
-    //     isApproved: false, // Requires admin approval
-    //     isFeatured: false,
-    //   },
-    // });
-    const testimonial = { id: 'mock-id', handle: name, text: review, rating: Number(rating) };
+    const testimonial = await prisma.testimonial.create({
+      data: {
+        handle: name,
+        text: review,
+        rating: Number(rating),
+        role: "Verified Buyer", // Default role
+        platform: platform,
+        serviceType: serviceType,
+        isApproved: false, // Requires admin approval
+        isFeatured: false,
+      },
+    });
+    // const testimonial = { id: 'mock-id', handle: name, text: review, rating: Number(rating) };
 
     return NextResponse.json({ success: true, testimonial });
   } catch (error: any) {
@@ -82,14 +82,13 @@ export async function GET(request: Request) {
       where.serviceType = serviceType;
     }
 
-    // const reviews = await prisma.testimonial.findMany({
-    //   where,
-    //   orderBy: {
-    //     displayOrder: "asc",
-    //   },
-    //   take: limit,
-    // });
-    const reviews: any[] = [];
+    const reviews = await prisma.testimonial.findMany({
+      where,
+      orderBy: {
+        displayOrder: "asc",
+      },
+      take: limit,
+    });
 
     return NextResponse.json({ reviews });
   } catch (error: any) {

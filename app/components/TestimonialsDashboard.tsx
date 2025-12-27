@@ -64,7 +64,7 @@ export default function TestimonialsDashboard() {
     isFeatured: false,
     displayOrder: 0,
   });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const seedData = [
     { handle: "@john_doe_official", role: "Influencer", text: "This is an amazing product, I love it and would highly recommend it to everyone...", rating: 5, isApproved: true },
     { handle: "Jane Smith", role: "Customer", text: "Great service and very helpful customer support. The team really cares about their customers...", rating: 5, isApproved: true },
@@ -193,7 +193,7 @@ export default function TestimonialsDashboard() {
       setError(e.message || "Failed to update approve status");
     }
   };
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this testimonial?")) return;
     try {
       const res = await fetch(`/api/cms/testimonials?id=${id}`, { method: "DELETE" });

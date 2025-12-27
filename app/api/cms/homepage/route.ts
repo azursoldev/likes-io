@@ -48,7 +48,15 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { heroTitle, heroSubtitle, heroRating, heroReviewCount, heroCtaButtons, isActive } = body;
+    const { 
+      heroTitle, heroSubtitle, heroRating, heroReviewCount, heroCtaButtons,
+      heroProfileHandle, heroProfileRole, heroProfileLikes, heroProfileFollowers, heroProfileEngagement, heroProfileImage,
+      platformTitle, platformSubtitle, platformCards,
+      whyChooseTitle, whyChooseSubtitle, benefits,
+      influenceTitle, influenceSubtitle, influenceSteps, influenceImage,
+      quickStartTitle, quickStartDescription1, quickStartDescription2, quickStartButtons,
+      isActive 
+    } = body;
 
     // Validate required fields
     if (!heroTitle || !heroSubtitle) {
@@ -73,6 +81,26 @@ export async function PATCH(request: NextRequest) {
           heroRating: heroRating || null,
           heroReviewCount: heroReviewCount || null,
           heroCtaButtons: heroCtaButtons ? JSON.parse(JSON.stringify(heroCtaButtons)) : null,
+          heroProfileHandle: heroProfileHandle || null,
+          heroProfileRole: heroProfileRole || null,
+          heroProfileLikes: heroProfileLikes || null,
+          heroProfileFollowers: heroProfileFollowers || null,
+          heroProfileEngagement: heroProfileEngagement || null,
+          heroProfileImage: heroProfileImage || null,
+          platformTitle: platformTitle || null,
+          platformSubtitle: platformSubtitle || null,
+          platformCards: platformCards ? JSON.parse(JSON.stringify(platformCards)) : null,
+          whyChooseTitle: whyChooseTitle || null,
+          whyChooseSubtitle: whyChooseSubtitle || null,
+          benefits: benefits ? JSON.parse(JSON.stringify(benefits)) : null,
+          influenceTitle: influenceTitle || null,
+          influenceSubtitle: influenceSubtitle || null,
+          influenceSteps: influenceSteps ? JSON.parse(JSON.stringify(influenceSteps)) : null,
+          influenceImage: influenceImage || null,
+          quickStartTitle: quickStartTitle || null,
+          quickStartDescription1: quickStartDescription1 || null,
+          quickStartDescription2: quickStartDescription2 || null,
+          quickStartButtons: quickStartButtons ? JSON.parse(JSON.stringify(quickStartButtons)) : null,
           isActive: isActive !== undefined ? isActive : true,
         },
       });
@@ -85,6 +113,26 @@ export async function PATCH(request: NextRequest) {
           heroRating: heroRating || null,
           heroReviewCount: heroReviewCount || null,
           heroCtaButtons: heroCtaButtons ? JSON.parse(JSON.stringify(heroCtaButtons)) : null,
+          heroProfileHandle: heroProfileHandle || null,
+          heroProfileRole: heroProfileRole || null,
+          heroProfileLikes: heroProfileLikes || null,
+          heroProfileFollowers: heroProfileFollowers || null,
+          heroProfileEngagement: heroProfileEngagement || null,
+          heroProfileImage: heroProfileImage || null,
+          platformTitle: platformTitle || null,
+          platformSubtitle: platformSubtitle || null,
+          platformCards: platformCards ? JSON.parse(JSON.stringify(platformCards)) : null,
+          whyChooseTitle: whyChooseTitle || null,
+          whyChooseSubtitle: whyChooseSubtitle || null,
+          benefits: benefits ? JSON.parse(JSON.stringify(benefits)) : null,
+          influenceTitle: influenceTitle || null,
+          influenceSubtitle: influenceSubtitle || null,
+          influenceSteps: influenceSteps ? JSON.parse(JSON.stringify(influenceSteps)) : null,
+          influenceImage: influenceImage || null,
+          quickStartTitle: quickStartTitle || null,
+          quickStartDescription1: quickStartDescription1 || null,
+          quickStartDescription2: quickStartDescription2 || null,
+          quickStartButtons: quickStartButtons ? JSON.parse(JSON.stringify(quickStartButtons)) : null,
           isActive: isActive !== undefined ? isActive : true,
         },
       });

@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { slug } = params;
 
-    const content = await prisma.servicePageContent.findUnique({
+    const content = await prisma.servicePageContent.findFirst({
       where: { slug }, 
     });
 

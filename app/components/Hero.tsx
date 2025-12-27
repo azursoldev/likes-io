@@ -15,6 +15,15 @@ const DEFAULT_BUTTONS = [
   { text: "Free Likes Trial", link: "#free-trial" },
 ];
 
+const DEFAULT_PROFILE = {
+  handle: "@yourprofile",
+  role: "Lifestyle Creator",
+  likes: "1,258",
+  followers: "15.2k",
+  engagement: "3.4%",
+  image: ""
+};
+
 export default function Hero() {
   const [heroContent, setHeroContent] = useState({
     title: DEFAULT_TITLE,
@@ -22,6 +31,7 @@ export default function Hero() {
     rating: DEFAULT_RATING,
     reviewCount: DEFAULT_REVIEW_COUNT,
     buttons: DEFAULT_BUTTONS,
+    profile: DEFAULT_PROFILE,
   });
   const [contentLoaded, setContentLoaded] = useState(false);
   // Fetch homepage content
@@ -56,6 +66,14 @@ export default function Hero() {
               rating: data.content.heroRating || DEFAULT_RATING,
               reviewCount: data.content.heroReviewCount || DEFAULT_REVIEW_COUNT,
               buttons,
+              profile: {
+                handle: data.content.heroProfileHandle || DEFAULT_PROFILE.handle,
+                role: data.content.heroProfileRole || DEFAULT_PROFILE.role,
+                likes: data.content.heroProfileLikes || DEFAULT_PROFILE.likes,
+                followers: data.content.heroProfileFollowers || DEFAULT_PROFILE.followers,
+                engagement: data.content.heroProfileEngagement || DEFAULT_PROFILE.engagement,
+                image: data.content.heroProfileImage || DEFAULT_PROFILE.image,
+              }
             });
           }
         }
@@ -145,22 +163,30 @@ export default function Hero() {
             <div className="profile-header">
               <div className="avatar" />
               <div className="profile-meta">
-                <div className="handle">@yourprofile</div>
-                <div className="role">Lifestyle Creator</div>
+                <div className="handle">{heroContent.profile.handle}</div>
+                <div className="role">{heroContent.profile.role}</div>
               </div>
             </div>
-            <div className="profile-image" />
+            <div className="profile-image">
+              {heroContent.profile.image && (
+                <img 
+                  src={heroContent.profile.image} 
+                  alt="Post" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              )}
+            </div>
             <div className="stats-row">
               <div className="stat">
-                <div className="val">1,258</div>
+                <div className="val">{heroContent.profile.likes}</div>
                 <div className="label">Likes</div>
               </div>
               <div className="stat">
-                <div className="val">15.2k</div>
+                <div className="val">{heroContent.profile.followers}</div>
                 <div className="label">Followers</div>
               </div>
               <div className="stat">
-                <div className="val">3.4%</div>
+                <div className="val">{heroContent.profile.engagement}</div>
                 <div className="label">Engagement</div>
               </div>
             </div>

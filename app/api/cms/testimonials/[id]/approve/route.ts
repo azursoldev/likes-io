@@ -20,11 +20,11 @@ export async function POST(
     const body = await request.json();
     const { approve } = body;
 
-    // const testimonial = await prisma.testimonial.update({
-    //   where: { id: parseInt(params.id) },
-    //   data: { isApproved: approve !== false },
-    // });
-    const testimonial = { id: params.id, isApproved: approve !== false };
+    const testimonial = await prisma.testimonial.update({
+      where: { id: params.id },
+      data: { isApproved: approve !== false },
+    });
+    // const testimonial = { id: params.id, isApproved: approve !== false };
 
     return NextResponse.json({ testimonial });
   } catch (error: any) {

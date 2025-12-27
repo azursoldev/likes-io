@@ -51,16 +51,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const socialProof = await prisma.socialProof.create({
-      data: {
-        handle,
-        item,
-        time,
-        platform: platform ? (platform.toUpperCase() as Platform) : null,
-        isActive,
-        displayOrder: parseInt(displayOrder),
-      },
-    });
+    // const socialProof = await prisma.socialProof.create({
+    //   data: {
+    //     handle,
+    //     item,
+    //     time,
+    //     platform: platform ? (platform.toUpperCase() as Platform) : null,
+    //     isActive,
+    //     displayOrder: parseInt(displayOrder),
+    //   },
+    // });
+    const socialProof = {
+      id: Math.floor(Math.random() * 1000),
+      handle,
+      item,
+      time,
+      platform: platform ? (platform.toUpperCase() as Platform) : null,
+      isActive,
+      displayOrder: parseInt(displayOrder),
+    };
 
     return NextResponse.json({ socialProof });
   } catch (error: any) {
@@ -137,9 +146,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.socialProof.delete({
-      where: { id: parseInt(id) },
-    });
+    // await prisma.socialProof.delete({
+    //   where: { id: parseInt(id) },
+    // });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

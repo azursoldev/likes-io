@@ -53,6 +53,94 @@ const DEFAULT_BUTTON2_LINK = "#free-trial";
 const DEFAULT_REVIEW_COUNT = "1,442+ Reviews";
 const DEFAULT_RATING = "5.0";
 
+type PlatformCard = {
+  key: string;
+  name: string;
+  desc: string;
+  tags: string[];
+  cta: string;
+  serviceType: string;
+};
+
+type InfluenceSubpoint = {
+  title: string;
+  text: string;
+};
+
+type InfluenceStep = {
+  id: number;
+  title: string;
+  description: string;
+  subpoints?: InfluenceSubpoint[];
+};
+
+type QuickStartButton = {
+  id: number;
+  label: string;
+  link: string;
+  gradientClass: string;
+  icon: string;
+};
+
+const initialInfluenceSteps: InfluenceStep[] = [
+  {
+    id: 1,
+    title: "Build Instant Credibility & Trust",
+    description: "A high follower count is the ultimate social proof. It tells new visitors your account is worth following, making them more likely to click \"Follow\" without hesitation.",
+    subpoints: [
+      { title: "Attract Organic Growth", text: "People naturally gravitate towards popular accounts. A strong follower base acts like a magnet for organic growth." },
+      { title: "Increase Brand Trust", text: "For businesses, a large following establishes credibility and makes your brand appear more reputable to potential customers and partners." },
+      { title: "Unlock Platform Features", text: "Reaching follower milestones on Instagram can unlock powerful features for driving traffic and engagement." }
+    ]
+  },
+  {
+    id: 2,
+    title: "Amplify Your Reach & Influence",
+    description: "A well-grown profile signals trust and authority, increasing audience confidence and brand appeal."
+  },
+  {
+    id: 3,
+    title: "Kickstart Your Growth",
+    description: "Higher social proof improves reach and engagement, unlocking new growth loops over time."
+  }
+];
+
+const initialQuickStartButtons: QuickStartButton[] = [
+  { id: 1, label: "BUY INSTAGRAM FOLLOWERS", link: "instagram/followers", gradientClass: "grad-orange", icon: "instagram" },
+  { id: 2, label: "BUY INSTAGRAM LIKES", link: "instagram/likes", gradientClass: "grad-red", icon: "instagram" },
+  { id: 3, label: "BUY INSTAGRAM VIEWS", link: "instagram/views", gradientClass: "grad-pink", icon: "instagram" },
+  { id: 4, label: "BUY TIKTOK LIKES", link: "tiktok/likes", gradientClass: "grad-purple", icon: "tiktok" },
+  { id: 5, label: "BUY TIKTOK VIEWS", link: "tiktok/views", gradientClass: "grad-violet", icon: "tiktok" },
+  { id: 6, label: "BUY TIKTOK FOLLOWERS", link: "tiktok/followers", gradientClass: "grad-magenta", icon: "tiktok" },
+];
+
+const initialPlatformCards: PlatformCard[] = [
+  {
+    key: "instagram",
+    name: "Instagram",
+    desc: "Boost your posts, gain credibility, and reach the Explore Page with our premium Instagram services.",
+    tags: ["Likes", "Followers", "Views"],
+    cta: "View Instagram Services",
+    serviceType: "likes",
+  },
+  {
+    key: "tiktok",
+    name: "TikTok",
+    desc: "Give your videos the viral push they need to land on the FYP and capture millions of views.",
+    tags: ["Likes", "Followers", "Views"],
+    cta: "View TikTok Services",
+    serviceType: "likes",
+  },
+  {
+    key: "youtube",
+    name: "YouTube",
+    desc: "Increase your video rankings, watch time, and channel authority to stand out on the world's largest video platform.",
+    tags: ["Views", "Subscribers", "Likes"],
+    cta: "View YouTube Services",
+    serviceType: "views",
+  },
+];
+
 export default function HomepageContentDashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -69,14 +157,111 @@ export default function HomepageContentDashboard() {
   const [rating, setRating] = useState(DEFAULT_RATING);
   const [heroImage, setHeroImage] = useState<File | null>(null);
   const [heroImageName, setHeroImageName] = useState("");
+  const [heroProfileImage, setHeroProfileImage] = useState("");
+  const [heroProfileHandle, setHeroProfileHandle] = useState("@yourprofile");
+  const [heroProfileRole, setHeroProfileRole] = useState("Lifestyle Creator");
+  const [heroProfileLikes, setHeroProfileLikes] = useState("1,258");
+  const [heroProfileFollowers, setHeroProfileFollowers] = useState("15.2k");
+  const [heroProfileEngagement, setHeroProfileEngagement] = useState("3.4%");
+  
+  const [platformTitle, setPlatformTitle] = useState("Choose Your Platform to Start Growing");
+  const [platformSubtitle, setPlatformSubtitle] = useState("We support all major social media platforms");
+  const [platformCards, setPlatformCards] = useState<PlatformCard[]>(initialPlatformCards);
+  
   const [whyChooseTitle, setWhyChooseTitle] = useState("Why Choose Us?");
   const [whyChooseSubtitle, setWhyChooseSubtitle] = useState("Why Buying Instagram Likes is a Game-Changer");
   const [benefits, setBenefits] = useState<Benefit[]>(initialBenefits);
+
+  const [influenceTitle, setInfluenceTitle] = useState("Build Your Empire of Influence");
+  const [influenceSubtitle, setInfluenceSubtitle] = useState("Start your journey to becoming a social media influencer today");
+  const [influenceSteps, setInfluenceSteps] = useState<InfluenceStep[]>(initialInfluenceSteps);
+  const [influenceImageFile, setInfluenceImageFile] = useState<File | null>(null);
+  const [influenceImageName, setInfluenceImageName] = useState("");
+  const [influenceImage, setInfluenceImage] = useState("");
+  
+  const [quickStartTitle, setQuickStartTitle] = useState("Get Started Now");
+  const [quickStartDescription1, setQuickStartDescription1] = useState("Select a package that fits your needs and watch your social media presence grow.");
+  const [quickStartDescription2, setQuickStartDescription2] = useState("Our services are safe, secure, and delivered instantly.");
+  const [quickStartButtons, setQuickStartButtons] = useState<QuickStartButton[]>(initialQuickStartButtons);
+
+  // Get Started Instantly State
+  const [gsPlatform, setGsPlatform] = useState("instagram");
+  const [gsService, setGsService] = useState("likes");
+  const [gsQuality, setGsQuality] = useState("premium");
+  const [gsFeatures, setGsFeatures] = useState<string[]>([]);
+  const [gsExplanation, setGsExplanation] = useState("");
+  const [gsLoading, setGsLoading] = useState(false);
+  const [gsSaving, setGsSaving] = useState(false);
+  const [gsMessage, setGsMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   // Fetch homepage content on mount
   useEffect(() => {
     fetchHomepageContent();
   }, []);
+
+  // Fetch Get Started content when selection changes
+  useEffect(() => {
+    fetchGetStartedContent();
+  }, [gsPlatform, gsService, gsQuality]);
+
+  const fetchGetStartedContent = async () => {
+    try {
+      setGsLoading(true);
+      const res = await fetch(`/api/cms/get-started?platform=${gsPlatform}&serviceType=${gsService}&quality=${gsQuality}`);
+      if (res.ok) {
+        const data = await res.json();
+        setGsFeatures(Array.isArray(data.features) ? data.features : []);
+        setGsExplanation(data.explanation || "");
+      }
+    } catch (error) {
+      console.error("Failed to fetch Get Started content", error);
+    } finally {
+      setGsLoading(false);
+    }
+  };
+
+  const handleSaveGetStarted = async () => {
+    try {
+      setGsSaving(true);
+      setGsMessage(null);
+      const res = await fetch('/api/cms/get-started', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: gsPlatform,
+          serviceType: gsService,
+          quality: gsQuality,
+          features: gsFeatures,
+          explanation: gsExplanation
+        })
+      });
+
+      if (res.ok) {
+        setGsMessage({ type: 'success', text: 'Content saved successfully!' });
+        setTimeout(() => setGsMessage(null), 3000);
+      } else {
+        throw new Error('Failed to save');
+      }
+    } catch (error) {
+      setGsMessage({ type: 'error', text: 'Failed to save content' });
+    } finally {
+      setGsSaving(false);
+    }
+  };
+
+  const handleAddFeature = () => {
+    setGsFeatures([...gsFeatures, "New Feature"]);
+  };
+
+  const handleUpdateFeature = (index: number, value: string) => {
+    const newFeatures = [...gsFeatures];
+    newFeatures[index] = value;
+    setGsFeatures(newFeatures);
+  };
+
+  const handleRemoveFeature = (index: number) => {
+    setGsFeatures(gsFeatures.filter((_, i) => i !== index));
+  };
 
   const fetchHomepageContent = async () => {
     try {
@@ -98,6 +283,53 @@ export default function HomepageContentDashboard() {
         setRating(data.content.heroRating || DEFAULT_RATING);
         setReviewCountText(data.content.heroReviewCount || DEFAULT_REVIEW_COUNT);
         
+        // Hero Profile Card
+        setHeroProfileHandle(data.content.heroProfileHandle || "@yourprofile");
+        setHeroProfileRole(data.content.heroProfileRole || "Lifestyle Creator");
+        setHeroProfileLikes(data.content.heroProfileLikes || "1,258");
+        setHeroProfileFollowers(data.content.heroProfileFollowers || "15.2k");
+        setHeroProfileEngagement(data.content.heroProfileEngagement || "3.4%");
+        setHeroProfileImage(data.content.heroProfileImage || "");
+        if (data.content.heroProfileImage) {
+          const fileName = data.content.heroProfileImage.split('/').pop();
+          setHeroImageName(fileName || "Existing Image");
+        }
+        
+        // Platform Section
+        setPlatformTitle(data.content.platformTitle || "Choose Your Platform to Start Growing");
+        setPlatformSubtitle(data.content.platformSubtitle || "We support all major social media platforms");
+        if (data.content.platformCards) {
+          setPlatformCards(data.content.platformCards);
+        }
+        
+        // Why Choose Us
+        setWhyChooseTitle(data.content.whyChooseTitle || "Why Choose Us?");
+        setWhyChooseSubtitle(data.content.whyChooseSubtitle || "Why Buying Instagram Likes is a Game-Changer");
+        
+        // Influence Section
+        setInfluenceTitle(data.content.influenceTitle || "Build Your Empire of Influence");
+        setInfluenceSubtitle(data.content.influenceSubtitle || "Start your journey to becoming a social media influencer today");
+        if (data.content.influenceSteps) {
+          setInfluenceSteps(data.content.influenceSteps);
+        }
+        setInfluenceImage(data.content.influenceImage || "");
+        if (data.content.influenceImage) {
+          const fileName = data.content.influenceImage.split('/').pop();
+          setInfluenceImageName(fileName || "Existing Image");
+        }
+        
+        // Quick Start Section
+        setQuickStartTitle(data.content.quickStartTitle || "Get Started Now");
+        setQuickStartDescription1(data.content.quickStartDescription1 || "Select a package that fits your needs and watch your social media presence grow.");
+        setQuickStartDescription2(data.content.quickStartDescription2 || "Our services are safe, secure, and delivered instantly.");
+        if (data.content.quickStartButtons) {
+          setQuickStartButtons(data.content.quickStartButtons);
+        }
+        
+        if (data.content.benefits) {
+          setBenefits(data.content.benefits);
+        }
+
         // Parse CTA buttons if they exist
         if (data.content.heroCtaButtons && Array.isArray(data.content.heroCtaButtons)) {
           if (data.content.heroCtaButtons[0]) {
@@ -129,6 +361,46 @@ export default function HomepageContentDashboard() {
         { text: button2Text, link: button2Link },
       ];
 
+      let imageUrl = heroProfileImage;
+
+      if (heroImage) {
+        const formData = new FormData();
+        formData.append('file', heroImage);
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload hero image');
+        }
+
+        const uploadData = await uploadResponse.json();
+        imageUrl = uploadData.url;
+        setHeroProfileImage(imageUrl);
+      }
+
+      let influenceImageUrl = influenceImage;
+
+      if (influenceImageFile) {
+        const formData = new FormData();
+        formData.append('file', influenceImageFile);
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload influence image');
+        }
+
+        const uploadData = await uploadResponse.json();
+        influenceImageUrl = uploadData.url;
+        setInfluenceImage(influenceImageUrl);
+      }
+
       const response = await fetch('/api/cms/homepage', {
         method: 'PATCH',
         headers: {
@@ -140,6 +412,26 @@ export default function HomepageContentDashboard() {
           heroRating: rating,
           heroReviewCount: reviewCountText,
           heroCtaButtons,
+          heroProfileHandle,
+          heroProfileRole,
+          heroProfileLikes,
+          heroProfileFollowers,
+          heroProfileEngagement,
+          heroProfileImage: imageUrl,
+          platformTitle,
+          platformSubtitle,
+          platformCards,
+          whyChooseTitle,
+          whyChooseSubtitle,
+          benefits,
+          influenceTitle,
+          influenceSubtitle,
+          influenceSteps,
+          influenceImage: influenceImageUrl,
+          quickStartTitle,
+          quickStartDescription1,
+          quickStartDescription2,
+          quickStartButtons,
           isActive: true,
         }),
       });
@@ -177,12 +469,73 @@ export default function HomepageContentDashboard() {
     setBenefits((prev) => prev.map((b) => (b.id === id ? { ...b, [field]: value } : b)));
   };
 
+  const handleAddPlatformCard = () => {
+    const newCard: PlatformCard = {
+      key: "instagram",
+      name: "New Platform",
+      desc: "Description for the new platform.",
+      tags: ["Tag1", "Tag2"],
+      cta: "View Services",
+      serviceType: "likes",
+    };
+    setPlatformCards((prev) => [...prev, newCard]);
+  };
+
+  const handleRemovePlatformCard = (index: number) => {
+    setPlatformCards((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setHeroImage(file);
       setHeroImageName(file.name);
     }
+  };
+
+  const handleInfluenceImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setInfluenceImageFile(file);
+      setInfluenceImageName(file.name);
+    }
+  };
+
+  const handleUpdateInfluenceStep = (index: number, field: keyof InfluenceStep, value: any) => {
+    const newSteps = [...influenceSteps];
+    newSteps[index] = { ...newSteps[index], [field]: value };
+    setInfluenceSteps(newSteps);
+  };
+  
+  const handleUpdateInfluenceSubpoint = (stepIndex: number, subpointIndex: number, field: keyof InfluenceSubpoint, value: string) => {
+      const newSteps = [...influenceSteps];
+      if (newSteps[stepIndex].subpoints) {
+          const newSubpoints = [...newSteps[stepIndex].subpoints!];
+          newSubpoints[subpointIndex] = { ...newSubpoints[subpointIndex], [field]: value };
+          newSteps[stepIndex].subpoints = newSubpoints;
+          setInfluenceSteps(newSteps);
+      }
+  };
+
+  const handleUpdateQuickStartButton = (index: number, field: keyof QuickStartButton, value: string) => {
+    const newButtons = [...quickStartButtons];
+    newButtons[index] = { ...newButtons[index], [field]: value };
+    setQuickStartButtons(newButtons);
+  };
+  
+  const handleAddQuickStartButton = () => {
+      const newButton: QuickStartButton = {
+          id: Date.now(),
+          label: "NEW BUTTON",
+          link: "#",
+          gradientClass: "grad-orange",
+          icon: "instagram"
+      };
+      setQuickStartButtons([...quickStartButtons, newButton]);
+  };
+  
+  const handleRemoveQuickStartButton = (index: number) => {
+      setQuickStartButtons(quickStartButtons.filter((_, i) => i !== index));
   };
 
   return (
@@ -326,17 +679,87 @@ export default function HomepageContentDashboard() {
 
               <div className="homepage-section-divider"></div>
 
+              <h2 className="section-title">Hero Profile Card</h2>
+              <div className="homepage-form-grid">
+                <div className="homepage-two-col">
+                  <label className="homepage-label">
+                    Handle
+                    <input
+                      type="text"
+                      className="homepage-input"
+                      value={heroProfileHandle}
+                      onChange={(e) => setHeroProfileHandle(e.target.value)}
+                      placeholder="@yourprofile"
+                    />
+                  </label>
+                  <label className="homepage-label">
+                    Role
+                    <input
+                      type="text"
+                      className="homepage-input"
+                      value={heroProfileRole}
+                      onChange={(e) => setHeroProfileRole(e.target.value)}
+                      placeholder="Lifestyle Creator"
+                    />
+                  </label>
+                </div>
+                <div className="homepage-three-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                  <label className="homepage-label">
+                    Likes
+                    <input
+                      type="text"
+                      className="homepage-input"
+                      value={heroProfileLikes}
+                      onChange={(e) => setHeroProfileLikes(e.target.value)}
+                      placeholder="1,258"
+                    />
+                  </label>
+                  <label className="homepage-label">
+                    Followers
+                    <input
+                      type="text"
+                      className="homepage-input"
+                      value={heroProfileFollowers}
+                      onChange={(e) => setHeroProfileFollowers(e.target.value)}
+                      placeholder="15.2k"
+                    />
+                  </label>
+                  <label className="homepage-label">
+                    Engagement
+                    <input
+                      type="text"
+                      className="homepage-input"
+                      value={heroProfileEngagement}
+                      onChange={(e) => setHeroProfileEngagement(e.target.value)}
+                      placeholder="3.4%"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="homepage-section-divider"></div>
+
               <h2 className="section-title">Hero Illustration Post Image</h2>
               <div className="homepage-image-upload">
                 <div className="homepage-image-frame">
                   {heroImage || heroImageName ? (
                     <div className="homepage-image-preview">
+                      <div className="homepage-image-container" style={{ width: '100%', height: '200px', backgroundColor: '#f3f4f6', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '8px' }}>
+                         {(heroImage || heroProfileImage) && (
+                           <img 
+                             src={heroImage ? URL.createObjectURL(heroImage) : heroProfileImage} 
+                             alt="Preview" 
+                             style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                           />
+                         )}
+                      </div>
                       <span>Image: {heroImageName}</span>
                       <button
                         type="button"
                         onClick={() => {
                           setHeroImage(null);
                           setHeroImageName("");
+                          setHeroProfileImage("");
                         }}
                         className="homepage-remove-image"
                       >
@@ -371,6 +794,147 @@ export default function HomepageContentDashboard() {
                     onChange={handleImageUpload}
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Platform Section */}
+            <div className="homepage-section-card">
+              <h2 className="section-title">Platform Section</h2>
+              <div className="homepage-form-grid">
+                <label className="homepage-label">
+                  Title
+                  <input
+                    type="text"
+                    className="homepage-input"
+                    value={platformTitle}
+                    onChange={(e) => setPlatformTitle(e.target.value)}
+                  />
+                </label>
+                <label className="homepage-label">
+                  Subtitle
+                  <input
+                    type="text"
+                    className="homepage-input"
+                    value={platformSubtitle}
+                    onChange={(e) => setPlatformSubtitle(e.target.value)}
+                  />
+                </label>
+              </div>
+              
+              <div className="homepage-section-divider"></div>
+              
+              <h3 className="section-subtitle">Platform Cards</h3>
+              <div className="homepage-benefits-grid">
+                {platformCards.map((card, index) => (
+                  <div key={index} className="homepage-benefit-card">
+                    <div className="homepage-benefit-header">
+                      <span className="homepage-benefit-icon-preview">
+                        {card.key === 'instagram' && <img src="/instagram.svg" alt="Instagram" width={24} height={24} />}
+                        {card.key === 'tiktok' && <img src="/tiktok-10.svg" alt="TikTok" width={24} height={24} />}
+                        {card.key === 'youtube' && <img src="/youtube-9.svg" alt="YouTube" width={24} height={24} />}
+                      </span>
+                      <span className="homepage-benefit-title">{card.name}</span>
+                    </div>
+                    <div className="homepage-form-grid">
+                      <div className="homepage-two-col">
+                        <label className="homepage-label">
+                          Platform Key (Icon)
+                          <select
+                            className="homepage-input"
+                            value={card.key}
+                            onChange={(e) => {
+                              const newCards = [...platformCards];
+                              newCards[index].key = e.target.value;
+                              setPlatformCards(newCards);
+                            }}
+                          >
+                            <option value="instagram">Instagram</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="youtube">YouTube</option>
+                          </select>
+                        </label>
+                        <label className="homepage-label">
+                          Service Type
+                          <input
+                            type="text"
+                            className="homepage-input"
+                            value={card.serviceType}
+                            onChange={(e) => {
+                              const newCards = [...platformCards];
+                              newCards[index].serviceType = e.target.value;
+                              setPlatformCards(newCards);
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <label className="homepage-label">
+                        Name
+                        <input
+                          type="text"
+                          className="homepage-input"
+                          value={card.name}
+                          onChange={(e) => {
+                            const newCards = [...platformCards];
+                            newCards[index].name = e.target.value;
+                            setPlatformCards(newCards);
+                          }}
+                        />
+                      </label>
+                      <label className="homepage-label">
+                        Description
+                        <textarea
+                          className="homepage-textarea"
+                          value={card.desc}
+                          onChange={(e) => {
+                            const newCards = [...platformCards];
+                            newCards[index].desc = e.target.value;
+                            setPlatformCards(newCards);
+                          }}
+                          rows={2}
+                        />
+                      </label>
+                      <label className="homepage-label">
+                        Tags (comma separated)
+                        <input
+                          type="text"
+                          className="homepage-input"
+                          value={card.tags.join(", ")}
+                          onChange={(e) => {
+                            const newCards = [...platformCards];
+                            newCards[index].tags = e.target.value.split(",").map(t => t.trim());
+                            setPlatformCards(newCards);
+                          }}
+                        />
+                      </label>
+                      <label className="homepage-label">
+                        CTA Text
+                        <input
+                          type="text"
+                          className="homepage-input"
+                          value={card.cta}
+                          onChange={(e) => {
+                            const newCards = [...platformCards];
+                            newCards[index].cta = e.target.value;
+                            setPlatformCards(newCards);
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <div className="homepage-benefit-actions">
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePlatformCard(index)}
+                        className="homepage-benefit-delete"
+                      >
+                        Delete Card
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={handleAddPlatformCard} className="homepage-add-benefit-btn">
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Add Platform Card</span>
+                </button>
               </div>
             </div>
 
@@ -453,10 +1017,334 @@ export default function HomepageContentDashboard() {
                 </button>
               </div>
             </div>
+          {/* Influence Section */}
+            <div className="homepage-section-card">
+              <h2 className="section-title">Influence Section</h2>
+              <div className="homepage-form-grid">
+                <label className="homepage-label">
+                  Title
+                  <input
+                    type="text"
+                    className="homepage-input"
+                    value={influenceTitle}
+                    onChange={(e) => setInfluenceTitle(e.target.value)}
+                  />
+                </label>
+                <label className="homepage-label">
+                  Subtitle
+                  <input
+                    type="text"
+                    className="homepage-input"
+                    value={influenceSubtitle}
+                    onChange={(e) => setInfluenceSubtitle(e.target.value)}
+                  />
+                </label>
+              </div>
+              
+              <div className="homepage-section-divider"></div>
+              
+              <h3 className="section-subtitle">Influence Image</h3>
+              <div className="homepage-image-upload">
+                <div className="homepage-image-frame">
+                  {influenceImageFile || influenceImageName ? (
+                    <div className="homepage-image-preview">
+                      <div className="homepage-image-container" style={{ width: '100%', height: '200px', backgroundColor: '#f3f4f6', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '8px' }}>
+                        {(influenceImageFile || influenceImage) && (
+                          <img 
+                            src={influenceImageFile ? URL.createObjectURL(influenceImageFile) : influenceImage} 
+                            alt="Preview" 
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                          />
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="homepage-image-upload-info">
+                  <p className="homepage-upload-text">Upload an image for the right side of the Influence section.</p>
+                  <label htmlFor="influence-image-upload" className="homepage-upload-btn">
+                    Upload Image
+                  </label>
+                  <input
+                    id="influence-image-upload"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleInfluenceImageUpload}
+                  />
+                </div>
+              </div>
+
+              <div className="homepage-section-divider"></div>
+              
+              <h3 className="section-subtitle">Steps</h3>
+              {influenceSteps.map((step, index) => (
+                <div key={step.id} className="homepage-benefit-card" style={{ marginBottom: '1rem' }}>
+                  <div className="homepage-form-grid">
+                    <label className="homepage-label">
+                      Step {index + 1} Title
+                      <input
+                        type="text"
+                        className="homepage-input"
+                        value={step.title}
+                        onChange={(e) => handleUpdateInfluenceStep(index, 'title', e.target.value)}
+                      />
+                    </label>
+                    <label className="homepage-label">
+                      Description
+                      <textarea
+                        className="homepage-textarea"
+                        rows={2}
+                        value={step.description}
+                        onChange={(e) => handleUpdateInfluenceStep(index, 'description', e.target.value)}
+                      />
+                    </label>
+                    
+                    {step.subpoints && (
+                      <div style={{ marginTop: '1rem', paddingLeft: '1rem', borderLeft: '2px solid #eee' }}>
+                        <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#6b7280' }}>Subpoints</h4>
+                        {step.subpoints.map((sub, subIndex) => (
+                          <div key={subIndex} className="homepage-two-col" style={{ marginBottom: '0.5rem' }}>
+                            <input
+                              type="text"
+                              className="homepage-input"
+                              placeholder="Subpoint Title"
+                              value={sub.title}
+                              onChange={(e) => handleUpdateInfluenceSubpoint(index, subIndex, 'title', e.target.value)}
+                            />
+                            <input
+                              type="text"
+                              className="homepage-input"
+                              placeholder="Subpoint Text"
+                              value={sub.text}
+                              onChange={(e) => handleUpdateInfluenceSubpoint(index, subIndex, 'text', e.target.value)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick Start Section */}
+            <div className="homepage-section-card">
+              <h2 className="section-title">Quick Start Section</h2>
+              <div className="homepage-form-grid">
+                <label className="homepage-label">
+                  Title
+                  <input
+                    type="text"
+                    className="homepage-input"
+                    value={quickStartTitle}
+                    onChange={(e) => setQuickStartTitle(e.target.value)}
+                  />
+                </label>
+                <label className="homepage-label">
+                  Description 1
+                  <textarea
+                    className="homepage-textarea"
+                    value={quickStartDescription1}
+                    onChange={(e) => setQuickStartDescription1(e.target.value)}
+                    rows={2}
+                  />
+                </label>
+                <label className="homepage-label">
+                  Description 2
+                  <textarea
+                    className="homepage-textarea"
+                    value={quickStartDescription2}
+                    onChange={(e) => setQuickStartDescription2(e.target.value)}
+                    rows={2}
+                  />
+                </label>
+              </div>
+
+              <div className="homepage-section-divider"></div>
+              <h3 className="section-subtitle">Action Buttons</h3>
+              <div className="homepage-benefits-grid">
+                {quickStartButtons.map((btn, index) => (
+                  <div key={btn.id} className="homepage-benefit-card">
+                    <div className="homepage-form-grid">
+                      <label className="homepage-label">
+                        Label
+                        <input
+                          type="text"
+                          className="homepage-input"
+                          value={btn.label}
+                          onChange={(e) => handleUpdateQuickStartButton(index, 'label', e.target.value)}
+                        />
+                      </label>
+                      <label className="homepage-label">
+                        Link
+                        <input
+                          type="text"
+                          className="homepage-input"
+                          value={btn.link}
+                          onChange={(e) => handleUpdateQuickStartButton(index, 'link', e.target.value)}
+                        />
+                      </label>
+                      <div className="homepage-two-col">
+                        <label className="homepage-label">
+                          Icon
+                          <select
+                            className="homepage-input"
+                            value={btn.icon}
+                            onChange={(e) => handleUpdateQuickStartButton(index, 'icon', e.target.value)}
+                          >
+                            <option value="instagram">Instagram</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="youtube">YouTube</option>
+                          </select>
+                        </label>
+                        <label className="homepage-label">
+                          Gradient
+                          <select
+                            className="homepage-input"
+                            value={btn.gradientClass}
+                            onChange={(e) => handleUpdateQuickStartButton(index, 'gradientClass', e.target.value)}
+                          >
+                            <option value="grad-orange">Orange</option>
+                            <option value="grad-red">Red</option>
+                            <option value="grad-pink">Pink</option>
+                            <option value="grad-purple">Purple</option>
+                            <option value="grad-violet">Violet</option>
+                            <option value="grad-magenta">Magenta</option>
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="homepage-benefit-actions">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveQuickStartButton(index)}
+                        className="homepage-benefit-delete"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={handleAddQuickStartButton} className="homepage-add-benefit-btn">
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Add Button</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Get Started Instantly Section */}
+            <div className="homepage-section-card">
+              <h2 className="section-title">Get Started Instantly Content</h2>
+              <div className="homepage-form-grid" style={{ marginBottom: '1.5rem' }}>
+                <div className="homepage-two-col">
+                  <label className="homepage-label">
+                    Platform
+                    <select
+                      className="homepage-input"
+                      value={gsPlatform}
+                      onChange={(e) => setGsPlatform(e.target.value)}
+                    >
+                      <option value="instagram">Instagram</option>
+                      <option value="tiktok">TikTok</option>
+                      <option value="youtube">YouTube</option>
+                    </select>
+                  </label>
+                  <label className="homepage-label">
+                    Service Type
+                    <select
+                      className="homepage-input"
+                      value={gsService}
+                      onChange={(e) => setGsService(e.target.value)}
+                    >
+                      <option value="likes">Likes</option>
+                      <option value="followers">Followers</option>
+                      <option value="views">Views</option>
+                      <option value="subscribers">Subscribers</option>
+                    </select>
+                  </label>
+                  <label className="homepage-label">
+                    Quality
+                    <select
+                      className="homepage-input"
+                      value={gsQuality}
+                      onChange={(e) => setGsQuality(e.target.value)}
+                    >
+                      <option value="premium">Premium</option>
+                      <option value="hq">High Quality</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              {gsLoading ? (
+                <div style={{ padding: '1rem', textAlign: 'center' }}>Loading content...</div>
+              ) : (
+                <>
+                  <div className="homepage-form-grid">
+                    <label className="homepage-label">
+                      Explanation Text
+                      <textarea
+                        className="homepage-textarea"
+                        value={gsExplanation}
+                        onChange={(e) => setGsExplanation(e.target.value)}
+                        rows={3}
+                        placeholder="Enter explanation text for this combination..."
+                      />
+                    </label>
+                    
+                    <div className="homepage-label">
+                      Features List
+                      {gsFeatures.map((feature, index) => (
+                        <div key={index} className="homepage-two-col" style={{ marginBottom: '0.5rem' }}>
+                          <input
+                            type="text"
+                            className="homepage-input"
+                            value={feature}
+                            onChange={(e) => handleUpdateFeature(index, e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFeature(index)}
+                            className="homepage-benefit-delete"
+                            style={{ width: 'auto', padding: '0 1rem' }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={handleAddFeature} className="homepage-add-benefit-btn" style={{ marginTop: '0.5rem' }}>
+                        <FontAwesomeIcon icon={faPlus} />
+                        <span>Add Feature Point</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button
+                      className="save-btn"
+                      onClick={handleSaveGetStarted}
+                      disabled={gsSaving}
+                    >
+                      {gsSaving ? 'Saving...' : 'Save Section Content'}
+                    </button>
+                    {gsMessage && (
+                      <span style={{ 
+                        color: gsMessage.type === 'success' ? '#10b981' : '#ef4444',
+                        fontSize: '0.9rem'
+                      }}>
+                        {gsMessage.text}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
           </div>
         </main>
       </div>
     </div>
   );
-}
+};
 

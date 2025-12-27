@@ -1,17 +1,25 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useCurrency } from "../contexts/CurrencyContext";
+import { useRouter } from "next/navigation";
 
 type PackType = "likes" | "followers" | "views" | "subscribers";
 type Platform = "instagram" | "tiktok" | "youtube";
 type Quality = "hq" | "premium";
 
 export default function GetStarted() {
+  const router = useRouter();
   const { formatPrice } = useCurrency();
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [packType, setPackType] = useState<PackType>("likes");
   const [quality, setQuality] = useState<Quality>("premium");
   const [qty, setQty] = useState(500);
+  
+  // Profile fetch state
+  const [username, setUsername] = useState("");
+  const [isFetchingProfile, setIsFetchingProfile] = useState(false);
+  const [profileData, setProfileData] = useState<any>(null);
+  const [usernameError, setUsernameError] = useState("");
 
   // Tab sets per platform
   const PLATFORM_TABS: Record<Platform, PackType[]> = {
@@ -77,19 +85,195 @@ export default function GetStarted() {
       "A strong like-to-dislike ratio is a positive signal to viewers and algorithm alike, helping your content rank and appear in 'Suggested Videos'.",
   };
 
+  const [dynamicFeatures, setDynamicFeatures] = useState<string[]>([]);
+  const [dynamicExplanation, setDynamicExplanation] = useState("");
+  const [availablePackages, setAvailablePackages] = useState<any[]>([]);
+  const [sliderIndex, setSliderIndex] = useState(0);
+
+  // Clear profile data when platform changes
   useEffect(() => {
     // Default to "likes" for all platforms to match the reference layout
     setPackType("likes");
+    setProfileData(null);
+    setUsernameError("");
+    setUsername("");
   }, [platform]);
 
-  const unitPrice = useMemo(() => {
-    const platformPrices = PRICES[platform] || PRICES.instagram;
-    const base = platformPrices[packType] ?? 0.03;
-    return quality === "premium" ? base : base * 0.85;
+  // Fetch profile when username changes (debounced)
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!username.trim()) {
+        setProfileData(null);
+        return;
+      }
+
+      setIsFetchingProfile(true);
+      setUsernameError("");
+
+      try {
+        const cleanUsername = username.replace(/^@/, '');
+        const res = await fetch(`/api/social/${platform}/profile?username=${cleanUsername}`);
+        const data = await res.json();
+
+        if (res.ok && data.profile) {
+          setProfileData(data.profile);
+        } else {
+          // Don't show error immediately while typing, just clear profile
+          setProfileData(null);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setIsFetchingProfile(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (username) fetchProfile();
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [username, platform]);
+
+  const handleBuy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim()) {
+      setUsernameError("Please enter your username");
+      return;
+    }
+
+    // Determine destination based on package type
+    // Likes/Views need a post link -> Go to /checkout/posts
+    // Followers/Subscribers just need profile -> Go to /checkout/final (bypassing details)
+    const needsPostLink = ["likes", "views"].includes(packType);
+    const nextStep = needsPostLink ? "posts" : "final";
+    
+    const cleanUsername = username.replace(/^@/, '');
+    const type = quality === "hq" ? "High-Quality" : "Premium";
+    
+    // Construct checkout URL
+    const checkoutUrl = `/${platform}/${packType}/checkout/${nextStep}?qty=${displayQty}&price=${displayPrice}&type=${encodeURIComponent(type)}&username=${encodeURIComponent(cleanUsername)}`;
+
+    // If we already have valid profile data, just redirect
+    if (profileData && profileData.username.toLowerCase() === cleanUsername.toLowerCase()) {
+      router.push(checkoutUrl);
+      return;
+    }
+
+    // Otherwise validate first
+    setIsFetchingProfile(true);
+    setUsernameError("");
+
+    try {
+      const res = await fetch(`/api/social/${platform}/profile?username=${cleanUsername}`);
+      const data = await res.json();
+
+      if (res.ok && data.profile) {
+        setProfileData(data.profile);
+        router.push(checkoutUrl);
+      } else if (res.status === 500 || res.status === 503) {
+        // If API fails (e.g. missing API key or service down), allow user to proceed
+        // We don't want to block valid users if our validation service is having issues
+        console.warn("Profile validation service unavailable, proceeding without validation");
+        router.push(checkoutUrl);
+      } else {
+        setUsernameError("Invalid username. Please check and try again.");
+      }
+    } catch (error) {
+      console.error("Validation error:", error);
+      setUsernameError("Validation failed. Please try again.");
+    } finally {
+      setIsFetchingProfile(false);
+    }
+  };
+
+  // Fetch dynamic content and packages
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch Get Started Content (Features & Explanation)
+        const contentRes = await fetch(`/api/cms/get-started?platform=${platform}&serviceType=${packType}&quality=${quality}`);
+        if (contentRes.ok) {
+          const contentData = await contentRes.json();
+          setDynamicFeatures(contentData.features || []);
+          setDynamicExplanation(contentData.explanation || "");
+        }
+
+        // Fetch Packages
+        const packagesRes = await fetch(`/api/cms/service-pages/${platform}/${packType}`);
+        if (packagesRes.ok) {
+          const packagesData = await packagesRes.json();
+          if (packagesData.packages && Array.isArray(packagesData.packages)) {
+            // Find the correct tab based on quality
+            const targetTabId = quality === "hq" ? "high" : "premium";
+            const tab = packagesData.packages.find((t: any) => 
+              t.id === targetTabId || 
+              t.label?.toLowerCase().includes(targetTabId === "high" ? "high" : "premium")
+            );
+
+            if (tab && tab.packages && Array.isArray(tab.packages)) {
+              const parsedPackages = tab.packages.map((pkg: any) => ({
+                ...pkg,
+                // Parse numbers for logic but keep originals if needed
+                quantity: typeof pkg.qty === 'string' ? parseInt(pkg.qty.replace(/,/g, ''), 10) : pkg.qty,
+                priceVal: typeof pkg.price === 'string' ? parseFloat(pkg.price.replace(/[^0-9.]/g, '')) : pkg.price,
+                oldPriceVal: typeof pkg.strike === 'string' ? parseFloat(pkg.strike.replace(/[^0-9.]/g, '')) : pkg.strike,
+              })).sort((a: any, b: any) => a.quantity - b.quantity);
+
+              setAvailablePackages(parsedPackages);
+              // Set slider to middle or start
+              setSliderIndex(0);
+            } else {
+              setAvailablePackages([]);
+            }
+          } else {
+            setAvailablePackages([]);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch dynamic content", error);
+        setAvailablePackages([]);
+      }
+    };
+
+    fetchData();
   }, [platform, packType, quality]);
 
-  const price = useMemo(() => (qty * unitPrice), [qty, unitPrice]);
-  const oldPrice = useMemo(() => (price + 10), [price]);
+  const selectedPackage = useMemo(() => {
+    if (availablePackages.length > 0 && availablePackages[sliderIndex]) {
+      return availablePackages[sliderIndex];
+    }
+    return null;
+  }, [availablePackages, sliderIndex]);
+
+  // Derived values for display
+  const displayQty = selectedPackage ? selectedPackage.quantity : qty;
+  
+  // Use price from package if available, otherwise calculate fallback
+  const displayPrice = useMemo(() => {
+    if (selectedPackage) return selectedPackage.priceVal;
+    
+    // Fallback logic
+    const platformPrices = PRICES[platform] || PRICES.instagram;
+    const base = platformPrices[packType] ?? 0.03;
+    const unitP = quality === "premium" ? base : base * 0.85;
+    return displayQty * unitP;
+  }, [selectedPackage, platform, packType, quality, displayQty]);
+
+  const displayOldPrice = useMemo(() => {
+    if (selectedPackage && selectedPackage.oldPriceVal) return selectedPackage.oldPriceVal;
+    return displayPrice * 1.5; // Default 50% markup if no old price
+  }, [selectedPackage, displayPrice]);
+
+  const displayDiscount = useMemo(() => {
+    if (selectedPackage && selectedPackage.save) return selectedPackage.save;
+    return null;
+  }, [selectedPackage]);
+
+  // Use dynamic features if available, else fallback to hardcoded
+  const features = dynamicFeatures.length > 0 ? dynamicFeatures : (FEATURES_BY_PLATFORM[platform] || []);
+  const explanation = dynamicExplanation || (EXPLAIN_BY_PLATFORM[platform] || "");
+
 
   const PillIcon = ({ name }: { name: Platform }) => {
     switch (name) {
@@ -164,31 +348,76 @@ export default function GetStarted() {
             <div className="gs-qty">
               <div className="gs-qty-top">
                 <div>
-                  <span className="qty-val">{qty.toLocaleString()}</span>
+                  <span className="qty-val">{displayQty.toLocaleString()}</span>
                   <span className="qty-label"> {LABELS[packType]}</span>
+                  {displayDiscount && (
+                    <span className="discount-badge" style={{ marginLeft: '10px', fontSize: '12px', background: '#e0f2fe', color: '#0284c7', padding: '2px 8px', borderRadius: '12px' }}>
+                      {displayDiscount}
+                    </span>
+                  )}
                 </div>
                 <div className="gs-price">
-                  <span className="price">{formatPrice(price)}</span>
-                  <span className="old">{formatPrice(oldPrice)}</span>
+                  <span className="price">{formatPrice(displayPrice)}</span>
+                  <span className="old">{formatPrice(displayOldPrice)}</span>
                 </div>
               </div>
-              <input
-                className="range"
-                type="range"
-                min={50}
-                max={5000}
-                step={50}
-                value={qty}
-                onChange={(e) => setQty(parseInt(e.target.value, 10))}
-              />
+              
+              {availablePackages.length > 0 ? (
+                <input
+                  className="range"
+                  type="range"
+                  min={0}
+                  max={availablePackages.length - 1}
+                  step={1}
+                  value={sliderIndex}
+                  onChange={(e) => setSliderIndex(parseInt(e.target.value, 10))}
+                />
+              ) : (
+                <input
+                  className="range"
+                  type="range"
+                  min={50}
+                  max={5000}
+                  step={50}
+                  value={qty}
+                  onChange={(e) => setQty(parseInt(e.target.value, 10))}
+                />
+              )}
             </div>
 
-            <form className="gs-form" onSubmit={(e) => { e.preventDefault(); }}>
-              <div className="gs-input">
-                <input className="input-field" placeholder={`Your ${platform === "instagram" ? "Instagram" : platform === "tiktok" ? "TikTok" : "YouTube"} username`} />
+            <form className="gs-form" onSubmit={handleBuy}>
+              <div className="gs-input-group" style={{ position: 'relative' }}>
+                <div className="gs-input-wrapper" style={{ display: 'flex', alignItems: 'center', background: '#fff', borderRadius: '12px', border: usernameError ? '1px solid #ef4444' : '1px solid #e2e8f0', padding: '5px' }}>
+                  {profileData?.profilePicture && (
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', marginRight: '10px', flexShrink: 0 }}>
+                      <img src={profileData.profilePicture} alt={username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input 
+                      className="input-field" 
+                      style={{ border: 'none', width: '100%', outline: 'none', padding: '10px 5px' }}
+                      placeholder={`Your ${platform === "instagram" ? "Instagram" : platform === "tiktok" ? "TikTok" : "YouTube"} username`} 
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                    />
+                    {isFetchingProfile && (
+                      <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)' }}>
+                        <div className="spinner" style={{ width: '16px', height: '16px', border: '2px solid #f3f3f3', borderTop: '2px solid #3498db', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                        <style jsx>{`
+                          @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                          }
+                        `}</style>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {usernameError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', marginLeft: '5px' }}>{usernameError}</div>}
               </div>
 
-              <button type="submit" className="btn buy-btn">Buy Now</button>
+              <button type="submit" className="btn buy-btn" style={{ marginTop: '15px' }}>Buy Now</button>
 
               <div className="gs-trust">
                 <span className="trust-item">🛡️ 100% Safe Delivery</span>
@@ -200,15 +429,29 @@ export default function GetStarted() {
           {/* Right features */}
           <div className="gs-right card-lg">
             <h4 className="gs-right-title">Premium {packType.charAt(0).toUpperCase() + packType.slice(1)} Features</h4>
-            <ul className="gs-checklist">
-              {FEATURES_BY_PLATFORM[platform].map((item, idx) => (
-                <li key={idx}><span className="check">✓</span><span className="plus">+</span> {item}</li>
+            {/* Dynamic Features List */}
+            <ul className="gs-features">
+              {features.map((feat, i) => (
+                <li key={i}>
+                  <span className="gs-check-icon">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path
+                        d="M11.6666 3.5L5.24992 9.91667L2.33325 7"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  {feat}
+                </li>
               ))}
             </ul>
 
             <div className="gs-divider" />
             <h4 className="gs-right-sub">Why Are {PLATFORM_LABELS[platform]} {packType.charAt(0).toUpperCase() + packType.slice(1)} Important?</h4>
-            <p className="gs-right-text">{EXPLAIN_BY_PLATFORM[platform]}</p>
+            <p className="gs-right-text">{explanation}</p>
           </div>
         </div>
       </div>

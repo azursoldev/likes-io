@@ -10,7 +10,7 @@ export default async function CheckoutFinalPage({
   params: { slug: string }; 
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const content = await prisma.servicePageContent.findUnique({
+  const content = await prisma.servicePageContent.findFirst({
     where: { slug: params.slug },
     select: { platform: true, serviceType: true }
   });
