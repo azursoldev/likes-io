@@ -38,17 +38,18 @@ async function getServiceContent(slug: string) {
     });
 
     // Fetch Testimonials
-    const testimonials = await prisma.testimonial.findMany({
-      where: {
-        isApproved: true,
-        OR: [
-          { platform: null },
-          { platform: content.platform, serviceType: null },
-          { platform: content.platform, serviceType: content.serviceType }
-        ],
-      },
-      orderBy: { displayOrder: 'asc' },
-    });
+    // const testimonials = await prisma.testimonial.findMany({
+    //   where: {
+    //     isApproved: true,
+    //     OR: [
+    //       { platform: null },
+    //       { platform: content.platform, serviceType: null },
+    //       { platform: content.platform, serviceType: content.serviceType }
+    //     ],
+    //   },
+    //   orderBy: { displayOrder: 'asc' },
+    // });
+    const testimonials: any[] = [];
 
     // Parse JSON fields
     return {
