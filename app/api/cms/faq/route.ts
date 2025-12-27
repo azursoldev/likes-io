@@ -105,9 +105,11 @@ export async function PUT(request: NextRequest) {
     }
 
     if (updateData.platform) {
+      delete updateData.platform;
       // updateData.platform = updateData.platform.toUpperCase();
     }
     if (updateData.serviceType) {
+      delete updateData.serviceType;
       // updateData.serviceType = updateData.serviceType.toUpperCase();
     }
     if (updateData.displayOrder !== undefined) {

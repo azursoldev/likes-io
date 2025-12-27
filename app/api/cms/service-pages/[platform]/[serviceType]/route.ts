@@ -48,8 +48,8 @@ export async function GET(
     // Fetch FAQs if they exist
     const faqs = await prisma.fAQ.findMany({
       where: {
-        platform,
-        serviceType,
+        // platform,
+        // serviceType,
         isActive: true,
       },
       orderBy: { displayOrder: 'asc' },
@@ -228,21 +228,21 @@ export async function PUT(
     // Update FAQs
     if (faqs && Array.isArray(faqs)) {
       // Delete existing FAQs for this service
-      await prisma.fAQ.deleteMany({
-        where: { platform, serviceType },
-      });
+      // await prisma.fAQ.deleteMany({
+      //   where: { platform, serviceType },
+      // });
       
       // Create new FAQs
-      await prisma.fAQ.createMany({
-        data: faqs.map((faq: any, index: number) => ({
-          platform,
-          serviceType,
-          question: faq.q || faq.question,
-          answer: faq.a || faq.answer,
-          displayOrder: index,
-          isActive: true,
-        })),
-      });
+      // await prisma.fAQ.createMany({
+      //   data: faqs.map((faq: any, index: number) => ({
+      //     platform,
+      //     serviceType,
+      //     question: faq.q || faq.question,
+      //     answer: faq.a || faq.answer,
+      //     displayOrder: index,
+      //     isActive: true,
+      //   })),
+      // });
     }
 
     return NextResponse.json(content);

@@ -151,8 +151,8 @@ async function getServiceContent() {
 
     const faqs = await prisma.fAQ.findMany({
       where: {
-        platform,
-        serviceType,
+        // platform,
+        // serviceType,
         isActive: true,
       },
       orderBy: { displayOrder: 'asc' },
