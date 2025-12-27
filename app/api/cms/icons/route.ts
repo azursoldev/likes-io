@@ -143,9 +143,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.iconAsset.delete({
-      where: { id: parseInt(id) },
-    });
+    // await prisma.iconAsset.delete({
+    //   where: { id: parseInt(id) },
+    // });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
