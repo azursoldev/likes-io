@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     const where: any = { isActive: true };
 
     if (category) where.category = category;
-    if (platform) where.platform = platform;
-    if (serviceType) where.serviceType = serviceType;
+    // if (platform) where.platform = platform;
+    // if (serviceType) where.serviceType = serviceType;
 
     const faqs = await prisma.fAQ.findMany({
       where,
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
         question,
         answer,
         category,
-        platform: platform ? (platform.toUpperCase() as Platform) : null,
-        serviceType: serviceType ? (serviceType.toUpperCase() as ServiceType) : null,
+        // platform: platform ? (platform.toUpperCase() as Platform) : null,
+        // serviceType: serviceType ? (serviceType.toUpperCase() as ServiceType) : null,
         displayOrder: parseInt(displayOrder),
         isActive,
       },
