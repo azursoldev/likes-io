@@ -28,6 +28,7 @@ export type ServicePageContentData = {
   testimonials?: ReviewItem[];
   platform?: string;
   serviceType?: string;
+  slug?: string;
 };
 
 const ServiceContentContext = createContext<ServicePageContentData | null>(null);
@@ -54,6 +55,29 @@ type ServicePageContentProviderProps = {
   children: React.ReactNode;
 };
 
+const getProcessedQualityCompare = (dbValue: any, defaultValue: any) => {
+  // Debug log
+  // console.log("getProcessedQualityCompare", { dbValue, defaultValue });
+
+  // If no DB data, use default
+  if (!dbValue) return defaultValue;
+  
+  // If DB data exists but has no columns or empty columns, use default
+  if (!dbValue.columns || !Array.isArray(dbValue.columns) || dbValue.columns.length === 0) {
+    console.log("getProcessedQualityCompare: DB data has no columns, using default");
+    return defaultValue;
+  }
+  
+  // If default has columns and DB has FEWER columns, assume data issue and use default
+  // RELAXED CHECK: Only revert if we have drastically fewer columns (e.g. 0 vs 2) or if specific required columns are missing
+  // For now, trust the DB data if it has at least 1 column, as the user might have intentionally removed one.
+  // if (defaultValue?.columns?.length && dbValue.columns.length < defaultValue.columns.length) {
+  //   return defaultValue;
+  // }
+  
+  return dbValue;
+};
+
 export function ServicePageContentProvider({
   platform,
   serviceType,
@@ -71,12 +95,41 @@ export function ServicePageContentProvider({
   initialData,
   children,
 }: ServicePageContentProviderProps) {
-  const [content, setContent] = useState<ServicePageContentData | null>(initialData || null);
+  const [content, setContent] = useState<ServicePageContentData | null>(() => {
+    if (!initialData) return null;
+    return {
+      ...initialData,
+      heroTitle: initialData.heroTitle || defaultHeroTitle,
+      heroSubtitle: initialData.heroSubtitle || defaultHeroSubtitle,
+      heroRating: initialData.heroRating || defaultHeroRating,
+      heroReviewCount: initialData.heroReviewCount || defaultHeroReviewCount,
+      assuranceCardText: initialData.assuranceCardText || defaultAssuranceCardText,
+      packages: initialData.packages || defaultPackages,
+      qualityCompare: getProcessedQualityCompare(initialData.qualityCompare, defaultQualityCompare),
+      howItWorks: initialData.howItWorks || defaultHowItWorks,
+      faqs: (initialData.faqs && initialData.faqs.length > 0) ? initialData.faqs : defaultFAQs,
+      testimonials: (initialData.testimonials && initialData.testimonials.length > 0) ? initialData.testimonials : defaultTestimonials,
+    };
+  });
   const [loading, setLoading] = useState(!initialData);
 
   useEffect(() => {
     if (initialData) {
-        setContent(initialData);
+        // Apply defensive fallbacks to initialData as well
+        setContent({
+            ...initialData,
+            heroTitle: initialData.heroTitle || defaultHeroTitle,
+            heroSubtitle: initialData.heroSubtitle || defaultHeroSubtitle,
+            heroRating: initialData.heroRating || defaultHeroRating,
+            heroReviewCount: initialData.heroReviewCount || defaultHeroReviewCount,
+            assuranceCardText: initialData.assuranceCardText || defaultAssuranceCardText,
+            packages: initialData.packages || defaultPackages,
+            qualityCompare: getProcessedQualityCompare(initialData.qualityCompare, defaultQualityCompare),
+            howItWorks: initialData.howItWorks || defaultHowItWorks,
+            faqs: (initialData.faqs && initialData.faqs.length > 0) ? initialData.faqs : defaultFAQs,
+            testimonials: (initialData.testimonials && initialData.testimonials.length > 0) ? initialData.testimonials : defaultTestimonials,
+            slug: initialData.slug || slug,
+        });
         setLoading(false);
         return;
     }
@@ -99,10 +152,11 @@ export function ServicePageContentProvider({
         const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
-          console.log(`Received packages from ${url}:`, {
+          console.log(`Received data from ${url}:`, {
             packagesCount: data.packages?.length || 0,
-            hasPackages: !!(data.packages && Array.isArray(data.packages) && data.packages.length > 0),
-            hasId: !!data.id // Check if this is a real CMS record (has id) or default response
+            hasQualityCompare: !!data.qualityCompare,
+            qualityCompareColumns: data.qualityCompare?.columns?.length || 0,
+            hasId: !!data.id
           });
           
           // Check if this is a real CMS record (has id) vs default API response
@@ -123,12 +177,17 @@ export function ServicePageContentProvider({
             packages: isRealCMSRecord 
               ? (data.packages && Array.isArray(data.packages) ? data.packages : defaultPackages)
               : defaultPackages,
-            qualityCompare: isRealCMSRecord ? (data.qualityCompare || defaultQualityCompare) : defaultQualityCompare,
+            qualityCompare: (() => {
+              // If not a real record, use default
+              if (!isRealCMSRecord) return defaultQualityCompare;
+              return getProcessedQualityCompare(data.qualityCompare, defaultQualityCompare);
+            })(),
             howItWorks: isRealCMSRecord ? (data.howItWorks || defaultHowItWorks) : defaultHowItWorks,
             faqs: (data.faqs && Array.isArray(data.faqs) && data.faqs.length > 0) ? data.faqs : defaultFAQs,
             testimonials: (data.testimonials && Array.isArray(data.testimonials)) ? data.testimonials : defaultTestimonials,
             platform: data.platform || platform,
             serviceType: data.serviceType || serviceType,
+            slug: slug || data.slug,
           });
         } else {
           // Use defaults if fetch fails
@@ -232,6 +291,7 @@ export function DynamicPackagesSelector() {
       metricLabel={metricLabel}
       platform={content.platform}
       serviceType={content.serviceType}
+      slug={content.slug}
     />
   );
 }

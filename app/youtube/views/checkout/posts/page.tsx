@@ -13,7 +13,7 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 
-function PostsSelectionContent() {
+export function PostsSelectionContent({ basePath = "/youtube/views" }: { basePath?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -28,7 +28,7 @@ function PostsSelectionContent() {
     e.preventDefault();
     if (postLink.trim()) {
       // Navigate to final checkout step
-      router.push(`/youtube/views/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`);
+      router.push(`${basePath}/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`);
     }
   };
 

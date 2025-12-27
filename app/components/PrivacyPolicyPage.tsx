@@ -9,6 +9,13 @@ import {
   faHand,
   faClock,
   faCommentDots,
+  faBookOpen,
+  faStar,
+  faUser,
+  faDollarSign,
+  faXmark,
+  faCircleNotch,
+  faHeadset,
 } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 
@@ -19,7 +26,24 @@ type PrivacySection = {
   content: string;
 };
 
-const sections: PrivacySection[] = [
+const ICON_MAP: Record<string, any> = {
+  faBookOpen,
+  faCheck,
+  faStar,
+  faUser,
+  faDollarSign,
+  faXmark,
+  faCircleNotch,
+  faTriangleExclamation,
+  faClock,
+  faHeadset,
+  faArrowRight,
+  faLock,
+  faHand,
+  faCommentDots
+};
+
+const defaultSections: PrivacySection[] = [
   {
     id: "data-collection",
     title: "Information We Collect",
@@ -102,9 +126,9 @@ You have the following rights regarding your personal information:
 
 We may update this Privacy Policy from time to time to reflect changes in our practices, technology, legal requirements, or other factors. When we make changes, we will:
 
-- Update the "Last updated" date at the top of this Privacy Policy
-- Post the revised policy on this page with a clear indication of what has changed
-- Notify you of significant changes via email or a prominent notice on our Service
+- **Update the "Last updated" date at the top of this Privacy Policy**
+- **Post the revised policy on this page with a clear indication of what has changed**
+- **Notify you of significant changes via email or a prominent notice on our Service**
 
 We encourage you to review this Privacy Policy periodically to stay informed about how we collect, use, and protect your information. Your continued use of our Service after any changes indicates your acceptance of the updated Privacy Policy.`,
   },
@@ -120,8 +144,31 @@ We are committed to addressing your privacy concerns and will respond to your in
   },
 ];
 
-export default function PrivacyPolicyPage() {
-  const [activeSection, setActiveSection] = useState<string>(sections[0].id);
+export default function PrivacyPolicyPage({ data }: { data?: any }) {
+  const [sections, setSections] = useState<PrivacySection[]>(defaultSections);
+  const [activeSection, setActiveSection] = useState<string>("");
+
+  useEffect(() => {
+    if (data && data.sections) {
+      const mappedSections = data.sections.map((s: any) => ({
+        ...s,
+        icon: ICON_MAP[s.icon] || faCheck // Fallback to check icon
+      }));
+      setSections(mappedSections);
+    } else {
+      setSections(defaultSections);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (sections.length > 0) {
+        // Set active section if not set or if it doesn't exist in current sections
+        if (!activeSection || !sections.find(s => s.id === activeSection)) {
+             setActiveSection(sections[0].id);
+        }
+    }
+  }, [sections]);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -143,7 +190,7 @@ export default function PrivacyPolicyPage() {
     handleScroll(); // Initial check
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [sections]);
 
   const extractMainHeading = (content: string): string | null => {
     const lines = content.split("\n").filter((line) => line.trim());
@@ -299,61 +346,57 @@ export default function PrivacyPolicyPage() {
       const boldParts = part.split(/(\*\*.*?\*\*)/g);
       return boldParts.map((boldPart, boldIndex) => {
         if (boldPart.startsWith("**") && boldPart.endsWith("**")) {
-          return <strong key={`${index}-${boldIndex}`}>{boldPart.slice(2, -2)}</strong>;
+          return (
+            <strong key={`${index}-${boldIndex}`}>
+              {boldPart.slice(2, -2)}
+            </strong>
+          );
         }
         return <span key={`${index}-${boldIndex}`}>{boldPart}</span>;
       });
-    }).flat();
-  };
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 100;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      });
-    }
+    });
   };
 
   return (
     <section className="privacy-page">
-      {/* Hero Section */}
       <div className="privacy-hero">
         <div className="container">
           <div className="privacy-hero-icon">
-            <FontAwesomeIcon icon={faCheck} />
+            <FontAwesomeIcon icon={faLock} style={{ fontSize: '32px', color: '#fff' }} />
           </div>
           <h1 className="privacy-title">
             Privacy <span className="privacy-title-accent">Policy</span>
           </h1>
           <p className="privacy-subtitle">
-            Your privacy is our priority. This policy outlines our commitment to protecting your data and how we use it to provide our services.
+            Your privacy is important to us. Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="privacy-content">
+      <div className="privacy-container">
         <div className="container">
-          {/* Sidebar Navigation */}
+          <div className="privacy-content">
           <aside className="privacy-sidebar">
             <nav className="privacy-sidebar-nav">
               {sections.map((section) => (
                 <a
                   key={section.id}
                   href={`#${section.id}`}
-                  className={`privacy-sidebar-link ${
-                    activeSection === section.id ? "active" : ""
-                  }`}
                   onClick={(e) => {
                     e.preventDefault();
-                    scrollToSection(section.id);
+                    const element = document.getElementById(section.id);
+                    if (element) {
+                      const offset = 100;
+                      const elementPosition = element.getBoundingClientRect().top;
+                      const offsetPosition = elementPosition + window.pageYOffset - offset;
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth"
+                      });
+                      setActiveSection(section.id);
+                    }
                   }}
+                  className={`privacy-sidebar-link ${activeSection === section.id ? "active" : ""}`}
                 >
                   {section.title}
                 </a>
@@ -361,30 +404,36 @@ export default function PrivacyPolicyPage() {
             </nav>
           </aside>
 
-          {/* Main Content Sections */}
           <main className="privacy-main">
             {sections.map((section, index) => {
-              const mainHeading = extractMainHeading(section.content);
-              const displayHeading = mainHeading || `${index + 1}. ${section.title}`;
-              
-              return (
-                <div key={section.id} id={section.id} className="privacy-section">
-                  <div className="privacy-section-header">
-                    <div className="privacy-section-icon">
-                      <FontAwesomeIcon icon={section.icon} />
-                    </div>
-                    <h2 className="privacy-section-heading">{displayHeading}</h2>
+               const mainHeading = extractMainHeading(section.content);
+               const displayHeading = mainHeading || `${index + 1}. ${section.title}`;
+               
+               return (
+              <div 
+                key={section.id} 
+                id={section.id} 
+                className="privacy-section"
+              >
+                <div className="privacy-section-header">
+                  <div className="privacy-section-icon">
+                    <FontAwesomeIcon icon={section.icon} />
                   </div>
-                  <div className="privacy-section-body">
-                    {formatContent(section.content, !!mainHeading)}
-                  </div>
+                  <h2 className="privacy-section-heading">
+                    {displayHeading}
+                  </h2>
                 </div>
-              );
+                
+                <div className="privacy-section-body">
+                  {formatContent(section.content, !!mainHeading)}
+                </div>
+              </div>
+            );
             })}
           </main>
+          </div>
         </div>
       </div>
     </section>
   );
 }
-

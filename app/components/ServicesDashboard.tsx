@@ -251,14 +251,50 @@ export default function ServicesDashboard() {
           return markdown;
         };
         
-        if (data.qualityCompare.columns[0] && data.qualityCompare.columns[0].bullets && Array.isArray(data.qualityCompare.columns[0].bullets)) {
-          setHighQualityFeatures(data.qualityCompare.columns[0].bullets.map((bullet: string, idx: number) => ({
+        // Smartly identify columns instead of relying on index
+        const columns = data.qualityCompare.columns;
+        let highQualityCol = null;
+        let premiumCol = null;
+        
+        // Try to identify Premium column first
+        // It usually has "Premium" in title, or is highlighted, or has badge
+        const premiumIdx = columns.findIndex((col: any) => 
+          (col.title && col.title.toLowerCase().includes("premium")) || 
+          col.highlight === true || 
+          (col.badge && col.badge.length > 0)
+        );
+        
+        if (premiumIdx >= 0) {
+          premiumCol = columns[premiumIdx];
+          // HighQuality is the other one, or if not found, maybe the one with "High" or index 0 (if not premium)
+          const highQualityIdx = columns.findIndex((col: any, idx: number) => 
+            idx !== premiumIdx && (
+              (col.title && col.title.toLowerCase().includes("high")) || 
+              !col.highlight
+            )
+          );
+          
+          if (highQualityIdx >= 0) {
+            highQualityCol = columns[highQualityIdx];
+          } else if (columns.length > 1) {
+            // If we have 2 columns and one is Premium, the other must be HQ
+            highQualityCol = columns.find((_: any, idx: number) => idx !== premiumIdx);
+          }
+        } else {
+          // Fallback: If no explicit Premium found, assume index 0 is HQ, index 1 is Premium (legacy behavior)
+          if (columns.length > 0) highQualityCol = columns[0];
+          if (columns.length > 1) premiumCol = columns[1];
+        }
+
+        if (highQualityCol && highQualityCol.bullets && Array.isArray(highQualityCol.bullets)) {
+          setHighQualityFeatures(highQualityCol.bullets.map((bullet: string, idx: number) => ({
             id: Date.now() + idx,
             name: htmlToMarkdown(bullet) // Convert HTML <strong> back to **markdown** for editing
           })));
         }
-        if (data.qualityCompare.columns[1] && data.qualityCompare.columns[1].bullets && Array.isArray(data.qualityCompare.columns[1].bullets)) {
-          setPremiumFeatures(data.qualityCompare.columns[1].bullets.map((bullet: string, idx: number) => ({
+        
+        if (premiumCol && premiumCol.bullets && Array.isArray(premiumCol.bullets)) {
+          setPremiumFeatures(premiumCol.bullets.map((bullet: string, idx: number) => ({
             id: Date.now() + idx + 1000,
             name: htmlToMarkdown(bullet) // Convert HTML <strong> back to **markdown** for editing
           })));
@@ -402,13 +438,24 @@ export default function ServicesDashboard() {
       
       // Always sync features from Pricing Tiers to Quality Compare columns
       // This ensures features are always up-to-date
+      console.log("DEBUG: Saving - highQualityFeatures:", highQualityFeatures);
+      console.log("DEBUG: Saving - premiumFeatures:", premiumFeatures);
+      console.log("DEBUG: Saving - Initial columns:", qualityCompareColumnsToSave);
       
       // Sync High-Quality features
       if (highQualityFeatures.length > 0) {
-        if (qualityCompareColumnsToSave.length > 0) {
-          // Update existing first column (High-Quality) bullets from features
-          qualityCompareColumnsToSave[0] = {
-            ...qualityCompareColumnsToSave[0],
+        // Find High-Quality column (contains "High" or NOT Premium)
+        // Note: Removed ID check to avoid issues where columns are out of order
+        const hqColumnIndex = qualityCompareColumnsToSave.findIndex(
+          col => (col.title && col.title.toLowerCase().includes("high")) || 
+          (!col.highlight && (!col.title || !col.title.toLowerCase().includes("premium")))
+        );
+
+        if (hqColumnIndex >= 0) {
+          // Update existing High-Quality column
+          qualityCompareColumnsToSave[hqColumnIndex] = {
+            ...qualityCompareColumnsToSave[hqColumnIndex],
+            id: 0, // Ensure ID is 0
             bullets: highQualityFeatures.map(f => convertMarkdownToHTML(f.name))
           };
         } else {
@@ -426,15 +473,19 @@ export default function ServicesDashboard() {
       
       // Always ensure Premium column exists if we have premium features
       if (premiumFeatures.length > 0) {
-        // Find Premium column by id or title
+        // Find Premium column by title or highlight/badge
+        // Note: Removed ID check to avoid issues where columns are out of order
         const premiumColumnIndex = qualityCompareColumnsToSave.findIndex(
-          col => col.id === 1 || col.title?.toLowerCase().includes("premium")
+          col => (col.title && col.title.toLowerCase().includes("premium")) ||
+          col.highlight === true ||
+          (col.badge && col.badge.length > 0)
         );
         
         if (premiumColumnIndex >= 0) {
           // Update existing Premium column bullets from features, preserving highlight and badge
           qualityCompareColumnsToSave[premiumColumnIndex] = {
             ...qualityCompareColumnsToSave[premiumColumnIndex],
+            id: 1, // Ensure ID is 1
             bullets: premiumFeatures.map(f => convertMarkdownToHTML(f.name)),
             highlight: qualityCompareColumnsToSave[premiumColumnIndex].highlight !== undefined 
               ? qualityCompareColumnsToSave[premiumColumnIndex].highlight 
@@ -444,7 +495,7 @@ export default function ServicesDashboard() {
         } else {
           // Create Premium column if it doesn't exist
           qualityCompareColumnsToSave.push({
-            id: qualityCompareColumnsToSave.length,
+            id: 1, // Force ID 1 for Premium
             title: "Premium " + (mapping.serviceType === "likes" ? "Likes" : mapping.serviceType === "followers" ? "Followers" : mapping.serviceType === "views" ? "Views" : "Subscribers"),
             subtitle: "Our best offering for maximum impact and organic growth.",
             bullets: premiumFeatures.map(f => convertMarkdownToHTML(f.name)),
@@ -456,8 +507,9 @@ export default function ServicesDashboard() {
       
       // Sort columns to ensure High-Quality is first, Premium is second
       const sortedColumns = [...qualityCompareColumnsToSave].sort((a, b) => {
-        const aIsPremium = a.id === 1 || a.title?.toLowerCase().includes("premium");
-        const bIsPremium = b.id === 1 || b.title?.toLowerCase().includes("premium");
+        const aIsPremium = a.id === 1 || (a.title && a.title.toLowerCase().includes("premium"));
+        const bIsPremium = b.id === 1 || (b.title && b.title.toLowerCase().includes("premium"));
+        
         if (aIsPremium && !bIsPremium) return 1;
         if (!aIsPremium && bIsPremium) return -1;
         return (a.id || 0) - (b.id || 0);
@@ -478,6 +530,8 @@ export default function ServicesDashboard() {
         })
       } : null;
       
+      console.log("DEBUG: Saving - Final qualityCompare:", JSON.stringify(qualityCompare, null, 2));
+
       const howItWorks = {
         title: howItWorksTitle || "How It Works",
         subtitle: howItWorksSubtitle || "",
@@ -624,34 +678,65 @@ export default function ServicesDashboard() {
       const updatedFeatures = [...highQualityFeatures, newFeature];
       setHighQualityFeatures(updatedFeatures);
       // Sync to qualityCompareColumns
-      if (qualityCompareColumns.length > 0) {
-        setQualityCompareColumns(prev => {
-          const newCols = [...prev];
-          if (newCols[0]) {
-            newCols[0] = {
-              ...newCols[0],
-              bullets: updatedFeatures.map(f => f.name)
-            };
-          }
-          return newCols;
-        });
-      }
+      setQualityCompareColumns(prev => {
+        const newCols = [...prev];
+        // Find High-Quality column (contains "High" or NOT Premium)
+        // Note: Removed ID check to avoid issues where columns are out of order
+        let hqIndex = newCols.findIndex(col => 
+          (col.title && col.title.toLowerCase().includes("high")) || 
+          (!col.highlight && (!col.title || !col.title.toLowerCase().includes("premium")))
+        );
+
+        if (hqIndex >= 0) {
+          newCols[hqIndex] = {
+            ...newCols[hqIndex],
+            bullets: updatedFeatures.map(f => f.name)
+          };
+        } else {
+          // Create new High-Quality column if it doesn't exist
+          // Insert at beginning
+          newCols.unshift({
+            id: 0,
+            title: "High-Quality",
+            subtitle: "Great for giving your posts a quick and affordable boost.",
+            bullets: updatedFeatures.map(f => f.name),
+            highlight: false,
+            badge: ""
+          });
+        }
+        return newCols;
+      });
     } else {
       const updatedFeatures = [...premiumFeatures, newFeature];
       setPremiumFeatures(updatedFeatures);
       // Sync to qualityCompareColumns
-      if (qualityCompareColumns.length > 1) {
-        setQualityCompareColumns(prev => {
-          const newCols = [...prev];
-          if (newCols[1]) {
-            newCols[1] = {
-              ...newCols[1],
-              bullets: updatedFeatures.map(f => f.name)
-            };
-          }
-          return newCols;
-        });
-      }
+      setQualityCompareColumns(prev => {
+        const newCols = [...prev];
+        // Find Premium column
+        let premiumIndex = newCols.findIndex(col => 
+          (col.title && col.title.toLowerCase().includes("premium")) || 
+          col.highlight === true || 
+          (col.badge && col.badge.length > 0)
+        );
+
+        if (premiumIndex >= 0) {
+          newCols[premiumIndex] = {
+            ...newCols[premiumIndex],
+            bullets: updatedFeatures.map(f => f.name)
+          };
+        } else {
+          // Create new Premium column
+          newCols.push({
+            id: 1,
+            title: "Premium",
+            subtitle: "Our best offering for maximum impact and organic growth.",
+            bullets: updatedFeatures.map(f => f.name),
+            highlight: true,
+            badge: "RECOMMENDED"
+          });
+        }
+        return newCols;
+      });
     }
   };
 
@@ -660,34 +745,43 @@ export default function ServicesDashboard() {
       const updatedFeatures = highQualityFeatures.filter(feat => feat.id !== id);
       setHighQualityFeatures(updatedFeatures);
       // Sync to qualityCompareColumns
-      if (qualityCompareColumns.length > 0) {
-        setQualityCompareColumns(prev => {
-          const newCols = [...prev];
-          if (newCols[0]) {
-            newCols[0] = {
-              ...newCols[0],
-              bullets: updatedFeatures.map(f => f.name)
-            };
-          }
-          return newCols;
-        });
-      }
+      setQualityCompareColumns(prev => {
+        const newCols = [...prev];
+        // Find High-Quality column
+        let hqIndex = newCols.findIndex(col => 
+          (col.title && col.title.toLowerCase().includes("high")) || 
+          (!col.highlight && (!col.title || !col.title.toLowerCase().includes("premium")))
+        );
+
+        if (hqIndex >= 0) {
+          newCols[hqIndex] = {
+            ...newCols[hqIndex],
+            bullets: updatedFeatures.map(f => f.name)
+          };
+        }
+        return newCols;
+      });
     } else {
       const updatedFeatures = premiumFeatures.filter(feat => feat.id !== id);
       setPremiumFeatures(updatedFeatures);
       // Sync to qualityCompareColumns
-      if (qualityCompareColumns.length > 1) {
-        setQualityCompareColumns(prev => {
-          const newCols = [...prev];
-          if (newCols[1]) {
-            newCols[1] = {
-              ...newCols[1],
-              bullets: updatedFeatures.map(f => f.name)
-            };
-          }
-          return newCols;
-        });
-      }
+      setQualityCompareColumns(prev => {
+        const newCols = [...prev];
+        // Find Premium column
+        let premiumIndex = newCols.findIndex(col => 
+          (col.title && col.title.toLowerCase().includes("premium")) || 
+          col.highlight === true || 
+          (col.badge && col.badge.length > 0)
+        );
+
+        if (premiumIndex >= 0) {
+          newCols[premiumIndex] = {
+            ...newCols[premiumIndex],
+            bullets: updatedFeatures.map(f => f.name)
+          };
+        }
+        return newCols;
+      });
     }
   };
 
@@ -697,41 +791,50 @@ export default function ServicesDashboard() {
         feat.id === id ? { ...feat, name: value } : feat
       ));
       // Also update qualityCompareColumns bullets
-      if (qualityCompareColumns.length > 0) {
-        const updatedFeatures = highQualityFeatures.map(feat => 
-          feat.id === id ? { ...feat, name: value } : feat
+      const updatedFeatures = highQualityFeatures.map(feat => 
+        feat.id === id ? { ...feat, name: value } : feat
+      );
+      setQualityCompareColumns(prev => {
+        const newCols = [...prev];
+        // Find High-Quality column
+        let hqIndex = newCols.findIndex(col => 
+          (col.title && col.title.toLowerCase().includes("high")) || 
+          (!col.highlight && (!col.title || !col.title.toLowerCase().includes("premium")))
         );
-        setQualityCompareColumns(prev => {
-          const newCols = [...prev];
-          if (newCols[0]) {
-            newCols[0] = {
-              ...newCols[0],
-              bullets: updatedFeatures.map(f => f.name)
-            };
-          }
-          return newCols;
-        });
-      }
+
+        if (hqIndex >= 0) {
+          newCols[hqIndex] = {
+            ...newCols[hqIndex],
+            bullets: updatedFeatures.map(f => f.name)
+          };
+        }
+        return newCols;
+      });
     } else {
       setPremiumFeatures(premiumFeatures.map(feat => 
         feat.id === id ? { ...feat, name: value } : feat
       ));
       // Also update qualityCompareColumns bullets
-      if (qualityCompareColumns.length > 1) {
-        const updatedFeatures = premiumFeatures.map(feat => 
-          feat.id === id ? { ...feat, name: value } : feat
+      const updatedFeatures = premiumFeatures.map(feat => 
+        feat.id === id ? { ...feat, name: value } : feat
+      );
+      setQualityCompareColumns(prev => {
+        const newCols = [...prev];
+        // Find Premium column
+        let premiumIndex = newCols.findIndex(col => 
+          (col.title && col.title.toLowerCase().includes("premium")) || 
+          col.highlight === true || 
+          (col.badge && col.badge.length > 0)
         );
-        setQualityCompareColumns(prev => {
-          const newCols = [...prev];
-          if (newCols[1]) {
-            newCols[1] = {
-              ...newCols[1],
-              bullets: updatedFeatures.map(f => f.name)
-            };
-          }
-          return newCols;
-        });
-      }
+
+        if (premiumIndex >= 0) {
+          newCols[premiumIndex] = {
+            ...newCols[premiumIndex],
+            bullets: updatedFeatures.map(f => f.name)
+          };
+        }
+        return newCols;
+      });
     }
   };
 

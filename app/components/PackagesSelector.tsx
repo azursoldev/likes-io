@@ -28,6 +28,7 @@ type PackagesSelectorProps = {
   ctaTemplate?: string;
   platform?: string;
   serviceType?: string;
+  slug?: string;
 };
 
 const DEFAULT_TABS: PackageTabConfig[] = [
@@ -71,6 +72,7 @@ export default function PackagesSelector({
   ctaTemplate = DEFAULT_CTA_TEMPLATE,
   platform: propPlatform,
   serviceType: propServiceType,
+  slug,
 }: PackagesSelectorProps) {
   const pathname = usePathname();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -407,7 +409,7 @@ export default function PackagesSelector({
               {displaySave && <div className="price-save">{displaySave}</div>}
             </div>
             <a 
-              href={`/${platform}/${serviceType}/checkout?qty=${displayQty}&price=${parsePrice(displayPrice)}&type=${encodeURIComponent(activeTabData?.label || 'High-Quality')}`}
+              href={slug ? `/${slug}/checkout?qty=${displayQty}&price=${parsePrice(displayPrice)}&type=${encodeURIComponent(activeTabData?.label || 'High-Quality')}` : `/${platform.toLowerCase()}/${serviceType.toLowerCase()}/checkout?qty=${displayQty}&price=${parsePrice(displayPrice)}&type=${encodeURIComponent(activeTabData?.label || 'High-Quality')}`}
               className="btn buy-btn"
             >
               {buttonLabel}

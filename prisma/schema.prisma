@@ -347,197 +347,67 @@ model ServicePageContent {
 
 // FAQ Management
 model FAQ {
-  id          Int         @id @default(autoincrement())
+  id          String   @id @default(cuid())
   question    String
-  answer      String
-  category    String?
-  platform    Platform?
-  serviceType ServiceType?
-  displayOrder Int        @default(0)
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
+  answer      String   @db.Text
+  category    String?   // e.g., "general", "services", "payments"
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime? @updatedAt
   
   @@index([category])
-  @@index([platform, serviceType])
-  @@index([displayOrder])
   @@map("faqs")
 }
 
-// Testimonials & Reviews
-model Testimonial {
-  id          Int      @id @default(autoincrement())
-  handle      String
-  role        String
-  text        String
-  rating      Int?
-  platform    Platform?
-  serviceType ServiceType?
-  isApproved  Boolean  @default(false)
-  isFeatured  Boolean  @default(false)
-  displayOrder Int     @default(0)
-  createdAt   DateTime @default(now())
-  
-  @@index([isApproved])
-  @@index([isFeatured])
-  @@index([platform])
-  @@index([displayOrder])
-  @@map("testimonials")
-}
-
+// Review Moderation
 model Review {
-  id          Int      @id @default(autoincrement())
-  userId      String
+  id          String   @id @default(cuid())
+  userId      String?
   orderId     String?
   rating      Int
-  comment     String?
-  isApproved  Boolean  @default(false)
+  comment     String   @db.Text
+  authorName  String?  // If not linked to user
   isPublished Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  
-  @@index([userId])
-  @@index([isApproved])
-  @@index([isPublished])
-  @@map("reviews")
-}
-
-// Blog Management
-model BlogPost {
-  id            Int      @id @default(autoincrement())
-  title         String
-  slug          String   @unique
-  excerpt       String?
-  content       String   @db.Text
-  featuredImage String?
-  authorId      String
-  category      String?
-  tags          Json?    // Array of strings
-  publishedAt   DateTime?
-  isPublished   Boolean  @default(false)
-  seoMeta       Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
-  @@index([slug])
-  @@index([isPublished])
-  @@index([category])
-  @@index([publishedAt])
-  @@map("blog_posts")
-}
-
-// Team Management
-model TeamMember {
-  id          Int      @id @default(autoincrement())
-  name        String
-  role        String
-  bio         String?  @db.Text
-  photo       String?
-  socialLinks Json?    // {twitter, linkedin, etc.}
-  displayOrder Int     @default(0)
-  isActive    Boolean  @default(true)
-  
-  @@index([displayOrder])
-  @@map("team_members")
-}
-
-// Social Proof
-model SocialProof {
-  id          Int      @id @default(autoincrement())
-  handle      String
-  item        String
-  time        String
-  platform    Platform?
-  isActive    Boolean  @default(true)
-  displayOrder Int     @default(0)
-  
-  @@index([isActive])
-  @@index([displayOrder])
-  @@map("social_proof")
-}
-
-// Notifications/Banners
-model Notification {
-  id          Int      @id @default(autoincrement())
-  title       String
-  message     String
-  type        String   // "info" | "warning" | "success" | "error"
-  isVisible   Boolean  @default(true)
-  targetPages Json?    // Array of page paths
-  scheduledAt DateTime?
-  expiresAt   DateTime?
-  displayOrder Int     @default(0)
-  createdAt   DateTime @default(now())
-  
-  @@index([isVisible])
-  @@index([scheduledAt])
-  @@index([expiresAt])
-  @@map("notifications")
-}
-
-// Currency Rates
-model CurrencyRate {
-  id          Int      @id @default(autoincrement())
-  fromCurrency String
-  toCurrency   String
-  rate         Float
-  updatedAt    DateTime @updatedAt
-  
-  @@unique([fromCurrency, toCurrency])
-  @@index([fromCurrency, toCurrency])
-  @@map("currency_rates")
-}
-
-// Icon/Asset Management
-model IconAsset {
-  id          Int      @id @default(autoincrement())
-  name        String
-  category    String?
-  url         String
-  alt         String?
-  displayOrder Int     @default(0)
-  createdAt   DateTime @default(now())
-  
-  @@index([category])
-  @@index([displayOrder])
-  @@map("icon_assets")
-}
-
-// Email Templates
-model EmailTemplate {
-  id          Int      @id @default(autoincrement())
-  name        String
-  subject     String
-  body        String   @db.Text
-  variables   Json?    // Array of available variables
-  type        String   // "order_confirmation" | "payment_success" | etc.
-  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  @@index([type])
-  @@index([isActive])
-  @@map("email_templates")
-}
-
-// SEO Settings
-model SEOSettings {
-  id              Int      @id @default(autoincrement())
-  page            String   @unique // Page path or identifier
-  title           String?
-  description     String?
-  keywords        String?
-  ogImage         String?
-  ogTitle         String?
-  ogDescription   String?
-  twitterCard     String?
-  structuredData  Json?
-  updatedAt       DateTime @updatedAt
+  user        User?    @relation(fields: [userId], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id])
   
-  @@index([page])
-  @@map("seo_settings")
+  @@index([isPublished])
+  @@index([rating])
+  @@map("reviews")
 }
 
+// Blog
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.Text
+  excerpt     String?  @db.Text
+  coverImage  String?
+  authorId    String
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  @@index([slug])
+  @@index([isPublished])
+  @@map("blog_posts")
+}
+
+// Legal Pages (Terms, Privacy)
+model LegalPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique // "terms" or "privacy"
+  title     String
+  sections  Json     // Array of Section objects
+  updatedAt DateTime @updatedAt
+  
+  @@map("legal_pages")
+}

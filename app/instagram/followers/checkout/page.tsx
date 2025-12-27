@@ -15,8 +15,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../contexts/CurrencyContext";
+import { type PackageTabConfig } from "../../../components/PackagesSelector";
 
-function CheckoutContent() {
+export function CheckoutContent({ basePath = "/instagram/followers", packages: cmsPackages }: { basePath?: string; packages?: PackageTabConfig[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -33,15 +34,30 @@ function CheckoutContent() {
   const currencyCode = getCurrencySymbol() === "€" ? "EUR" : "USD";
   const selectedPackage = `${qty} Followers / ${formatPrice(priceValue)} ${currencyCode}`;
 
-  const packagePrices = [4.49, 9.99, 15.99, 27.99, 62.49, 109.99];
-  const packageQuantities = [100, 250, 500, "1K", "2.5K", "5K"];
-  
-  const packages = packageQuantities.map((qty, idx) => {
-    if (qty === "10,000+") return "10,000+ Custom";
-    return `${qty} Followers / ${formatPrice(packagePrices[idx])} ${currencyCode}`;
-  });
-  
-  packages.push("10,000+ Custom");
+  let dropdownOptions: string[] = [];
+
+  if (cmsPackages && cmsPackages.length > 0) {
+    const activeTab = cmsPackages.find(p => p.label === packageType) || cmsPackages[0];
+    if (activeTab) {
+      dropdownOptions = activeTab.packages.map(pkg => {
+        if (pkg.qty === "10,000+") return "10,000+ Custom";
+        const priceNum = parseFloat(pkg.price.replace(/[^0-9.]/g, ''));
+        return `${pkg.qty} Followers / ${formatPrice(priceNum)} ${currencyCode}`;
+      });
+    }
+  }
+
+  if (dropdownOptions.length === 0) {
+    const packagePrices = [4.49, 9.99, 15.99, 27.99, 62.49, 109.99];
+    const packageQuantities = [100, 250, 500, "1K", "2.5K", "5K"];
+    
+    dropdownOptions = packageQuantities.map((qty, idx) => {
+      if (qty === "10,000+") return "10,000+ Custom";
+      return `${qty} Followers / ${formatPrice(packagePrices[idx])} ${currencyCode}`;
+    });
+    
+    dropdownOptions.push("10,000+ Custom");
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -63,7 +79,7 @@ function CheckoutContent() {
     e.preventDefault();
     if (username.trim()) {
       // Navigate to posts selection page
-      router.push(`/instagram/followers/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+      router.push(`${basePath}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
     }
   };
 
@@ -131,7 +147,7 @@ function CheckoutContent() {
                   </button>
                   {isPackageOpen && (
                     <div className="checkout-dropdown-menu">
-                      {packages.map((pkg, idx) => (
+                      {dropdownOptions.map((pkg, idx) => (
                         <button
                           key={idx}
                           type="button"

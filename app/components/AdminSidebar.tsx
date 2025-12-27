@@ -26,6 +26,8 @@ import {
   faArrowRightFromBracket,
   faWrench,
   faNewspaper,
+  faFileContract,
+  faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 import { getAdminUrl } from "@/lib/url-utils";
 
@@ -64,7 +66,9 @@ type AdminSidebarProps = {
   | "smmPanel"
   | "systemStatus"
   | "iconManagement"
-    | "support";
+  | "support"
+  | "terms"
+  | "privacy";
 };
 
 export default function AdminSidebar({ activePage }: AdminSidebarProps) {
@@ -100,6 +104,8 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
         { label: "Review Moderation", icon: faCheckCircle, active: activePage === "reviewModeration", href: getAdminUrl("review-moderation") },
         { label: "Blog", icon: faNewspaper, active: activePage === "blog", href: getAdminUrl("blog") },
         { label: "Published Testimonials", icon: faQuoteLeft, active: activePage === "testimonials", href: getAdminUrl("testimonials") },
+        { label: "Terms of Service", icon: faFileContract, active: activePage === "terms", href: getAdminUrl("legal/terms") },
+        { label: "Privacy Policy", icon: faShieldHalved, active: activePage === "privacy", href: getAdminUrl("legal/privacy") },
         { label: "FAQ", icon: faQuestionCircle, active: activePage === "faq", href: getAdminUrl("faq") },
         { label: "Team", icon: faUserGroup, active: activePage === "team", href: getAdminUrl("team") },
       ],

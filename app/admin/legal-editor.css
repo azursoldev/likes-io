@@ -1,0 +1,214 @@
+/* Legal Page Editor Styles */
+.legal-page-editor {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin: 0 auto;
+}
+
+.legal-page-editor .form-group {
+  margin-bottom: 24px;
+}
+
+.heading3-terms{
+    font-size: 24px;
+    font-weight: 600;
+    margin-top: 0;
+}
+
+.legal-page-editor label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.legal-page-editor .admin-input,
+.legal-page-editor .admin-select,
+.legal-page-editor .admin-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+  background: #fff;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.legal-page-editor .admin-input:focus,
+.legal-page-editor .admin-select:focus,
+.legal-page-editor .admin-textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.legal-page-editor .admin-textarea {
+  min-height: 200px;
+  line-height: 1.6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.legal-page-editor .sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 32px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 32px;
+}
+
+.legal-page-editor .admin-card-sub {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s;
+}
+
+.legal-page-editor .admin-card-sub:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.legal-page-editor .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.legal-page-editor .section-number {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.legal-page-editor .form-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.legal-page-editor .form-col-title {
+  flex: 1;
+}
+
+.legal-page-editor .form-col-icon {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.legal-page-editor .icon-select-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.legal-page-editor .icon-preview {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #4b5563;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.legal-page-editor .markdown-badge {
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-weight: 500;
+  border: 1px solid #e5e7eb;
+}
+
+.legal-page-editor .admin-btn-primary {
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.legal-page-editor .admin-btn-primary:hover {
+  background: #1e293b;
+}
+
+.legal-page-editor .admin-btn-secondary {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.legal-page-editor .admin-btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.legal-page-editor .btn-icon.danger {
+  color: #ef4444;
+  background: #fee2e2;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.legal-page-editor .btn-icon.danger:hover {
+  background: #fecaca;
+}
+
+/* Mobile Responsiveness for Legal Editor */
+@media (max-width: 768px) {
+  .legal-page-editor .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .legal-page-editor .form-col-icon {
+    width: 100%;
+  }
+  
+  .legal-page-editor {
+    padding: 20px;
+  }
+}

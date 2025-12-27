@@ -21,7 +21,7 @@ import { useSearchParams, usePathname } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
-function FinalCheckoutContent() {
+export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
@@ -31,14 +31,20 @@ function FinalCheckoutContent() {
   const priceValue = parseFloat(searchParams.get("price") || "15.99");
   const packageType = searchParams.get("type") || "High-Quality";
 
-  // Get platform and service from pathname
-  const pathParts = pathname?.split("/") || [];
-  const platform = pathParts[1] || "instagram";
-  const service = pathParts[2] || "followers";
+  // Determine root path (e.g., /instagram/followers or /some-slug)
+  let rootPath = "";
+  if (basePath) {
+     rootPath = basePath;
+  } else {
+     const pathParts = pathname?.split("/") || [];
+     const platform = pathParts[1] || "instagram";
+     const service = pathParts[2] || "followers";
+     rootPath = `/${platform}/${service}`;
+  }
   
   // Create URLs for navigation
-  const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
-  const accountUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
+  const detailsUrl = `${rootPath}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
+  const accountUrl = `${rootPath}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
   const [cardholderName, setCardholderName] = useState("");

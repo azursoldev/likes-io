@@ -12,7 +12,7 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 
-function PostsSelectionContent() {
+export function PostsSelectionContent({ basePath = "/instagram/followers" }: { basePath?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -25,7 +25,7 @@ function PostsSelectionContent() {
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     // Navigate to final checkout step
-    router.push(`/instagram/followers/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${packageType}`);
+    router.push(`${basePath}/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${packageType}`);
   };
 
   return (

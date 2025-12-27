@@ -75,6 +75,7 @@ async function getServiceContent(slug: string) {
         })),
         platform: content.platform,
         serviceType: content.serviceType,
+        slug: content.slug,
     } as ServicePageContentData;
   } catch (error) {
     console.error('Error fetching service content:', error);

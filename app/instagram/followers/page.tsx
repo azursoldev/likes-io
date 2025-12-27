@@ -22,6 +22,8 @@ import type { FAQItem } from "../../components/FAQSection";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
 import { faThumbsUp } from "@fortawesome/free-solid-svg-icons";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Buy Instagram Followers | Likes.io",
   description: "Gain instant authority with high-quality Instagram followers delivered safely and naturally. Boost social proof, attract partnerships, and unlock organic growth.",

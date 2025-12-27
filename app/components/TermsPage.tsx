@@ -11,7 +11,11 @@ import {
   faTriangleExclamation,
   faClock,
   faHeadset,
-  faBookOpen
+  faBookOpen,
+  faArrowRight,
+  faLock,
+  faHand,
+  faCommentDots
 } from "@fortawesome/free-solid-svg-icons";
 
 type TermSection = {
@@ -21,7 +25,24 @@ type TermSection = {
   content: string;
 };
 
-const sections: TermSection[] = [
+const ICON_MAP: Record<string, any> = {
+  faBookOpen,
+  faCheck,
+  faStar,
+  faUser,
+  faDollarSign,
+  faXmark,
+  faCircleNotch,
+  faTriangleExclamation,
+  faClock,
+  faHeadset,
+  faArrowRight,
+  faLock,
+  faHand,
+  faCommentDots
+};
+
+const defaultSections: TermSection[] = [
   {
     id: "definitions",
     title: "Definitions",
@@ -204,9 +225,30 @@ We aim to respond to all inquiries within 24-48 hours during business days.`
   }
 ];
 
-export default function TermsPage() {
-  const [activeSection, setActiveSection] = useState(sections[0]?.id);
+export default function TermsPage({ data }: { data?: any }) {
+  const [sections, setSections] = useState<TermSection[]>(defaultSections);
+  const [activeSection, setActiveSection] = useState("");
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (data && data.sections) {
+      const mappedSections = data.sections.map((s: any) => ({
+        ...s,
+        icon: ICON_MAP[s.icon] || faCheck // Fallback to check icon
+      }));
+      setSections(mappedSections);
+    } else {
+      setSections(defaultSections);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (sections.length > 0) {
+        if (!activeSection || !sections.find(s => s.id === activeSection)) {
+            setActiveSection(sections[0].id);
+        }
+    }
+  }, [sections]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -226,7 +268,7 @@ export default function TermsPage() {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [sections]);
 
   const handleSectionClick = (id: string) => {
     setActiveSection(id);
@@ -444,4 +486,3 @@ export default function TermsPage() {
     </section>
   );
 }
-

@@ -15,8 +15,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../contexts/CurrencyContext";
+import { type PackageTabConfig } from "../../../components/PackagesSelector";
 
-function CheckoutContent() {
+export function CheckoutContent({ basePath = "/youtube/views", packages: cmsPackages }: { basePath?: string; packages?: PackageTabConfig[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -33,24 +34,40 @@ function CheckoutContent() {
   const currencyCode = getCurrencySymbol() === "€" ? "EUR" : "USD";
   const selectedPackage = `${qty} Views / ${formatPrice(priceValue)} ${currencyCode}`;
 
-  // High-Quality Views packages
-  const highQualityPrices = [22.99, 41.99, 96.99, 179.99, 329.99, 729.99, 1349.99];
-  const highQualityQuantities = [500, "1K", "2.5K", "5K", "10K", "25K", "50K"];
-  
-  // Premium Views packages
-  const premiumPrices = [29.99, 53.99, 124.99, 234.99, 429.99, 949.99, 1699.99];
-  const premiumQuantities = [500, "1K", "2.5K", "5K", "10K", "25K", "50K"];
+  let dropdownOptions: string[] = [];
 
-  // Use the appropriate package list based on packageType
-  const packagePrices = packageType === "Premium" ? premiumPrices : highQualityPrices;
-  const packageQuantities = packageType === "Premium" ? premiumQuantities : highQualityQuantities;
-  
-  const packages = packageQuantities.map((qty, idx) => {
-    if (qty === "100,000+") return "100,000+ Custom";
-    return `${qty} Views / ${formatPrice(packagePrices[idx])} ${currencyCode}`;
-  });
-  
-  packages.push("100,000+ Custom");
+  if (cmsPackages && cmsPackages.length > 0) {
+    const activeTab = cmsPackages.find(p => p.label === packageType) || cmsPackages[0];
+    if (activeTab) {
+      dropdownOptions = activeTab.packages.map(pkg => {
+        if (pkg.qty === "100,000+") return "100,000+ Custom";
+        const priceNum = parseFloat(pkg.price.replace(/[^0-9.]/g, ''));
+        return `${pkg.qty} Views / ${formatPrice(priceNum)} ${currencyCode}`;
+      });
+    }
+  }
+
+  if (dropdownOptions.length === 0) {
+    // High-Quality Views packages
+    const highQualityPrices = [22.99, 41.99, 96.99, 179.99, 329.99, 729.99, 1349.99];
+    const highQualityQuantities = [500, "1K", "2.5K", "5K", "10K", "25K", "50K"];
+    
+    // Premium Views packages
+    const premiumPrices = [29.99, 53.99, 124.99, 234.99, 429.99, 949.99, 1699.99];
+    const premiumQuantities = [500, "1K", "2.5K", "5K", "10K", "25K", "50K"];
+
+    // Use the appropriate package list based on packageType
+    const isPremium = packageType.includes("Premium");
+    const packagePrices = isPremium ? premiumPrices : highQualityPrices;
+    const packageQuantities = isPremium ? premiumQuantities : highQualityQuantities;
+    
+    dropdownOptions = packageQuantities.map((qty, idx) => {
+      if (qty === "100,000+") return "100,000+ Custom";
+      return `${qty} Views / ${formatPrice(packagePrices[idx])} ${currencyCode}`;
+    });
+    
+    dropdownOptions.push("100,000+ Custom");
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -72,7 +89,7 @@ function CheckoutContent() {
     e.preventDefault();
     if (username.trim()) {
       // Navigate to posts selection page (if exists) or final checkout
-      router.push(`/youtube/views/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+      router.push(`${basePath}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
     }
   };
 
@@ -140,7 +157,7 @@ function CheckoutContent() {
                   </button>
                   {isPackageOpen && (
                     <div className="checkout-dropdown-menu">
-                      {packages.map((pkg, idx) => (
+                      {dropdownOptions.map((pkg, idx) => (
                         <button
                           key={idx}
                           type="button"
