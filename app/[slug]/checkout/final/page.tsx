@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { FinalCheckoutContent as InstagramFollowersFinal } from '../../../../instagram/followers/checkout/final/page';
-import { FinalCheckoutContent as YouTubeViewsFinal } from '../../../../youtube/views/checkout/final/page';
+import { FinalCheckoutContent as InstagramFollowersFinal } from '../../../instagram/followers/checkout/final/page';
+import { FinalCheckoutContent as YouTubeViewsFinal } from '../../../youtube/views/checkout/final/page';
 
 export default async function CheckoutFinalPage({ 
   params, 

@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { PostsSelectionContent as InstagramFollowersPosts } from '../../../../instagram/followers/checkout/posts/page';
-import { PostsSelectionContent as YouTubeViewsPosts } from '../../../../youtube/views/checkout/posts/page';
+import { PostsSelectionContent as InstagramFollowersPosts } from '../../../instagram/followers/checkout/posts/page';
+import { PostsSelectionContent as YouTubeViewsPosts } from '../../../youtube/views/checkout/posts/page';
 
 export default async function CheckoutPostsPage({ 
   params, 
