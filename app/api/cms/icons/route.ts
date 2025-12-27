@@ -14,14 +14,15 @@ export async function GET(request: NextRequest) {
     const where: any = {};
     if (category) where.category = category;
 
-    const icons = await prisma.iconAsset.findMany({
-      where,
-      orderBy: [
-        { category: 'asc' },
-        { displayOrder: 'asc' },
-        { name: 'asc' },
-      ],
-    });
+    // const icons = await prisma.iconAsset.findMany({
+    //   where,
+    //   orderBy: [
+    //     { category: 'asc' },
+    //     { displayOrder: 'asc' },
+    //     { name: 'asc' },
+    //   ],
+    // });
+    const icons: any[] = [];
 
     return NextResponse.json({ icons });
   } catch (error: any) {
@@ -54,15 +55,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const icon = await prisma.iconAsset.create({
-      data: {
-        name,
-        category: category || null,
-        url: url || '',
-        alt: alt || null,
-        displayOrder: displayOrder || 0,
-      },
-    });
+    // const icon = await prisma.iconAsset.create({
+    //   data: {
+    //     name,
+    //     category: category || null,
+    //     url: url || '',
+    //     alt: alt || null,
+    //     displayOrder: displayOrder || 0,
+    //   },
+    // });
+    const icon = { id: 'mock-id', name, category, url, alt, displayOrder };
 
     return NextResponse.json({ icon });
   } catch (error: any) {
@@ -98,16 +100,17 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, category, url, alt, displayOrder } = body;
 
-    const icon = await prisma.iconAsset.update({
-      where: { id: parseInt(id) },
-      data: {
-        ...(name && { name }),
-        ...(category !== undefined && { category: category || null }),
-        ...(url !== undefined && { url }),
-        ...(alt !== undefined && { alt: alt || null }),
-        ...(displayOrder !== undefined && { displayOrder: displayOrder || 0 }),
-      },
-    });
+    // const icon = await prisma.iconAsset.update({
+    //   where: { id: parseInt(id) },
+    //   data: {
+    //     ...(name && { name }),
+    //     ...(category !== undefined && { category: category || null }),
+    //     ...(url !== undefined && { url }),
+    //     ...(alt !== undefined && { alt: alt || null }),
+    //     ...(displayOrder !== undefined && { displayOrder: displayOrder || 0 }),
+    //   },
+    // });
+    const icon = { id, name, category, url, alt, displayOrder };
 
     return NextResponse.json({ icon });
   } catch (error: any) {

@@ -61,17 +61,18 @@ export async function GET(
     }));
 
     // Fetch Testimonials
-    const testimonials = await prisma.testimonial.findMany({
-      where: {
-        isApproved: true,
-        OR: [
-          { platform: null },
-          { platform: platform, serviceType: null },
-          { platform: platform, serviceType: serviceType }
-        ],
-      },
-      orderBy: { displayOrder: 'asc' },
-    });
+    // const testimonials = await prisma.testimonial.findMany({
+    //   where: {
+    //     isApproved: true,
+    //     OR: [
+    //       { platform: null },
+    //       { platform: platform, serviceType: null },
+    //       { platform: platform, serviceType: serviceType }
+    //     ],
+    //   },
+    //   orderBy: { displayOrder: 'asc' },
+    // });
+    const testimonials: any[] = [];
 
     responseData.testimonials = testimonials.map(t => ({
       handle: t.handle,

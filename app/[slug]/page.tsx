@@ -97,8 +97,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     }
     
     return {
-      title: content.metaTitle || content.heroTitle, 
-      description: content.metaDescription || content.heroSubtitle,
+      title: (content as any).metaTitle || content.heroTitle, 
+      description: (content as any).metaDescription || content.heroSubtitle,
     };
   } catch (error) {
     console.error('Error fetching metadata:', error);

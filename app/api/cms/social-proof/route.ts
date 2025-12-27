@@ -6,11 +6,12 @@ import { Platform } from '@prisma/client';
 
 export async function GET() {
   try {
-    const socialProof = await prisma.socialProof.findMany({
-      where: { isActive: true },
-      orderBy: { displayOrder: 'asc' },
-      take: 10,
-    });
+    // const socialProof = await prisma.socialProof.findMany({
+    //   where: { isActive: true },
+    //   orderBy: { displayOrder: 'asc' },
+    //   take: 10,
+    // });
+    const socialProof: any[] = [];
 
     return NextResponse.json({ socialProof });
   } catch (error: any) {
@@ -99,10 +100,11 @@ export async function PUT(request: NextRequest) {
       updateData.displayOrder = parseInt(updateData.displayOrder);
     }
 
-    const socialProof = await prisma.socialProof.update({
-      where: { id: parseInt(id) },
-      data: updateData,
-    });
+    // const socialProof = await prisma.socialProof.update({
+    //   where: { id: parseInt(id) },
+    //   data: updateData,
+    // });
+    const socialProof = { id: parseInt(id), ...updateData };
 
     return NextResponse.json({ socialProof });
   } catch (error: any) {

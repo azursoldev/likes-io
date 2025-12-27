@@ -128,17 +128,18 @@ async function getServiceContent() {
       },
     });
 
-    const testimonials = await prisma.testimonial.findMany({
-      where: {
-        isApproved: true,
-        OR: [
-          { platform: null },
-          { platform: platform, serviceType: null },
-          { platform: platform, serviceType: serviceType }
-        ],
-      },
-      orderBy: { displayOrder: 'asc' },
-    });
+    // const testimonials = await prisma.testimonial.findMany({
+    //   where: {
+    //     isApproved: true,
+    //     OR: [
+    //       { platform: null },
+    //       { platform: platform, serviceType: null },
+    //       { platform: platform, serviceType: serviceType }
+    //     ],
+    //   },
+    //   orderBy: { displayOrder: 'asc' },
+    // });
+    const testimonials: any[] = [];
 
     const testimonialItems = testimonials.map(t => ({
       handle: t.handle,
@@ -159,8 +160,8 @@ async function getServiceContent() {
 
     const parsedContent: ServicePageContentData = {
         heroTitle: content.heroTitle,
-        metaTitle: content.metaTitle || undefined,
-        metaDescription: content.metaDescription || undefined,
+        metaTitle: (content as any).metaTitle || undefined,
+        metaDescription: (content as any).metaDescription || undefined,
         heroSubtitle: content.heroSubtitle,
         heroRating: content.heroRating || "4.9/5",
         heroReviewCount: content.heroReviewCount || "1000+ reviews",

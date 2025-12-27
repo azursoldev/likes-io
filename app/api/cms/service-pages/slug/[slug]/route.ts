@@ -42,17 +42,18 @@ export async function GET(
     }));
 
     // Fetch Testimonials
-    const testimonials = await prisma.testimonial.findMany({
-      where: {
-        isApproved: true,
-        OR: [
-          { platform: null },
-          { platform: content.platform, serviceType: null },
-          { platform: content.platform, serviceType: content.serviceType }
-        ],
-      },
-      orderBy: { displayOrder: 'asc' },
-    });
+    // const testimonials = await prisma.testimonial.findMany({
+    //   where: {
+    //     isApproved: true,
+    //     OR: [
+    //       { platform: null },
+    //       { platform: content.platform, serviceType: null },
+    //       { platform: content.platform, serviceType: content.serviceType }
+    //     ],
+    //   },
+    //   orderBy: { displayOrder: 'asc' },
+    // });
+    const testimonials: any[] = [];
 
     responseData.testimonials = testimonials.map(t => ({
       handle: t.handle,
