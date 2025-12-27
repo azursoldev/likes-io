@@ -105,17 +105,17 @@ export async function PUT(request: NextRequest) {
     }
 
     if (updateData.platform) {
-      updateData.platform = updateData.platform.toUpperCase();
+      // updateData.platform = updateData.platform.toUpperCase();
     }
     if (updateData.serviceType) {
-      updateData.serviceType = updateData.serviceType.toUpperCase();
+      // updateData.serviceType = updateData.serviceType.toUpperCase();
     }
     if (updateData.displayOrder !== undefined) {
       updateData.displayOrder = parseInt(updateData.displayOrder);
     }
 
     const faq = await prisma.fAQ.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: updateData,
     });
 
@@ -151,7 +151,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.fAQ.delete({
-      where: { id: parseInt(id) },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });
