@@ -6,45 +6,42 @@ import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCheck,
-  faUserPlus,
+  faHeart,
   faChevronRight,
   faLock,
   faCreditCard,
   faInfoCircle,
   faLink,
-  faHeart,
   faShieldHalved,
   faTag,
-  faCoins
+  faCoins,
+  faUser
 } from "@fortawesome/free-solid-svg-icons";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
-export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
+export function FinalCheckoutContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const pathname = usePathname();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
   
   const username = searchParams.get("username") || "";
   const qty = searchParams.get("qty") || "500";
-  const priceValue = parseFloat(searchParams.get("price") || "15.99");
+  const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
+  const postLink = searchParams.get("postLink") || "";
+  const packageServiceId = searchParams.get("serviceId") || "";
 
-  // Determine root path (e.g., /instagram/followers or /some-slug)
-  let rootPath = "";
-  if (basePath) {
-     rootPath = basePath;
-  } else {
-     const pathParts = pathname?.split("/") || [];
-     const platform = pathParts[1] || "instagram";
-     const service = pathParts[2] || "followers";
-     rootPath = `/${platform}/${service}`;
-  }
+  // Get platform and service from pathname
+  const pathParts = pathname?.split("/") || [];
+  const platform = pathParts[1] || "instagram";
+  const service = pathParts[2] || "followers";
   
   // Create URLs for navigation
-  const detailsUrl = `${rootPath}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
-  const accountUrl = `${rootPath}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
+  const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
+  // No postsUrl for followers
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
   const [cardholderName, setCardholderName] = useState("");
@@ -55,11 +52,13 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
 
   const offers = [
     { id: "offer1", text: "50 likes x 10 posts", price: 5.99, icon: faHeart },
     { id: "offer2", text: "100 likes x 10 posts", price: 11.24, icon: faHeart },
-    { id: "offer3", text: "1K views", price: 11.24, icon: faLink }
+    { id: "offer3", text: "1K followers", price: 11.24, icon: faLink }
   ];
 
   const handleAddOffer = (offer: typeof offers[0]) => {
@@ -76,16 +75,98 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const totalPrice = priceValue + offersTotal;
   const currencyCode = currency;
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Processing payment...");
+    setProcessing(true);
+    setError("");
+
+    try {
+      // Validate required fields
+      if (paymentMethod === "card") {
+        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
+          setError("Please fill in all card details");
+          setProcessing(false);
+          return;
+        }
+      }
+
+      if (!username) {
+        setError("Username is required");
+        setProcessing(false);
+        return;
+      }
+
+      // Map service type from path
+      const serviceTypeMap: Record<string, string> = {
+        likes: "LIKES",
+        followers: "FOLLOWERS",
+        views: "VIEWS",
+        subscribers: "SUBSCRIBERS"
+      };
+
+      const serviceType = serviceTypeMap[service] || "FOLLOWERS";
+      const platformUpper = platform.toUpperCase();
+
+      // Determine link
+      let targetLink = postLink;
+      if (!targetLink && service === "followers" && username) {
+        // Construct profile link for followers if not provided
+        targetLink = `https://instagram.com/${username}`;
+      }
+
+      // Create order and payment in one call
+      const paymentResponse = await fetch("/api/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: platformUpper,
+          serviceType,
+          quantity: parseInt(qty) || 50,
+          price: totalPrice,
+          link: targetLink || null,
+          paymentMethod: paymentMethod, // 'card' or 'crypto'
+          currency: currencyCode,
+          packageServiceId: packageServiceId || undefined,
+        }),
+      });
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        if (paymentResponse.status === 401) {
+          throw new Error("Please log in to complete your purchase");
+        }
+        throw new Error(errorData.error || "Failed to process payment");
+      }
+
+      const { checkoutUrl } = await paymentResponse.json();
+      
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error("No checkout URL received");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      setError(err.message || "Failed to process payment. Please try again.");
+      setProcessing(false);
+    }
   };
+
+  // Get platform icon based on URL
+  const getPlatformIcon = () => {
+    return "/instagram-11.png";
+  };
+
+  const getMetricIcon = () => faUser; // Followers icon
+  const getMetricLabel = () => "Followers";
+  const getPlatformName = () => "Instagram";
 
   return (
     <>
       <Header />
       <main className="final-checkout-page">
         <div className="final-checkout-container">
+          {/* Progress Indicator */}
           <div className="checkout-progress">
             <Link href={detailsUrl} className="progress-step completed" style={{ textDecoration: "none", color: "inherit" }}>
               <div className="progress-step-icon">
@@ -96,24 +177,17 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            <Link href={accountUrl} className="progress-step completed" style={{ textDecoration: "none", color: "inherit" }}>
-              <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
-              </div>
-              <span className="progress-step-label">Account</span>
-            </Link>
-            <div className="progress-arrow">
-              <FontAwesomeIcon icon={faChevronRight} />
-            </div>
+            {/* Removed Posts Step */}
             <div className="progress-step active">
               <div className="progress-step-icon">
-                <span>3</span>
+                <span>2</span>
               </div>
               <span className="progress-step-label">Checkout</span>
             </div>
           </div>
 
           <div className="final-checkout-layout">
+            {/* Left Column - Payment Form */}
             <div className="final-checkout-left">
               <div className="checkout-card">
                 <h2 className="final-checkout-title">Review & Pay</h2>
@@ -122,6 +196,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     
+                    {/* Card Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
@@ -225,6 +300,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                       )}
                     </div>
 
+                    {/* Crypto Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
@@ -249,9 +325,28 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                     </div>
                   </div>
 
-                  <button type="submit" className="pay-button">
+                  {error && (
+                    <div style={{ 
+                      padding: "12px", 
+                      background: "#fef2f2", 
+                      border: "1px solid #fecaca", 
+                      borderRadius: "6px", 
+                      color: "#dc2626",
+                      marginBottom: "16px",
+                      fontSize: "14px"
+                    }}>
+                      {error}
+                    </div>
+                  )}
+                  
+                  <button 
+                    type="submit" 
+                    className="pay-button"
+                    disabled={processing}
+                    style={{ opacity: processing ? 0.6 : 1, cursor: processing ? "not-allowed" : "pointer" }}
+                  >
                     <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                    Pay {formatPrice(totalPrice)}
+                    {processing ? "Processing..." : `Pay ${formatPrice(totalPrice)}`}
                   </button>
 
                   <div className="payment-guarantees">
@@ -274,26 +369,29 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
               </div>
             </div>
 
+            {/* Right Column - Order Summary & Offers */}
             <div className="final-checkout-right">
+              {/* Account/Post Info */}
               <div className="checkout-card">
                 <div className="account-info-item">
                   <div className="account-info-left">
-                    <img src="/instagram-11.png" alt="Instagram" width={20} height={20} />
+                    <img src={getPlatformIcon()} alt={getPlatformName()} width={20} height={20} />
                     <span>@{username || "username"}</span>
                   </div>
                   <button type="button" className="change-button">Change</button>
                 </div>
               </div>
 
+              {/* Order Summary */}
               <div className="checkout-card order-summary-final">
                 <h3 className="order-summary-title">Order summary</h3>
                 
                 <div className="order-item">
                   <div className="order-item-left">
-                    <FontAwesomeIcon icon={faUserPlus} className="order-item-icon" />
+                    <FontAwesomeIcon icon={getMetricIcon()} className="order-item-icon" />
                     <div className="order-item-details">
-                      <span className="order-item-text">{qty} Instagram Followers</span>
-                      <span className="order-item-subtext">Delivered to your account.</span>
+                      <span className="order-item-text">{qty} {getPlatformName()} {getMetricLabel()}</span>
+                      <span className="order-item-subtext">Target: @{username}</span>
                     </div>
                   </div>
                   <span className="order-item-price">{formatPrice(priceValue)}</span>
@@ -357,6 +455,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                 </div>
               </div>
 
+              {/* Exclusive Offers */}
               <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
               
               <div className="checkout-card exclusive-offers">
@@ -402,7 +501,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                   <div className="offer-badge">25%</div>
                   <FontAwesomeIcon icon={faLink} className="offer-icon" />
                   <div className="offer-details">
-                    <span className="offer-text">1K views</span>
+                    <span className="offer-text">1K followers</span>
                     <div className="offer-price">
                       <span className="offer-price-new">For only {formatPrice(11.24)}</span>
                       <span className="offer-price-old">{formatPrice(14.99)}</span>
@@ -418,6 +517,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                 </div>
               </div>
 
+              {/* Security Guarantees */}
               <div className="checkout-card security-guarantees">
                 <div className="guarantee-item">
                   <div className="guarantee-icon-wrapper shield-wrapper">
@@ -440,11 +540,4 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   );
 }
 
-export default function FinalCheckoutPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <FinalCheckoutContent />
-    </Suspense>
-  );
-}
-
+export default FinalCheckoutContent;

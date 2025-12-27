@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useEffect, useRef } from "react";
+import { useState, Suspense, useEffect, useRef, useMemo } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,53 +11,178 @@ import {
   faShield,
   faShieldHalved,
   faLock,
-  faAngleDown
+  faAngleDown,
+  faUser
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../contexts/CurrencyContext";
-import { type PackageTabConfig } from "../../../components/PackagesSelector";
 
-export function CheckoutContent({ basePath = "/instagram/followers", packages: cmsPackages }: { basePath?: string; packages?: PackageTabConfig[] }) {
+type PackageOption = {
+  qty: number | string;
+  price: string;
+  strike?: string;
+  offText?: string;
+  serviceId?: string;
+};
+
+type PackageTab = {
+  id: string;
+  label: string;
+  packages: PackageOption[];
+};
+
+export function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
-  const [username, setUsername] = useState("kyliejenner");
+  const [username, setUsername] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
+  const [usernameValid, setUsernameValid] = useState(false);
+  const [packages, setPackages] = useState<PackageTab[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get package info from URL params if available
-  const qty = searchParams.get("qty") || "500";
-  const priceValue = parseFloat(searchParams.get("price") || "15.99");
+  const initialQty = searchParams.get("qty") || "500";
+  const initialPrice = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
   
-  // Format selected package from URL params
-  const currencyCode = getCurrencySymbol() === "€" ? "EUR" : "USD";
-  const selectedPackage = `${qty} Followers / ${formatPrice(priceValue)} ${currencyCode}`;
-
-  let dropdownOptions: string[] = [];
-
-  if (cmsPackages && cmsPackages.length > 0) {
-    const activeTab = cmsPackages.find(p => p.label === packageType) || cmsPackages[0];
-    if (activeTab) {
-      dropdownOptions = activeTab.packages.map(pkg => {
-        if (pkg.qty === "10,000+") return "10,000+ Custom";
-        const priceNum = parseFloat(pkg.price.replace(/[^0-9.]/g, ''));
-        return `${pkg.qty} Followers / ${formatPrice(priceNum)} ${currencyCode}`;
-      });
-    }
-  }
-
-  if (dropdownOptions.length === 0) {
-    const packagePrices = [4.49, 9.99, 15.99, 27.99, 62.49, 109.99];
-    const packageQuantities = [100, 250, 500, "1K", "2.5K", "5K"];
+  const [qty, setQty] = useState(initialQty);
+  const [priceValue, setPriceValue] = useState(initialPrice);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+  
+  // Fetch packages from CMS
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const response = await fetch("/api/cms/service-pages/instagram/followers");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.packages && Array.isArray(data.packages) && data.packages.length > 0) {
+            setPackages(data.packages);
+            
+            // Try to match initial package from URL params
+            const allPackages: PackageOption[] = [];
+            data.packages.forEach((tab: PackageTab) => {
+              tab.packages.forEach((pkg: PackageOption) => {
+                allPackages.push(pkg);
+              });
+            });
+            
+            // Find matching package from URL params
+            const matchingPackage = allPackages.find((pkg) => {
+              const pkgQty = typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty);
+              const pkgPrice = parseFloat(pkg.price.replace(/[^0-9.]/g, ""));
+              return pkgQty === initialQty && Math.abs(pkgPrice - initialPrice) < 0.01;
+            });
+            
+            if (matchingPackage) {
+              setQty(typeof matchingPackage.qty === "string" ? matchingPackage.qty : String(matchingPackage.qty));
+              setPriceValue(parseFloat(matchingPackage.price.replace(/[^0-9.]/g, "")));
+              if (matchingPackage.serviceId) {
+                setSelectedServiceId(matchingPackage.serviceId);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching packages:", error);
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
     
-    dropdownOptions = packageQuantities.map((qty, idx) => {
-      if (qty === "10,000+") return "10,000+ Custom";
-      return `${qty} Followers / ${formatPrice(packagePrices[idx])} ${currencyCode}`;
+    fetchPackages();
+  }, []);
+
+  // Format selected package
+  const currencyCode = getCurrencySymbol() === "€" ? "EUR" : "USD";
+  const selectedPackage = useMemo(() => {
+    const qtyDisplay = typeof qty === "string" ? qty : String(qty);
+    return `${qtyDisplay} Followers / ${formatPrice(priceValue)} ${currencyCode}`;
+  }, [qty, priceValue, formatPrice, currencyCode]);
+
+  // Build package options list from CMS data (remove duplicates, prioritize ones with serviceId)
+  const packageOptions = useMemo(() => {
+    const optionsMap = new Map<string, { label: string; qty: string | number; price: number; tabLabel: string; serviceId?: string }>();
+    
+    packages.forEach((tab) => {
+      tab.packages.forEach((pkg) => {
+        const priceNum = parseFloat(pkg.price.replace(/[^0-9.]/g, "") || "0");
+        const qtyDisplay = typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty);
+        
+        // Create a unique key based on quantity and price to avoid duplicates
+        const uniqueKey = `${qtyDisplay}_${priceNum}`;
+        
+        // Only add if not already exists, or if this one has better discount info or serviceId
+        const existing = optionsMap.get(uniqueKey);
+        if (!existing || pkg.offText || (pkg.serviceId && !existing.serviceId)) {
+          const offText = pkg.offText ? ` - ${pkg.offText}` : "";
+          optionsMap.set(uniqueKey, {
+            label: `${qtyDisplay} Followers / ${formatPrice(priceNum)} ${currencyCode}${offText}`,
+            qty: pkg.qty,
+            price: priceNum,
+            tabLabel: tab.label,
+            serviceId: pkg.serviceId,
+          });
+        }
+      });
     });
     
-    dropdownOptions.push("10,000+ Custom");
-  }
+    // Convert map to array and sort by quantity (numeric first, then string)
+    return Array.from(optionsMap.values()).sort((a, b) => {
+      const aQty = typeof a.qty === "string" ? parseFloat(a.qty.replace(/[^0-9.]/g, "")) || 999999 : a.qty;
+      const bQty = typeof b.qty === "string" ? parseFloat(b.qty.replace(/[^0-9.]/g, "")) || 999999 : b.qty;
+      return aQty - bQty;
+    });
+  }, [packages, formatPrice, currencyCode]);
+
+  // Validate Instagram username via API
+  const validateUsername = async (usernameValue: string) => {
+    if (!usernameValue.trim()) {
+      setUsernameError("");
+      setUsernameValid(false);
+      return;
+    }
+
+    setIsValidating(true);
+    setUsernameError("");
+
+    try {
+      const response = await fetch(`/api/instagram/validate-username?username=${encodeURIComponent(usernameValue)}`);
+      const data = await response.json();
+
+      if (response.ok && data.valid) {
+        setUsernameValid(true);
+        setUsernameError("");
+      } else {
+        setUsernameValid(false);
+        setUsernameError(data.error || "Invalid username");
+      }
+    } catch (error) {
+      console.error("Error validating username:", error);
+      setUsernameValid(false);
+      setUsernameError("Failed to validate username. Please try again.");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  // Debounce username validation
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (username.trim()) {
+        validateUsername(username);
+      } else {
+        setUsernameValid(false);
+        setUsernameError("");
+      }
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timeoutId);
+  }, [username]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -77,9 +202,22 @@ export function CheckoutContent({ basePath = "/instagram/followers", packages: c
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
-      // Navigate to posts selection page
-      router.push(`${basePath}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+    if (username.trim() && usernameValid) {
+      // Navigate to final checkout page (skipping posts selection for followers)
+      const params = new URLSearchParams({
+        username: username,
+        qty: typeof qty === "string" ? qty : String(qty),
+        price: String(priceValue),
+        type: packageType,
+      });
+      if (selectedServiceId) {
+        params.append("serviceId", selectedServiceId);
+      }
+      router.push(`/instagram/followers/checkout/final?${params.toString()}`);
+    } else if (!username.trim()) {
+      setUsernameError("Please enter your Instagram username");
+    } else if (!usernameValid) {
+      setUsernameError("Please enter a valid Instagram username");
     }
   };
 
@@ -102,7 +240,7 @@ export function CheckoutContent({ basePath = "/instagram/followers", packages: c
           <div className="checkout-card checkout-features-card">
             <div className="checkout-features">
               <div className="checkout-feature-item">
-                <FontAwesomeIcon icon={faThumbsUp} className="checkout-feature-icon" />
+                <FontAwesomeIcon icon={faUser} className="checkout-feature-icon" />
                 <span>Internationally acclaimed services & top ratings.</span>
               </div>
               <div className="checkout-feature-item">
@@ -125,13 +263,53 @@ export function CheckoutContent({ basePath = "/instagram/followers", packages: c
             <form className="checkout-form" onSubmit={handleContinue}>
               <div className="checkout-form-group">
                 <label className="checkout-label">Instagram username</label>
-                <input
-                  type="text"
-                  className="checkout-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your Instagram username"
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    className={`checkout-input ${usernameError ? "checkout-input-error" : ""} ${usernameValid ? "checkout-input-valid" : ""}`}
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setUsernameError("");
+                    }}
+                    placeholder="Enter your Instagram username"
+                    disabled={isValidating}
+                  />
+                  {isValidating && (
+                    <span style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "14px",
+                      color: "#666"
+                    }}>
+                      Validating...
+                    </span>
+                  )}
+                  {usernameValid && !isValidating && (
+                    <span style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "14px",
+                      color: "#10b981"
+                    }}>
+                      ✓ Valid
+                    </span>
+                  )}
+                </div>
+                {usernameError && (
+                  <span style={{
+                    display: "block",
+                    marginTop: "6px",
+                    fontSize: "13px",
+                    color: "#ef4444"
+                  }}>
+                    {usernameError}
+                  </span>
+                )}
               </div>
 
               <div className="checkout-form-group">
@@ -141,24 +319,34 @@ export function CheckoutContent({ basePath = "/instagram/followers", packages: c
                     type="button"
                     className="checkout-dropdown"
                     onClick={() => setIsPackageOpen(!isPackageOpen)}
+                    disabled={loadingPackages}
                   >
-                    <span>{selectedPackage}</span>
+                    <span>{loadingPackages ? "Loading packages..." : selectedPackage}</span>
                     <FontAwesomeIcon icon={faAngleDown} className="checkout-dropdown-icon" />
                   </button>
-                  {isPackageOpen && (
+                  {isPackageOpen && !loadingPackages && (
                     <div className="checkout-dropdown-menu">
-                      {dropdownOptions.map((pkg, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          className="checkout-dropdown-item"
-                          onClick={() => {
-                            setIsPackageOpen(false);
-                          }}
-                        >
-                          {pkg}
-                        </button>
-                      ))}
+                      {packageOptions.length === 0 ? (
+                        <div style={{ padding: "12px", textAlign: "center", color: "#666" }}>
+                          No packages available
+                        </div>
+                      ) : (
+                        packageOptions.map((pkg, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="checkout-dropdown-item"
+                            onClick={() => {
+                              setQty(typeof pkg.qty === "string" ? pkg.qty : String(pkg.qty));
+                              setPriceValue(pkg.price);
+                              setSelectedServiceId(pkg.serviceId || "");
+                              setIsPackageOpen(false);
+                            }}
+                          >
+                            {pkg.label}
+                          </button>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>
@@ -200,7 +388,7 @@ export function CheckoutContent({ basePath = "/instagram/followers", packages: c
                   <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect width="60" height="40" rx="6" fill="#0066CC"/>
                     <circle cx="12" cy="12" r="3" fill="#FFA500"/>
-                    <text x="30" y="26" fontFamily="Arial, sans-serif" fontSize="18" fontWeight="bold" fill="white" textAnchor="middle" letterSpacing="1px">iCH</text>
+                    <text x="30" y="26" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="1px">iCH</text>
                   </svg>
                 </div>
                 {/* Mastercard Logo */}
@@ -222,11 +410,4 @@ export function CheckoutContent({ basePath = "/instagram/followers", packages: c
   );
 }
 
-export default function CheckoutPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <CheckoutContent />
-    </Suspense>
-  );
-}
-
+export default CheckoutContent;
