@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const published = searchParams.get('published') === 'true';
 
     const where: any = {};
-    if (category) where.category = category;
+    // if (category) where.category = category;
     if (published) {
       where.isPublished = true;
       where.publishedAt = { lte: new Date() };
@@ -81,13 +81,13 @@ export async function POST(request: NextRequest) {
         slug,
         excerpt,
         content,
-        featuredImage,
+        coverImage: featuredImage,
         authorId: session.user.id,
-        category,
-        tags: tags ? (tags as any) : null,
+        // category,
+        // tags: tags ? (tags as any) : null,
         isPublished,
         publishedAt: isPublished ? new Date() : null,
-        seoMeta: seoMeta ? (seoMeta as any) : null,
+        // seoMeta: seoMeta ? (seoMeta as any) : null,
       },
     });
 
