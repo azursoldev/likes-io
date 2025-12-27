@@ -392,6 +392,18 @@ model LegalPage {
   @@map("legal_pages")
 }
 
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  type      String
+  subject   String
+  body      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
 enum UserRole {
   USER
   ADMIN
