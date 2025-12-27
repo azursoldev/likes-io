@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
-import { Platform, ServiceType } from '@prisma/client';
+import { Platform, ServiceType, Prisma } from '@prisma/client';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,9 +82,9 @@ export async function POST(request: NextRequest) {
       platform: platform.toUpperCase() as Platform,
       packType: serviceType.toUpperCase() as ServiceType,
       quality: quality.toLowerCase(),
-      features: JSON.stringify(features || []),
+      features: features || [],
       explanation: explanation || '',
-      pricing: pricing ? JSON.stringify(pricing) : null,
+      pricing: pricing || Prisma.DbNull,
       isActive: true,
     };
 
