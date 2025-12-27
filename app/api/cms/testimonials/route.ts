@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
           : null;
     
     // Ensure normalizedRating is not NaN (parseInt can return NaN)
-    const finalRating = normalizedRating !== null && isNaN(normalizedRating) ? null : normalizedRating;
+    const finalRating = normalizedRating !== null && isNaN(normalizedRating) ? 5 : (normalizedRating ?? 5);
 
     const normalizedDisplayOrder =
       typeof displayOrder === 'number' && !isNaN(displayOrder)
