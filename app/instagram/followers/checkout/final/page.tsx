@@ -541,4 +541,10 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   );
 }
 
-export default FinalCheckoutContent;
+export default function FinalCheckoutPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+      <FinalCheckoutContent />
+    </Suspense>
+  );
+}
