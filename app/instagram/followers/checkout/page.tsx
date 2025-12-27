@@ -31,7 +31,7 @@ type PackageTab = {
   packages: PackageOption[];
 };
 
-export function CheckoutContent() {
+export function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: string; packages?: any[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -40,8 +40,8 @@ export function CheckoutContent() {
   const [isValidating, setIsValidating] = useState(false);
   const [usernameError, setUsernameError] = useState("");
   const [usernameValid, setUsernameValid] = useState(false);
-  const [packages, setPackages] = useState<PackageTab[]>([]);
-  const [loadingPackages, setLoadingPackages] = useState(true);
+  const [packages, setPackages] = useState<PackageTab[]>(initialPackages || []);
+  const [loadingPackages, setLoadingPackages] = useState(!initialPackages);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get package info from URL params if available
@@ -53,8 +53,10 @@ export function CheckoutContent() {
   const [priceValue, setPriceValue] = useState(initialPrice);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   
-  // Fetch packages from CMS
+  // Fetch packages from CMS if not provided via props
   useEffect(() => {
+    if (initialPackages && initialPackages.length > 0) return;
+    
     const fetchPackages = async () => {
       try {
         const response = await fetch("/api/cms/service-pages/instagram/followers");

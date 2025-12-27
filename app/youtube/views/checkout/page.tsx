@@ -32,7 +32,7 @@ type PackageTab = {
   packages: PackageOption[];
 };
 
-export function CheckoutContent() {
+export function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: string; packages?: any[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -41,8 +41,8 @@ export function CheckoutContent() {
   const [isValidating, setIsValidating] = useState(false);
   const [linkError, setLinkError] = useState("");
   const [linkValid, setLinkValid] = useState(false);
-  const [packages, setPackages] = useState<PackageTab[]>([]);
-  const [loadingPackages, setLoadingPackages] = useState(true);
+  const [packages, setPackages] = useState<PackageTab[]>(initialPackages || []);
+  const [loadingPackages, setLoadingPackages] = useState(!initialPackages);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get package info from URL params if available
@@ -54,8 +54,10 @@ export function CheckoutContent() {
   const [priceValue, setPriceValue] = useState(initialPrice);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   
-  // Fetch packages from CMS
+  // Fetch packages from CMS if not provided via props
   useEffect(() => {
+    if (initialPackages && initialPackages.length > 0) return;
+
     const fetchPackages = async () => {
       try {
         const response = await fetch("/api/cms/service-pages/youtube/views");
@@ -171,7 +173,8 @@ export function CheckoutContent() {
         params.append("serviceId", selectedServiceId);
       }
       
-      router.push(`/youtube/views/checkout/final?${params.toString()}`);
+      const baseUrl = basePath || "/youtube/views";
+      router.push(`${baseUrl}/checkout/final?${params.toString()}`);
     } else if (!videoLink.trim()) {
         setLinkError("Please enter a video link");
     }
