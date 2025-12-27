@@ -30,8 +30,8 @@ async function getServiceContent(slug: string) {
     // Fetch FAQs
     const faqs = await prisma.fAQ.findMany({
       where: {
-        platform: content.platform,
-        serviceType: content.serviceType,
+        // platform: content.platform, // Removed as per schema
+        // serviceType: content.serviceType, // Removed as per schema
         isActive: true,
       },
       orderBy: { displayOrder: 'asc' },
