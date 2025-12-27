@@ -8,7 +8,7 @@ import {
   faThumbsUp, 
   faCoffee, 
   faClock, 
-  faShield,
+  faShield, 
   faShieldHalved,
   faLock,
   faAngleDown,
