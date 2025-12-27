@@ -22,7 +22,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
-export function FinalCheckoutContent() {
+export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -34,13 +34,14 @@ export function FinalCheckoutContent() {
   const packageType = searchParams.get("type") || "High-Retention";
   const packageServiceId = searchParams.get("serviceId") || "";
 
-  // Get platform and service from pathname
+  // Get platform and service from pathname or use basePath
   const pathParts = pathname?.split("/") || [];
   const platform = pathParts[1] || "youtube";
   const service = pathParts[2] || "views";
   
   // Create URLs for navigation
-  const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
+  const baseUrl = basePath || `/${platform}/${service}`;
+  const detailsUrl = `${baseUrl}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
   const [cardholderName, setCardholderName] = useState("");
