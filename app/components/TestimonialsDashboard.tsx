@@ -17,7 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 type DbTestimonial = {
-  id: number;
+  id: string;
   handle: string;
   role?: string | null;
   text: string;
@@ -179,7 +179,7 @@ export default function TestimonialsDashboard() {
       setError(e.message || "Failed to update testimonial");
     }
   };
-  const toggleApprove = async (id: number, approve: boolean) => {
+  const toggleApprove = async (id: string, approve: boolean) => {
     try {
       const res = await fetch(`/api/cms/testimonials/${id}/approve`, {
         method: "POST",
