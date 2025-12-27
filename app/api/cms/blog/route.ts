@@ -122,7 +122,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const postId = parseInt(id, 10);
+    const postId = id; // parseInt(id, 10);
     const body = await request.json();
 
     const {
@@ -143,12 +143,12 @@ export async function PUT(request: NextRequest) {
         title,
         excerpt,
         content,
-        featuredImage,
-        category,
-        tags: tags ? (tags as any) : undefined,
+        coverImage: featuredImage,
+        // category,
+        // tags: tags ? (tags as any) : undefined,
         isPublished,
         publishedAt: typeof publishedAt === 'string' ? new Date(publishedAt) : publishedAt,
-        seoMeta: seoMeta ? (seoMeta as any) : undefined,
+        // seoMeta: seoMeta ? (seoMeta as any) : undefined,
       },
     });
 
@@ -183,7 +183,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const postId = parseInt(id, 10);
+    const postId = id; // parseInt(id, 10);
 
     await prisma.blogPost.delete({
       where: { id: postId },
