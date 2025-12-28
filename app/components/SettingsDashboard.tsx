@@ -25,6 +25,12 @@ export default function SettingsDashboard() {
   const [cryptomusApiKey, setCryptomusApiKey] = useState("••••••••");
   const [cryptomusTestMode, setCryptomusTestMode] = useState(true);
   const [supportEmail, setSupportEmail] = useState("support@likes.io");
+  
+  // RapidAPI
+  const [rapidApiKey, setRapidApiKey] = useState("••••••••");
+  const [rapidApiInstagramHost, setRapidApiInstagramHost] = useState("instagram120.p.rapidapi.com");
+  const [rapidApiTikTokHost, setRapidApiTikTokHost] = useState("tiktok-data.p.rapidapi.com");
+  const [rapidApiYouTubeHost, setRapidApiYouTubeHost] = useState("youtube-data.p.rapidapi.com");
 
   // Fetch settings on mount
   useEffect(() => {
@@ -56,6 +62,12 @@ export default function SettingsDashboard() {
         
         if (data.newServiceIndicator !== undefined) setNewServiceIndicator(data.newServiceIndicator);
         if (data.supportEmail) setSupportEmail(data.supportEmail);
+        
+        // RapidAPI
+        if (data.rapidApiKey) setRapidApiKey(data.rapidApiKey);
+        if (data.rapidApiInstagramHost) setRapidApiInstagramHost(data.rapidApiInstagramHost);
+        if (data.rapidApiTikTokHost) setRapidApiTikTokHost(data.rapidApiTikTokHost);
+        if (data.rapidApiYouTubeHost) setRapidApiYouTubeHost(data.rapidApiYouTubeHost);
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -86,6 +98,11 @@ export default function SettingsDashboard() {
           exitIntentDiscountCode,
           newServiceIndicator,
           supportEmail,
+          // RapidAPI
+          rapidApiKey: rapidApiKey.includes('••••') ? undefined : rapidApiKey,
+          rapidApiInstagramHost,
+          rapidApiTikTokHost,
+          rapidApiYouTubeHost,
         }),
       });
 
@@ -229,6 +246,52 @@ export default function SettingsDashboard() {
                     <span className="settings-toggle-slider"></span>
                   </label>
                 </div>
+              </div>
+            </div>
+
+            {/* RapidAPI Configuration */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">RapidAPI Configuration</h2>
+              <p className="settings-card-description">Configure API keys and hosts for social media data fetching.</p>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  RapidAPI Key
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={rapidApiKey}
+                    onChange={(e) => setRapidApiKey(e.target.value)}
+                    placeholder="Enter your RapidAPI key"
+                  />
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
+                </label>
+                <label className="settings-label">
+                  Instagram Host
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={rapidApiInstagramHost}
+                    onChange={(e) => setRapidApiInstagramHost(e.target.value)}
+                  />
+                </label>
+                <label className="settings-label">
+                  TikTok Host
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={rapidApiTikTokHost}
+                    onChange={(e) => setRapidApiTikTokHost(e.target.value)}
+                  />
+                </label>
+                <label className="settings-label">
+                  YouTube Host
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={rapidApiYouTubeHost}
+                    onChange={(e) => setRapidApiYouTubeHost(e.target.value)}
+                  />
+                </label>
               </div>
             </div>
 

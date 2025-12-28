@@ -103,6 +103,11 @@ export async function GET() {
       hasBigPayMeConfig: !!settings.bigPayMeApiKey,
       hasRapidApiConfig: !!settings.rapidApiKey,
       hasSmtpConfig: !!settings.smtpHost,
+      // RapidAPI
+      rapidApiKey: maskApiKey(getField(settings, 'rapidApiKey', null)),
+      rapidApiInstagramHost: getField(settings, 'rapidApiInstagramHost', 'instagram120.p.rapidapi.com'),
+      rapidApiTikTokHost: getField(settings, 'rapidApiTikTokHost', 'tiktok-data.p.rapidapi.com'),
+      rapidApiYouTubeHost: getField(settings, 'rapidApiYouTubeHost', 'youtube-data.p.rapidapi.com'),
     });
   } catch (error: any) {
     console.error('Get settings error:', error);

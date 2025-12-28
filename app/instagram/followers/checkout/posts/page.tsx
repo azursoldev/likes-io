@@ -6,9 +6,9 @@ import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCheck,
+  faChevronRight,
   faLink,
-  faHeart,
-  faChevronRight
+  faUser
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
@@ -26,12 +26,10 @@ function PostsSelectionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
-  const [postLink, setPostLink] = useState("");
   const [selectedPost, setSelectedPost] = useState<string>("");
+  const [manualLink, setManualLink] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState("");
   
   const username = searchParams.get("username") || "";
@@ -40,74 +38,61 @@ function PostsSelectionContent() {
   const packageType = searchParams.get("type") || "High-Quality";
   const serviceId = searchParams.get("serviceId") || "";
 
-  const fetchPosts = async (cursor?: string) => {
-    if (!username) return;
-    
-    try {
-      if (cursor) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      
-      const url = cursor 
-        ? `/api/instagram/posts?username=${username}&cursor=${encodeURIComponent(cursor)}`
-        : `/api/instagram/posts?username=${username}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (response.ok) {
-        if (cursor) {
-          setPosts(prev => [...prev, ...(data.posts || [])]);
-        } else {
-          setPosts(data.posts || []);
-        }
-        setNextCursor(data.nextCursor || null);
-      } else {
-        if (!cursor) setError(data.error || "Failed to fetch posts");
-      }
-    } catch (err) {
-      if (!cursor) setError("An error occurred while fetching posts");
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchPosts = async () => {
+      if (!username) return;
+      
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/instagram/posts?username=${username}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          setPosts(data.posts || []);
+        } else {
+          setError(data.error || "Failed to fetch posts");
+        }
+      } catch (err) {
+        setError("An error occurred while fetching posts");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPosts();
   }, [username]);
 
-  const handleLoadMore = () => {
-    if (nextCursor) {
-      fetchPosts(nextCursor);
-    }
-  };
-
   const handlePostSelect = (url: string) => {
-    setSelectedPost(url);
-    setPostLink(url); // Also update the manual input value
+    if (selectedPost === url) {
+      setSelectedPost(""); // Deselect
+      setManualLink("");
+    } else {
+      setSelectedPost(url);
+      setManualLink(url);
+    }
   };
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalLink = selectedPost || postLink;
     
-    if (finalLink.trim()) {
-      // Navigate to final checkout step, include serviceId if available
-      const params = new URLSearchParams({
-        username: username,
-        qty: qty,
-        price: String(priceValue),
-        type: packageType,
-        postLink: finalLink,
-      });
-      if (serviceId) {
-        params.append("serviceId", serviceId);
-      }
-      router.push(`/instagram/likes/checkout/final?${params.toString()}`);
+    const params = new URLSearchParams({
+      username: username,
+      qty: qty,
+      price: String(priceValue),
+      type: packageType,
+    });
+    
+    // Include post link if selected or manually entered
+    const finalLink = selectedPost || manualLink;
+    if (finalLink) {
+      params.append("postLink", finalLink);
     }
+    
+    if (serviceId) {
+      params.append("serviceId", serviceId);
+    }
+    
+    router.push(`/instagram/followers/checkout/final?${params.toString()}`);
   };
 
   return (
@@ -147,7 +132,10 @@ function PostsSelectionContent() {
             {/* Left Column - Select Post */}
             <div className="posts-selection-left">
               <div className="checkout-card">
-                <h2 className="posts-selection-title">Select Posts</h2>
+                <h2 className="posts-selection-title">Select Posts (Optional)</h2>
+                <p className="posts-helper-text" style={{ marginBottom: '20px' }}>
+                   Verify your account by selecting a post, or continue to checkout.
+                </p>
                 
                 {loading ? (
                   <div className="loading-state" style={{ padding: '40px', textAlign: 'center' }}>
@@ -174,76 +162,58 @@ function PostsSelectionContent() {
                      <p className="text-sm text-gray-500" style={{ marginTop: '10px' }}>Ensure your account is public.</p>
                    </div>
                 ) : (
-                  <>
-                    <div className="posts-grid" style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
-                      gap: '10px',
-                      marginBottom: '20px'
-                    }}>
-                      {posts.map((post) => (
-                        <div 
-                          key={post.id} 
-                          className={`post-item ${selectedPost === post.url ? 'selected' : ''}`}
-                          onClick={() => handlePostSelect(post.url)}
-                          style={{
-                            cursor: 'pointer',
-                            border: selectedPost === post.url ? '3px solid #f97316' : '1px solid #eee',
-                            borderRadius: '8px',
-                            overflow: 'hidden',
-                            aspectRatio: '1/1',
-                            position: 'relative'
-                          }}
-                        >
-                          <img 
-                            src={post.thumbnail} 
-                            alt={post.caption} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          />
-                          {selectedPost === post.url && (
-                            <div style={{
-                              position: 'absolute',
-                              top: '5px',
-                              right: '5px',
-                              background: '#f97316',
-                              color: 'white',
-                              borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '12px'
-                            }}>
-                              <FontAwesomeIcon icon={faCheck} />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {nextCursor && (
-                      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                        <button 
-                          onClick={handleLoadMore}
-                          disabled={loadingMore}
-                          style={{
-                            padding: '10px 20px',
-                            background: '#f97316',
+                  <div className="posts-grid" style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
+                    gap: '10px',
+                    marginBottom: '20px'
+                  }}>
+                    {posts.map((post) => (
+                      <div 
+                        key={post.id} 
+                        className={`post-item ${selectedPost === post.url ? 'selected' : ''}`}
+                        onClick={() => handlePostSelect(post.url)}
+                        style={{
+                          cursor: 'pointer',
+                          border: selectedPost === post.url ? '3px solid #007bff' : '1px solid #eee',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          aspectRatio: '1/1',
+                          position: 'relative'
+                        }}
+                      >
+                        <img 
+                          src={post.thumbnail} 
+                          alt={post.caption} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        {selectedPost === post.url && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '5px',
+                            right: '5px',
+                            background: '#007bff',
                             color: 'white',
-                            border: 'none',
-                            borderRadius: '5px',
-                            cursor: loadingMore ? 'not-allowed' : 'pointer',
-                            opacity: loadingMore ? 0.7 : 1,
-                            fontSize: '14px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {loadingMore ? 'Loading...' : 'Load More'}
-                        </button>
+                            borderRadius: '50%',
+                            width: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '12px'
+                          }}>
+                            <FontAwesomeIcon icon={faCheck} />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </>
+                    ))}
+                  </div>
+                )}
+                
+                {posts.length === 0 && !loading && !error && (
+                  <p style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                    No posts found. You can enter a link manually below.
+                  </p>
                 )}
 
                 {/* Manual Link Input Fallback */}
@@ -258,9 +228,9 @@ function PostsSelectionContent() {
                         <input
                           type="text"
                           className="posts-input"
-                          value={postLink}
+                          value={manualLink}
                           onChange={(e) => {
-                            setPostLink(e.target.value);
+                            setManualLink(e.target.value);
                             setSelectedPost(""); // Clear selection if typing manually
                           }}
                           placeholder="https://www.instagram.com/p/C..."
@@ -283,20 +253,17 @@ function PostsSelectionContent() {
                       </div>
                       <span className="order-summary-text">@{username || "username"}</span>
                     </div>
-                    <button type="button" className="order-change-btn">Change</button>
                   </div>
 
                   <div className="order-summary-item">
                     <div className="order-summary-left">
                       <div className="order-summary-icon">
-                        <FontAwesomeIcon icon={faHeart} />
+                        <FontAwesomeIcon icon={faUser} />
                       </div>
                       <div className="order-summary-details">
-                        <span className="order-summary-text">{qty} Instagram Likes</span>
-                        <span className="order-summary-subtext">Applying to {selectedPost || postLink ? '1' : '0'} post.</span>
+                        <span className="order-summary-text">{qty} Instagram Followers</span>
                       </div>
                     </div>
-                    <button type="button" className="order-change-btn">Change</button>
                   </div>
 
                   <div className="order-summary-divider"></div>
@@ -310,7 +277,6 @@ function PostsSelectionContent() {
                     type="button" 
                     className="order-continue-btn"
                     onClick={handleContinue}
-                    disabled={!postLink.trim() && !selectedPost}
                   >
                     Continue to checkout
                   </button>

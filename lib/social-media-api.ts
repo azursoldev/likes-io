@@ -2,11 +2,6 @@ import axios from 'axios';
 import { prisma } from './prisma';
 import { Platform } from '@prisma/client';
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-const RAPIDAPI_INSTAGRAM_HOST = process.env.RAPIDAPI_INSTAGRAM_HOST || 'instagram-data1.p.rapidapi.com';
-const RAPIDAPI_TIKTOK_HOST = process.env.RAPIDAPI_TIKTOK_HOST || 'tiktok-data.p.rapidapi.com';
-const RAPIDAPI_YOUTUBE_HOST = process.env.RAPIDAPI_YOUTUBE_HOST || 'youtube-data.p.rapidapi.com';
-
 interface ProfileData {
   username: string;
   fullName?: string;
@@ -31,7 +26,46 @@ interface PostData {
   [key: string]: any;
 }
 
+export interface FetchPostsResult {
+  posts: PostData[];
+  nextCursor?: string;
+}
+
 export class SocialMediaAPI {
+  private apiConfig: {
+    key: string;
+    instagramHost: string;
+    tikTokHost: string;
+    youTubeHost: string;
+    lastFetched: number;
+  } | null = null;
+
+  private async getRapidApiConfig() {
+    // Check in-memory cache (5 minutes)
+    if (this.apiConfig && Date.now() - this.apiConfig.lastFetched < 5 * 60 * 1000) {
+      return this.apiConfig;
+    }
+
+    // Fetch from DB
+    const settings = await prisma.adminSettings.findFirst();
+    
+    // Fallback to env vars if not in DB
+    const key = settings?.rapidApiKey || process.env.RAPIDAPI_KEY;
+    const instagramHost = settings?.rapidApiInstagramHost || process.env.RAPIDAPI_INSTAGRAM_HOST || 'instagram120.p.rapidapi.com';
+    const tikTokHost = settings?.rapidApiTikTokHost || process.env.RAPIDAPI_TIKTOK_HOST || 'tiktok-data.p.rapidapi.com';
+    const youTubeHost = settings?.rapidApiYouTubeHost || process.env.RAPIDAPI_YOUTUBE_HOST || 'youtube-data.p.rapidapi.com';
+
+    this.apiConfig = {
+      key: key || '',
+      instagramHost,
+      tikTokHost,
+      youTubeHost,
+      lastFetched: Date.now()
+    };
+
+    return this.apiConfig;
+  }
+
   private getCacheKey(platform: Platform, username: string): string {
     return `${platform}:${username}`;
   }
@@ -115,43 +149,48 @@ export class SocialMediaAPI {
     return profileData;
   }
 
-  async fetchPosts(platform: Platform, username: string): Promise<PostData[]> {
-    const cached = await prisma.socialProfile.findUnique({
-      where: {
-        platform_username: {
-          platform,
-          username: username.toLowerCase(),
+  async fetchPosts(platform: Platform, username: string, cursor?: string): Promise<FetchPostsResult> {
+    // Only check cache for initial page, and skip for Instagram to ensure we get fresh cursor for pagination
+    if (!cursor && platform !== 'INSTAGRAM') {
+      const cached = await prisma.socialProfile.findUnique({
+        where: {
+          platform_username: {
+            platform,
+            username: username.toLowerCase(),
+          },
         },
-      },
-    });
+      });
 
-    if (cached && cached.posts && cached.expiresAt > new Date()) {
-      return cached.posts as PostData[];
+      if (cached && cached.posts && cached.expiresAt > new Date()) {
+        return { posts: cached.posts as PostData[] };
+      }
     }
 
-    let posts: PostData[];
+    let result: FetchPostsResult;
 
     switch (platform) {
       case 'INSTAGRAM':
-        posts = await this.fetchInstagramPosts(username);
+        result = await this.fetchInstagramPosts(username, cursor);
         break;
       case 'TIKTOK':
-        posts = await this.fetchTikTokVideos(username);
+        result = await this.fetchTikTokVideos(username, cursor);
         break;
       case 'YOUTUBE':
-        posts = await this.fetchYouTubeVideos(username);
+        result = await this.fetchYouTubeVideos(username, cursor);
         break;
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }
 
-    // Update cache with posts
-    const profileData = await this.getCachedProfile(platform, username) || {
-      username,
-    };
-    await this.cacheProfile(platform, username, profileData, posts);
+    // Update cache with posts (only for first page)
+    if (!cursor) {
+      const profileData = await this.getCachedProfile(platform, username) || {
+        username,
+      };
+      await this.cacheProfile(platform, username, profileData, result.posts);
+    }
 
-    return posts;
+    return result;
   }
 
   async validateUrl(platform: Platform, url: string): Promise<{ valid: boolean; id?: string; username?: string }> {
@@ -173,69 +212,159 @@ export class SocialMediaAPI {
 
   // Instagram Methods
   private async fetchInstagramProfile(username: string): Promise<ProfileData> {
-    if (!RAPIDAPI_KEY) {
+    const config = await this.getRapidApiConfig();
+    if (!config.key) {
       throw new Error('RAPIDAPI_KEY is not configured');
     }
 
     try {
-      const response = await axios.get(
-        `https://${RAPIDAPI_INSTAGRAM_HOST}/user/info`,
+      // Fetch profile info using POST to /api/instagram/profile
+      const profileResponse = await axios.post(
+        `https://${config.instagramHost}/api/instagram/profile`,
+        { username },
         {
-          params: { username },
           headers: {
-            'X-RapidAPI-Key': RAPIDAPI_KEY,
-            'X-RapidAPI-Host': RAPIDAPI_INSTAGRAM_HOST,
+            'Content-Type': 'application/json',
+            'X-RapidAPI-Key': config.key,
+            'X-RapidAPI-Host': config.instagramHost,
           },
         }
       );
+      
+      const profileData = profileResponse.data.result;
+      
+      if (!profileData) {
+         throw new Error('No profile data returned from API');
+      }
 
-      const data = response.data;
       return {
-        username: data.username || username,
-        fullName: data.full_name,
-        bio: data.biography,
-        followerCount: data.edge_followed_by?.count || data.follower_count,
-        followingCount: data.edge_follow?.count || data.following_count,
-        postCount: data.edge_owner_to_timeline_media?.count || data.media_count,
-        profilePicture: data.profile_pic_url_hd || data.profile_pic_url,
-        isVerified: data.is_verified,
+        username: profileData.username || username,
+        fullName: profileData.full_name,
+        bio: profileData.biography,
+        followerCount: profileData.edge_followed_by?.count || profileData.follower_count || 0,
+        followingCount: profileData.edge_follow?.count || profileData.following_count || 0,
+        postCount: profileData.edge_owner_to_timeline_media?.count || profileData.media_count || 0,
+        profilePicture: profileData.profile_pic_url_hd || profileData.profile_pic_url,
+        isVerified: profileData.is_verified || false,
+        isPrivate: profileData.is_private || false,
       };
     } catch (error: any) {
       console.error('Instagram API Error:', error.message);
+      
+      // MOCK DATA FALLBACK for Development/Testing when API is down/unsubscribed
+      /*
+      if (process.env.NODE_ENV === 'development' || error.response?.status === 403 || error.response?.status === 502) {
+        console.log('Returning mock profile data');
+        return {
+          username: username,
+          fullName: "Test User",
+          bio: "This is a mock profile (API unavailable)",
+          followerCount: 1234,
+          followingCount: 567,
+          postCount: 42,
+          profilePicture: "https://via.placeholder.com/150",
+          isVerified: false,
+        };
+      }
+      */
+      
       throw new Error(`Failed to fetch Instagram profile: ${error.message}`);
     }
   }
 
-  private async fetchInstagramPosts(username: string): Promise<PostData[]> {
-    if (!RAPIDAPI_KEY) {
+  private async fetchInstagramPosts(username: string, cursor?: string): Promise<FetchPostsResult> {
+    const config = await this.getRapidApiConfig();
+    if (!config.key) {
       throw new Error('RAPIDAPI_KEY is not configured');
     }
 
     try {
-      const response = await axios.get(
-        `https://${RAPIDAPI_INSTAGRAM_HOST}/user/posts`,
+      console.log(`Fetching Instagram posts for ${username} using ${config.instagramHost}/api/instagram/posts with cursor: ${cursor || 'none'}`);
+      
+      // Updated logic based on user provided PHP snippet: POST request to /api/instagram/posts
+      const response = await axios.post(
+        `https://${config.instagramHost}/api/instagram/posts`,
         {
-          params: { username, limit: 12 },
+          username: username,
+          maxId: cursor || ''
+        },
+        {
           headers: {
-            'X-RapidAPI-Key': RAPIDAPI_KEY,
-            'X-RapidAPI-Host': RAPIDAPI_INSTAGRAM_HOST,
+            'Content-Type': 'application/json',
+            'X-RapidAPI-Key': config.key,
+            'X-RapidAPI-Host': config.instagramHost,
           },
         }
       );
 
-      const posts = response.data?.data || response.data || [];
-      return posts.map((post: any) => ({
-        id: post.shortcode || post.id,
-        url: `https://www.instagram.com/p/${post.shortcode || post.id}/`,
-        thumbnail: post.display_url || post.thumbnail_url,
-        caption: post.caption?.text || post.caption,
-        likes: post.edge_media_preview_like?.count || post.like_count,
-        comments: post.edge_media_to_comment?.count || post.comment_count,
-        timestamp: post.taken_at_timestamp || post.timestamp,
-      }));
+      // Debug logging
+      console.log('Instagram Posts API Response Status:', response.status);
+      
+      // Attempt to parse response based on common structures from this API family
+      let postsData = [];
+      let nextCursor: string | undefined;
+      
+      if (Array.isArray(response.data)) {
+        postsData = response.data;
+      } else if (response.data?.result?.edges) {
+        postsData = response.data.result.edges;
+        if (response.data.result.page_info?.has_next_page) {
+            nextCursor = response.data.result.page_info.end_cursor;
+        }
+      } else if (response.data?.data) {
+        postsData = response.data.data;
+      } else if (response.data?.items) {
+        postsData = response.data.items;
+      } else {
+        console.log('Unknown response structure:', Object.keys(response.data));
+      }
+
+      const posts = postsData.map((item: any) => {
+        // Handle different API structures (direct post object or edge/node structure)
+        const post = item.node ? item.node : item;
+        
+        const shortcode = post.shortcode || post.code || post.id || post.pk;
+        
+        // Try to find the best quality image
+        // Priority:
+        // 1. image_versions2.candidates[0] (Highest quality usually)
+        // 2. display_url (Standard fallback)
+        // 3. thumbnail_url (Sometimes used)
+        // 4. video_versions[0] (If it's a video and no image found)
+        
+        let thumbnail = '';
+        
+        if (post.image_versions2?.candidates?.length > 0) {
+           thumbnail = post.image_versions2.candidates[0].url;
+        } else if (post.carousel_media?.[0]?.image_versions2?.candidates?.length > 0) {
+           // Handle carousel first item if main image is missing
+           thumbnail = post.carousel_media[0].image_versions2.candidates[0].url;
+        } else {
+           thumbnail = post.display_url || 
+                       post.thumbnail_url || 
+                       post.video_versions?.[0]?.url ||
+                       '';
+        }
+                         
+        return {
+          id: shortcode,
+          url: `https://www.instagram.com/p/${shortcode}/`,
+          thumbnail: thumbnail,
+          caption: post.caption?.text || post.caption || '',
+          likes: post.edge_media_preview_like?.count || post.like_count || 0,
+          comments: post.edge_media_to_comment?.count || post.comment_count || 0,
+          timestamp: post.taken_at_timestamp || post.taken_at || post.timestamp,
+        };
+      });
+
+      return { posts, nextCursor };
+
     } catch (error: any) {
       console.error('Instagram Posts API Error:', error.message);
-      return [];
+      if (error.response) {
+        console.error('Error details:', error.response.status, JSON.stringify(error.response.data));
+      }
+      return { posts: [] };
     }
   }
 
@@ -263,18 +392,19 @@ export class SocialMediaAPI {
 
   // TikTok Methods
   private async fetchTikTokProfile(username: string): Promise<ProfileData> {
-    if (!RAPIDAPI_KEY) {
+    const config = await this.getRapidApiConfig();
+    if (!config.key) {
       throw new Error('RAPIDAPI_KEY is not configured');
     }
 
     try {
       const response = await axios.get(
-        `https://${RAPIDAPI_TIKTOK_HOST}/user/info`,
+        `https://${config.tikTokHost}/user/info`,
         {
           params: { username: username.replace('@', '') },
           headers: {
-            'X-RapidAPI-Key': RAPIDAPI_KEY,
-            'X-RapidAPI-Host': RAPIDAPI_TIKTOK_HOST,
+            'X-RapidAPI-Key': config.key,
+            'X-RapidAPI-Host': config.tikTokHost,
           },
         }
       );
@@ -296,25 +426,26 @@ export class SocialMediaAPI {
     }
   }
 
-  private async fetchTikTokVideos(username: string): Promise<PostData[]> {
-    if (!RAPIDAPI_KEY) {
+  private async fetchTikTokVideos(username: string, cursor?: string): Promise<FetchPostsResult> {
+    const config = await this.getRapidApiConfig();
+    if (!config.key) {
       throw new Error('RAPIDAPI_KEY is not configured');
     }
 
     try {
       const response = await axios.get(
-        `https://${RAPIDAPI_TIKTOK_HOST}/user/videos`,
+        `https://${config.tikTokHost}/user/videos`,
         {
           params: { username: username.replace('@', ''), limit: 12 },
           headers: {
-            'X-RapidAPI-Key': RAPIDAPI_KEY,
-            'X-RapidAPI-Host': RAPIDAPI_TIKTOK_HOST,
+            'X-RapidAPI-Key': config.key,
+            'X-RapidAPI-Host': config.tikTokHost,
           },
         }
       );
 
       const videos = response.data?.data || response.data?.videos || [];
-      return videos.map((video: any) => ({
+      const posts = videos.map((video: any) => ({
         id: video.id || video.aweme_id,
         url: `https://www.tiktok.com/@${username.replace('@', '')}/video/${video.id || video.aweme_id}`,
         thumbnail: video.cover || video.cover_url,
@@ -324,9 +455,11 @@ export class SocialMediaAPI {
         views: video.statistics?.play_count || video.view_count,
         timestamp: video.createTime || video.created_at,
       }));
+
+      return { posts };
     } catch (error: any) {
       console.error('TikTok Videos API Error:', error.message);
-      return [];
+      return { posts: [] };
     }
   }
 
@@ -346,21 +479,22 @@ export class SocialMediaAPI {
 
   // YouTube Methods
   private async fetchYouTubeChannel(usernameOrId: string): Promise<ProfileData> {
-    if (!RAPIDAPI_KEY) {
+    const config = await this.getRapidApiConfig();
+    if (!config.key) {
       throw new Error('RAPIDAPI_KEY is not configured');
     }
 
     try {
       const response = await axios.get(
-        `https://${RAPIDAPI_YOUTUBE_HOST}/channel/info`,
+        `https://${config.youTubeHost}/channel/info`,
         {
           params: { 
             id: usernameOrId.startsWith('@') ? undefined : usernameOrId,
             username: usernameOrId.startsWith('@') ? usernameOrId.replace('@', '') : undefined,
           },
           headers: {
-            'X-RapidAPI-Key': RAPIDAPI_KEY,
-            'X-RapidAPI-Host': RAPIDAPI_YOUTUBE_HOST,
+            'X-RapidAPI-Key': config.key,
+            'X-RapidAPI-Host': config.youTubeHost,
           },
         }
       );
@@ -380,25 +514,26 @@ export class SocialMediaAPI {
     }
   }
 
-  private async fetchYouTubeVideos(channelId: string): Promise<PostData[]> {
-    if (!RAPIDAPI_KEY) {
+  private async fetchYouTubeVideos(channelId: string, cursor?: string): Promise<FetchPostsResult> {
+    const config = await this.getRapidApiConfig();
+    if (!config.key) {
       throw new Error('RAPIDAPI_KEY is not configured');
     }
 
     try {
       const response = await axios.get(
-        `https://${RAPIDAPI_YOUTUBE_HOST}/channel/videos`,
+        `https://${config.youTubeHost}/channel/videos`,
         {
           params: { id: channelId, limit: 12 },
           headers: {
-            'X-RapidAPI-Key': RAPIDAPI_KEY,
-            'X-RapidAPI-Host': RAPIDAPI_YOUTUBE_HOST,
+            'X-RapidAPI-Key': config.key,
+            'X-RapidAPI-Host': config.youTubeHost,
           },
         }
       );
 
       const videos = response.data?.data || response.data?.videos || [];
-      return videos.map((video: any) => ({
+      const posts = videos.map((video: any) => ({
         id: video.videoId || video.id,
         url: `https://www.youtube.com/watch?v=${video.videoId || video.id}`,
         thumbnail: video.thumbnail || video.thumbnails?.default?.url,
@@ -408,9 +543,11 @@ export class SocialMediaAPI {
         views: video.viewCount || video.views,
         timestamp: video.publishedAt || video.published_at,
       }));
+
+      return { posts };
     } catch (error: any) {
       console.error('YouTube Videos API Error:', error.message);
-      return [];
+      return { posts: [] };
     }
   }
 

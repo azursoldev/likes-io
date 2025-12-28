@@ -183,6 +183,23 @@ model HomepageContent {
   @@map("homepage_content")
 }
 
+model TeamMember {
+  id           String   @id @default(cuid())
+  name         String
+  role         String
+  description  String
+  twitterUrl   String?
+  linkedinUrl  String?
+  avatarUrl    String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("team_members")
+  @@index([displayOrder])
+}
+
 model HeroSocialUpdate {
   id           Int     @id @default(autoincrement())
   handle       String

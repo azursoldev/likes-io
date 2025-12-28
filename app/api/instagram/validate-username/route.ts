@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { socialMediaAPI } from '@/lib/social-media-api';
 
 /**
  * Validate and fetch Instagram username information using RapidAPI
- * Supports multiple RapidAPI Instagram APIs:
- * - instagram-scraper-api (by apidash)
- * - instagram-looter2 (by apidash)
- * - instagram-scraper-2024 (by apidash)
- * 
- * Set RAPIDAPI_KEY in your .env.local file
- * Set RAPIDAPI_INSTAGRAM_HOST to the API host (e.g., 'instagram-scraper-api.p.rapidapi.com')
+ * Uses the shared socialMediaAPI service for consistency.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -50,92 +45,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Use RapidAPI if configured
-    const rapidApiKey = process.env.RAPIDAPI_KEY;
-    const rapidApiHost = process.env.RAPIDAPI_INSTAGRAM_HOST || 'instagram-scraper-api.p.rapidapi.com';
-
-    if (rapidApiKey) {
-      try {
-        // Try to fetch Instagram profile data from RapidAPI
-        // Using instagram-scraper-api endpoint
-        const rapidApiResponse = await fetch(
-          `https://${rapidApiHost}/userinfo?username=${encodeURIComponent(cleanUsername)}`,
-          {
-            method: 'GET',
-            headers: {
-              'X-RapidAPI-Key': rapidApiKey,
-              'X-RapidAPI-Host': rapidApiHost,
-            },
-          }
-        );
-
-        if (rapidApiResponse.ok) {
-          const profileData = await rapidApiResponse.json();
-          
-          // Handle different response formats from different RapidAPI providers
-          const isPrivate = profileData.is_private || profileData.isPrivate || false;
-          const followerCount = profileData.follower_count || profileData.followers || profileData.followerCount || 0;
-          const profilePic = profileData.profile_pic_url || profileData.profilePic || profileData.profile_pic_url_hd || '';
-          const isVerified = profileData.is_verified || profileData.isVerified || false;
-          const fullName = profileData.full_name || profileData.fullName || '';
-
-          return NextResponse.json({
-            valid: true,
-            username: cleanUsername,
-            exists: true,
-            isPrivate,
-            followerCount,
-            profilePic,
-            isVerified,
-            fullName,
-            message: 'Username found and validated',
-          });
-        } else if (rapidApiResponse.status === 404) {
-          // User not found
-          return NextResponse.json(
-            {
-              valid: false,
-              error: 'Instagram account not found. Please check the username and try again.',
-            },
-            { status: 404 }
-          );
-        } else {
-          // API error but username format is valid
-          const errorData = await rapidApiResponse.json().catch(() => ({}));
-          console.error('RapidAPI error:', errorData);
-          
-          // Fall back to format validation only
-          return NextResponse.json({
-            valid: true,
-            username: cleanUsername,
-            message: 'Username format is valid (unable to verify account existence)',
-            warning: 'Could not verify account existence via API',
-          });
-        }
-      } catch (rapidApiError: any) {
-        console.error('RapidAPI request failed:', rapidApiError);
-        // Fall back to format validation only
-        return NextResponse.json({
-          valid: true,
-          username: cleanUsername,
-          message: 'Username format is valid (API verification unavailable)',
-          warning: 'Could not verify account existence via API',
-        });
-      }
+    try {
+      // Use the shared service which has caching and centralized logic
+      const profile = await socialMediaAPI.fetchProfile('INSTAGRAM', cleanUsername);
+      
+      return NextResponse.json({
+        valid: true,
+        username: profile.username,
+        exists: true,
+        isPrivate: profile.isPrivate,
+        followerCount: profile.followerCount,
+        profilePic: profile.profilePicture,
+        isVerified: profile.isVerified,
+        fullName: profile.fullName,
+        message: 'Username found and validated',
+      });
+    } catch (error: any) {
+      console.error("Validation error:", error.message);
+      
+      // Since we disabled mock data, any error means validation failed
+      // (either user not found or API issue)
+      return NextResponse.json({
+        valid: false,
+        error: 'Username not found or could not be validated.'
+      });
     }
 
-    // If RapidAPI is not configured, return format validation only
-    return NextResponse.json({
-      valid: true,
-      username: cleanUsername,
-      message: 'Username format is valid',
-      note: 'Configure RAPIDAPI_KEY and RAPIDAPI_INSTAGRAM_HOST in .env.local to enable full account verification',
-    });
   } catch (error: any) {
-    console.error('Instagram username validation error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to validate username' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

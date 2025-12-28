@@ -205,7 +205,7 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim() && usernameValid) {
-      // Navigate to final checkout page (skipping posts selection for followers)
+      // Navigate to posts selection page
       const params = new URLSearchParams({
         username: username,
         qty: typeof qty === "string" ? qty : String(qty),
@@ -215,7 +215,7 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
       if (selectedServiceId) {
         params.append("serviceId", selectedServiceId);
       }
-      router.push(`/instagram/followers/checkout/final?${params.toString()}`);
+      router.push(`/instagram/followers/checkout/posts?${params.toString()}`);
     } else if (!username.trim()) {
       setUsernameError("Please enter your Instagram username");
     } else if (!usernameValid) {

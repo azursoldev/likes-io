@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
           text,
           rating: finalRating,
           platform: normalizedPlatform,
-          serviceType: normalizedServiceType,
+          serviceType: normalizedServiceType || undefined,
           isApproved,
           isFeatured,
           displayOrder: finalDisplayOrder,
