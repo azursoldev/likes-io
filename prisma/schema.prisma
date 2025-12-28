@@ -132,57 +132,51 @@ model AdminSettings {
   exitIntentTitle        String?
   exitIntentSubtitle     String?
   exitIntentDiscountCode String?
-  bannerEnabled          Boolean  @default(true)
-  bannerDurationHours    Int      @default(24)
-  inboxCount             Int      @default(0)
-  teamCount              Int      @default(0)
   newServiceIndicator    Boolean  @default(true)
   supportEmail           String?
   updatedAt              DateTime @updatedAt
+  bannerDurationHours    Int      @default(24)
+  bannerEnabled          Boolean  @default(true)
+  inboxCount             Int      @default(0)
+  teamCount              Int      @default(0)
+  faviconUrl             String?
+  footerLogoUrl          String?
+  headerLogoUrl          String?
+  homeMetaDescription    String?
+  homeMetaTitle          String?
 
   @@map("admin_settings")
 }
 
 model HomepageContent {
-  id              String   @id @default(cuid())
-  heroTitle       String
-  heroSubtitle    String
-  heroRating      String?
-  heroReviewCount String?
-  heroCtaButtons  Json?
-  
-  // Hero Profile Card
-  heroProfileHandle     String?
-  heroProfileRole       String?
-  heroProfileImage      String?
-  heroProfileLikes      String?
-  heroProfileFollowers  String?
-  heroProfileEngagement String?
-  
-  // Platform Section
-  platformTitle    String?
-  platformSubtitle String?
-  platformCards    Json?
-  
-  // Why Choose Us
-  whyChooseTitle    String?
-  whyChooseSubtitle String?
-  benefits          Json?
-  
-  // Influence Section
-  influenceTitle    String?
-  influenceSubtitle String?
-  influenceSteps    Json?
-  influenceImage    String?
-  
-  // Quick Start Section
-  quickStartTitle        String?
+  id                     String   @id @default(cuid())
+  heroTitle              String
+  heroSubtitle           String
+  heroRating             String?
+  heroReviewCount        String?
+  heroCtaButtons         Json?
+  isActive               Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
+  benefits               Json?
+  heroProfileEngagement  String?
+  heroProfileFollowers   String?
+  heroProfileHandle      String?
+  heroProfileLikes       String?
+  heroProfileRole        String?
+  influenceSubtitle      String?
+  influenceTitle         String?
+  platformSubtitle       String?
+  platformTitle          String?
   quickStartDescription1 String?
   quickStartDescription2 String?
+  quickStartTitle        String?
+  whyChooseSubtitle      String?
+  whyChooseTitle         String?
+  platformCards          Json?
+  heroProfileImage       String?
+  influenceImage         String?
+  influenceSteps         Json?
   quickStartButtons      Json?
-  
-  isActive        Boolean  @default(true)
-  updatedAt       DateTime @updatedAt
 
   @@map("homepage_content")
 }
@@ -200,8 +194,8 @@ model TeamMember {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  @@map("team_members")
   @@index([displayOrder])
+  @@map("team_members")
 }
 
 model HeroSocialUpdate {
@@ -325,9 +319,9 @@ model ServicePageContent {
   packages              Json
   qualityCompare        Json?
   howItWorks            Json?
-  benefits              Json?
   isActive              Boolean     @default(true)
   updatedAt             DateTime    @updatedAt
+  benefits              Json?
 
   @@unique([platform, serviceType])
   @@index([platform, serviceType])
@@ -426,6 +420,45 @@ model EmailTemplate {
   @@map("email_templates")
 }
 
+model BellNotification {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String
+  priority    String   @default("low")
+  category    String   @default("system")
+  iconBg      String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("bell_notifications")
+}
+
+model BannerMessage {
+  id        String   @id @default(cuid())
+  text      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  icon      String   @default("🔥")
+
+  @@map("banner_messages")
+}
+
+model IconAsset {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  category     String?
+  url          String?
+  alt          String?
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("icon_assets")
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -465,43 +498,4 @@ enum PaymentStatus {
   SUCCESS
   FAILED
   REFUNDED
-}
-
-model BellNotification {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  icon        String
-  iconBg      String?
-  priority    String   @default("low") // low, medium, high
-  category    String   @default("system") // system, order, user
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("bell_notifications")
-}
-
-model BannerMessage {
-  id        String   @id @default(cuid())
-  text      String
-  icon      String   @default("🔥")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("banner_messages")
-}
-
-model IconAsset {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  category     String?
-  url          String?
-  alt          String?
-  displayOrder Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("icon_assets")
 }

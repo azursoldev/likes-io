@@ -18,7 +18,9 @@ export async function GET() {
 
     let settings: any;
     try {
-      settings = await prisma.adminSettings.findFirst();
+      // Use raw query to ensure we get all fields even if client is outdated
+      const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`;
+      settings = Array.isArray(result) && result.length > 0 ? result[0] : null;
     } catch (dbError: any) {
       console.error('Database query error:', dbError);
       // If query fails due to missing columns, return defaults
@@ -108,6 +110,12 @@ export async function GET() {
       rapidApiInstagramHost: getField(settings, 'rapidApiInstagramHost', 'instagram120.p.rapidapi.com'),
       rapidApiTikTokHost: getField(settings, 'rapidApiTikTokHost', 'tiktok-data.p.rapidapi.com'),
       rapidApiYouTubeHost: getField(settings, 'rapidApiYouTubeHost', 'youtube-data.p.rapidapi.com'),
+      // SEO & Branding
+      homeMetaTitle: getField(settings, 'homeMetaTitle', ''),
+      homeMetaDescription: getField(settings, 'homeMetaDescription', ''),
+      faviconUrl: getField(settings, 'faviconUrl', ''),
+      headerLogoUrl: getField(settings, 'headerLogoUrl', ''),
+      footerLogoUrl: getField(settings, 'footerLogoUrl', ''),
     });
   } catch (error: any) {
     console.error('Get settings error:', error);
@@ -130,6 +138,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('PUT /api/admin/settings received body:', JSON.stringify(body, null, 2));
     const {
       // Cryptomus
       cryptomusMerchantId,
@@ -151,6 +160,12 @@ export async function PUT(request: NextRequest) {
       newServiceIndicator,
       // Site Config
       supportEmail,
+      // SEO & Branding
+      homeMetaTitle,
+      homeMetaDescription,
+      faviconUrl,
+      headerLogoUrl,
+      footerLogoUrl,
       // Existing fields
       japApiUrl,
       japApiKey,
@@ -168,7 +183,13 @@ export async function PUT(request: NextRequest) {
       defaultCurrency,
     } = body;
 
-    let settings = await prisma.adminSettings.findFirst();
+    let settings: any;
+    try {
+      const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`;
+      settings = Array.isArray(result) && result.length > 0 ? result[0] : null;
+    } catch (e) {
+      console.error("Failed to fetch settings for update:", e);
+    }
 
     const updateData: any = {};
     
@@ -203,6 +224,13 @@ export async function PUT(request: NextRequest) {
     // Site Config
     if (supportEmail !== undefined) updateData.supportEmail = supportEmail || null;
 
+    // SEO & Branding - Handled via raw SQL below to avoid Prisma schema mismatch errors
+    // if (homeMetaTitle !== undefined) updateData.homeMetaTitle = homeMetaTitle || null;
+    // if (homeMetaDescription !== undefined) updateData.homeMetaDescription = homeMetaDescription || null;
+    // if (faviconUrl !== undefined) updateData.faviconUrl = faviconUrl || null;
+    // if (headerLogoUrl !== undefined) updateData.headerLogoUrl = headerLogoUrl || null;
+    // if (footerLogoUrl !== undefined) updateData.footerLogoUrl = footerLogoUrl || null;
+
     console.log('Updating settings with data:', {
       ...updateData,
       cryptomusApiKey: updateData.cryptomusApiKey ? '[REDACTED]' : undefined,
@@ -229,19 +257,61 @@ export async function PUT(request: NextRequest) {
     try {
       if (settings) {
         console.log('Updating existing settings record:', settings.id);
-        settings = await prisma.adminSettings.update({
+        await prisma.adminSettings.update({
           where: { id: settings.id },
           data: updateData,
         });
-        console.log('Settings updated successfully');
+        console.log('Standard settings updated successfully');
       } else {
         console.log('Creating new settings record');
-        settings = await prisma.adminSettings.create({
+        const created = await prisma.adminSettings.create({
           data: updateData,
         });
+        settings = created;
         console.log('Settings created successfully');
       }
-    } catch (prismaError: any) {
+
+      // Force update SEO & Branding fields via raw SQL
+      // This is necessary because the Prisma Client might be outdated (locked by dev server)
+      // and therefore unaware of these new columns.
+      if (settings && settings.id) {
+         try {
+           console.log('Force updating SEO/Branding fields via raw SQL for ID:', settings.id);
+           
+           // Ensure values are safe for SQL (convert undefined to null if not provided, but prefer existing value if undefined)
+           // Note: Empty strings from frontend will be treated as valid values, but we can convert to null if desired.
+           // Current logic: undefined -> keep existing (or null). provided (inc empty string) -> use it.
+           
+           const getVal = (newVal: any, existingVal: any) => {
+             if (newVal !== undefined) return newVal;
+             return existingVal !== undefined ? existingVal : null;
+           };
+
+           const safeTitle = getVal(homeMetaTitle, settings.homeMetaTitle);
+           const safeDesc = getVal(homeMetaDescription, settings.homeMetaDescription);
+           const safeFavicon = getVal(faviconUrl, settings.faviconUrl);
+           const safeHeader = getVal(headerLogoUrl, settings.headerLogoUrl);
+           const safeFooter = getVal(footerLogoUrl, settings.footerLogoUrl);
+
+           const result = await prisma.$executeRaw`
+             UPDATE "admin_settings"
+             SET 
+               "homeMetaTitle" = ${safeTitle},
+               "homeMetaDescription" = ${safeDesc},
+               "faviconUrl" = ${safeFavicon},
+               "headerLogoUrl" = ${safeHeader},
+               "footerLogoUrl" = ${safeFooter}
+             WHERE "id" = ${settings.id}
+           `;
+           console.log('Raw SQL update result:', result);
+         } catch (rawError: any) {
+           console.error('Raw SQL Update Error:', rawError);
+           // Don't fail the whole request if only SEO fields fail, but log it.
+           // Or should we fail? Better to fail so user knows.
+           throw rawError; 
+         }
+       }
+     } catch (prismaError: any) {
       console.error('Prisma error:', {
         code: prismaError.code,
         message: prismaError.message,
@@ -265,6 +335,15 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Settings updated successfully',
+      debug: {
+        seo: {
+          homeMetaTitle: homeMetaTitle || null,
+          homeMetaDescription: homeMetaDescription || null,
+          faviconUrl: faviconUrl || null,
+          headerLogoUrl: headerLogoUrl || null,
+          footerLogoUrl: footerLogoUrl || null
+        }
+      }
     });
   } catch (error: any) {
     console.error('Update settings error:', error);

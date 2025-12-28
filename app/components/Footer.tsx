@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useNavigation } from "../hooks/useNavigation";
+import { useSettings } from "../contexts/SettingsContext";
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const { footerLogoUrl } = useSettings();
   const [showTooltip, setShowTooltip] = useState(false);
   const langBtnRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -130,8 +132,14 @@ export default function Footer() {
         {/* Bottom */}
         <div className="footer-bottom">
           <div className="brand">
-            <span className="logo-text">Likes</span>
-            <span className="logo-dot">.io</span>
+            {footerLogoUrl ? (
+              <img src={footerLogoUrl} alt="Likes.io" style={{ maxHeight: '40px' }} />
+            ) : (
+              <>
+                <span className="logo-text">Likes</span>
+                <span className="logo-dot">.io</span>
+              </>
+            )}
           </div>
           <p className="copyright">
             Copyright © {year} Likes.io. All Rights Reserved.

@@ -26,6 +26,14 @@ export default function SettingsDashboard() {
   const [cryptomusTestMode, setCryptomusTestMode] = useState(true);
   const [supportEmail, setSupportEmail] = useState("support@likes.io");
   
+  // SEO & Branding
+  const [homeMetaTitle, setHomeMetaTitle] = useState("");
+  const [homeMetaDescription, setHomeMetaDescription] = useState("");
+  const [faviconUrl, setFaviconUrl] = useState("");
+  const [headerLogoUrl, setHeaderLogoUrl] = useState("");
+  const [footerLogoUrl, setFooterLogoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  
   // RapidAPI
   const [rapidApiKey, setRapidApiKey] = useState("••••••••");
   const [rapidApiInstagramHost, setRapidApiInstagramHost] = useState("instagram120.p.rapidapi.com");
@@ -68,6 +76,13 @@ export default function SettingsDashboard() {
         if (data.rapidApiInstagramHost) setRapidApiInstagramHost(data.rapidApiInstagramHost);
         if (data.rapidApiTikTokHost) setRapidApiTikTokHost(data.rapidApiTikTokHost);
         if (data.rapidApiYouTubeHost) setRapidApiYouTubeHost(data.rapidApiYouTubeHost);
+
+        // SEO & Branding
+        if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
+        if (data.homeMetaDescription) setHomeMetaDescription(data.homeMetaDescription);
+        if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
+        if (data.headerLogoUrl) setHeaderLogoUrl(data.headerLogoUrl);
+        if (data.footerLogoUrl) setFooterLogoUrl(data.footerLogoUrl);
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -103,6 +118,12 @@ export default function SettingsDashboard() {
           rapidApiInstagramHost,
           rapidApiTikTokHost,
           rapidApiYouTubeHost,
+          // SEO & Branding
+          homeMetaTitle,
+          homeMetaDescription,
+          faviconUrl,
+          headerLogoUrl,
+          footerLogoUrl,
         }),
       });
 
@@ -118,6 +139,32 @@ export default function SettingsDashboard() {
       alert(error.message || "Failed to save settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, setUrl: (url: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Upload failed");
+
+      const data = await response.json();
+      setUrl(data.url);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Failed to upload file");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -171,6 +218,148 @@ export default function SettingsDashboard() {
                     <option>Text Only</option>
                   </select>
                 </label>
+                
+                <label className="settings-label">
+                  Header Logo
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="settings-input"
+                      value={headerLogoUrl}
+                      onChange={(e) => setHeaderLogoUrl(e.target.value)}
+                      placeholder="Enter URL or upload image"
+                    />
+                    <label className="settings-btn" style={{ cursor: 'pointer', margin: 0 }}>
+                      Upload
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, setHeaderLogoUrl)}
+                        disabled={uploading}
+                      />
+                    </label>
+                  </div>
+                  {headerLogoUrl && (
+                    <div style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
+                      <img src={headerLogoUrl} alt="Header Logo Preview" style={{ maxHeight: '50px', maxWidth: '100%' }} />
+                    </div>
+                  )}
+                </label>
+
+                <label className="settings-label">
+                  Footer Logo
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="settings-input"
+                      value={footerLogoUrl}
+                      onChange={(e) => setFooterLogoUrl(e.target.value)}
+                      placeholder="Enter URL or upload image"
+                    />
+                    <label className="settings-btn" style={{ cursor: 'pointer', margin: 0 }}>
+                      Upload
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, setFooterLogoUrl)}
+                        disabled={uploading}
+                      />
+                    </label>
+                  </div>
+                  {footerLogoUrl && (
+                    <div style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
+                      <img src={footerLogoUrl} alt="Footer Logo Preview" style={{ maxHeight: '50px', maxWidth: '100%' }} />
+                    </div>
+                  )}
+                </label>
+
+                <label className="settings-label">
+                  Favicon
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="settings-input"
+                      value={faviconUrl}
+                      onChange={(e) => setFaviconUrl(e.target.value)}
+                      placeholder="Enter URL or upload .ico/.png"
+                    />
+                    <label className="settings-btn" style={{ cursor: 'pointer', margin: 0 }}>
+                      Upload
+                      <input
+                        type="file"
+                        hidden
+                        accept=".ico,.png,.svg"
+                        onChange={(e) => handleFileUpload(e, setFaviconUrl)}
+                        disabled={uploading}
+                      />
+                    </label>
+                  </div>
+                  {faviconUrl && (
+                    <div style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
+                      <img src={faviconUrl} alt="Favicon Preview" style={{ width: '32px', height: '32px' }} />
+                    </div>
+                  )}
+                </label>
+              </div>
+            </div>
+
+            {/* Home Page SEO */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Home Page SEO</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Meta Title
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span className="settings-helper-text">Recommended length: 50-60 characters</span>
+                    <span className={`settings-helper-text ${homeMetaTitle.length > 60 ? 'text-red-500' : ''}`}>
+                      {homeMetaTitle.length} / 60
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={homeMetaTitle}
+                    onChange={(e) => setHomeMetaTitle(e.target.value)}
+                    placeholder="Enter meta title for home page"
+                  />
+                </label>
+
+                <label className="settings-label">
+                  Meta Description
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span className="settings-helper-text">Recommended length: 150-160 characters</span>
+                    <span className={`settings-helper-text ${homeMetaDescription.length > 160 ? 'text-red-500' : ''}`}>
+                      {homeMetaDescription.length} / 160
+                    </span>
+                  </div>
+                  <textarea
+                    className="settings-input"
+                    value={homeMetaDescription}
+                    onChange={(e) => setHomeMetaDescription(e.target.value)}
+                    placeholder="Enter meta description for home page"
+                    rows={4}
+                    style={{ resize: 'vertical' }}
+                  />
+                </label>
+
+                {/* SERP Preview */}
+                <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', background: '#fff' }}>
+                  <h3 style={{ fontSize: '14px', marginBottom: '10px', color: '#555' }}>Google Search Preview</h3>
+                  <div style={{ fontFamily: 'Arial, sans-serif' }}>
+                    <div style={{ color: '#202124', fontSize: '14px', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                      {faviconUrl && <img src={faviconUrl} alt="" style={{ width: '16px', height: '16px', marginRight: '8px', borderRadius: '50%' }} />}
+                      <span>likes.io</span>
+                    </div>
+                    <div style={{ color: '#1a0dab', fontSize: '20px', lineHeight: '1.3', cursor: 'pointer', textDecoration: 'none' }}>
+                      {homeMetaTitle || 'Page Title'}
+                    </div>
+                    <div style={{ color: '#4d5156', fontSize: '14px', lineHeight: '1.58', marginTop: '4px' }}>
+                      {homeMetaDescription || 'Page description will appear here...'}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

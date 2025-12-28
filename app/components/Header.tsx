@@ -6,11 +6,13 @@ import NotificationBell from "./NotificationBell";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 import { useCurrency } from "../contexts/CurrencyContext";
+import { useSettings } from "../contexts/SettingsContext";
 import { useNavigation } from "../hooks/useNavigation";
 
 export default function Header() {
   const { status } = useSession();
   const { currency, setCurrency } = useCurrency();
+  const { headerLogoUrl } = useSettings();
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const currencyRef = useRef<HTMLDivElement>(null);
   const { getLink } = useNavigation();
@@ -44,8 +46,14 @@ export default function Header() {
         <div className="container header-inner">
           <div className="brand">
             <a href="/" className="brand-logo">
-            <span className="logo-text">Likes</span>
-            <span className="logo-dot">.io</span>
+              {headerLogoUrl ? (
+                <img src={headerLogoUrl} alt="Likes.io" style={{ maxHeight: '40px' }} />
+              ) : (
+                <>
+                  <span className="logo-text">Likes</span>
+                  <span className="logo-dot">.io</span>
+                </>
+              )}
             </a>
           </div>
           <nav className="nav">
