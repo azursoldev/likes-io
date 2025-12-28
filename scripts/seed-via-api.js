@@ -1,12 +1,3 @@
-// Usage: node scripts/seed-icons.js
-// Seeds the database with default icons from IconManagementDashboard
-
-require('dotenv').config({ path: '.env' });
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient({
-  errorFormat: 'colorless',
-});
 
 const defaultIcons = [
   // Logos
@@ -14,7 +5,7 @@ const defaultIcons = [
   { name: "LikesInCheckoutLogo", category: "Logos", url: "", customText: "Likes", isCustom: true },
   { name: "Buzzoid", category: "Logos", url: "", customText: "Buzzoid.svg", isCustom: true },
   
-  // General UI Icons (FontAwesome icons - stored as empty URL, will be handled by component)
+  // General UI Icons
   { name: "HamburgerIcon", category: "General UI Icons", url: "", iconType: "faBars" },
   { name: "XIcon", category: "General UI Icons", url: "", iconType: "faXmark" },
   { name: "ChevronDownIcon", category: "General UI Icons", url: "", iconType: "faChevronDown" },
@@ -114,45 +105,38 @@ const defaultIcons = [
   { name: "YouTubeViewsShortcutIcon", category: "Service & Platform Icons", url: "", iconType: "faEye" },
 ];
 
-async function main() {
-  console.log('Seeding default icons...');
+async function seed() {
+  console.log('Seeding via API...');
   
   for (const icon of defaultIcons) {
     try {
-      const existing = await prisma.iconAsset.findUnique({
-        where: { name: icon.name },
-      });
-      
-      if (existing) {
-        console.log(`Icon already exists: ${icon.name}`);
-        continue;
-      }
-      
-      await prisma.iconAsset.create({
-        data: {
-          name: icon.name,
-          category: icon.category,
-          url: icon.url || '',
-          alt: icon.customText || icon.name,
-          displayOrder: 0,
+      const body = {
+        name: icon.name,
+        category: icon.category,
+        url: icon.url || '',
+        alt: icon.customText || icon.name,
+      };
+
+      const res = await fetch('http://localhost:3000/api/cms/icons', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-seed-secret': 'temp-secret-123'
         },
+        body: JSON.stringify(body)
       });
-      
-      console.log(`Created icon: ${icon.name}`);
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(`Failed to create ${icon.name}: ${res.status} ${text}`);
+      } else {
+        console.log(`Created/Checked ${icon.name}`);
+      }
     } catch (err) {
-      console.error(`Error processing icon ${icon.name}:`, err);
+      console.error(`Error processing ${icon.name}:`, err.message);
     }
   }
-  
-  console.log('Icon seeding completed!');
+  console.log('Done.');
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
-
+seed();

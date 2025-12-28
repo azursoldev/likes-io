@@ -9,12 +9,12 @@ import {
   DynamicAssuranceCard,
   DynamicPackagesSelector,
   DynamicQualityCompare,
+  DynamicAdvantageSection,
   DynamicHowItWorks,
   DynamicFAQSection,
   DynamicLearnMoreSection,
 } from "../../components/ServicePageContent";
 import FeaturedOn from "../../components/FeaturedOn";
-import AdvantageSection from "../../components/AdvantageSection";
 import ReviewsSection, { type ReviewItem } from "../../components/ReviewsSection";
 import MoreServicesCTA, { type CTAButton } from "../../components/MoreServicesCTA";
 import type { PackageTabConfig } from "../../components/PackagesSelector";
@@ -180,7 +180,7 @@ export default function Page() {
         <DynamicPackagesSelector />
         <DynamicQualityCompare />
         <FeaturedOn />
-        <AdvantageSection />
+        <DynamicAdvantageSection />
         <DynamicHowItWorks />
         <ReviewsSection
           title="Loved by Creators Worldwide"

@@ -1,15 +1,14 @@
 "use client";
-import "../dashboard/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-type BannerMessage = { id: number; text: string };
+type BannerMessage = { id: string; text: string; icon: string };
 type BellNotification = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   icon: string;
@@ -18,30 +17,16 @@ type BellNotification = {
   iconBg?: string;
 };
 
-const initialBannerMessages: BannerMessage[] = [
-  { id: 1, text: "FLASH SALE: Get 30% off all Instagram Followers packages for the next 24 hours." },
-  { id: 2, text: "Go viral! Buy TikTok Likes and get a FREE views boost on us." },
-  { id: 3, text: "Limited Time: Double your YouTube Views on select packages today only." },
-];
-
-const initialBellNotifications: BellNotification[] = [
-  { id: 1, title: "Order #1234 Complete", description: "Your order of 1,000 Likes has been delivered.", icon: "CheckCircleIcon", priority: "Medium", category: "Inbox", iconBg: "bg-green-100 text-green-600" },
-  { id: 2, title: "Flash Sale!", description: "Get 30% off TikTok likes for the next 24 hours.", icon: "FireIcon", priority: "High", category: "Inbox", iconBg: "bg-red-100 text-red-600" },
-  { id: 3, title: "New Team Member", description: "Sophia Rodriguez has joined the support team.", icon: "UserIcon", priority: "Low", category: "Team", iconBg: "bg-blue-100 text-blue-600" },
-  { id: 4, title: "New Blog Post for Review", description: "The 2024 algorithm article is ready for your feedback.", icon: "BookOpenIcon", priority: "Medium", category: "Inbox", iconBg: "bg-amber-100 text-amber-600" },
-  { id: 5, title: "You got a new review!", description: "A customer left a 5-star review.", icon: "StarIcon", priority: "Low", category: "Inbox", iconBg: "bg-sky-100 text-sky-600" },
-];
-
 export default function NotificationsDashboard() {
-  const [inboxCount, setInboxCount] = useState(7);
-  const [teamCount, setTeamCount] = useState(9);
+  const [inboxCount, setInboxCount] = useState(0);
+  const [teamCount, setTeamCount] = useState(0);
   const [bannerEnabled, setBannerEnabled] = useState(true);
   const [durationHours, setDurationHours] = useState(24);
-  const [bannerMessages, setBannerMessages] = useState<BannerMessage[]>(initialBannerMessages);
-
-  const [bellNotifications, setBellNotifications] = useState<BellNotification[]>(initialBellNotifications);
+  const [bannerMessages, setBannerMessages] = useState<BannerMessage[]>([]);
+  
+  const [bellNotifications, setBellNotifications] = useState<BellNotification[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [nTitle, setNTitle] = useState("");
   const [nDescription, setNDescription] = useState("");
   const [nCategory, setNCategory] = useState("Inbox");
@@ -49,24 +34,141 @@ export default function NotificationsDashboard() {
   const [nIcon, setNIcon] = useState("BellIcon");
   const [nIconBg, setNIconBg] = useState("");
 
-  const addBannerMessage = () => {
-    setBannerMessages((prev) => [...prev, { id: Date.now(), text: "New promotion!" }]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [settingsRes, bannersRes, notificationsRes] = await Promise.all([
+        fetch("/api/admin/settings/notifications"),
+        fetch("/api/admin/banner-messages"),
+        fetch("/api/admin/notifications"),
+      ]);
+
+      if (settingsRes.ok) {
+        const settings = await settingsRes.json();
+        setInboxCount(settings.inboxCount);
+        setTeamCount(settings.teamCount);
+        setBannerEnabled(settings.bannerEnabled);
+        setDurationHours(settings.bannerDurationHours);
+      }
+
+      if (bannersRes.ok) {
+        setBannerMessages(await bannersRes.json());
+      }
+
+      if (notificationsRes.ok) {
+        setBellNotifications(await notificationsRes.json());
+      }
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateBannerMessage = (id: number, text: string) => {
-    setBannerMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text } : m)));
+  const updateSettings = async (updates: any) => {
+    try {
+      await fetch("/api/admin/settings/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      console.error("Failed to update settings", error);
+    }
   };
 
-  const removeBannerMessage = (id: number) => {
-    setBannerMessages((prev) => prev.filter((m) => m.id !== id));
+  const handleInboxCountChange = (val: number) => {
+    setInboxCount(val);
+    updateSettings({ inboxCount: val });
+  };
+
+  const handleTeamCountChange = (val: number) => {
+    setTeamCount(val);
+    updateSettings({ teamCount: val });
+  };
+
+  const handleBannerEnabledChange = (val: boolean) => {
+    setBannerEnabled(val);
+    updateSettings({ bannerEnabled: val });
+  };
+
+  const handleDurationChange = (val: number) => {
+    setDurationHours(val);
+    updateSettings({ bannerDurationHours: val });
+  };
+
+  const addBannerMessage = async () => {
+    try {
+      const res = await fetch("/api/admin/banner-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "New promotion!", icon: "🔥" }),
+      });
+      if (res.ok) {
+        const newMessage = await res.json();
+        setBannerMessages((prev) => [...prev, newMessage]);
+      }
+    } catch (error) {
+      console.error("Failed to add banner message", error);
+    }
+  };
+
+  const updateBannerMessage = async (id: string, updates: Partial<BannerMessage>) => {
+    // Optimistic update
+    setBannerMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
+    
+    // Find current message to merge with updates for API call
+    const current = bannerMessages.find(m => m.id === id);
+    if (!current) return;
+    
+    const merged = { ...current, ...updates };
+
+    try {
+      await fetch(`/api/admin/banner-messages/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: merged.text, icon: merged.icon, isActive: true }),
+      });
+    } catch (error) {
+      console.error("Failed to update banner message", error);
+    }
+  };
+
+  const removeBannerMessage = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/banner-messages/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setBannerMessages((prev) => prev.filter((m) => m.id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to delete banner message", error);
+    }
   };
 
   const addBellNotification = () => {
+    resetNotificationForm();
     setShowAddModal(true);
   };
 
-  const removeBellNotification = (id: number) => {
-    setBellNotifications((prev) => prev.filter((n) => n.id !== id));
+  const removeBellNotification = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/notifications/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setBellNotifications((prev) => prev.filter((n) => n.id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to delete notification", error);
+    }
   };
 
   const resetNotificationForm = () => {
@@ -79,38 +181,47 @@ export default function NotificationsDashboard() {
     setEditingId(null);
   };
 
-  const handleSaveNotification = () => {
+  const handleSaveNotification = async () => {
     if (!nTitle.trim() || !nDescription.trim()) return;
-    if (editingId !== null) {
-      setBellNotifications((prev) =>
-        prev.map((n) =>
-          n.id === editingId
-            ? {
-                ...n,
-                title: nTitle.trim(),
-                description: nDescription.trim(),
-                icon: nIcon.trim() || "BellIcon",
-                priority: nPriority,
-                category: nCategory.trim() || "Inbox",
-                iconBg: nIconBg.trim(),
-              }
-            : n
-        )
-      );
-    } else {
-      const next: BellNotification = {
-        id: Date.now(),
-        title: nTitle.trim(),
-        description: nDescription.trim(),
-        icon: nIcon.trim() || "BellIcon",
-        priority: nPriority,
-        category: nCategory.trim() || "Inbox",
-        iconBg: nIconBg.trim(),
-      };
-      setBellNotifications((prev) => [...prev, next]);
+    
+    const payload = {
+      title: nTitle.trim(),
+      description: nDescription.trim(),
+      icon: nIcon.trim() || "BellIcon",
+      priority: nPriority,
+      category: nCategory.trim() || "Inbox",
+      iconBg: nIconBg.trim(),
+    };
+
+    try {
+      if (editingId !== null) {
+        const res = await fetch(`/api/admin/notifications/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setBellNotifications((prev) =>
+            prev.map((n) => (n.id === editingId ? updated : n))
+          );
+        }
+      } else {
+        const res = await fetch("/api/admin/notifications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const created = await res.json();
+          setBellNotifications((prev) => [created, ...prev]);
+        }
+      }
+      resetNotificationForm();
+      setShowAddModal(false);
+    } catch (error) {
+      console.error("Failed to save notification", error);
     }
-    resetNotificationForm();
-    setShowAddModal(false);
   };
 
   const handleStartEditNotification = (n: BellNotification) => {
@@ -124,9 +235,16 @@ export default function NotificationsDashboard() {
     setShowAddModal(true);
   };
 
+  if (loading) return <div className="p-8">Loading notifications...</div>;
+
   return (
     <div className="admin-wrapper">
-      <PromoBar />
+      <PromoBar 
+        previewMode={true}
+        enabled={bannerEnabled}
+        durationHours={durationHours}
+        messages={bannerMessages.map(m => ({ text: m.text, icon: m.icon || "🔥" }))}
+      />
       <div className="admin-body">
         <AdminSidebar activePage="notifications" />
 
@@ -149,7 +267,7 @@ export default function NotificationsDashboard() {
                     type="number"
                     className="notif-input"
                     value={inboxCount}
-                    onChange={(e) => setInboxCount(Number(e.target.value))}
+                    onChange={(e) => handleInboxCountChange(Number(e.target.value))}
                   />
                 </div>
                 <div className="notif-card">
@@ -158,7 +276,7 @@ export default function NotificationsDashboard() {
                     type="number"
                     className="notif-input"
                     value={teamCount}
-                    onChange={(e) => setTeamCount(Number(e.target.value))}
+                    onChange={(e) => handleTeamCountChange(Number(e.target.value))}
                   />
                 </div>
               </div>
@@ -174,7 +292,7 @@ export default function NotificationsDashboard() {
                   <input
                     type="checkbox"
                     checked={bannerEnabled}
-                    onChange={(e) => setBannerEnabled(e.target.checked)}
+                    onChange={(e) => handleBannerEnabledChange(e.target.checked)}
                   />
                   <span className={`notif-toggle ${bannerEnabled ? "on" : ""}`} />
                 </label>
@@ -186,7 +304,7 @@ export default function NotificationsDashboard() {
                   type="number"
                   className="notif-input notif-size"
                   value={durationHours}
-                  onChange={(e) => setDurationHours(Number(e.target.value))}
+                  onChange={(e) => handleDurationChange(Number(e.target.value))}
                 />
               </div>
 
@@ -195,11 +313,17 @@ export default function NotificationsDashboard() {
                 <div className="notif-banner-list">
                   {bannerMessages.map((msg) => (
                     <div key={msg.id} className="notif-banner-pill">
-                      <span>🔥</span>
+                      <input
+                        className="notif-banner-input"
+                        style={{ width: "40px", textAlign: "center", marginRight: "8px", flex: "0 0 auto" }}
+                        value={msg.icon || "🔥"}
+                        onChange={(e) => updateBannerMessage(msg.id, { icon: e.target.value })}
+                        placeholder="🔥"
+                      />
                       <input
                         className="notif-banner-input notif-size"
                         value={msg.text}
-                        onChange={(e) => updateBannerMessage(msg.id, e.target.value)}
+                        onChange={(e) => updateBannerMessage(msg.id, { text: e.target.value })}
                         placeholder="New promotion!"
                       />
                       <button className="notif-pill-close" onClick={() => removeBannerMessage(msg.id)}>
@@ -241,17 +365,17 @@ export default function NotificationsDashboard() {
                         <td>{n.title}</td>
                         <td>{n.description}</td>
                         <td>{n.icon}</td>
-                      <td>
-                        <span className={`notif-pill priority-${n.priority.toLowerCase()}`}>{n.priority}</span>
-                      </td>
-                      <td className="team-actions">
-                        <button className="team-edit" onClick={() => handleStartEditNotification(n)}>
-                          Edit
-                        </button>
-                        <button className="team-delete" onClick={() => removeBellNotification(n.id)}>
-                          Delete
-                        </button>
-                      </td>
+                        <td>
+                          <span className={`notif-pill priority-${n.priority.toLowerCase()}`}>{n.priority}</span>
+                        </td>
+                        <td className="team-actions">
+                          <button className="team-edit" onClick={() => handleStartEditNotification(n)}>
+                            Edit
+                          </button>
+                          <button className="team-delete" onClick={() => removeBellNotification(n.id)}>
+                            Delete
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

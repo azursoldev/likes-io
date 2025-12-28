@@ -60,15 +60,16 @@ import {
   faChartBar,
   faDollarSign,
   faImage,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 
 type IconItem = {
-  id: number;
+  id: string;
   name: string;
   icon?: any;
   isCustom?: boolean;
   customText?: string;
-  dbId?: number;
+  dbId?: string;
   url?: string;
   category?: string | null;
 };
@@ -174,6 +175,13 @@ export default function IconManagementDashboard() {
   const [icons, setIcons] = useState<IconItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newIconData, setNewIconData] = useState({
+    name: "",
+    category: "General UI Icons",
+    url: "",
+    alt: "",
+  });
 
   useEffect(() => {
     loadIcons();
@@ -196,12 +204,12 @@ export default function IconManagementDashboard() {
     }
   };
 
-  const handleReplaceClick = (dbId: number) => {
+  const handleReplaceClick = (dbId: string) => {
     const input = document.getElementById(`icon-file-${dbId}`) as HTMLInputElement | null;
     if (input) input.click();
   };
 
-  const handleFileUpload = async (dbId: number, file: File) => {
+  const handleFileUpload = async (dbId: string, file: File) => {
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -228,10 +236,60 @@ export default function IconManagementDashboard() {
     }
   };
 
+  const handleDeleteIcon = async (dbId: string) => {
+    if (!confirm("Are you sure you want to delete this icon?")) return;
+
+    try {
+      const res = await fetch(`/api/cms/icons?id=${dbId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete icon");
+      }
+
+      await loadIcons();
+    } catch (err: any) {
+      console.error("Delete error", err);
+      alert(err.message || "Failed to delete icon");
+    }
+  };
+
+  const handleAddIcon = async () => {
+    try {
+      if (!newIconData.name) {
+        alert("Please enter an icon name");
+        return;
+      }
+
+      const res = await fetch("/api/cms/icons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newIconData),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to create icon");
+      }
+
+      setNewIconData({ name: "", category: "General UI Icons", url: "", alt: "" });
+      setIsAddModalOpen(false);
+      await loadIcons();
+    } catch (err: any) {
+      console.error("Create error", err);
+      alert(err.message || "Failed to create icon");
+    }
+  };
+
   const renderReplaceControl = (item: IconItem) => (
-    <>
+    <div className="icon-controls">
       <button className="icon-replace-btn" onClick={() => handleReplaceClick(item.dbId!)}>
         Replace
+      </button>
+      <button className="icon-delete-btn" onClick={() => handleDeleteIcon(item.dbId!)} style={{ marginLeft: "8px", color: "red", border: "none", background: "none", cursor: "pointer" }}>
+        <FontAwesomeIcon icon={faTrash} />
       </button>
       <input
         id={`icon-file-${item.dbId}`}
@@ -244,7 +302,7 @@ export default function IconManagementDashboard() {
           }
         }}
       />
-    </>
+    </div>
   );
 
   const renderIcon = (item: IconItem) => {
@@ -284,6 +342,7 @@ export default function IconManagementDashboard() {
   }, {} as Record<string, IconItem[]>);
 
   const categories = Object.keys(groupedIcons).sort();
+  const existingCategories = Array.from(new Set(icons.map(i => i.category).filter(Boolean)));
 
   return (
     <div className="admin-wrapper">
@@ -293,13 +352,22 @@ export default function IconManagementDashboard() {
         <main className="admin-main">
           <AdminToolbar title="Icon Management" />
           <div className="icon-management-page">
-            <div className="icon-management-header">
-              <h1>Icon Management</h1>
-              <p>View and manage SVG icons used across the site.</p>
+            <div className="icon-management-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h1>Icon Management</h1>
+                <p>View and manage SVG icons used across the site.</p>
+              </div>
+              <button 
+                className="icon-add-header-btn"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <FontAwesomeIcon icon={faPlus} />
+                Add Icon
+              </button>
             </div>
 
             {error && (
-              <div style={{ color: "#b91c1c", marginBottom: "16px", padding: "12px" }}>
+              <div style={{ color: "#b91c1c", marginBottom: "16px", padding: "12px", backgroundColor: "#fee2e2", borderRadius: "4px" }}>
                 {error}
               </div>
             )}
@@ -310,10 +378,7 @@ export default function IconManagementDashboard() {
               </div>
             ) : icons.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px" }}>
-                <p>No icons found. Run the seed script to add default icons:</p>
-                <code style={{ background: "#f3f4f6", padding: "8px", borderRadius: "4px" }}>
-                  node scripts/seed-icons.js
-                </code>
+                <p>No icons found.</p>
               </div>
             ) : (
               categories.map((category) => {
@@ -339,7 +404,65 @@ export default function IconManagementDashboard() {
           </div>
         </main>
       </div>
+
+      {isAddModalOpen && (
+        <div className="icon-modal-overlay">
+          <div className="icon-modal-content">
+            <h2 className="icon-modal-title">Add New Icon</h2>
+            
+            <div className="icon-form-group">
+              <label className="icon-form-label">Name</label>
+              <input 
+                className="icon-form-input"
+                type="text" 
+                value={newIconData.name}
+                onChange={(e) => setNewIconData({...newIconData, name: e.target.value})}
+                placeholder="e.g. MyNewIcon"
+              />
+            </div>
+
+            <div className="icon-form-group">
+              <label className="icon-form-label">Category</label>
+              <input 
+                className="icon-form-input"
+                type="text" 
+                value={newIconData.category}
+                onChange={(e) => setNewIconData({...newIconData, category: e.target.value})}
+                list="categories-list"
+              />
+              <datalist id="categories-list">
+                {existingCategories.map((c: any) => <option key={c} value={c} />)}
+              </datalist>
+            </div>
+
+            <div className="icon-form-group">
+              <label className="icon-form-label">Alt Text / Custom Text</label>
+              <input 
+                className="icon-form-input"
+                type="text" 
+                value={newIconData.alt}
+                onChange={(e) => setNewIconData({...newIconData, alt: e.target.value})}
+                placeholder="e.g. 🔥"
+              />
+            </div>
+
+            <div className="icon-modal-actions">
+              <button 
+                className="icon-btn-secondary"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="icon-btn-primary"
+                onClick={handleAddIcon}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

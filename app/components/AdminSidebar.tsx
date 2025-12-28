@@ -1,5 +1,4 @@
 "use client";
-import "../admin/dashboard.css";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

@@ -51,6 +51,18 @@ const getPlatformIcon = (platform: string) => {
   return faInstagram;
 };
 
+const BENEFIT_ICONS = [
+  { value: "/fast-delivery.svg", label: "Fast Delivery" },
+  { value: "/premium-quality.svg", label: "Premium Quality" },
+  { value: "/shield.svg", label: "Secure (Shield)" },
+  { value: "/24-hour-service.svg", label: "24/7 Support" },
+  { value: "/secure-2.svg", label: "Secure (Lock)" },
+  { value: "/padlock.svg", label: "Padlock" },
+  { value: "/heart-3.svg", label: "Heart / Likes" },
+  { value: "/eye-2.svg", label: "Eye / Views" },
+  { value: "/alarm-2.svg", label: "Alarm / Speed" },
+];
+
 export default function ServicesDashboard() {
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -74,6 +86,12 @@ export default function ServicesDashboard() {
   const [learnMoreModalContent, setLearnMoreModalContent] = useState("");
   const [howItWorksTitle, setHowItWorksTitle] = useState("");
   const [howItWorksSubtitle, setHowItWorksSubtitle] = useState("");
+  
+  // Benefits Section State
+  const [benefitsTitle, setBenefitsTitle] = useState("");
+  const [benefitsSubtitle, setBenefitsSubtitle] = useState("");
+  const [benefitsItems, setBenefitsItems] = useState<Array<{ id: number; title: string; desc: string; icon: string }>>([]);
+
   const [serviceSlug, setServiceSlug] = useState("");
   
   const [steps, setSteps] = useState<Array<{ id: number; title: string; description: string; icon: string }>>([]);
@@ -130,6 +148,9 @@ export default function ServicesDashboard() {
     setLearnMoreModalContent("");
     setHowItWorksTitle("");
     setHowItWorksSubtitle("");
+    setBenefitsTitle("");
+    setBenefitsSubtitle("");
+    setBenefitsItems([]);
     setSteps([]);
     setHighQualityPriceOptions([]);
     setPremiumPriceOptions([]);
@@ -153,7 +174,8 @@ export default function ServicesDashboard() {
     try {
       const response = await fetch(`/api/cms/service-pages/${mapping.platform}/${mapping.serviceType}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch service content");
+        const errText = await response.text();
+        throw new Error(`Failed to fetch service content: ${response.status} ${errText}`);
       }
       const data = await response.json();
       
@@ -189,6 +211,35 @@ export default function ServicesDashboard() {
         }
       } else {
         setSteps([]);
+      }
+
+      if (data.benefits) {
+        setBenefitsTitle(data.benefits.title || "The Likes.io Advantage");
+        setBenefitsSubtitle(data.benefits.subtitle || "We combine premium quality with industry-leading features to deliver growth you can trust.");
+        if (data.benefits.items && Array.isArray(data.benefits.items)) {
+          setBenefitsItems(data.benefits.items.map((item: any, idx: number) => ({
+            id: idx,
+            title: item.title || "",
+            desc: item.desc || "",
+            icon: item.icon || "/premium-quality.svg"
+          })));
+        } else {
+            setBenefitsItems([
+                { id: 0, title: "Instant Delivery", desc: "Your order begins the moment you check out, with tangible results in minutes.", icon: "/fast-delivery.svg" },
+                { id: 1, title: "Premium Quality", desc: "Enhance your social proof with engagement from high-quality, real-looking profiles.", icon: "/premium-quality.svg" },
+                { id: 2, title: "100% Safe & Secure", desc: "Your account's safety is our priority. We never ask for your password.", icon: "/shield.svg" },
+                { id: 3, title: "24/7 Customer Support", desc: "Our dedicated global support team is always available to help you.", icon: "/24-hour-service.svg" }
+            ]);
+        }
+      } else {
+        setBenefitsTitle("The Likes.io Advantage");
+        setBenefitsSubtitle("We combine premium quality with industry-leading features to deliver growth you can trust.");
+        setBenefitsItems([
+            { id: 0, title: "Instant Delivery", desc: "Your order begins the moment you check out, with tangible results in minutes.", icon: "/fast-delivery.svg" },
+            { id: 1, title: "Premium Quality", desc: "Enhance your social proof with engagement from high-quality, real-looking profiles.", icon: "/premium-quality.svg" },
+            { id: 2, title: "100% Safe & Secure", desc: "Your account's safety is our priority. We never ask for your password.", icon: "/shield.svg" },
+            { id: 3, title: "24/7 Customer Support", desc: "Our dedicated global support team is always available to help you.", icon: "/24-hour-service.svg" }
+        ]);
       }
       
       // Reset packages first, then populate if data exists
@@ -537,7 +588,18 @@ export default function ServicesDashboard() {
         subtitle: howItWorksSubtitle || "",
         steps: steps.map(step => ({
           title: step.title,
-          description: step.description
+          description: step.description,
+          icon: step.icon
+        }))
+      };
+
+      const benefits = {
+        title: benefitsTitle,
+        subtitle: benefitsSubtitle,
+        items: benefitsItems.map(item => ({
+          title: item.title,
+          desc: item.desc,
+          icon: item.icon
         }))
       };
       
@@ -572,6 +634,7 @@ export default function ServicesDashboard() {
           packages,
           qualityCompare,
           howItWorks,
+          benefits,
           faqs,
           isActive: true
         })
@@ -626,6 +689,20 @@ export default function ServicesDashboard() {
   const handleStepChange = (id: number, field: string, value: string) => {
     setSteps(steps.map(step => 
       step.id === id ? { ...step, [field]: value } : step
+    ));
+  };
+
+  const handleAddBenefitItem = () => {
+    setBenefitsItems([...benefitsItems, { id: Date.now(), title: "", desc: "", icon: "/premium-quality.svg" }]);
+  };
+
+  const handleRemoveBenefitItem = (id: number) => {
+    setBenefitsItems(benefitsItems.filter(item => item.id !== id));
+  };
+
+  const handleBenefitItemChange = (id: number, field: string, value: string) => {
+    setBenefitsItems(benefitsItems.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
     ));
   };
 
@@ -1624,42 +1701,92 @@ export default function ServicesDashboard() {
 
                 <div className="add-service-section" ref={editSectionRefs.benefits}>
                   <h3 className="add-service-section-title">Benefits Section</h3>
-                  {!showBenefitsForm ? (
-                    <button className="add-service-add-btn" onClick={() => setShowBenefitsForm(true)}>
-                      <FontAwesomeIcon icon={faPlus} />
-                      <span>Add Benefits Section</span>
-                    </button>
-                  ) : (
-                    <div className="benefits-form-card">
-                      <div className="add-service-two-columns">
-                        <div className="add-service-form-group">
-                          <label htmlFor="edit-benefits-title">Section Title</label>
-                          <input
-                            type="text"
-                            id="edit-benefits-title"
-                            className="add-service-input"
-                            placeholder="Why Buying [Service] Is a Game-Changer"
-                          />
-                        </div>
-                        <div className="add-service-form-group">
-                          <label htmlFor="edit-benefits-subtitle">Section Subtitle</label>
-                          <textarea
-                            id="edit-benefits-subtitle"
-                            className="add-service-textarea"
-                            placeholder="A subtitle explaining the benefits."
-                            rows={3}
-                          />
-                        </div>
+                  <div className="benefits-form-card">
+                    <div className="add-service-two-columns">
+                      <div className="add-service-form-group">
+                        <label htmlFor="edit-benefits-title">Section Title</label>
+                        <input
+                          type="text"
+                          id="edit-benefits-title"
+                          className="add-service-input"
+                          placeholder="The Likes.io Advantage"
+                          value={benefitsTitle}
+                          onChange={(e) => setBenefitsTitle(e.target.value)}
+                        />
                       </div>
                       <div className="add-service-form-group">
-                        <label htmlFor="edit-benefits-list">Benefits</label>
-                        <button className="add-service-add-btn">
-                          <FontAwesomeIcon icon={faPlus} />
-                          <span>Add Benefit</span>
-                        </button>
+                        <label htmlFor="edit-benefits-subtitle">Section Subtitle</label>
+                        <textarea
+                          id="edit-benefits-subtitle"
+                          className="add-service-textarea"
+                          placeholder="We combine premium quality with..."
+                          rows={3}
+                          value={benefitsSubtitle}
+                          onChange={(e) => setBenefitsSubtitle(e.target.value)}
+                        />
                       </div>
                     </div>
-                  )}
+                    
+                    <div className="add-service-form-group">
+                      <label>Benefit Items</label>
+                      <div className="features-list">
+                          {benefitsItems.map((item) => (
+                              <div key={item.id} className="feature-input-row" style={{marginBottom: '10px', flexDirection: 'column', alignItems: 'flex-start', border: '1px solid #eee', padding: '10px', borderRadius: '8px'}}>
+                                  <div style={{display: 'flex', width: '100%', marginBottom: '5px', gap: '10px'}}>
+                                      <div style={{flex: 1, display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                        <select
+                                            className="add-service-input"
+                                            value={item.icon}
+                                            onChange={(e) => handleBenefitItemChange(item.id, 'icon', e.target.value)}
+                                            style={{flex: 1}}
+                                        >
+                                          <option value="">Select Icon</option>
+                                          {BENEFIT_ICONS.map((icon) => (
+                                            <option key={icon.value} value={icon.value}>
+                                              {icon.label}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        {item.icon && (
+                                          <div style={{width: '32px', height: '32px', background: '#f0f2f5', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px'}}>
+                                            <img src={item.icon} alt="" style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+                                          </div>
+                                        )}
+                                      </div>
+                                      <input
+                                          type="text"
+                                          className="add-service-input"
+                                          placeholder="Title"
+                                          value={item.title}
+                                          onChange={(e) => handleBenefitItemChange(item.id, 'title', e.target.value)}
+                                          style={{flex: 2}}
+                                      />
+                                      <button
+                                          className="feature-delete-btn"
+                                          onClick={() => handleRemoveBenefitItem(item.id)}
+                                          type="button"
+                                      >
+                                          Del
+                                      </button>
+                                  </div>
+                                  <textarea
+                                      className="add-service-textarea"
+                                      placeholder="Description"
+                                      rows={2}
+                                      value={item.desc}
+                                      onChange={(e) => handleBenefitItemChange(item.id, 'desc', e.target.value)}
+                                      style={{width: '100%'}}
+                                  />
+                              </div>
+                          ))}
+                      </div>
+
+                      <button className="add-service-add-btn" onClick={handleAddBenefitItem} type="button">
+                        <FontAwesomeIcon icon={faPlus} />
+                        <span>Add Benefit Item</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="add-service-section" ref={editSectionRefs.pricing}>

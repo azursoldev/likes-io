@@ -1,5 +1,17 @@
-export default function AdvantageSection() {
-  const items = [
+interface BenefitItem {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+interface AdvantageSectionProps {
+  title?: string;
+  subtitle?: string;
+  items?: BenefitItem[];
+}
+
+export default function AdvantageSection({ title, subtitle, items }: AdvantageSectionProps) {
+  const defaultItems = [
     {
       icon: "/fast-delivery.svg",
       title: "Instant Delivery",
@@ -22,15 +34,19 @@ export default function AdvantageSection() {
     },
   ];
 
+  const displayItems = items && items.length > 0 ? items : defaultItems;
+  const displayTitle = title || "The Likes.io Advantage";
+  const displaySubtitle = subtitle || "We combine premium quality with industry-leading features to deliver growth you can trust.";
+
   return (
     <section className="advantage">
       <div className="container">
-        <h2 className="adv-title">The Likes.io Advantage</h2>
-        <p className="adv-sub">We combine premium quality with industry-leading features to deliver growth you can trust.</p>
+        <h2 className="adv-title">{displayTitle}</h2>
+        <p className="adv-sub">{displaySubtitle}</p>
 
         <div className="adv-grid">
-          {items.map((it) => (
-            <div className="adv-card" key={it.title}>
+          {displayItems.map((it, idx) => (
+            <div className="adv-card" key={idx}>
               <div className="adv-icon">
                 <img src={it.icon} alt="" />
               </div>

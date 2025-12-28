@@ -11,10 +11,10 @@ import {
   DynamicQualityCompare,
   DynamicHowItWorks,
   DynamicFAQSection,
+  DynamicAdvantageSection,
   ServicePageContentData
 } from "../components/ServicePageContent";
 import FeaturedOn from "../components/FeaturedOn";
-import AdvantageSection from "../components/AdvantageSection";
 import ReviewsSection from "../components/ReviewsSection";
 import MoreServicesCTA from "../components/MoreServicesCTA";
 import LearnMoreSection from "../components/LearnMoreSection";
@@ -64,6 +64,7 @@ async function getServiceContent(slug: string) {
         packages: typeof content.packages === 'string' ? JSON.parse(content.packages) : content.packages,
         qualityCompare: content.qualityCompare ? (typeof content.qualityCompare === 'string' ? JSON.parse(content.qualityCompare) : content.qualityCompare) : undefined,
         howItWorks: content.howItWorks ? (typeof content.howItWorks === 'string' ? JSON.parse(content.howItWorks) : content.howItWorks) : undefined,
+        benefits: content.benefits ? (typeof content.benefits === 'string' ? JSON.parse(content.benefits) : content.benefits) : undefined,
         faqs: faqs.map(faq => ({
           q: faq.question,
           a: faq.answer,
@@ -143,7 +144,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
         <DynamicPackagesSelector />
         <DynamicQualityCompare />
         <FeaturedOn />
-        <AdvantageSection />
+        <DynamicAdvantageSection />
         <DynamicHowItWorks />
         <ReviewsSection />
         <DynamicFAQSection />

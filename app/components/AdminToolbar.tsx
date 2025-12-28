@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faMagnifyingGlass, faUser, faArrowRightFromBracket, faAngleDown } from "@fortawesome/free-solid-svg-icons";
 import { signOut, useSession } from "next-auth/react";
-import "../dashboard/dashboard.css";
 
 type AdminToolbarProps = {
   title: string;

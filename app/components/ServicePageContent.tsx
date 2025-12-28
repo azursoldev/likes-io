@@ -4,6 +4,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { usePathname } from "next/navigation";
 import ServiceHero from "./ServiceHero";
 import AssuranceCard from "./AssuranceCard";
+import AdvantageSection from "./AdvantageSection";
 import LearnMoreSection from "./LearnMoreSection";
 import PackagesSelector, { type PackageTabConfig } from "./PackagesSelector";
 import QualityCompare from "./QualityCompare";
@@ -24,6 +25,7 @@ export type ServicePageContentData = {
   packages?: PackageTabConfig[];
   qualityCompare?: { title?: string; columns?: any[] };
   howItWorks?: { title?: string; subtitle?: string; steps?: any[] };
+  benefits?: { title?: string; subtitle?: string; items?: any[] };
   faqs?: FAQItem[];
   testimonials?: ReviewItem[];
   platform?: string;
@@ -49,6 +51,7 @@ type ServicePageContentProviderProps = {
   defaultPackages?: PackageTabConfig[];
   defaultQualityCompare?: { title?: string; columns?: any[] };
   defaultHowItWorks?: { title?: string; subtitle?: string; steps?: any[] };
+  defaultBenefits?: { title?: string; subtitle?: string; items?: any[] };
   defaultFAQs?: FAQItem[];
   defaultTestimonials?: ReviewItem[];
   initialData?: ServicePageContentData | null;
@@ -90,6 +93,7 @@ export function ServicePageContentProvider({
   defaultPackages,
   defaultQualityCompare,
   defaultHowItWorks,
+  defaultBenefits,
   defaultFAQs,
   defaultTestimonials,
   initialData,
@@ -107,6 +111,7 @@ export function ServicePageContentProvider({
       packages: initialData.packages || defaultPackages,
       qualityCompare: getProcessedQualityCompare(initialData.qualityCompare, defaultQualityCompare),
       howItWorks: initialData.howItWorks || defaultHowItWorks,
+      benefits: initialData.benefits || defaultBenefits,
       faqs: (initialData.faqs && initialData.faqs.length > 0) ? initialData.faqs : defaultFAQs,
       testimonials: (initialData.testimonials && initialData.testimonials.length > 0) ? initialData.testimonials : defaultTestimonials,
     };
@@ -126,6 +131,7 @@ export function ServicePageContentProvider({
             packages: initialData.packages || defaultPackages,
             qualityCompare: getProcessedQualityCompare(initialData.qualityCompare, defaultQualityCompare),
             howItWorks: initialData.howItWorks || defaultHowItWorks,
+            benefits: initialData.benefits || defaultBenefits,
             faqs: (initialData.faqs && initialData.faqs.length > 0) ? initialData.faqs : defaultFAQs,
             testimonials: (initialData.testimonials && initialData.testimonials.length > 0) ? initialData.testimonials : defaultTestimonials,
             slug: initialData.slug || slug,
@@ -183,6 +189,7 @@ export function ServicePageContentProvider({
               return getProcessedQualityCompare(data.qualityCompare, defaultQualityCompare);
             })(),
             howItWorks: isRealCMSRecord ? (data.howItWorks || defaultHowItWorks) : defaultHowItWorks,
+            benefits: isRealCMSRecord ? (data.benefits || defaultBenefits) : defaultBenefits,
             faqs: (data.faqs && Array.isArray(data.faqs) && data.faqs.length > 0) ? data.faqs : defaultFAQs,
             testimonials: (data.testimonials && Array.isArray(data.testimonials)) ? data.testimonials : defaultTestimonials,
             platform: data.platform || platform,
@@ -200,6 +207,7 @@ export function ServicePageContentProvider({
             packages: defaultPackages,
             qualityCompare: defaultQualityCompare,
             howItWorks: defaultHowItWorks,
+            benefits: defaultBenefits,
             faqs: defaultFAQs,
             testimonials: defaultTestimonials,
             platform,
@@ -218,6 +226,7 @@ export function ServicePageContentProvider({
           packages: defaultPackages,
           qualityCompare: defaultQualityCompare,
           howItWorks: defaultHowItWorks,
+          benefits: defaultBenefits,
           faqs: defaultFAQs,
           testimonials: defaultTestimonials,
           platform,
@@ -229,7 +238,7 @@ export function ServicePageContentProvider({
     };
 
     fetchContent();
-  }, [platform, serviceType, defaultHeroTitle, defaultHeroSubtitle, defaultHeroRating, defaultHeroReviewCount, defaultAssuranceCardText, defaultPackages, defaultQualityCompare, defaultHowItWorks, defaultFAQs, defaultTestimonials]);
+  }, [platform, serviceType, defaultHeroTitle, defaultHeroSubtitle, defaultHeroRating, defaultHeroReviewCount, defaultAssuranceCardText, defaultPackages, defaultQualityCompare, defaultHowItWorks, defaultBenefits, defaultFAQs, defaultTestimonials]);
 
   if (loading || !content) {
     return <>{children}</>; // Render children with defaults while loading
@@ -352,6 +361,19 @@ export function DynamicAssuranceCard() {
   if (!content) return null;
   
   return <AssuranceCard text={content.assuranceCardText} />;
+}
+
+export function DynamicAdvantageSection() {
+  const content = useServiceContent();
+  const benefits = content?.benefits;
+
+  return (
+    <AdvantageSection
+      title={benefits?.title}
+      subtitle={benefits?.subtitle}
+      items={benefits?.items}
+    />
+  );
 }
 
 export function DynamicLearnMoreSection({ defaultText }: { defaultText?: string }) {

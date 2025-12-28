@@ -21,7 +21,7 @@ const DEFAULT_PROFILE = {
   likes: "1,258",
   followers: "15.2k",
   engagement: "3.4%",
-  image: ""
+  image: "/uploads/9eaad50b-4387-4b98-aaa3-0c53594b74a8.jpg"
 };
 
 export default function Hero() {
@@ -34,6 +34,7 @@ export default function Hero() {
     profile: DEFAULT_PROFILE,
   });
   const [contentLoaded, setContentLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   // Fetch homepage content
   useEffect(() => {
     const fetchContent = async () => {
@@ -168,11 +169,12 @@ export default function Hero() {
               </div>
             </div>
             <div className="profile-image">
-              {heroContent.profile.image && (
+              {(heroContent.profile.image || DEFAULT_PROFILE.image) && (
                 <img 
-                  src={heroContent.profile.image} 
+                  src={imageError ? DEFAULT_PROFILE.image : (heroContent.profile.image || DEFAULT_PROFILE.image)} 
                   alt="Post" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  onError={() => setImageError(true)}
                 />
               )}
             </div>

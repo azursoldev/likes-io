@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import PromoBar from "./PromoBar";
+import NotificationBell from "./NotificationBell";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 import { useCurrency } from "../contexts/CurrencyContext";
@@ -94,10 +95,7 @@ export default function Header() {
             <a href="/blog">Blog</a>
           </nav>
           <div className="header-actions">
-            <div className="notif" aria-label="Notifications">
-              <img src="/alarm-2.svg" alt="Notifications" className="icon" width={20} height={20} />
-              <span className="badge">3</span>
-            </div>
+            <NotificationBell />
             <div className="currency-selector" ref={currencyRef}>
               <div 
                 className="currency-trigger" 
