@@ -257,7 +257,28 @@ section.hero-section .reviews-pill span.sep {
     animation: spin 4s linear infinite;
   }
   
-  /* Scroll to top button */
+  /* Shimmer Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-bg {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+html.dark .shimmer-bg {
+  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+  background-size: 200% 100%;
+}
+
+/* Scroll to top button */
   .scroll-top { position: fixed; right: 24px; bottom: 24px; width: 48px; height: 48px; border-radius: 9999px; background: rgb(var(--color-brand)); color: #fff; border: none; display: grid; place-items: center; box-shadow: 0 20px 40px rgba(17,24,39,0.18); cursor: pointer; z-index: 1000; opacity: 0; transform: translateY(10px); transition: opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease, filter 180ms ease; }
   .scroll-top.show { opacity: 1; transform: translateY(0); }
   .scroll-top:hover, .scroll-top:focus-visible { filter: brightness(0.97); box-shadow: 0 24px 48px rgba(17,24,39,0.22); }

@@ -5,6 +5,7 @@ import { useNavigation } from "@/app/hooks/useNavigation";
 
 export default function QuickStartSection() {
   const { getLink } = useNavigation();
+  const [loading, setLoading] = useState(true);
   const [quickStartContent, setQuickStartContent] = useState({
     title: "Get Started Now",
     description1: "And importantly, Likes.io’s real followers, likes, views, and comments are available at very reasonable prices that are never higher than those charged by other reputable providers.",
@@ -52,11 +53,39 @@ export default function QuickStartSection() {
         }
       } catch (error) {
         console.error('Error fetching quick start content:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
     fetchContent();
   }, []);
+
+  if (loading) {
+    return (
+      <section className="quickstart">
+        <div className="container">
+          <div className="qs-grid">
+            <div className="qs-left">
+              <div className="shimmer-bg" style={{ width: '60%', height: '3rem', marginBottom: '1.5rem', borderRadius: '8px' }}></div>
+              <div className="shimmer-bg" style={{ width: '100%', height: '1rem', marginBottom: '0.5rem', borderRadius: '4px' }}></div>
+              <div className="shimmer-bg" style={{ width: '90%', height: '1rem', marginBottom: '0.5rem', borderRadius: '4px' }}></div>
+              <div className="shimmer-bg" style={{ width: '95%', height: '1rem', marginBottom: '1.5rem', borderRadius: '4px' }}></div>
+              <div className="shimmer-bg" style={{ width: '100%', height: '1rem', marginBottom: '0.5rem', borderRadius: '4px' }}></div>
+              <div className="shimmer-bg" style={{ width: '80%', height: '1rem', borderRadius: '4px' }}></div>
+            </div>
+            <div className="qs-right">
+              <div className="qs-actions">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="shimmer-bg" style={{ width: '100%', height: '60px', borderRadius: '9999px' }}></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="quickstart">

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 export default function InfluenceSection() {
   const [open, setOpen] = useState<number>(1);
+  const [loading, setLoading] = useState(true);
   const [influenceContent, setInfluenceContent] = useState({
     title: "Build Your Empire of Influence",
     subtitle: "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche."
@@ -23,11 +24,29 @@ export default function InfluenceSection() {
         }
       } catch (error) {
         console.error('Error fetching influence content:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
     fetchContent();
   }, []);
+
+  if (loading) {
+    return (
+      <section className="influence">
+        <div className="container">
+          <div className="influence-grid">
+            <div className="influence-left">
+              <div className="shimmer-bg" style={{ width: '80%', height: '3rem', marginBottom: '1.5rem', borderRadius: '8px' }}></div>
+              <div className="shimmer-bg" style={{ width: '100%', height: '1.5rem', marginBottom: '1rem', borderRadius: '4px' }}></div>
+              <div className="shimmer-bg" style={{ width: '90%', height: '1.5rem', marginBottom: '3rem', borderRadius: '4px' }}></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="influence">

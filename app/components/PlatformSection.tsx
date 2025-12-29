@@ -44,6 +44,7 @@ const PLATFORMS: PlatformCard[] = [
 
 export default function PlatformSection() {
   const { getLink } = useNavigation();
+  const [loading, setLoading] = React.useState(true);
 
   const [platformContent, setPlatformContent] = React.useState({
     title: "Choose Your Platform to Start Growing",
@@ -67,11 +68,50 @@ export default function PlatformSection() {
         }
       } catch (error) {
         console.error('Error fetching platform content:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
     fetchContent();
   }, []);
+
+  if (loading) {
+    return (
+      <section className="platforms">
+        <div className="container">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem' }}>
+            <div className="shimmer-bg" style={{ width: '60%', height: '3rem', marginBottom: '1rem', borderRadius: '8px' }}></div>
+            <div className="shimmer-bg" style={{ width: '40%', height: '1.5rem', borderRadius: '4px' }}></div>
+          </div>
+
+          <div className="platform-grid">
+            {[1, 2, 3].map((i) => (
+              <article key={i} className="p-card">
+                <div className="p-top">
+                  <div className="shimmer-bg" style={{ width: '48px', height: '48px', borderRadius: '12px', marginBottom: '1rem' }}></div>
+                  <div className="shimmer-bg" style={{ width: '100px', height: '24px', borderRadius: '4px', marginBottom: '0.5rem' }}></div>
+                  <div className="shimmer-bg" style={{ width: '80px', height: '20px', borderRadius: '9999px' }}></div>
+                </div>
+
+                <div className="shimmer-bg" style={{ width: '100%', height: '60px', borderRadius: '4px', margin: '1rem 0' }}></div>
+
+                <div className="p-tags" style={{ display: 'flex', gap: '0.5rem' }}>
+                  {[1, 2, 3].map(t => (
+                    <div key={t} className="shimmer-bg" style={{ width: '60px', height: '24px', borderRadius: '9999px' }}></div>
+                  ))}
+                </div>
+
+                <div className="p-cta" style={{ marginTop: 'auto' }}>
+                  <div className="shimmer-bg" style={{ width: '100%', height: '48px', borderRadius: '8px' }}></div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const Icon = ({ name }: { name: string }) => {
     switch (name) {

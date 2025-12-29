@@ -48,6 +48,15 @@ export async function POST(request: NextRequest) {
     }
 
     const filepath = path.join(uploadDir, filename);
+    
+    // Debug logging
+    try {
+      const logMsg = `${new Date().toISOString()} - Uploading: ${filename} (${file.name}, ${buffer.length} bytes) to ${filepath}\n`;
+      await writeFile(path.join(uploadDir, 'upload-debug.log'), logMsg, { flag: 'a' });
+    } catch (logErr) {
+      console.error('Failed to write debug log', logErr);
+    }
+
     await writeFile(filepath, buffer);
 
     const url = `/uploads/${filename}`;

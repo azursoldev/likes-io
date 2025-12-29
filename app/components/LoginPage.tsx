@@ -16,7 +16,7 @@ declare global {
   }
 }
 
-export default function LoginPage() {
+export default function LoginPage({ dbSiteKey }: { dbSiteKey?: string | null }) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
@@ -26,7 +26,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recaptchaReady, setRecaptchaReady] = useState(false);
-  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+  const siteKey = dbSiteKey || process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
   useEffect(() => {
     if (!siteKey) return;

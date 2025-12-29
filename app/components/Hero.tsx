@@ -24,6 +24,59 @@ const DEFAULT_PROFILE = {
   image: "/uploads/9eaad50b-4387-4b98-aaa3-0c53594b74a8.jpg"
 };
 
+const HeroSkeleton = () => (
+  <section className="hero-section">
+    <div className="container hero-grid">
+      <div className="hero-left">
+        {/* Title skeleton */}
+        <div className="shimmer-bg" style={{ height: '3.75rem', width: '90%', marginBottom: '1rem', borderRadius: '8px' }}></div>
+        <div className="shimmer-bg" style={{ height: '3.75rem', width: '70%', marginBottom: '2rem', borderRadius: '8px' }}></div>
+        
+        {/* Subtitle skeleton */}
+        <div className="shimmer-bg" style={{ height: '1.25rem', width: '100%', marginBottom: '0.5rem', borderRadius: '4px' }}></div>
+        <div className="shimmer-bg" style={{ height: '1.25rem', width: '80%', marginBottom: '2rem', borderRadius: '4px' }}></div>
+        
+        {/* Reviews pill skeleton */}
+        <div className="shimmer-bg" style={{ height: '42px', width: '200px', borderRadius: '9999px', marginBottom: '2rem' }}></div>
+        
+        {/* CTA skeleton */}
+        <div className="cta">
+          <div className="shimmer-bg" style={{ height: '54px', width: '160px', borderRadius: '10px' }}></div>
+          <div className="shimmer-bg" style={{ height: '54px', width: '160px', borderRadius: '10px' }}></div>
+        </div>
+      </div>
+
+      <div className="hero-right">
+        <div className="blob blob-1" />
+        <div className="blob blob-2" />
+        <div className="profile-card" style={{ borderColor: 'transparent' }}>
+          {/* Profile Header */}
+          <div className="profile-header">
+            <div className="shimmer-bg" style={{ width: '36px', height: '36px', borderRadius: '9999px' }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div className="shimmer-bg" style={{ width: '100px', height: '14px', borderRadius: '4px' }}></div>
+              <div className="shimmer-bg" style={{ width: '80px', height: '12px', borderRadius: '4px' }}></div>
+            </div>
+          </div>
+          
+          {/* Profile Image */}
+          <div className="shimmer-bg" style={{ margin: '0.75rem 0', height: '306px', borderRadius: '0.5rem', width: '100%' }}></div>
+          
+          {/* Stats Row */}
+          <div className="stats-row">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="stat" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                <div className="shimmer-bg" style={{ width: '40px', height: '16px', borderRadius: '4px' }}></div>
+                <div className="shimmer-bg" style={{ width: '50px', height: '10px', borderRadius: '4px' }}></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 export default function Hero() {
   const [heroContent, setHeroContent] = useState({
     title: DEFAULT_TITLE,
@@ -39,7 +92,7 @@ export default function Hero() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const response = await fetch('/api/cms/homepage');
+        const response = await fetch(`/api/cms/homepage?t=${Date.now()}`);
         if (response.ok) {
           const data = await response.json();
           if (data.content) {
@@ -76,6 +129,7 @@ export default function Hero() {
                 image: data.content.heroProfileImage || DEFAULT_PROFILE.image,
               }
             });
+            setImageError(false); // Reset error state on new content
           }
         }
       } catch (error) {
@@ -125,6 +179,11 @@ export default function Hero() {
       : currentUpdate.iconClass === "vw-icon"
       ? "Views"
       : "Followers";
+
+  if (!contentLoaded) {
+    return <HeroSkeleton />;
+  }
+
   return (
     <section className="hero-section">
       <div className="container hero-grid">

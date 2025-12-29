@@ -89,6 +89,7 @@ export default function GetStarted() {
   const [dynamicExplanation, setDynamicExplanation] = useState("");
   const [availablePackages, setAvailablePackages] = useState<any[]>([]);
   const [sliderIndex, setSliderIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   // Clear profile data when platform changes
   useEffect(() => {
@@ -191,6 +192,7 @@ export default function GetStarted() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         // Fetch Get Started Content (Features & Explanation)
         const contentRes = await fetch(`/api/cms/get-started?platform=${platform}&serviceType=${packType}&quality=${quality}`);
         if (contentRes.ok) {
@@ -233,6 +235,8 @@ export default function GetStarted() {
       } catch (error) {
         console.error("Failed to fetch dynamic content", error);
         setAvailablePackages([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -299,6 +303,71 @@ export default function GetStarted() {
         return null;
     }
   };
+
+  // Skeleton Loader
+  if (loading && availablePackages.length === 0 && dynamicFeatures.length === 0) {
+    return (
+      <section className="getstarted">
+        <div className="container">
+          <div className="gs-header">
+            <h3 className="font-heading">Get Started Instantly</h3>
+            <div className="gs-platforms">
+              {['Instagram', 'TikTok', 'YouTube'].map((p) => (
+                <button key={p} className="pill">
+                  <span className="pill-icon" style={{ width: 12, height: 12, background: '#ccc', borderRadius: '50%' }}></span>
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="gs-grid">
+            {/* Left card skeleton */}
+            <div className="gs-left card-lg boxgray">
+              <div className="gs-tabs" style={{ gap: '10px' }}>
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="shimmer-bg" style={{ width: '100px', height: '40px', borderRadius: '8px' }}></div>
+                ))}
+              </div>
+
+              <div className="gs-quality" style={{ marginTop: '20px' }}>
+                <div className="shimmer-bg" style={{ width: '100%', height: '40px', borderRadius: '8px' }}></div>
+              </div>
+
+              <div className="gs-qty" style={{ marginTop: '30px' }}>
+                <div className="gs-qty-top">
+                  <div className="shimmer-bg" style={{ width: '120px', height: '30px', borderRadius: '4px' }}></div>
+                  <div className="shimmer-bg" style={{ width: '80px', height: '30px', borderRadius: '4px' }}></div>
+                </div>
+                <div className="shimmer-bg" style={{ width: '100%', height: '10px', borderRadius: '4px', marginTop: '20px' }}></div>
+              </div>
+
+              <div className="gs-form" style={{ marginTop: '30px' }}>
+                 <div className="shimmer-bg" style={{ width: '100%', height: '50px', borderRadius: '12px' }}></div>
+                 <div className="shimmer-bg" style={{ width: '100%', height: '50px', borderRadius: '12px', marginTop: '15px' }}></div>
+              </div>
+            </div>
+
+            {/* Right features skeleton */}
+            <div className="gs-right card-lg">
+              <div className="shimmer-bg" style={{ width: '60%', height: '24px', borderRadius: '4px', marginBottom: '20px' }}></div>
+              <ul className="gs-features">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <li key={i} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                    <div className="shimmer-bg" style={{ width: '20px', height: '20px', borderRadius: '50%' }}></div>
+                    <div className="shimmer-bg" style={{ width: '80%', height: '20px', borderRadius: '4px' }}></div>
+                  </li>
+                ))}
+              </ul>
+              <div className="gs-divider" style={{ margin: '20px 0' }} />
+              <div className="shimmer-bg" style={{ width: '70%', height: '24px', borderRadius: '4px', marginBottom: '10px' }}></div>
+              <div className="shimmer-bg" style={{ width: '100%', height: '60px', borderRadius: '4px' }}></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="getstarted">

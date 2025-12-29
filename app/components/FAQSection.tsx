@@ -108,8 +108,28 @@ export default function FAQSection({
     setOpen(null);
   };
 
+  if (loading) {
+    return (
+      <section className="faq-section">
+        <div className="container">
+          <div className="faq-header">
+            <div className="shimmer-bg" style={{ width: '200px', height: '36px', borderRadius: '8px', margin: '0 auto 1rem auto' }}></div>
+            <div className="shimmer-bg" style={{ width: '400px', height: '24px', borderRadius: '4px', margin: '0 auto' }}></div>
+          </div>
+          <div className="faq-list">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="faq-item" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.5rem', marginBottom: '1rem' }}>
+                 <div className="shimmer-bg" style={{ width: '80%', height: '24px', borderRadius: '4px' }}></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="faq">
+    <section className="faq-section">
       <div className="container">
         <h2 className="faq-title">{title}</h2>
         <p className="faq-sub">{subtitle}</p>

@@ -50,6 +50,7 @@ export default function FeaturedOn() {
 
   // Filter brands based on current page path
   const getDisplayBrands = (): FeaturedBrand[] => {
+    // ... (logic remains same)
     if (brands.length === 0) {
       return DEFAULT_BRANDS.map((name, index) => ({ 
         id: index,
@@ -63,6 +64,7 @@ export default function FeaturedOn() {
     }
 
     return brands.filter(brand => {
+      // ... (logic remains same)
       // If no page links, show on all pages (backward compatibility)
       if (!brand.pageLinks || brand.pageLinks.length === 0) {
         return true;
@@ -79,6 +81,21 @@ export default function FeaturedOn() {
   };
 
   const displayBrands = getDisplayBrands();
+
+  if (loading) {
+    return (
+      <section className="featured-on">
+        <div className="container">
+          <p className="featured-label">AS FEATURED ON</p>
+          <div className="featured-brands" style={{ gap: '2rem' }}>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="shimmer-bg" style={{ width: '120px', height: '24px', borderRadius: '4px' }}></div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="featured-on">
