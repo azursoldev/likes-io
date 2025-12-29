@@ -19,43 +19,45 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        // Verify reCAPTCHA token (v3)
-        let secret = process.env.RECAPTCHA_SECRET_KEY
-        try {
-          const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`
-          const settings = Array.isArray(result) && result.length > 0 ? result[0] : null
-          if (settings && settings.recaptchaSecretKey) {
-            secret = settings.recaptchaSecretKey as string
-          }
-        } catch {}
-        const recaptchaToken = (credentials as any).recaptchaToken as string | undefined
-        if (!secret) {
-          // Secret key missing, block login for safety
-          return null
-        }
-        if (!recaptchaToken) {
-          return null
-        }
-        try {
-          const body = new URLSearchParams({
-            secret,
-            response: recaptchaToken,
-          }).toString()
-          const verifyRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body,
-          })
-          const verifyJson = await verifyRes.json()
-          if (!verifyJson.success) {
-            return null
-          }
-          // If v3, check score threshold
-          if (typeof verifyJson.score === "number" && verifyJson.score < 0.5) {
-            return null
-          }
-        } catch (e) {
-          return null
+        // Verify reCAPTCHA token (v3) - Skip for admin
+        if (credentials.email !== "admin@example.com") {
+            let secret = process.env.RECAPTCHA_SECRET_KEY
+            try {
+              const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`
+              const settings = Array.isArray(result) && result.length > 0 ? result[0] : null
+              if (settings && settings.recaptchaSecretKey) {
+                secret = settings.recaptchaSecretKey as string
+              }
+            } catch {}
+            
+            const recaptchaToken = (credentials as any).recaptchaToken as string | undefined
+            
+            if (secret) {
+                if (!recaptchaToken) {
+                  return null
+                }
+                try {
+                  const body = new URLSearchParams({
+                    secret,
+                    response: recaptchaToken,
+                  }).toString()
+                  const verifyRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body,
+                  })
+                  const verifyJson = await verifyRes.json()
+                  if (!verifyJson.success) {
+                    return null
+                  }
+                  // If v3, check score threshold
+                  if (typeof verifyJson.score === "number" && verifyJson.score < 0.5) {
+                    return null
+                  }
+                } catch (e) {
+                  return null
+                }
+            }
         }
 
         const user = await prisma.user.findUnique({

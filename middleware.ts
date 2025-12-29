@@ -12,20 +12,23 @@ export default withAuth(
     const isAdmin = token?.role === "ADMIN"
     const isAdminRoute = req.nextUrl.pathname.startsWith("/admin")
 
-    // TEMP: Allow all /admin routes without auth check
     // Redirect non-admin users trying to access admin routes
-    // if (isAdminRoute && !isAdmin) {
-    //   return NextResponse.redirect(new URL("/", req.url))
-    // }
+    if (isAdminRoute && !isAdmin) {
+      return NextResponse.redirect(new URL("/", req.url))
+    }
 
     return NextResponse.next()
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // TEMP: Allow all /admin routes without auth
+        // Admin routes require admin role
         if (req.nextUrl.pathname.startsWith("/admin")) {
-          return true
+          // Allow access to login page without token
+          if (req.nextUrl.pathname === "/admin/login") {
+            return true
+          }
+          return token?.role === "ADMIN"
         }
         // Dashboard routes require authentication
         if (req.nextUrl.pathname.startsWith("/dashboard")) {
