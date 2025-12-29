@@ -268,7 +268,9 @@ export default function HomepageContentDashboard() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/cms/homepage');
+      const response = await fetch(`/api/cms/homepage?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch homepage content');
@@ -443,6 +445,15 @@ export default function HomepageContentDashboard() {
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+      
+      // Clear file inputs after successful save
+      setHeroImage(null);
+      setHeroImageName("");
+      setInfluenceImageFile(null);
+      setInfluenceImageName("");
+      
+      // Refresh content to ensure we have the latest data
+      fetchHomepageContent();
     } catch (err: any) {
       setError(err.message || 'Failed to save homepage content');
       console.error('Error saving homepage content:', err);

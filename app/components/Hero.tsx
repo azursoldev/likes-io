@@ -92,7 +92,9 @@ export default function Hero() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const response = await fetch(`/api/cms/homepage?t=${Date.now()}`);
+        const response = await fetch(`/api/cms/homepage?t=${Date.now()}`, {
+          cache: 'no-store'
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.content) {
