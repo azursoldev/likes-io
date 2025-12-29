@@ -4,12 +4,12 @@ import Footer from "../components/Footer";
 import TermsPage from "../components/TermsPage";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Terms of Service | Likes.io",
   description: "Read the Terms of Service for Likes.io. Understand your rights and responsibilities when using our social media marketing services.",
 };
-
-import { TERMS_DEFAULT_SECTIONS } from "@/lib/legal-defaults";
 
 async function getTermsData() {
   try {
@@ -22,7 +22,7 @@ async function getTermsData() {
     if (!legalPage) {
       return {
         title: "Terms of Service",
-        sections: TERMS_DEFAULT_SECTIONS
+        sections: []
       };
     }
     
@@ -31,7 +31,7 @@ async function getTermsData() {
     console.error("Error fetching terms:", error);
     return {
       title: "Terms of Service",
-      sections: TERMS_DEFAULT_SECTIONS
+      sections: []
     };
   }
 }

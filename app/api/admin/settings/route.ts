@@ -110,6 +110,12 @@ export async function GET() {
       rapidApiInstagramHost: getField(settings, 'rapidApiInstagramHost', 'instagram120.p.rapidapi.com'),
       rapidApiTikTokHost: getField(settings, 'rapidApiTikTokHost', 'tiktok-data.p.rapidapi.com'),
       rapidApiYouTubeHost: getField(settings, 'rapidApiYouTubeHost', 'youtube-data.p.rapidapi.com'),
+      recaptchaSiteKey: getField(settings, 'recaptchaSiteKey', ''),
+      recaptchaSecretKey: maskApiKey(getField(settings, 'recaptchaSecretKey', null)),
+      googleClientId: getField(settings, 'googleClientId', ''),
+      googleClientSecret: maskApiKey(getField(settings, 'googleClientSecret', null)),
+      facebookClientId: getField(settings, 'facebookClientId', ''),
+      facebookClientSecret: maskApiKey(getField(settings, 'facebookClientSecret', null)),
       // SEO & Branding
       homeMetaTitle: getField(settings, 'homeMetaTitle', ''),
       homeMetaDescription: getField(settings, 'homeMetaDescription', ''),
@@ -177,6 +183,12 @@ export async function PUT(request: NextRequest) {
       rapidApiInstagramHost,
       rapidApiTikTokHost,
       rapidApiYouTubeHost,
+      recaptchaSiteKey,
+      recaptchaSecretKey,
+      googleClientId,
+      googleClientSecret,
+      facebookClientId,
+      facebookClientSecret,
       smtpHost,
       smtpUser,
       smtpPass,
@@ -249,6 +261,18 @@ export async function PUT(request: NextRequest) {
     if (rapidApiInstagramHost !== undefined) updateData.rapidApiInstagramHost = rapidApiInstagramHost;
     if (rapidApiTikTokHost !== undefined) updateData.rapidApiTikTokHost = rapidApiTikTokHost;
     if (rapidApiYouTubeHost !== undefined) updateData.rapidApiYouTubeHost = rapidApiYouTubeHost;
+    if (recaptchaSiteKey !== undefined) updateData.recaptchaSiteKey = recaptchaSiteKey || null;
+    if (recaptchaSecretKey !== undefined && !recaptchaSecretKey.includes('••••')) {
+      updateData.recaptchaSecretKey = recaptchaSecretKey || null;
+    }
+    if (googleClientId !== undefined) updateData.googleClientId = googleClientId || null;
+    if (googleClientSecret !== undefined && !googleClientSecret.includes('••••')) {
+      updateData.googleClientSecret = googleClientSecret || null;
+    }
+    if (facebookClientId !== undefined) updateData.facebookClientId = facebookClientId || null;
+    if (facebookClientSecret !== undefined && !facebookClientSecret.includes('••••')) {
+      updateData.facebookClientSecret = facebookClientSecret || null;
+    }
     if (smtpHost !== undefined) updateData.smtpHost = smtpHost;
     if (smtpUser !== undefined) updateData.smtpUser = smtpUser;
     if (smtpPass !== undefined) updateData.smtpPass = smtpPass;
@@ -275,9 +299,9 @@ export async function PUT(request: NextRequest) {
       // This is necessary because the Prisma Client might be outdated (locked by dev server)
       // and therefore unaware of these new columns.
       if (settings && settings.id) {
-         try {
-           console.log('Force updating SEO/Branding fields via raw SQL for ID:', settings.id);
-           
+       try {
+         console.log('Force updating SEO/Branding fields via raw SQL for ID:', settings.id);
+         
            // Ensure values are safe for SQL (convert undefined to null if not provided, but prefer existing value if undefined)
            // Note: Empty strings from frontend will be treated as valid values, but we can convert to null if desired.
            // Current logic: undefined -> keep existing (or null). provided (inc empty string) -> use it.
@@ -304,6 +328,30 @@ export async function PUT(request: NextRequest) {
              WHERE "id" = ${settings.id}
            `;
            console.log('Raw SQL update result:', result);
+           
+           const getSecretVal = (newVal: any, existingVal: any) => {
+             if (newVal !== undefined) return newVal;
+             return existingVal !== undefined ? existingVal : null;
+           };
+           const safeRecaptchaSiteKey = getVal(recaptchaSiteKey, settings.recaptchaSiteKey);
+           const safeRecaptchaSecretKey = getSecretVal(recaptchaSecretKey, settings.recaptchaSecretKey);
+           const safeGoogleClientId = getVal(googleClientId, settings.googleClientId);
+           const safeGoogleClientSecret = getSecretVal(googleClientSecret, settings.googleClientSecret);
+           const safeFacebookClientId = getVal(facebookClientId, settings.facebookClientId);
+           const safeFacebookClientSecret = getSecretVal(facebookClientSecret, settings.facebookClientSecret);
+           
+           const authResult = await prisma.$executeRaw`
+             UPDATE "admin_settings"
+             SET
+               "recaptchaSiteKey" = ${safeRecaptchaSiteKey},
+               "recaptchaSecretKey" = ${safeRecaptchaSecretKey},
+               "googleClientId" = ${safeGoogleClientId},
+               "googleClientSecret" = ${safeGoogleClientSecret},
+               "facebookClientId" = ${safeFacebookClientId},
+               "facebookClientSecret" = ${safeFacebookClientSecret}
+             WHERE "id" = ${settings.id}
+           `;
+           console.log('Raw SQL auth update result:', authResult);
          } catch (rawError: any) {
            console.error('Raw SQL Update Error:', rawError);
            // Don't fail the whole request if only SEO fields fail, but log it.

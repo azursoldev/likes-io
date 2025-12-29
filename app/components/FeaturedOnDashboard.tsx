@@ -239,7 +239,7 @@ export default function FeaturedOnDashboard() {
       const brandData: any = {
         brandName: brandName.trim(),
         altText: type === "image" ? (altText.trim() || brandName.trim()) : null,
-        logoUrl: type === "image" ? (logoUrl || (logoImage ? "uploaded" : null)) : null,
+        logoUrl: type === "image" ? (logoUrl || null) : null,
         pageLinks: validPageLinks,
         displayOrder: displayOrder,
         isActive: true,
@@ -479,15 +479,29 @@ export default function FeaturedOnDashboard() {
                       <input
                         id="logo-upload"
                         type="file"
-                        accept="image/*"
+                        accept=".svg,.png,.jpg,.jpeg,.webp"
                         style={{ display: "none" }}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
-                          if (file) {
+                          if (!file) return;
+                          try {
                             setLogoImage(file);
                             setLogoImageName(file.name);
-                            // For now, we'll use the file name as a placeholder
-                            // In production, you'd upload to a storage service
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            const res = await fetch("/api/upload", { method: "POST", body: formData });
+                            if (!res.ok) {
+                              const err = await res.json().catch(() => ({} as any));
+                              throw new Error(err.error || "Upload failed");
+                            }
+                            const data = await res.json();
+                            const finalUrl = data.publicUrl || data.url;
+                            if (!finalUrl) {
+                              throw new Error("Upload did not return a URL");
+                            }
+                            setLogoUrl(finalUrl);
+                          } catch (uploadErr: any) {
+                            alert(uploadErr.message || "Failed to upload logo");
                           }
                         }}
                       />
@@ -512,6 +526,11 @@ export default function FeaturedOnDashboard() {
                       placeholder="https://example.com/logo.png"
                     />
                   </label>
+                  {logoUrl && (
+                    <div style={{ marginTop: '8px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
+                      <img src={logoUrl} alt={altText || brandName || 'Logo'} style={{ maxHeight: '50px' }} />
+                    </div>
+                  )}
                   <label className="faq-modal-label">
                     Alt Text
                     <input

@@ -17,8 +17,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate file type and size
+    const allowedExt = ['.svg', '.png', '.jpg', '.jpeg', '.webp'];
+    const ext = path.extname(file.name).toLowerCase();
+    if (!allowedExt.includes(ext)) {
+      return NextResponse.json(
+        { error: `Unsupported file type. Allowed: ${allowedExt.join(', ')}` },
+        { status: 400 }
+      );
+    }
+    const maxBytes = 5 * 1024 * 1024; // 5MB
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    if (buffer.length > maxBytes) {
+      return NextResponse.json(
+        { error: 'File too large (max 5MB)' },
+        { status: 400 }
+      );
+    }
 
     // Create unique filename
     const filename = `${uuidv4()}${path.extname(file.name)}`;
@@ -35,8 +51,11 @@ export async function POST(request: NextRequest) {
     await writeFile(filepath, buffer);
 
     const url = `/uploads/${filename}`;
+    const proto = request.headers.get('x-forwarded-proto') || 'http';
+    const host = request.headers.get('host') || '';
+    const publicUrl = host ? `${proto}://${host}${url}` : url;
 
-    return NextResponse.json({ url });
+    return NextResponse.json({ url, publicUrl });
   } catch (error: any) {
     console.error('Upload error:', error);
     return NextResponse.json(

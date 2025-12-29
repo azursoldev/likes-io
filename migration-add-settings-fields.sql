@@ -26,3 +26,11 @@ ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "newServiceIndicator" BOOL
 -- Add Site Configuration
 ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "supportEmail" TEXT;
 
+-- Add Authentication keys
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "recaptchaSiteKey" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "recaptchaSecretKey" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "googleClientId" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "googleClientSecret" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "facebookClientId" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "facebookClientSecret" TEXT;
+

@@ -4,12 +4,12 @@ import Footer from "../components/Footer";
 import PrivacyPolicyPage from "../components/PrivacyPolicyPage";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Privacy Policy | Likes.io",
   description: "Your privacy is our priority. Read our Privacy Policy to understand how we collect, use, and protect your personal information.",
 };
-
-import { PRIVACY_DEFAULT_SECTIONS } from "@/lib/legal-defaults";
 
 async function getPrivacyData() {
   try {
@@ -22,7 +22,7 @@ async function getPrivacyData() {
     if (!legalPage) {
       return {
         title: "Privacy Policy",
-        sections: PRIVACY_DEFAULT_SECTIONS
+        sections: []
       };
     }
 
@@ -31,7 +31,7 @@ async function getPrivacyData() {
     console.error("Error fetching privacy:", error);
     return {
       title: "Privacy Policy",
-      sections: PRIVACY_DEFAULT_SECTIONS
+      sections: []
     };
   }
 }

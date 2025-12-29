@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,24 +10,57 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faGoogle, faFacebook } from "@fortawesome/free-brands-svg-icons";
 
+declare global {
+  interface Window {
+    grecaptcha: any;
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
-    captcha: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+
+  useEffect(() => {
+    if (!siteKey) return;
+    const script = document.createElement("script");
+    script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setRecaptchaReady(true);
+    script.onerror = () => setRecaptchaReady(false);
+    document.head.appendChild(script);
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, [siteKey]);
+
+  const getRecaptchaToken = async (): Promise<string | null> => {
+    try {
+      if (!siteKey || !recaptchaReady || !window.grecaptcha) return null;
+      await window.grecaptcha.ready();
+      const token = await window.grecaptcha.execute(siteKey, { action: "login" });
+      return token;
+    } catch {
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setError(null);
 
-    if (!formData.captcha) {
-      setError("Please confirm you're not a robot.");
+    const recaptchaToken = await getRecaptchaToken();
+    if (!recaptchaToken) {
+      setError("reCAPTCHA verification failed. Please try again.");
       return;
     }
 
@@ -36,6 +69,7 @@ export default function LoginPage() {
       redirect: false,
       email: formData.email.trim(),
       password: formData.password,
+      recaptchaToken,
     });
 
     if (res?.error) {
@@ -137,19 +171,7 @@ export default function LoginPage() {
                 <a href="/forgot-password" className="login-forgot-link">Forgot your password?</a>
               </div>
 
-              <div className="login-captcha">
-                <label className="login-checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="captcha"
-                    checked={formData.captcha}
-                    onChange={handleChange}
-                    className="login-checkbox"
-                  />
-                  <span>I'm not a robot</span>
-                </label>
-                <div className="login-captcha-logo">reCAPTCHA</div>
-              </div>
+              <div className="login-captcha-logo">Protected by reCAPTCHA</div>
 
               {error && <div className="login-alert login-alert-error">{error}</div>}
 
@@ -162,17 +184,24 @@ export default function LoginPage() {
               </div>
 
               <div className="login-social">
-                <button type="button" className="login-social-btn">
+                <button
+                  type="button"
+                  className="login-social-btn"
+                  onClick={() => signIn("google")}
+                  aria-label="Sign in with Google"
+                >
                   <FontAwesomeIcon icon={faGoogle} />
-                  
                 </button>
-                <button type="button" className="login-social-btn">
+                <button
+                  type="button"
+                  className="login-social-btn"
+                  onClick={() => signIn("facebook")}
+                  aria-label="Sign in with Facebook"
+                >
                   <FontAwesomeIcon icon={faFacebook} />
-                 
                 </button>
                 <button type="button" className="login-social-btn">
                   <span className="login-social-icon">J</span>
-                 
                 </button>
               </div>
 

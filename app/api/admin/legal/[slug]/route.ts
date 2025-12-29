@@ -96,6 +96,9 @@ export async function PUT(
       },
     });
 
+    // Revalidate the public page
+    revalidatePath(`/${slug}`);
+
     // await prisma.$executeRaw`
     //   INSERT INTO "legal_pages" ("id", "slug", "title", "sections", "updatedAt")
     //   VALUES (${id}, ${slug}, ${title}, ${sectionsJson}::jsonb, ${now}::timestamp)

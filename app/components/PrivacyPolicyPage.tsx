@@ -43,109 +43,8 @@ const ICON_MAP: Record<string, any> = {
   faCommentDots
 };
 
-const defaultSections: PrivacySection[] = [
-  {
-    id: "data-collection",
-    title: "Information We Collect",
-    icon: faTriangleExclamation,
-    content: `**1. Information We Collect**
-
-We collect information that you provide directly to us when you use our Service. This includes:
-
-- **Personal Information:** Your name, email address, and social media username/URL when you make a purchase or create an account
-- **Payment Information:** All payment information is handled securely by trusted third-party payment processors. We do not store your full payment card details
-- **Usage Information:** Information about how you use our Service, including pages visited, time spent, and features used
-- **Device Information:** Technical information about your device, browser, and IP address for security and service improvement purposes`,
-  },
-  {
-    id: "data-usage",
-    title: "How We Use Your Information",
-    icon: faCheck,
-    content: `**2. How We Use Your Information**
-
-We use the information we collect to:
-
-- **Process Transactions:** Complete your purchases and deliver the services you've requested
-- **Send Updates:** Keep you informed about your orders, delivery status, and important service updates
-- **Respond to Support:** Address your questions, concerns, and support requests promptly
-- **Analyze Usage Trends:** Understand how our Service is used to improve functionality and user experience
-- **Ensure Security:** Detect and prevent fraud, abuse, and other security threats
-- **Comply with Legal Obligations:** Meet our legal and regulatory requirements`,
-  },
-  {
-    id: "data-sharing",
-    title: "Information Sharing",
-    icon: faArrowRight,
-    content: `**3. Information Sharing**
-
-**We do not sell your personal information.**
-
-We may share your information only in the following limited circumstances:
-
-- **Trusted Third-Party Payment Processors:** To process payments securely. These processors are required to maintain the confidentiality of your information
-- **Legal Obligations:** When required by law, court order, or government regulation
-- **Protection of Rights:** To protect our rights, privacy, safety, or property, or that of our users or others
-- **Business Transfers:** In connection with any merger, sale of company assets, or acquisition, your information may be transferred as part of that transaction
-
-We do not share your information with third parties for their marketing purposes.`,
-  },
-  {
-    id: "data-security",
-    title: "Data Security",
-    icon: faLock,
-    content: `**4. Data Security**
-
-We implement robust security measures to protect your personal information:
-
-- **Secure Connections:** All data transmission is encrypted using SSL (Secure Socket Layer) technology
-- **Certified Payment Gateways:** We use industry-standard, PCI-compliant payment processors to handle all financial transactions
-- **Access Controls:** Your personal information is accessible only to authorized personnel who need it to perform their job functions
-- **Regular Security Audits:** We conduct regular security assessments to identify and address potential vulnerabilities
-
-While we strive to protect your personal information, no method of transmission over the Internet or electronic storage is 100% secure. We cannot guarantee absolute security, but we are committed to maintaining the highest standards of data protection.`,
-  },
-  {
-    id: "your-rights",
-    title: "Your Choices & Rights",
-    icon: faHand,
-    content: `**5. Your Choices & Rights**
-
-You have the following rights regarding your personal information:
-
-- **Opt-Out of Promotional Communications:** You can opt out of receiving promotional emails by clicking the unsubscribe link in any promotional email we send you, or by contacting us directly
-- **Access Your Information:** You can request access to the personal information we hold about you
-- **Update Your Information:** You can update or correct your personal information through your account settings or by contacting us
-- **Delete Your Information:** You can request deletion of your personal information, subject to certain legal and operational requirements
-- **Essential Communications:** Please note that even if you opt out of promotional communications, we may still send you essential, non-promotional messages related to your account or orders, such as order confirmations and delivery updates`,
-  },
-  {
-    id: "policy-changes",
-    title: "Changes to This Policy",
-    icon: faClock,
-    content: `**6. Changes to This Policy**
-
-We may update this Privacy Policy from time to time to reflect changes in our practices, technology, legal requirements, or other factors. When we make changes, we will:
-
-- **Update the "Last updated" date at the top of this Privacy Policy**
-- **Post the revised policy on this page with a clear indication of what has changed**
-- **Notify you of significant changes via email or a prominent notice on our Service**
-
-We encourage you to review this Privacy Policy periodically to stay informed about how we collect, use, and protect your information. Your continued use of our Service after any changes indicates your acceptance of the updated Privacy Policy.`,
-  },
-  {
-    id: "contact-us",
-    title: "Contact Us",
-    icon: faCommentDots,
-    content: `**7. Contact Us**
-
-If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please [contact us](/contact).
-
-We are committed to addressing your privacy concerns and will respond to your inquiries as promptly as possible.`,
-  },
-];
-
 export default function PrivacyPolicyPage({ data }: { data?: any }) {
-  const [sections, setSections] = useState<PrivacySection[]>(defaultSections);
+  const [sections, setSections] = useState<PrivacySection[]>([]);
   const [activeSection, setActiveSection] = useState<string>("");
 
   useEffect(() => {
@@ -156,9 +55,10 @@ export default function PrivacyPolicyPage({ data }: { data?: any }) {
       }));
       setSections(mappedSections);
     } else {
-      setSections(defaultSections);
+      setSections([]);
     }
   }, [data]);
+
 
   useEffect(() => {
     if (sections.length > 0) {
@@ -368,7 +268,7 @@ export default function PrivacyPolicyPage({ data }: { data?: any }) {
             Privacy <span className="privacy-title-accent">Policy</span>
           </h1>
           <p className="privacy-subtitle">
-            Your privacy is important to us. Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            Your privacy is important to us. {(data?.updatedAt || data?.updated_at) ? `Last updated: ${new Date(data?.updatedAt || data?.updated_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}
           </p>
         </div>
       </div>

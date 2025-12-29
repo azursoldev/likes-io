@@ -40,6 +40,13 @@ export default function SettingsDashboard() {
   const [rapidApiTikTokHost, setRapidApiTikTokHost] = useState("tiktok-data.p.rapidapi.com");
   const [rapidApiYouTubeHost, setRapidApiYouTubeHost] = useState("youtube-data.p.rapidapi.com");
 
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState("");
+  const [recaptchaSecretKey, setRecaptchaSecretKey] = useState("••••••••");
+  const [googleClientId, setGoogleClientId] = useState("");
+  const [googleClientSecret, setGoogleClientSecret] = useState("••••••••");
+  const [facebookClientId, setFacebookClientId] = useState("");
+  const [facebookClientSecret, setFacebookClientSecret] = useState("••••••••");
+
   // Fetch settings on mount
   useEffect(() => {
     fetchSettings();
@@ -76,6 +83,13 @@ export default function SettingsDashboard() {
         if (data.rapidApiInstagramHost) setRapidApiInstagramHost(data.rapidApiInstagramHost);
         if (data.rapidApiTikTokHost) setRapidApiTikTokHost(data.rapidApiTikTokHost);
         if (data.rapidApiYouTubeHost) setRapidApiYouTubeHost(data.rapidApiYouTubeHost);
+
+        if (data.recaptchaSiteKey) setRecaptchaSiteKey(data.recaptchaSiteKey);
+        if (data.recaptchaSecretKey) setRecaptchaSecretKey(data.recaptchaSecretKey);
+        if (data.googleClientId) setGoogleClientId(data.googleClientId);
+        if (data.googleClientSecret) setGoogleClientSecret(data.googleClientSecret);
+        if (data.facebookClientId) setFacebookClientId(data.facebookClientId);
+        if (data.facebookClientSecret) setFacebookClientSecret(data.facebookClientSecret);
 
         // SEO & Branding
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
@@ -118,6 +132,12 @@ export default function SettingsDashboard() {
           rapidApiInstagramHost,
           rapidApiTikTokHost,
           rapidApiYouTubeHost,
+          recaptchaSiteKey,
+          recaptchaSecretKey: recaptchaSecretKey.includes('••••') ? undefined : recaptchaSecretKey,
+          googleClientId,
+          googleClientSecret: googleClientSecret.includes('••••') ? undefined : googleClientSecret,
+          facebookClientId,
+          facebookClientSecret: facebookClientSecret.includes('••••') ? undefined : facebookClientSecret,
           // SEO & Branding
           homeMetaTitle,
           homeMetaDescription,
@@ -480,6 +500,76 @@ export default function SettingsDashboard() {
                     value={rapidApiYouTubeHost}
                     onChange={(e) => setRapidApiYouTubeHost(e.target.value)}
                   />
+                </label>
+              </div>
+            </div>
+
+            <div className="settings-card">
+              <h2 className="settings-card-title">Authentication Keys</h2>
+              <p className="settings-card-description">Configure reCAPTCHA and social login credentials.</p>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  reCAPTCHA Site Key
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={recaptchaSiteKey}
+                    onChange={(e) => setRecaptchaSiteKey(e.target.value)}
+                    placeholder="Enter your public site key"
+                  />
+                </label>
+                <label className="settings-label">
+                  reCAPTCHA Secret Key
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={recaptchaSecretKey}
+                    onChange={(e) => setRecaptchaSecretKey(e.target.value)}
+                    placeholder="Enter your secret key"
+                  />
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
+                </label>
+                <label className="settings-label">
+                  Google Client ID
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={googleClientId}
+                    onChange={(e) => setGoogleClientId(e.target.value)}
+                    placeholder="Enter Google OAuth Client ID"
+                  />
+                </label>
+                <label className="settings-label">
+                  Google Client Secret
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={googleClientSecret}
+                    onChange={(e) => setGoogleClientSecret(e.target.value)}
+                    placeholder="Enter Google OAuth Client Secret"
+                  />
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
+                </label>
+                <label className="settings-label">
+                  Facebook Client ID
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={facebookClientId}
+                    onChange={(e) => setFacebookClientId(e.target.value)}
+                    placeholder="Enter Facebook OAuth App ID"
+                  />
+                </label>
+                <label className="settings-label">
+                  Facebook Client Secret
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={facebookClientSecret}
+                    onChange={(e) => setFacebookClientSecret(e.target.value)}
+                    placeholder="Enter Facebook OAuth App Secret"
+                  />
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
                 </label>
               </div>
             </div>

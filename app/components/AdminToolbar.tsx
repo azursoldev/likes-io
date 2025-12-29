@@ -58,6 +58,27 @@ export default function AdminToolbar({ title }: AdminToolbarProps) {
 
   const userName = session?.user?.name || "Admin User";
   const userRole = session?.user?.role === "ADMIN" ? "Administrator" : "User";
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const res = await fetch("/api/admin/profile/avatar");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.avatarUrl) setAvatarUrl(data.avatarUrl);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchAvatar();
+    const onUpdated = () => fetchAvatar();
+    window.addEventListener("avatar-updated", onUpdated as any);
+    return () => {
+      window.removeEventListener("avatar-updated", onUpdated as any);
+    };
+  }, []);
 
   return (
     <div className="admin-toolbar-wrapper">
@@ -79,7 +100,16 @@ export default function AdminToolbar({ title }: AdminToolbarProps) {
                 className="admin-user-chip admin-user-chip-clickable"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                <div className="chip-avatar">{getUserInitials()}</div>
+                {avatarUrl ? (
+                  <img 
+                    src={avatarUrl} 
+                    alt={userName} 
+                    className="chip-avatar" 
+                    style={{ objectFit: "cover", borderRadius: "50%" }}
+                  />
+                ) : (
+                  <div className="chip-avatar">{getUserInitials()}</div>
+                )}
                 <div className="chip-meta">
                   <span className="chip-name">{userName}</span>
                   <span className="chip-role">{userRole}</span>
