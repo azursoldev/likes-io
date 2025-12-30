@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { Platform, ServiceType } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +26,15 @@ export async function GET(request: NextRequest) {
       orderBy: { displayOrder: 'asc' },
     });
 
-    return NextResponse.json({ faqs });
+    const response = NextResponse.json({ faqs });
+
+    // Explicitly disable caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    response.headers.set('Surrogate-Control', 'no-store');
+
+    return response;
   } catch (error: any) {
     console.error('Get FAQs error:', error);
     return NextResponse.json(
@@ -73,6 +85,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidatePath('/faq');
+    revalidatePath('/admin/faq');
+    revalidatePath('/');
+
     return NextResponse.json({ faq });
   } catch (error: any) {
     console.error('Create FAQ error:', error);
@@ -121,6 +137,10 @@ export async function PUT(request: NextRequest) {
       data: updateData,
     });
 
+    revalidatePath('/faq');
+    revalidatePath('/admin/faq');
+    revalidatePath('/');
+
     return NextResponse.json({ faq });
   } catch (error: any) {
     console.error('Update FAQ error:', error);
@@ -155,6 +175,10 @@ export async function DELETE(request: NextRequest) {
     await prisma.fAQ.delete({
       where: { id: id },
     });
+
+    revalidatePath('/faq');
+    revalidatePath('/admin/faq');
+    revalidatePath('/');
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

@@ -155,7 +155,9 @@ export default function FAQDashboard() {
   const fetchFAQs = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/cms/faq");
+      const response = await fetch(`/api/cms/faq?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
       if (response.ok) {
         const data = await response.json();
         const faqs = data.faqs || [];

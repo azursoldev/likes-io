@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,9 +15,17 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       content: homepageContent || null,
     });
+    
+    // Explicitly disable caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    response.headers.set('Surrogate-Control', 'no-store');
+    
+    return response;
   } catch (error: any) {
     console.error('Get homepage content error:', error);
     return NextResponse.json(
@@ -58,8 +67,11 @@ export async function PATCH(request: NextRequest) {
       isActive 
     } = body;
 
+    console.log('PATCH /api/cms/homepage body:', JSON.stringify(body, null, 2));
+
     // Validate required fields
     if (!heroTitle || !heroSubtitle) {
+      console.log('PATCH /api/cms/homepage: Missing required fields');
       return NextResponse.json(
         { error: 'Hero title and subtitle are required' },
         { status: 400 }
@@ -70,9 +82,14 @@ export async function PATCH(request: NextRequest) {
     let homepageContent = await prisma.homepageContent.findFirst({
       where: { isActive: true },
     });
+    
+    console.log('PATCH /api/cms/homepage: Existing content found:', homepageContent ? homepageContent.id : 'None');
 
     if (homepageContent) {
       // Update existing
+      console.log('PATCH /api/cms/homepage: Updating existing record. ID:', homepageContent.id);
+      console.log('PATCH /api/cms/homepage: New HeroProfileImage:', heroProfileImage);
+      
       homepageContent = await prisma.homepageContent.update({
         where: { id: homepageContent.id },
         data: {
@@ -104,6 +121,7 @@ export async function PATCH(request: NextRequest) {
           isActive: isActive !== undefined ? isActive : true,
         },
       });
+      console.log('PATCH /api/cms/homepage: Update successful. New Image in DB:', homepageContent.heroProfileImage);
     } else {
       // Create new
       homepageContent = await prisma.homepageContent.create({
@@ -137,6 +155,10 @@ export async function PATCH(request: NextRequest) {
         },
       });
     }
+
+    // Purge cache for homepage and admin page
+    revalidatePath('/');
+    revalidatePath('/admin/homepage-content');
 
     return NextResponse.json({
       message: 'Homepage content updated successfully',

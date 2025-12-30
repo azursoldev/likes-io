@@ -263,6 +263,74 @@ export default function HomepageContentDashboard() {
     setGsFeatures(gsFeatures.filter((_, i) => i !== index));
   };
 
+  const updateStateFromData = (content: any) => {
+    if (!content) return;
+
+    setHeroTitle(content.heroTitle || DEFAULT_HERO_TITLE);
+    setHeroSubtitle(content.heroSubtitle || DEFAULT_HERO_SUBTITLE);
+    setRating(content.heroRating || DEFAULT_RATING);
+    setReviewCountText(content.heroReviewCount || DEFAULT_REVIEW_COUNT);
+    
+    // Hero Profile Card
+    setHeroProfileHandle(content.heroProfileHandle || "@yourprofile");
+    setHeroProfileRole(content.heroProfileRole || "Lifestyle Creator");
+    setHeroProfileLikes(content.heroProfileLikes || "1,258");
+    setHeroProfileFollowers(content.heroProfileFollowers || "15.2k");
+    setHeroProfileEngagement(content.heroProfileEngagement || "3.4%");
+    setHeroProfileImage(content.heroProfileImage || "");
+    if (content.heroProfileImage) {
+      const fileName = content.heroProfileImage.split('/').pop();
+      setHeroImageName(fileName || "Existing Image");
+    }
+    
+    // Platform Section
+    setPlatformTitle(content.platformTitle || "Choose Your Platform to Start Growing");
+    setPlatformSubtitle(content.platformSubtitle || "We support all major social media platforms");
+    if (content.platformCards) {
+      setPlatformCards(content.platformCards);
+    }
+    
+    // Why Choose Us
+    setWhyChooseTitle(content.whyChooseTitle || "Why Choose Us?");
+    setWhyChooseSubtitle(content.whyChooseSubtitle || "Why Buying Instagram Likes is a Game-Changer");
+    
+    // Influence Section
+    setInfluenceTitle(content.influenceTitle || "Build Your Empire of Influence");
+    setInfluenceSubtitle(content.influenceSubtitle || "Start your journey to becoming a social media influencer today");
+    if (content.influenceSteps) {
+      setInfluenceSteps(content.influenceSteps);
+    }
+    setInfluenceImage(content.influenceImage || "");
+    if (content.influenceImage) {
+      const fileName = content.influenceImage.split('/').pop();
+      setInfluenceImageName(fileName || "Existing Image");
+    }
+    
+    // Quick Start Section
+    setQuickStartTitle(content.quickStartTitle || "Get Started Now");
+    setQuickStartDescription1(content.quickStartDescription1 || "Select a package that fits your needs and watch your social media presence grow.");
+    setQuickStartDescription2(content.quickStartDescription2 || "Our services are safe, secure, and delivered instantly.");
+    if (content.quickStartButtons) {
+      setQuickStartButtons(content.quickStartButtons);
+    }
+    
+    if (content.benefits) {
+      setBenefits(content.benefits);
+    }
+
+    // Parse CTA buttons if they exist
+    if (content.heroCtaButtons && Array.isArray(content.heroCtaButtons)) {
+      if (content.heroCtaButtons[0]) {
+        setButton1Text(content.heroCtaButtons[0].text || DEFAULT_BUTTON1_TEXT);
+        setButton1Link(content.heroCtaButtons[0].link || DEFAULT_BUTTON1_LINK);
+      }
+      if (content.heroCtaButtons[1]) {
+        setButton2Text(content.heroCtaButtons[1].text || DEFAULT_BUTTON2_TEXT);
+        setButton2Link(content.heroCtaButtons[1].link || DEFAULT_BUTTON2_LINK);
+      }
+    }
+  };
+
   const fetchHomepageContent = async () => {
     try {
       setLoading(true);
@@ -277,72 +345,10 @@ export default function HomepageContentDashboard() {
       }
       
       const data = await response.json();
+      console.log('Admin Dashboard: Fetched homepage content:', data);
       
       if (data.content) {
-        // Parse the content from database
-        setHeroTitle(data.content.heroTitle || DEFAULT_HERO_TITLE);
-        setHeroSubtitle(data.content.heroSubtitle || DEFAULT_HERO_SUBTITLE);
-        setRating(data.content.heroRating || DEFAULT_RATING);
-        setReviewCountText(data.content.heroReviewCount || DEFAULT_REVIEW_COUNT);
-        
-        // Hero Profile Card
-        setHeroProfileHandle(data.content.heroProfileHandle || "@yourprofile");
-        setHeroProfileRole(data.content.heroProfileRole || "Lifestyle Creator");
-        setHeroProfileLikes(data.content.heroProfileLikes || "1,258");
-        setHeroProfileFollowers(data.content.heroProfileFollowers || "15.2k");
-        setHeroProfileEngagement(data.content.heroProfileEngagement || "3.4%");
-        setHeroProfileImage(data.content.heroProfileImage || "");
-        if (data.content.heroProfileImage) {
-          const fileName = data.content.heroProfileImage.split('/').pop();
-          setHeroImageName(fileName || "Existing Image");
-        }
-        
-        // Platform Section
-        setPlatformTitle(data.content.platformTitle || "Choose Your Platform to Start Growing");
-        setPlatformSubtitle(data.content.platformSubtitle || "We support all major social media platforms");
-        if (data.content.platformCards) {
-          setPlatformCards(data.content.platformCards);
-        }
-        
-        // Why Choose Us
-        setWhyChooseTitle(data.content.whyChooseTitle || "Why Choose Us?");
-        setWhyChooseSubtitle(data.content.whyChooseSubtitle || "Why Buying Instagram Likes is a Game-Changer");
-        
-        // Influence Section
-        setInfluenceTitle(data.content.influenceTitle || "Build Your Empire of Influence");
-        setInfluenceSubtitle(data.content.influenceSubtitle || "Start your journey to becoming a social media influencer today");
-        if (data.content.influenceSteps) {
-          setInfluenceSteps(data.content.influenceSteps);
-        }
-        setInfluenceImage(data.content.influenceImage || "");
-        if (data.content.influenceImage) {
-          const fileName = data.content.influenceImage.split('/').pop();
-          setInfluenceImageName(fileName || "Existing Image");
-        }
-        
-        // Quick Start Section
-        setQuickStartTitle(data.content.quickStartTitle || "Get Started Now");
-        setQuickStartDescription1(data.content.quickStartDescription1 || "Select a package that fits your needs and watch your social media presence grow.");
-        setQuickStartDescription2(data.content.quickStartDescription2 || "Our services are safe, secure, and delivered instantly.");
-        if (data.content.quickStartButtons) {
-          setQuickStartButtons(data.content.quickStartButtons);
-        }
-        
-        if (data.content.benefits) {
-          setBenefits(data.content.benefits);
-        }
-
-        // Parse CTA buttons if they exist
-        if (data.content.heroCtaButtons && Array.isArray(data.content.heroCtaButtons)) {
-          if (data.content.heroCtaButtons[0]) {
-            setButton1Text(data.content.heroCtaButtons[0].text || DEFAULT_BUTTON1_TEXT);
-            setButton1Link(data.content.heroCtaButtons[0].link || DEFAULT_BUTTON1_LINK);
-          }
-          if (data.content.heroCtaButtons[1]) {
-            setButton2Text(data.content.heroCtaButtons[1].text || DEFAULT_BUTTON2_TEXT);
-            setButton2Link(data.content.heroCtaButtons[1].link || DEFAULT_BUTTON2_LINK);
-          }
-        }
+        updateStateFromData(data.content);
       }
     } catch (err: any) {
       console.error('Error fetching homepage content:', err);
@@ -364,6 +370,9 @@ export default function HomepageContentDashboard() {
       ];
 
       let imageUrl = heroProfileImage;
+      
+      console.log('Admin Dashboard: Starting Save. Initial heroProfileImage state:', heroProfileImage);
+      console.log('Admin Dashboard: HeroImage file selected:', heroImage ? heroImage.name : 'None');
 
       if (heroImage) {
         const formData = new FormData();
@@ -380,7 +389,10 @@ export default function HomepageContentDashboard() {
 
         const uploadData = await uploadResponse.json();
         imageUrl = uploadData.url;
+        console.log('Admin Dashboard: Upload successful. New imageUrl:', imageUrl);
         setHeroProfileImage(imageUrl);
+      } else {
+        console.log('Admin Dashboard: No new file uploaded. Using existing URL:', imageUrl);
       }
 
       let influenceImageUrl = influenceImage;
@@ -403,12 +415,7 @@ export default function HomepageContentDashboard() {
         setInfluenceImage(influenceImageUrl);
       }
 
-      const response = await fetch('/api/cms/homepage', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const payload = {
           heroTitle,
           heroSubtitle,
           heroRating: rating,
@@ -435,12 +442,27 @@ export default function HomepageContentDashboard() {
           quickStartDescription2,
           quickStartButtons,
           isActive: true,
-        }),
+      };
+      
+      console.log('Admin Dashboard: Sending PATCH request with payload:', payload);
+
+      const response = await fetch('/api/cms/homepage', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Failed to save (${response.status})`);
+      }
+
+      const responseData = await response.json();
+      if (responseData.content) {
+          console.log('Admin Dashboard: Update successful. Syncing state with server response.');
+          updateStateFromData(responseData.content);
       }
 
       setSuccess(true);
@@ -452,8 +474,8 @@ export default function HomepageContentDashboard() {
       setInfluenceImageFile(null);
       setInfluenceImageName("");
       
-      // Refresh content to ensure we have the latest data
-      fetchHomepageContent();
+      // Removed immediate refetch to avoid race conditions with cache
+      // fetchHomepageContent();
     } catch (err: any) {
       setError(err.message || 'Failed to save homepage content');
       console.error('Error saving homepage content:', err);

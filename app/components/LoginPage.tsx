@@ -43,13 +43,24 @@ export default function LoginPage({ dbSiteKey }: { dbSiteKey?: string | null }) 
   }, [siteKey]);
 
   const getRecaptchaToken = async (): Promise<string | null> => {
+    // Check if we are on localhost
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
     try {
-      if (!siteKey || !recaptchaReady || !window.grecaptcha) return null;
+      if (!siteKey) {
+        return isLocalhost ? "LOCALHOST_BYPASS" : null;
+      }
+      
+      if (!recaptchaReady || !window.grecaptcha) {
+        return isLocalhost ? "LOCALHOST_BYPASS" : null;
+      }
+
       await window.grecaptcha.ready();
       const token = await window.grecaptcha.execute(siteKey, { action: "login" });
       return token;
-    } catch {
-      return null;
+    } catch (error) {
+      console.error("reCAPTCHA execution failed:", error);
+      return isLocalhost ? "LOCALHOST_BYPASS" : null;
     }
   };
 

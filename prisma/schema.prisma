@@ -147,6 +147,10 @@ model AdminSettings {
   homeMetaTitle          String?
   recaptchaSecretKey     String?
   recaptchaSiteKey       String?
+  googleClientId         String?
+  googleClientSecret     String?
+  facebookClientId       String?
+  facebookClientSecret   String?
 
   @@map("admin_settings")
 }

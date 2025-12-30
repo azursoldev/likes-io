@@ -50,7 +50,9 @@ export default function FAQPage() {
   const fetchFAQs = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/cms/faq");
+      const response = await fetch(`/api/cms/faq?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
       if (response.ok) {
         const data = await response.json();
         // Filter out homepage FAQs and get only main FAQ page FAQs
