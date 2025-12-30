@@ -71,9 +71,7 @@ export default function LoginPage({ dbSiteKey }: { dbSiteKey?: string | null }) 
 
     const recaptchaToken = await getRecaptchaToken();
     if (!recaptchaToken) {
-      // Fallback: If reCAPTCHA fails, allow login to proceed but log the error
-      // This ensures users can still log in even if reCAPTCHA is misconfigured
-      console.warn("reCAPTCHA token generation failed, proceeding with bypass token.");
+      console.warn("reCAPTCHA token generation failed, proceeding.");
     }
 
     const finalToken = recaptchaToken || "RECAPTCHA_FAILED_CLIENT_SIDE";
@@ -227,4 +225,3 @@ export default function LoginPage({ dbSiteKey }: { dbSiteKey?: string | null }) 
     </section>
   );
 }
-

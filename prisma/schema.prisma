@@ -20,6 +20,7 @@ model User {
   blogPosts BlogPost[]
   orders    Order[]
   reviews   Review[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([email])
   @@index([role])
@@ -365,6 +366,19 @@ model Review {
   @@index([isPublished])
   @@index([rating])
   @@map("reviews")
+}
+
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Testimonial {

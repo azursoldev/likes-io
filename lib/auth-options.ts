@@ -33,8 +33,7 @@ export const authOptions: NextAuthOptions = {
             const recaptchaToken = (credentials as any).recaptchaToken as string | undefined
             
             if (recaptchaToken === "LOCALHOST_BYPASS" || recaptchaToken === "RECAPTCHA_FAILED_CLIENT_SIDE") {
-               // Bypass verification for localhost/dev or if client-side execution failed
-            } else if (secret) {
+             } else if (secret) {
                 if (!recaptchaToken) {
                   return null
                 }
@@ -130,4 +129,3 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 }
-
