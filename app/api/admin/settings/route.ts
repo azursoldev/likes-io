@@ -105,6 +105,13 @@ export async function GET() {
       hasBigPayMeConfig: !!settings.bigPayMeApiKey,
       hasRapidApiConfig: !!settings.rapidApiKey,
       hasSmtpConfig: !!settings.smtpHost,
+      // SMTP Configuration
+      smtpHost: getField(settings, 'smtpHost', ''),
+      smtpPort: getField(settings, 'smtpPort', 587),
+      smtpSecure: getField(settings, 'smtpSecure', false),
+      smtpUser: getField(settings, 'smtpUser', ''),
+      smtpPass: getField(settings, 'smtpPass', ''),
+      smtpFrom: getField(settings, 'smtpFrom', ''),
       // RapidAPI
       rapidApiKey: maskApiKey(getField(settings, 'rapidApiKey', null)),
       rapidApiInstagramHost: getField(settings, 'rapidApiInstagramHost', 'instagram120.p.rapidapi.com'),
@@ -190,8 +197,11 @@ export async function PUT(request: NextRequest) {
       facebookClientId,
       facebookClientSecret,
       smtpHost,
+      smtpPort,
+      smtpSecure,
       smtpUser,
       smtpPass,
+      smtpFrom,
       defaultCurrency,
     } = body;
 

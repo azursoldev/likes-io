@@ -12,13 +12,25 @@ class EmailService {
   private transporter: nodemailer.Transporter | null = null;
 
   private async getTransporter(): Promise<nodemailer.Transporter> {
+    // Always fetch latest settings to ensure we use current config
+    // We can cache the transporter if settings haven't changed, but for now let's recreate if needed
+    // or just rely on instance caching.
+    // If we want to support dynamic updates without restart, we should probably not cache 'transporter' indefinitely
+    // or check if config changed.
+    // For simplicity, let's keep caching but assume this service might be short-lived (serverless)
+    // or acceptable to require restart/re-instantiation.
+    
     if (this.transporter) {
       return this.transporter;
     }
 
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    const settings = await prisma.adminSettings.findFirst();
+
+    const smtpHost = settings?.smtpHost || process.env.SMTP_HOST;
+    const smtpUser = settings?.smtpUser || process.env.SMTP_USER;
+    const smtpPass = settings?.smtpPass || process.env.SMTP_PASS;
+    const smtpPort = settings?.smtpPort || parseInt(process.env.SMTP_PORT || '587');
+    const smtpSecure = settings?.smtpSecure ?? (process.env.SMTP_SECURE === 'true');
 
     if (!smtpHost || !smtpUser || !smtpPass) {
       throw new Error('SMTP configuration is missing');
@@ -26,8 +38,8 @@ class EmailService {
 
     this.transporter = nodemailer.createTransport({
       host: smtpHost,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
+      port: smtpPort,
+      secure: smtpSecure,
       auth: {
         user: smtpUser,
         pass: smtpPass,
@@ -41,8 +53,11 @@ class EmailService {
     try {
       const transporter = await this.getTransporter();
       
+      const settings = await prisma.adminSettings.findFirst();
+      const from = settings?.smtpFrom || process.env.SMTP_FROM || settings?.smtpUser || process.env.SMTP_USER;
+
       await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        from: from,
         to: options.to,
         subject: options.subject,
         html: options.html,

@@ -34,3 +34,10 @@ ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "googleClientSecret" TEXT;
 ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "facebookClientId" TEXT;
 ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "facebookClientSecret" TEXT;
 
+-- Add SMTP settings fields
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpHost" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpPort" INTEGER;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpSecure" BOOLEAN DEFAULT false;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpUser" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpPass" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpFrom" TEXT;
