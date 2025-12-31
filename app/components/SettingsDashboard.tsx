@@ -55,6 +55,11 @@ export default function SettingsDashboard() {
   const [smtpPass, setSmtpPass] = useState("");
   const [smtpFrom, setSmtpFrom] = useState("");
 
+  // MyFatoorah Configuration
+  const [myFatoorahToken, setMyFatoorahToken] = useState("••••••••");
+  const [myFatoorahBaseURL, setMyFatoorahBaseURL] = useState("https://apitest.myfatoorah.com");
+  const [myFatoorahTestMode, setMyFatoorahTestMode] = useState(true);
+
   // Fetch settings on mount
   useEffect(() => {
     fetchSettings();
@@ -106,6 +111,11 @@ export default function SettingsDashboard() {
         if (data.smtpUser) setSmtpUser(data.smtpUser);
         if (data.smtpPass) setSmtpPass(data.smtpPass); // Passwords should probably be masked if not changed, but let's assume API returns it or masked
         if (data.smtpFrom) setSmtpFrom(data.smtpFrom);
+
+        // MyFatoorah Configuration
+        if (data.myFatoorahToken) setMyFatoorahToken(data.myFatoorahToken);
+        if (data.myFatoorahBaseURL) setMyFatoorahBaseURL(data.myFatoorahBaseURL);
+        if (data.myFatoorahTestMode !== undefined) setMyFatoorahTestMode(data.myFatoorahTestMode);
 
         // SEO & Branding
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
@@ -161,6 +171,10 @@ export default function SettingsDashboard() {
           smtpUser,
           smtpPass,
           smtpFrom,
+          // MyFatoorah Configuration
+          myFatoorahToken: myFatoorahToken?.includes('••••') ? undefined : myFatoorahToken,
+          myFatoorahBaseURL,
+          myFatoorahTestMode,
           // SEO & Branding
           homeMetaTitle,
           homeMetaDescription,
@@ -700,6 +714,49 @@ export default function SettingsDashboard() {
                       type="checkbox"
                       checked={cryptomusTestMode}
                       onChange={(e) => setCryptomusTestMode(e.target.checked)}
+                    />
+                    <span className="settings-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* MyFatoorah Gateway */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">MyFatoorah Gateway</h2>
+              <p className="settings-card-description">Configure MyFatoorah payment gateway settings.</p>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  API Token
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={myFatoorahToken}
+                    onChange={(e) => setMyFatoorahToken(e.target.value)}
+                    placeholder="Enter your MyFatoorah API token"
+                  />
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
+                </label>
+                <label className="settings-label">
+                  Base URL
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={myFatoorahBaseURL}
+                    onChange={(e) => setMyFatoorahBaseURL(e.target.value)}
+                    placeholder="https://apitest.myfatoorah.com"
+                  />
+                </label>
+                <div className="settings-toggle-group">
+                  <label className="settings-toggle-label">
+                    <span>Test Mode</span>
+                    <span className="settings-toggle-description">Enable to use the test environment (apitest.myfatoorah.com).</span>
+                  </label>
+                  <label className="settings-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={myFatoorahTestMode}
+                      onChange={(e) => setMyFatoorahTestMode(e.target.checked)}
                     />
                     <span className="settings-toggle-slider"></span>
                   </label>

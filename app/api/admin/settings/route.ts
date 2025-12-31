@@ -105,6 +105,11 @@ export async function GET() {
       hasBigPayMeConfig: !!settings.bigPayMeApiKey,
       hasRapidApiConfig: !!settings.rapidApiKey,
       hasSmtpConfig: !!settings.smtpHost,
+      // MyFatoorah
+      myFatoorahToken: maskApiKey(getField(settings, 'myFatoorahToken', null)),
+      myFatoorahBaseURL: getField(settings, 'myFatoorahBaseURL', 'https://apitest.myfatoorah.com'),
+      myFatoorahTestMode: getField(settings, 'myFatoorahTestMode', true),
+
       // SMTP Configuration
       smtpHost: getField(settings, 'smtpHost', ''),
       smtpPort: getField(settings, 'smtpPort', 587),
@@ -203,6 +208,9 @@ export async function PUT(request: NextRequest) {
       smtpPass,
       smtpFrom,
       defaultCurrency,
+      myFatoorahToken,
+      myFatoorahBaseURL,
+      myFatoorahTestMode,
     } = body;
 
     let settings: any;
@@ -284,8 +292,19 @@ export async function PUT(request: NextRequest) {
       updateData.facebookClientSecret = facebookClientSecret || null;
     }
     if (smtpHost !== undefined) updateData.smtpHost = smtpHost;
+    if (smtpPort !== undefined) updateData.smtpPort = smtpPort ? parseInt(smtpPort) : null;
+    if (smtpSecure !== undefined) updateData.smtpSecure = smtpSecure;
     if (smtpUser !== undefined) updateData.smtpUser = smtpUser;
     if (smtpPass !== undefined) updateData.smtpPass = smtpPass;
+    if (smtpFrom !== undefined) updateData.smtpFrom = smtpFrom;
+
+    // MyFatoorah Settings
+    if (myFatoorahToken !== undefined && !myFatoorahToken.includes('••••')) {
+      updateData.myFatoorahToken = myFatoorahToken || null;
+    }
+    if (myFatoorahBaseURL !== undefined) updateData.myFatoorahBaseURL = myFatoorahBaseURL;
+    if (myFatoorahTestMode !== undefined) updateData.myFatoorahTestMode = myFatoorahTestMode;
+
     if (defaultCurrency !== undefined) updateData.defaultCurrency = defaultCurrency;
 
     try {

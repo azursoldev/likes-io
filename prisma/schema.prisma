@@ -119,8 +119,11 @@ model AdminSettings {
   rapidApiTikTokHost     String?
   rapidApiYouTubeHost    String?
   smtpHost               String?
+  smtpPort               Int?
+  smtpSecure             Boolean  @default(false)
   smtpUser               String?
   smtpPass               String?
+  smtpFrom               String?
   defaultCurrency        String   @default("USD")
   cryptomusMerchantId    String?
   cryptomusApiKey        String?
@@ -152,6 +155,11 @@ model AdminSettings {
   googleClientSecret     String?
   facebookClientId       String?
   facebookClientSecret   String?
+
+  // MyFatoorah Settings
+  myFatoorahToken        String?
+  myFatoorahBaseURL      String?  @default("https://apitest.myfatoorah.com")
+  myFatoorahTestMode     Boolean  @default(true)
 
   @@map("admin_settings")
 }
@@ -512,6 +520,7 @@ enum PaymentGateway {
   CHECKOUT_COM
   BIGPAYME
   CRYPTOMUS
+  MYFATOORAH
 }
 
 enum PaymentStatus {
