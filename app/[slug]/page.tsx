@@ -21,7 +21,7 @@ import LearnMoreSection from "../components/LearnMoreSection";
 
 import { getDefaultMoreServicesButtons } from "../utils/serviceDefaults";
 
-export async function getServiceContent(slug: string): Promise<ServicePageContentData | null> {
+async function getServiceContent(slug: string): Promise<ServicePageContentData | null> {
   try {
     const content = await prisma.servicePageContent.findFirst({
       where: { slug },
