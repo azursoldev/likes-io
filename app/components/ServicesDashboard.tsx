@@ -4,6 +4,7 @@ import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import { getServiceMapping } from "@/lib/service-utils";
+import { getDefaultMoreServicesButtons } from "../utils/serviceDefaults";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faInstagram,
@@ -63,6 +64,19 @@ const BENEFIT_ICONS = [
   { value: "/alarm-2.svg", label: "Alarm / Speed" },
 ];
 
+const CTA_ICONS = [
+  { value: "user", label: "User" },
+  { value: "eye", label: "Eye" },
+  { value: "heart", label: "Heart" },
+  { value: "star", label: "Star" },
+  { value: "comment", label: "Comment" },
+  { value: "share", label: "Share" },
+  { value: "play", label: "Play" },
+  { value: "image", label: "Image" },
+  { value: "hashtag", label: "Hashtag" },
+  { value: "bolt", label: "Bolt" },
+];
+
 export default function ServicesDashboard() {
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -102,6 +116,12 @@ export default function ServicesDashboard() {
   const [premiumFeatures, setPremiumFeatures] = useState<Array<{ id: number; name: string }>>([]);
   const [qualityCompareColumns, setQualityCompareColumns] = useState<Array<{ id: number; title: string; subtitle: string; bullets: string[]; highlight?: boolean; badge?: string }>>([]);
   
+  // More Services Section State
+  const [moreServicesTitle, setMoreServicesTitle] = useState("");
+  const [moreServicesHighlight, setMoreServicesHighlight] = useState("");
+  const [moreServicesBody, setMoreServicesBody] = useState("");
+  const [moreServicesButtons, setMoreServicesButtons] = useState<Array<{ platform?: string; serviceType?: string; label: string; iconName?: string; href?: string }>>([]);
+
   const sectionRefs = {
     configuration: useRef<HTMLDivElement>(null),
     meta: useRef<HTMLDivElement>(null),
@@ -111,6 +131,7 @@ export default function ServicesDashboard() {
     qualitycompare: useRef<HTMLDivElement>(null),
     howitworks: useRef<HTMLDivElement>(null),
     faq: useRef<HTMLDivElement>(null),
+    moreservices: useRef<HTMLDivElement>(null),
   };
   const contentRef = useRef<HTMLDivElement>(null);
   const editContentRef = useRef<HTMLDivElement>(null);
@@ -124,6 +145,7 @@ export default function ServicesDashboard() {
     qualitycompare: useRef<HTMLDivElement>(null),
     howitworks: useRef<HTMLDivElement>(null),
     faq: useRef<HTMLDivElement>(null),
+    moreservices: useRef<HTMLDivElement>(null),
   };
 
   const handleAddServiceClick = () => {
@@ -158,6 +180,10 @@ export default function ServicesDashboard() {
     setPremiumFeatures([]);
     setQualityCompareColumns([]);
     setFaqItems([]);
+    setMoreServicesTitle("");
+    setMoreServicesHighlight("");
+    setMoreServicesBody("");
+    setMoreServicesButtons([]);
     
     const mapping = getServiceMapping(service.name);
     if (!mapping) {
@@ -362,6 +388,17 @@ export default function ServicesDashboard() {
           question: faq.q || faq.question || "",
           answer: faq.a || faq.answer || ""
         })));
+      }
+
+      // Load More Services
+      setMoreServicesTitle(data.moreServicesTitle || "More Growth Services from Likes.io");
+      setMoreServicesHighlight(data.moreServicesHighlight || "Services");
+      setMoreServicesBody(data.moreServicesBody || "Instagram likes are powerful tools, but they're not the only engagements available from Likes.io. We offer more growth services that can rapidly boost your Instagram fan base or engagement rates even more. Please give them a try to see how quickly you can become popular and important on the app!");
+      
+      if (data.moreServicesButtons && Array.isArray(data.moreServicesButtons) && data.moreServicesButtons.length > 0) {
+        setMoreServicesButtons(data.moreServicesButtons);
+      } else {
+        setMoreServicesButtons(getDefaultMoreServicesButtons(mapping.platform));
       }
     } catch (err: any) {
       console.error("Error fetching service content:", err);
@@ -636,6 +673,10 @@ export default function ServicesDashboard() {
           howItWorks,
           benefits,
           faqs,
+          moreServicesTitle,
+          moreServicesHighlight,
+          moreServicesBody,
+          moreServicesButtons,
           isActive: true
         })
       });
@@ -717,6 +758,21 @@ export default function ServicesDashboard() {
   const handleFaqChange = (id: number, field: string, value: string) => {
     setFaqItems(faqItems.map(item => 
       item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  // More Services Helper Functions
+  const handleAddMoreServiceButton = () => {
+    setMoreServicesButtons([...moreServicesButtons, { label: "New Button", iconName: "user", href: "" }]);
+  };
+
+  const handleRemoveMoreServiceButton = (index: number) => {
+    setMoreServicesButtons(moreServicesButtons.filter((_, i) => i !== index));
+  };
+
+  const handleMoreServiceButtonChange = (index: number, field: string, value: string) => {
+    setMoreServicesButtons(moreServicesButtons.map((btn, i) => 
+      i === index ? { ...btn, [field]: value } : btn
     ));
   };
 
@@ -981,6 +1037,7 @@ export default function ServicesDashboard() {
     { id: "qualitycompare", label: "Compare Quality" },
     { id: "howitworks", label: "How It Works" },
     { id: "faq", label: "FAQ" },
+    { id: "moreservices", label: "More Services" },
   ];
 
   return (
@@ -2216,6 +2273,109 @@ export default function ServicesDashboard() {
                     <button className="add-service-add-btn" onClick={handleAddFaqItem}>
                       <FontAwesomeIcon icon={faPlus} />
                       <span>Add FAQ Item</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="add-service-section" ref={editSectionRefs.moreservices}>
+                  <h3 className="add-service-section-title">More Services Section</h3>
+                  <div className="add-service-form-group">
+                    <label htmlFor="edit-moreservices-title">Section Title</label>
+                    <input
+                      type="text"
+                      id="edit-moreservices-title"
+                      className="add-service-input"
+                      placeholder="e.g. More Growth Services from Likes.io"
+                      value={moreServicesTitle}
+                      onChange={(e) => setMoreServicesTitle(e.target.value)}
+                    />
+                  </div>
+                  <div className="add-service-form-group">
+                    <label htmlFor="edit-moreservices-highlight">Highlight Word</label>
+                    <input
+                      type="text"
+                      id="edit-moreservices-highlight"
+                      className="add-service-input"
+                      placeholder="e.g. Services"
+                      value={moreServicesHighlight}
+                      onChange={(e) => setMoreServicesHighlight(e.target.value)}
+                    />
+                  </div>
+                  <div className="add-service-form-group">
+                    <label htmlFor="edit-moreservices-body">Description Body</label>
+                    <textarea
+                      id="edit-moreservices-body"
+                      className="add-service-textarea"
+                      placeholder="Description text..."
+                      rows={4}
+                      value={moreServicesBody}
+                      onChange={(e) => setMoreServicesBody(e.target.value)}
+                    />
+                  </div>
+                  
+                  <h4 className="pricing-card-subtitle" style={{marginTop: '20px'}}>Service Buttons</h4>
+                  <div className="faq-form-card">
+                    <div className="faq-items-list">
+                      {moreServicesButtons.map((btn, idx) => (
+                        <div key={idx} className="faq-item-row" style={{display: 'flex', alignItems: 'flex-end', flexDirection: 'row', gap: '10px', padding: '15px', background: '#f8f9fa', borderRadius: '8px'}}>
+                           <div className="faq-input-group" style={{flex: 1, minWidth: 0}}>
+                            <label style={{fontSize: '12px', marginBottom: '4px', display: 'block', color: '#666'}}>Button Label</label>
+                            <input
+                              type="text"
+                              className="add-service-input"
+                              placeholder="Button Label"
+                              value={btn.label}
+                              onChange={(e) => handleMoreServiceButtonChange(idx, "label", e.target.value)}
+                              style={{width: '100%'}}
+                            />
+                          </div>
+                          
+                          <div className="faq-input-group" style={{width: '120px', flexShrink: 0}}>
+                            <label style={{fontSize: '12px', marginBottom: '4px', display: 'block', color: '#666'}}>Icon</label>
+                            <div style={{position: 'relative', width: '100%'}}>
+                              <select
+                                className="add-service-input"
+                                value={btn.iconName || "user"}
+                                onChange={(e) => handleMoreServiceButtonChange(idx, "iconName", e.target.value)}
+                                style={{paddingRight: '30px', width: '100%'}}
+                              >
+                                {CTA_ICONS.map((icon) => (
+                                  <option key={icon.value} value={icon.value}>{icon.label}</option>
+                                ))}
+                              </select>
+                              <FontAwesomeIcon icon={faChevronDown} style={{position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999', pointerEvents: 'none'}} />
+                            </div>
+                          </div>
+
+                          <div className="faq-input-group" style={{flex: 1.5, minWidth: 0}}>
+                            <label style={{fontSize: '12px', marginBottom: '4px', display: 'block', color: '#666'}}>Link URL</label>
+                            <div style={{position: 'relative', width: '100%'}}>
+                              <input
+                                type="text"
+                                className="add-service-input"
+                                placeholder="https://... or /path"
+                                value={btn.href || ""}
+                                onChange={(e) => handleMoreServiceButtonChange(idx, "href", e.target.value)}
+                                style={{paddingLeft: '30px', width: '100%'}}
+                              />
+                              <FontAwesomeIcon icon={faLink} style={{position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999'}} />
+                            </div>
+                          </div>
+                          
+                          <button
+                            className="faq-delete-btn"
+                            onClick={() => handleRemoveMoreServiceButton(idx)}
+                            type="button"
+                            style={{marginBottom: '2px', height: '42px', width: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="add-service-add-btn" onClick={handleAddMoreServiceButton}>
+                      <FontAwesomeIcon icon={faPlus} />
+                      <span>Add Service Button</span>
                     </button>
                   </div>
                 </div>

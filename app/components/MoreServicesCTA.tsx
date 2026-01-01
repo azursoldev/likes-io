@@ -1,8 +1,8 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faEye } from "@fortawesome/free-regular-svg-icons";
-import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faEye, faHeart, faStar, faComment, faShareSquare, faPlayCircle, faImage } from "@fortawesome/free-regular-svg-icons";
+import { faAngleRight, faHashtag, faBolt } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { useNavigation } from "@/app/hooks/useNavigation";
 
@@ -12,6 +12,20 @@ export type CTAButton = {
   serviceType?: string;
   label: string;
   icon?: IconDefinition;
+  iconName?: string;
+};
+
+const iconMap: Record<string, IconDefinition> = {
+  "user": faUser,
+  "eye": faEye,
+  "heart": faHeart,
+  "star": faStar,
+  "comment": faComment,
+  "share": faShareSquare,
+  "play": faPlayCircle,
+  "image": faImage,
+  "hashtag": faHashtag,
+  "bolt": faBolt,
 };
 
 type MoreServicesCTAProps = {
@@ -42,6 +56,13 @@ export default function MoreServicesCTA({
 
   const displayButtons = buttons || defaultButtons;
 
+  const getIcon = (btn: CTAButton) => {
+    if (btn.iconName && iconMap[btn.iconName]) {
+      return iconMap[btn.iconName];
+    }
+    return btn.icon ?? faUser;
+  };
+
   const renderTitle = () => {
     if (!highlight || !title.includes(highlight)) {
       return title;
@@ -71,7 +92,7 @@ export default function MoreServicesCTA({
           {displayButtons.map((btn, index) => (
             <a href={resolveHref(btn)} className="ms-btn" key={index}>
             <span className="ms-icon">
-                <FontAwesomeIcon icon={btn.icon ?? faUser} />
+                <FontAwesomeIcon icon={getIcon(btn)} />
             </span>
               <span className="ms-label">{btn.label}</span>
             <span className="arrow" aria-hidden="true">

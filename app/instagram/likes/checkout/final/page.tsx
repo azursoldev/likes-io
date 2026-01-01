@@ -16,14 +16,12 @@ import {
   faTag,
   faCoins
 } from "@fortawesome/free-solid-svg-icons";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
 function FinalCheckoutContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
   
   const username = searchParams.get("username") || "";
@@ -33,10 +31,9 @@ function FinalCheckoutContent() {
   const postLink = searchParams.get("postLink") || "";
   const packageServiceId = searchParams.get("serviceId") || "";
 
-  // Get platform and service from pathname
-  const pathParts = pathname?.split("/") || [];
-  const platform = pathParts[1] || "instagram";
-  const service = pathParts[2] || "likes";
+  // Set platform and service (hardcoded for this route)
+  const platform = "instagram";
+  const service = "likes";
   
   // Create URLs for navigation
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
@@ -324,6 +321,30 @@ function FinalCheckoutContent() {
                         <div className="crypto-form">
                           <div className="crypto-message-box">
                             <p>You will be redirected to Cryptomus to complete your payment securely.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* MyFatoorah Payment Option */}
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="myfatoorah"
+                          checked={paymentMethod === "myfatoorah"}
+                          onChange={() => setPaymentMethod("myfatoorah")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
+                        <span>MyFatoorah (KNET, Visa/Master)</span>
+                      </label>
+                      
+                      {paymentMethod === "myfatoorah" && (
+                        <div className="crypto-form">
+                          <div className="crypto-message-box">
+                            <p>You will be redirected to MyFatoorah to complete your payment securely.</p>
                           </div>
                         </div>
                       )}

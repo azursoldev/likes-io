@@ -29,8 +29,8 @@ export async function GET(
     // Fetch FAQs
     const faqs = await prisma.fAQ.findMany({
       where: {
-        // platform: content.platform,
-        // serviceType: content.serviceType,
+        platform: content.platform,
+        serviceType: content.serviceType,
         isActive: true,
       },
       orderBy: { displayOrder: 'asc' },
