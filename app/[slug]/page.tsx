@@ -12,14 +12,16 @@ import {
   DynamicHowItWorks,
   DynamicFAQSection,
   DynamicAdvantageSection,
+  DynamicMoreServicesCTA,
   ServicePageContentData
 } from "../components/ServicePageContent";
 import FeaturedOn from "../components/FeaturedOn";
 import ReviewsSection from "../components/ReviewsSection";
-import MoreServicesCTA from "../components/MoreServicesCTA";
 import LearnMoreSection from "../components/LearnMoreSection";
 
-async function getServiceContent(slug: string) {
+import { getDefaultMoreServicesButtons } from "../utils/serviceDefaults";
+
+async function getServiceContent(slug: string): Promise<ServicePageContentData | null> {
   try {
     const content = await prisma.servicePageContent.findFirst({
       where: { slug },
@@ -30,8 +32,8 @@ async function getServiceContent(slug: string) {
     // Fetch FAQs
     const faqs = await prisma.fAQ.findMany({
       where: {
-        // platform: content.platform, // Removed as per schema
-        // serviceType: content.serviceType, // Removed as per schema
+        platform: content.platform,
+        serviceType: content.serviceType,
         isActive: true,
       },
       orderBy: { displayOrder: 'asc' },
@@ -74,6 +76,14 @@ async function getServiceContent(slug: string) {
           role: t.role || "Verified Buyer",
           text: t.text,
         })),
+        moreServices: {
+          title: (content as any).moreServicesTitle || undefined,
+          highlight: (content as any).moreServicesHighlight || undefined,
+          body: (content as any).moreServicesBody || undefined,
+          buttons: (content as any).moreServicesButtons 
+            ? (typeof (content as any).moreServicesButtons === 'string' ? JSON.parse((content as any).moreServicesButtons) : (content as any).moreServicesButtons) 
+            : getDefaultMoreServicesButtons(content.platform || ""),
+        },
         platform: content.platform,
         serviceType: content.serviceType,
         slug: content.slug,
@@ -137,6 +147,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
         defaultHowItWorks={content.howItWorks}
         defaultFAQs={content.faqs}
         defaultTestimonials={content.testimonials}
+        defaultMoreServices={content.moreServices}
       >
         <DynamicServiceHero />
         <DynamicAssuranceCard />
@@ -148,7 +159,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
         <DynamicHowItWorks />
         <ReviewsSection />
         <DynamicFAQSection />
-        <MoreServicesCTA />
+        <DynamicMoreServicesCTA />
       </ServicePageContentProvider>
       <Footer />
     </>

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { checkoutAPI } from '@/lib/checkout-api';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
+import { getMyFatoorahAPI } from '@/lib/myfatoorah-api';
 import { Platform, ServiceType } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
@@ -172,6 +173,53 @@ export async function POST(request: NextRequest) {
         console.error('Cryptomus payment creation error:', error);
         return NextResponse.json(
           { error: error.message || 'Failed to create Cryptomus payment session' },
+          { status: 500 }
+        );
+      }
+    } else if (paymentMethod === 'myfatoorah') {
+      // MyFatoorah payment
+      try {
+        const myFatoorahAPI = await getMyFatoorahAPI();
+        
+        if (!myFatoorahAPI) {
+          return NextResponse.json(
+            { error: 'MyFatoorah payment is not configured. Please contact support or use card payment.' },
+            { status: 400 }
+          );
+        }
+
+        const myFatoorahPayment = await myFatoorahAPI.createPayment(
+          order.id,
+          order.price,
+          order.currency,
+          user.name || 'Customer',
+          user.email,
+          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/success?orderId=${order.id}`,
+          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/error?orderId=${order.id}`
+        );
+
+        // Create payment record
+        await prisma.payment.create({
+          data: {
+            orderId: order.id,
+            gateway: 'MYFATOORAH',
+            transactionId: myFatoorahPayment.InvoiceId.toString(),
+            amount: order.price,
+            currency: order.currency,
+            status: 'PENDING',
+          },
+        });
+
+        return NextResponse.json({
+          orderId: order.id,
+          checkoutUrl: myFatoorahPayment.PaymentURL,
+          paymentId: myFatoorahPayment.InvoiceId,
+          paymentStatus: 'PENDING',
+        });
+      } catch (error: any) {
+        console.error('MyFatoorah payment creation error:', error);
+        return NextResponse.json(
+          { error: error.message || 'Failed to create MyFatoorah payment session' },
           { status: 500 }
         );
       }

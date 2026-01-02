@@ -101,6 +101,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
       items: [
         { label: "Services", icon: faWrench, active: activePage === "services", href: getAdminUrl("services") },
         { label: "Blog", icon: faNewspaper, active: activePage === "blog", href: getAdminUrl("blog") },
+        { label: "Review Moderation", icon: faCheckCircle, active: activePage === "reviewModeration", href: getAdminUrl("review-moderation") },
         { label: "Published Testimonials", icon: faQuoteLeft, active: activePage === "testimonials", href: getAdminUrl("testimonials") },
         { label: "Terms of Service", icon: faFileContract, active: activePage === "terms", href: getAdminUrl("legal/terms") },
         { label: "Privacy Policy", icon: faShieldHalved, active: activePage === "privacy", href: getAdminUrl("legal/privacy") },

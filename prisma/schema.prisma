@@ -119,8 +119,11 @@ model AdminSettings {
   rapidApiTikTokHost     String?
   rapidApiYouTubeHost    String?
   smtpHost               String?
+  smtpPort               Int?
+  smtpSecure             Boolean  @default(false)
   smtpUser               String?
   smtpPass               String?
+  smtpFrom               String?
   defaultCurrency        String   @default("USD")
   cryptomusMerchantId    String?
   cryptomusApiKey        String?
@@ -152,6 +155,11 @@ model AdminSettings {
   googleClientSecret     String?
   facebookClientId       String?
   facebookClientSecret   String?
+
+  // MyFatoorah Settings
+  myFatoorahToken        String?
+  myFatoorahBaseURL      String?  @default("https://apitest.myfatoorah.com")
+  myFatoorahTestMode     Boolean  @default(true)
 
   @@map("admin_settings")
 }
@@ -330,6 +338,10 @@ model ServicePageContent {
   isActive              Boolean     @default(true)
   updatedAt             DateTime    @updatedAt
   benefits              Json?
+  moreServicesTitle     String?
+  moreServicesHighlight String?
+  moreServicesBody      String?
+  moreServicesButtons   Json?
 
   @@unique([platform, serviceType])
   @@index([platform, serviceType])
@@ -337,16 +349,20 @@ model ServicePageContent {
 }
 
 model FAQ {
-  id           String    @id @default(cuid())
+  id           String       @id @default(cuid())
   question     String
   answer       String
   category     String?
-  displayOrder Int       @default(0)
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime? @updatedAt
+  platform     Platform?
+  serviceType  ServiceType?
+  displayOrder Int          @default(0)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime?    @updatedAt
 
   @@index([category])
+  @@index([platform])
+  @@index([serviceType])
   @@map("faqs")
 }
 
@@ -512,6 +528,7 @@ enum PaymentGateway {
   CHECKOUT_COM
   BIGPAYME
   CRYPTOMUS
+  MYFATOORAH
 }
 
 enum PaymentStatus {

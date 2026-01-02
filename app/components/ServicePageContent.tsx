@@ -11,6 +11,7 @@ import QualityCompare from "./QualityCompare";
 import HowItWorksSection from "./HowItWorksSection";
 import FAQSection, { type FAQItem } from "./FAQSection";
 import ReviewsSection, { type ReviewItem } from "./ReviewsSection";
+import MoreServicesCTA, { type CTAButton } from "./MoreServicesCTA";
 
 export type ServicePageContentData = {
   heroTitle: string;
@@ -31,6 +32,12 @@ export type ServicePageContentData = {
   platform?: string;
   serviceType?: string;
   slug?: string;
+  moreServices?: {
+    title?: string;
+    highlight?: string;
+    body?: string;
+    buttons?: CTAButton[];
+  };
 };
 
 const ServiceContentContext = createContext<ServicePageContentData | null>(null);
@@ -54,6 +61,12 @@ type ServicePageContentProviderProps = {
   defaultBenefits?: { title?: string; subtitle?: string; items?: any[] };
   defaultFAQs?: FAQItem[];
   defaultTestimonials?: ReviewItem[];
+  defaultMoreServices?: {
+    title?: string;
+    highlight?: string;
+    body?: string;
+    buttons?: CTAButton[];
+  };
   initialData?: ServicePageContentData | null;
   children: React.ReactNode;
 };
@@ -96,6 +109,7 @@ export function ServicePageContentProvider({
   defaultBenefits,
   defaultFAQs,
   defaultTestimonials,
+  defaultMoreServices,
   initialData,
   children,
 }: ServicePageContentProviderProps) {
@@ -114,6 +128,7 @@ export function ServicePageContentProvider({
       benefits: initialData.benefits || defaultBenefits,
       faqs: (initialData.faqs && initialData.faqs.length > 0) ? initialData.faqs : defaultFAQs,
       testimonials: (initialData.testimonials && initialData.testimonials.length > 0) ? initialData.testimonials : defaultTestimonials,
+      moreServices: initialData.moreServices || defaultMoreServices,
     };
   });
   const [loading, setLoading] = useState(!initialData);
@@ -134,6 +149,7 @@ export function ServicePageContentProvider({
             benefits: initialData.benefits || defaultBenefits,
             faqs: (initialData.faqs && initialData.faqs.length > 0) ? initialData.faqs : defaultFAQs,
             testimonials: (initialData.testimonials && initialData.testimonials.length > 0) ? initialData.testimonials : defaultTestimonials,
+            moreServices: initialData.moreServices || defaultMoreServices,
             slug: initialData.slug || slug,
         });
         setLoading(false);
@@ -438,4 +454,18 @@ export function RemoteAssuranceCard({
   }, [platform, serviceType]);
 
   return <AssuranceCard text={text} />;
+}
+
+export function DynamicMoreServicesCTA() {
+  const content = useServiceContent();
+  const moreServices = content?.moreServices;
+
+  return (
+    <MoreServicesCTA
+      title={moreServices?.title}
+      highlight={moreServices?.highlight}
+      body={moreServices?.body}
+      buttons={moreServices?.buttons}
+    />
+  );
 }

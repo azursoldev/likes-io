@@ -422,6 +422,31 @@ export default function IconManagementDashboard() {
             </div>
 
             <div className="icon-form-group">
+              <label className="icon-form-label">Icon File (Optional)</label>
+              <input 
+                className="icon-form-input"
+                type="file" 
+                accept=".svg,.png,.jpg,.jpeg,.webp"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      setNewIconData({...newIconData, url: ev.target?.result as string});
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+              {newIconData.url && (
+                <div style={{ marginTop: "10px" }}>
+                  <p style={{ fontSize: "12px", marginBottom: "5px" }}>Preview:</p>
+                  <img src={newIconData.url} alt="Preview" style={{ maxWidth: "50px", maxHeight: "50px" }} />
+                </div>
+              )}
+            </div>
+
+            <div className="icon-form-group">
               <label className="icon-form-label">Category</label>
               <input 
                 className="icon-form-input"

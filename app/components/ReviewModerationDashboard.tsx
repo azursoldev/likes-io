@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
@@ -13,48 +13,84 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 type Review = {
-  id: number;
+  id: string;
   author: string;
   quote: string;
   service: string;
   rating: number;
 };
 
-const reviews: Review[] = [
-  {
-    id: 1,
-    author: "@newbie_creator",
-    quote: "This service was pretty good! I saw a nice jump in my likes count almost immediately. Will probably use again.",
-    service: "Instagram Likes",
-    rating: 5,
-  },
-  {
-    id: 2,
-    author: "@tiktok_dancer_123",
-    quote: "WOW! The TikTok views I bought really helped my video get noticed. Super happy with the results!",
-    service: "TikTok Views",
-    rating: 5,
-  },
-];
-
 export default function ReviewModerationDashboard() {
-  const [pendingReviews, setPendingReviews] = useState(reviews);
+  const [pendingReviews, setPendingReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleApprove = (id: number) => {
-    const review = pendingReviews.find(r => r.id === id);
-    if (review) {
-      setPendingReviews(pendingReviews.filter(review => review.id !== id));
-      // Here you would typically send an API request to approve the review
-      console.log("Approved review:", review);
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch('/api/cms/testimonials?approved=false');
+      if (response.ok) {
+        const data = await response.json();
+        const formattedReviews = data.testimonials.map((t: any) => ({
+          id: t.id,
+          author: t.handle,
+          quote: t.text,
+          service: formatService(t.platform, t.serviceType),
+          rating: t.rating
+        }));
+        setPendingReviews(formattedReviews);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDecline = (id: number) => {
-    const review = pendingReviews.find(r => r.id === id);
-    if (review && confirm("Are you sure you want to decline this review?")) {
-      setPendingReviews(pendingReviews.filter(review => review.id !== id));
-      // Here you would typically send an API request to decline the review
-      console.log("Declined review:", review);
+  const formatService = (platform?: string, type?: string) => {
+    if (!platform) return "General";
+    const p = platform.charAt(0).toUpperCase() + platform.slice(1).toLowerCase();
+    const t = type ? type.charAt(0).toUpperCase() + type.slice(1).toLowerCase() : "";
+    return `${p} ${t}`.trim();
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      const response = await fetch(`/api/cms/testimonials/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approve: true })
+      });
+      
+      if (response.ok) {
+        setPendingReviews(pendingReviews.filter(review => review.id !== id));
+      } else {
+        alert("Failed to approve review");
+      }
+    } catch (error) {
+      console.error("Error approving review:", error);
+      alert("Error approving review");
+    }
+  };
+
+  const handleDecline = async (id: string) => {
+    if (!confirm("Are you sure you want to decline (delete) this review?")) return;
+    
+    try {
+      const response = await fetch(`/api/cms/testimonials/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setPendingReviews(pendingReviews.filter(review => review.id !== id));
+      } else {
+        alert("Failed to decline review");
+      }
+    } catch (error) {
+      console.error("Error declining review:", error);
+      alert("Error declining review");
     }
   };
 
@@ -107,6 +143,15 @@ export default function ReviewModerationDashboard() {
           </div>
           
           <div className="review-table-wrapper">
+            {loading ? (
+              <div style={{ padding: "40px", textAlign: "center", color: "#666" }}>
+                Loading reviews...
+              </div>
+            ) : pendingReviews.length === 0 ? (
+              <div style={{ padding: "40px", textAlign: "center", color: "#666" }}>
+                No pending reviews found.
+              </div>
+            ) : (
             <table className="review-table">
               <thead>
                 <tr>
@@ -153,6 +198,7 @@ export default function ReviewModerationDashboard() {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
           </div>
         </main>

@@ -47,6 +47,19 @@ export default function SettingsDashboard() {
   const [facebookClientId, setFacebookClientId] = useState("");
   const [facebookClientSecret, setFacebookClientSecret] = useState("••••••••");
 
+  // SMTP Configuration
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("587");
+  const [smtpSecure, setSmtpSecure] = useState(false);
+  const [smtpUser, setSmtpUser] = useState("");
+  const [smtpPass, setSmtpPass] = useState("");
+  const [smtpFrom, setSmtpFrom] = useState("");
+
+  // MyFatoorah Configuration
+  const [myFatoorahToken, setMyFatoorahToken] = useState("••••••••");
+  const [myFatoorahBaseURL, setMyFatoorahBaseURL] = useState("https://apitest.myfatoorah.com");
+  const [myFatoorahTestMode, setMyFatoorahTestMode] = useState(true);
+
   // Fetch settings on mount
   useEffect(() => {
     fetchSettings();
@@ -90,6 +103,19 @@ export default function SettingsDashboard() {
         if (data.googleClientSecret) setGoogleClientSecret(data.googleClientSecret);
         if (data.facebookClientId) setFacebookClientId(data.facebookClientId);
         if (data.facebookClientSecret) setFacebookClientSecret(data.facebookClientSecret);
+
+        // SMTP Configuration
+        if (data.smtpHost) setSmtpHost(data.smtpHost);
+        if (data.smtpPort) setSmtpPort(data.smtpPort.toString());
+        if (data.smtpSecure !== undefined) setSmtpSecure(data.smtpSecure);
+        if (data.smtpUser) setSmtpUser(data.smtpUser);
+        if (data.smtpPass) setSmtpPass(data.smtpPass); // Passwords should probably be masked if not changed, but let's assume API returns it or masked
+        if (data.smtpFrom) setSmtpFrom(data.smtpFrom);
+
+        // MyFatoorah Configuration
+        if (data.myFatoorahToken) setMyFatoorahToken(data.myFatoorahToken);
+        if (data.myFatoorahBaseURL) setMyFatoorahBaseURL(data.myFatoorahBaseURL);
+        if (data.myFatoorahTestMode !== undefined) setMyFatoorahTestMode(data.myFatoorahTestMode);
 
         // SEO & Branding
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
@@ -138,6 +164,17 @@ export default function SettingsDashboard() {
           googleClientSecret: googleClientSecret.includes('••••') ? undefined : googleClientSecret,
           facebookClientId,
           facebookClientSecret: facebookClientSecret.includes('••••') ? undefined : facebookClientSecret,
+          // SMTP Configuration
+          smtpHost,
+          smtpPort: parseInt(smtpPort),
+          smtpSecure,
+          smtpUser,
+          smtpPass,
+          smtpFrom,
+          // MyFatoorah Configuration
+          myFatoorahToken: myFatoorahToken?.includes('••••') ? undefined : myFatoorahToken,
+          myFatoorahBaseURL,
+          myFatoorahTestMode,
           // SEO & Branding
           homeMetaTitle,
           homeMetaDescription,
@@ -677,6 +714,123 @@ export default function SettingsDashboard() {
                       type="checkbox"
                       checked={cryptomusTestMode}
                       onChange={(e) => setCryptomusTestMode(e.target.checked)}
+                    />
+                    <span className="settings-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* MyFatoorah Gateway */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">MyFatoorah Gateway</h2>
+              <p className="settings-card-description">Configure MyFatoorah payment gateway settings.</p>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  API Token
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={myFatoorahToken}
+                    onChange={(e) => setMyFatoorahToken(e.target.value)}
+                    placeholder="Enter your MyFatoorah API token"
+                  />
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
+                </label>
+                <label className="settings-label">
+                  Base URL
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={myFatoorahBaseURL}
+                    onChange={(e) => setMyFatoorahBaseURL(e.target.value)}
+                    placeholder="https://apitest.myfatoorah.com"
+                  />
+                </label>
+                <div className="settings-toggle-group">
+                  <label className="settings-toggle-label">
+                    <span>Test Mode</span>
+                    <span className="settings-toggle-description">Enable to use the test environment (apitest.myfatoorah.com).</span>
+                  </label>
+                  <label className="settings-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={myFatoorahTestMode}
+                      onChange={(e) => setMyFatoorahTestMode(e.target.checked)}
+                    />
+                    <span className="settings-toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Email Configuration (SMTP) */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Email Configuration (SMTP)</h2>
+              <p className="settings-card-description">Configure SMTP settings for sending system emails.</p>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  SMTP Host
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={smtpHost}
+                    onChange={(e) => setSmtpHost(e.target.value)}
+                    placeholder="smtp.example.com"
+                  />
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <label className="settings-label">
+                    SMTP Port
+                    <input
+                      type="number"
+                      className="settings-input"
+                      value={smtpPort}
+                      onChange={(e) => setSmtpPort(e.target.value)}
+                      placeholder="587"
+                    />
+                  </label>
+                  <label className="settings-label">
+                    From Email
+                    <input
+                      type="email"
+                      className="settings-input"
+                      value={smtpFrom}
+                      onChange={(e) => setSmtpFrom(e.target.value)}
+                      placeholder="noreply@example.com"
+                    />
+                  </label>
+                </div>
+                <label className="settings-label">
+                  SMTP User
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={smtpUser}
+                    onChange={(e) => setSmtpUser(e.target.value)}
+                    placeholder="user@example.com"
+                  />
+                </label>
+                <label className="settings-label">
+                  SMTP Password
+                  <input
+                    type="password"
+                    className="settings-input"
+                    value={smtpPass}
+                    onChange={(e) => setSmtpPass(e.target.value)}
+                    placeholder="Enter SMTP password"
+                  />
+                </label>
+                <div className="settings-toggle-group">
+                  <label className="settings-toggle-label">
+                    <span>Secure (SSL/TLS)</span>
+                    <span className="settings-toggle-description">Enable if your SMTP server requires a secure connection.</span>
+                  </label>
+                  <label className="settings-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={smtpSecure}
+                      onChange={(e) => setSmtpSecure(e.target.checked)}
                     />
                     <span className="settings-toggle-slider"></span>
                   </label>
