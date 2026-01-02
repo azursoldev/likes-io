@@ -31,15 +31,20 @@ function FinalCheckoutContent() {
   const postLink = searchParams.get("postLink") || "";
   const packageServiceId = searchParams.get("serviceId") || "";
 
+  // Calculate total price based on number of posts
+  const postLinks = postLink.split(',').filter(link => link.trim() !== "");
+  const postCount = postLinks.length || 1;
+  const basePrice = priceValue * postCount;
+
   // Set platform and service (hardcoded for this route)
   const platform = "instagram";
   const service = "likes";
   
   // Create URLs for navigation
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
-  const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
+  const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later">("card");
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -68,13 +73,19 @@ function FinalCheckoutContent() {
   };
 
   const offersTotal = addedOffers.reduce((sum, offer) => sum + offer.price, 0);
-  const totalPrice = priceValue + offersTotal;
+  const totalPrice = basePrice + offersTotal;
   const currencyCode = currency;
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setProcessing(true);
     setError("");
+
+    if (paymentMethod === 'pay_later') {
+      alert(`Test Checkout Successful!\n\nPlatform: ${platform}\nService: ${service}\nQuantity: ${qty}\nTotal Price: ${formatPrice(totalPrice)}\nPosts: ${postCount}`);
+      setProcessing(false);
+      return;
+    }
 
     try {
       // Check if user is logged in (we'll check this via the API response)
@@ -349,6 +360,30 @@ function FinalCheckoutContent() {
                         </div>
                       )}
                     </div>
+
+                    {/* Pay Later (Test) Option */}
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="pay_later"
+                          checked={paymentMethod === "pay_later"}
+                          onChange={() => setPaymentMethod("pay_later")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faShieldHalved} className="payment-option-icon" />
+                        <span>Pay Later (Test)</span>
+                      </label>
+                      
+                      {paymentMethod === "pay_later" && (
+                        <div className="crypto-form">
+                          <div className="crypto-message-box">
+                            <p>This is a test payment method. No actual charge will be made.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {error && (
@@ -402,7 +437,9 @@ function FinalCheckoutContent() {
                 <div className="account-info-item">
                   <div className="account-info-left">
                     <img src={getPlatformIcon()} alt={getPlatformName()} width={20} height={20} />
-                    <span>@{username || "username"}</span>
+                    <span className="account-info-url">
+                      {postCount > 1 ? `${postCount} posts selected` : (postLink || `@${username || "username"}`)}
+                    </span>
                   </div>
                   <button type="button" className="change-button">Change</button>
                 </div>
@@ -417,10 +454,10 @@ function FinalCheckoutContent() {
                     <FontAwesomeIcon icon={getMetricIcon()} className="order-item-icon" />
                     <div className="order-item-details">
                       <span className="order-item-text">{qty} {getPlatformName()} {getMetricLabel()}</span>
-                      <span className="order-item-subtext">Applying to 1 post.</span>
+                      <span className="order-item-subtext">Applying to {postCount} post{postCount > 1 ? 's' : ''}.</span>
                     </div>
                   </div>
-                  <span className="order-item-price">{formatPrice(priceValue)}</span>
+                  <span className="order-item-price">{formatPrice(basePrice)}</span>
                 </div>
 
                 {addedOffers.map((offer) => (
@@ -573,4 +610,3 @@ export default function FinalCheckoutPage() {
     </Suspense>
   );
 }
-

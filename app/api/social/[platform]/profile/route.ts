@@ -27,7 +27,7 @@ export async function GET(
     }
 
     const profile = await socialMediaAPI.fetchProfile(platform, username);
-
+    console.log(`API returning profile for ${username} on ${platform}:`, profile ? "Found" : "Null");
     return NextResponse.json({ profile });
   } catch (error: any) {
     console.error('Profile API Error:', error);

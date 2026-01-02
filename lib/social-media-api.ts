@@ -11,6 +11,7 @@ interface ProfileData {
   postCount?: number;
   profilePicture?: string;
   isVerified?: boolean;
+  secUid?: string;
   [key: string]: any;
 }
 
@@ -52,7 +53,7 @@ export class SocialMediaAPI {
     // Fallback to env vars if not in DB
     const key = settings?.rapidApiKey || process.env.RAPIDAPI_KEY;
     const instagramHost = settings?.rapidApiInstagramHost || process.env.RAPIDAPI_INSTAGRAM_HOST || 'instagram120.p.rapidapi.com';
-    const tikTokHost = settings?.rapidApiTikTokHost || process.env.RAPIDAPI_TIKTOK_HOST || 'tiktok-data.p.rapidapi.com';
+    const tikTokHost = 'tiktok-api23.p.rapidapi.com'; // Using specific host as requested
     const youTubeHost = settings?.rapidApiYouTubeHost || process.env.RAPIDAPI_YOUTUBE_HOST || 'youtube-data.p.rapidapi.com';
 
     this.apiConfig = {
@@ -81,7 +82,13 @@ export class SocialMediaAPI {
     });
 
     if (cached && cached.expiresAt > new Date()) {
-      return cached.profileData as ProfileData;
+      const data = cached.profileData as ProfileData;
+      // Self-healing: if profile picture is invalid, invalidate cache
+      if (data.profilePicture && (typeof data.profilePicture !== 'string' || data.profilePicture.includes('[object Object]'))) {
+          console.log('Cached profile has invalid picture, refreshing...');
+          return null;
+      }
+      return data;
     }
 
     return null;
@@ -210,6 +217,17 @@ export class SocialMediaAPI {
     }
   }
 
+  // Helper to extract URL from potential object or array
+  private extractUrl(source: any): string {
+    if (!source) return '';
+    if (typeof source === 'string') return source;
+    if (Array.isArray(source)) return source[0] || '';
+    if (typeof source === 'object') {
+        return source.url_list ? (this.extractUrl(source.url_list)) : (source.url || '');
+    }
+    return '';
+  }
+
   // Instagram Methods
   private async fetchInstagramProfile(username: string): Promise<ProfileData> {
     const config = await this.getRapidApiConfig();
@@ -244,7 +262,7 @@ export class SocialMediaAPI {
         followerCount: profileData.edge_followed_by?.count || profileData.follower_count || 0,
         followingCount: profileData.edge_follow?.count || profileData.following_count || 0,
         postCount: profileData.edge_owner_to_timeline_media?.count || profileData.media_count || 0,
-        profilePicture: profileData.profile_pic_url_hd || profileData.profile_pic_url,
+        profilePicture: this.extractUrl(profileData.profile_pic_url_hd) || this.extractUrl(profileData.profile_pic_url),
         isVerified: profileData.is_verified || false,
         isPrivate: profileData.is_private || false,
       };
@@ -353,6 +371,7 @@ export class SocialMediaAPI {
           caption: post.caption?.text || post.caption || '',
           likes: post.edge_media_preview_like?.count || post.like_count || 0,
           comments: post.edge_media_to_comment?.count || post.comment_count || 0,
+          views: post.video_view_count || post.view_count || post.play_count || 0,
           timestamp: post.taken_at_timestamp || post.taken_at || post.timestamp,
         };
       });
@@ -399,9 +418,9 @@ export class SocialMediaAPI {
 
     try {
       const response = await axios.get(
-        `https://${config.tikTokHost}/user/info`,
+        `https://${config.tikTokHost}/api/user/info-with-region`,
         {
-          params: { username: username.replace('@', '') },
+          params: { uniqueId: username.replace('@', '') },
           headers: {
             'X-RapidAPI-Key': config.key,
             'X-RapidAPI-Host': config.tikTokHost,
@@ -423,19 +442,33 @@ export class SocialMediaAPI {
       }
 
       // If we don't get a uniqueId or similar identifier, assume invalid response or user not found
-      if (!data.uniqueId && !data.user && !data.userInfo && !data.secUid) {
+      if (!data.data && !data.userInfo) {
           throw new Error('User not found or invalid response format');
       }
 
+      let userData = data.data || data.userInfo || data;
+      
+      // Capture stats source before potentially reassigning userData
+      const statsSource = data.stats || data.statsV2 || userData.stats;
+
+      // Handle nested user object (e.g. data.userInfo.user or data.user)
+      if (userData.user) {
+        userData = userData.user;
+      }
+
+      // Handle nested stats object
+      const statsData = statsSource || userData.stats || userData;
+
       return {
-        username: data.uniqueId || username,
-        fullName: data.nickname,
-        bio: data.signature,
-        followerCount: data.followerCount || data.follower_count,
-        followingCount: data.followingCount || data.following_count,
-        postCount: data.videoCount || data.video_count,
-        profilePicture: data.avatarLarger || data.avatar,
-        isVerified: data.verified || false,
+        username: userData.uniqueId || username,
+        fullName: userData.nickname || userData.fullName,
+        bio: userData.signature || userData.bio,
+        followerCount: statsData.followerCount || userData.followerCount || 0,
+        followingCount: statsData.followingCount || userData.followingCount || 0,
+        postCount: statsData.videoCount || statsData.postCount || userData.videoCount || 0,
+        profilePicture: this.extractUrl(userData.avatarThumb) || this.extractUrl(userData.avatarMedium) || this.extractUrl(userData.avatarLarger) || this.extractUrl(userData.avatar) || this.extractUrl(userData.profilePicture),
+        isVerified: userData.verified || false,
+        secUid: userData.secUid || userData.sec_uid,
       };
     } catch (error: any) {
       console.error('TikTok API Error:', error.message);
@@ -480,10 +513,41 @@ export class SocialMediaAPI {
     }
 
     try {
+      // Step 1: Get User Info to get the secUid
+      // The posts endpoint requires secUid for reliable results
+      let secUid: string | undefined;
+      
+      try {
+        // We call the private method directly to ensure we get fresh data (skipping cache check in public fetchProfile)
+        const profile = await this.fetchTikTokProfile(username);
+        secUid = profile.secUid;
+        if (secUid) {
+            console.log(`Found secUid for ${username}: ${secUid}`);
+        } else {
+            console.warn(`No secUid found in profile for ${username}`);
+        }
+      } catch (e) {
+        console.warn('Error fetching profile for secUid:', e);
+      }
+
+      // Step 2: Fetch posts using secUid (preferred) or uniqueId (fallback)
+      const params: any = {
+        count: 100, // Increased to 100 to show more posts
+        cursor: cursor || '0'
+      };
+
+      if (secUid) {
+        params.secUid = secUid;
+      } else {
+        params.uniqueId = username.replace('@', '');
+      }
+      
+      console.log(`Fetching TikTok posts with params:`, params);
+
       const response = await axios.get(
-        `https://${config.tikTokHost}/user/videos`,
+        `https://${config.tikTokHost}/api/user/posts`,
         {
-          params: { username: username.replace('@', ''), limit: 12 },
+          params,
           headers: {
             'X-RapidAPI-Key': config.key,
             'X-RapidAPI-Host': config.tikTokHost,
@@ -491,19 +555,25 @@ export class SocialMediaAPI {
         }
       );
 
-      const videos = response.data?.data || response.data?.videos || [];
+      const data = response.data;
+      const videos = data.data?.itemList || data.data?.videos || data.itemList || data.videos || [];
+      const nextCursor = data.data?.cursor || data.cursor;
+
       const posts = videos.map((video: any) => ({
-        id: video.id || video.aweme_id,
-        url: `https://www.tiktok.com/@${username.replace('@', '')}/video/${video.id || video.aweme_id}`,
-        thumbnail: video.cover || video.cover_url,
-        caption: video.desc || video.description,
-        likes: video.statistics?.digg_count || video.like_count,
-        comments: video.statistics?.comment_count || video.comment_count,
-        views: video.statistics?.play_count || video.view_count,
-        timestamp: video.createTime || video.created_at,
+        id: video.id || video.video_id || video.aweme_id,
+        url: `https://www.tiktok.com/@${video.author?.uniqueId || username.replace('@', '')}/video/${video.id || video.video_id || video.aweme_id}`,
+        thumbnail: this.extractUrl(video.video?.cover) || this.extractUrl(video.video?.originCover) || this.extractUrl(video.cover) || this.extractUrl(video.cover_url) || this.extractUrl(video.origin_cover),
+        caption: video.title || video.desc || video.description,
+        likes: Number(video.stats?.diggCount || video.stats?.likeCount || video.digg_count || video.statistics?.digg_count || 0),
+        comments: Number(video.comment_count || video.statistics?.comment_count || 0),
+        views: Number(video.stats?.playCount || video.stats?.viewCount || video.play_count || video.statistics?.play_count || 0),
+        timestamp: video.create_time || video.createTime || 0,
       }));
 
-      return { posts };
+      return { 
+        posts,
+        nextCursor: nextCursor ? String(nextCursor) : undefined
+      };
     } catch (error: any) {
       console.error('TikTok Videos API Error:', error.message);
       return { posts: [] };
