@@ -22,6 +22,9 @@ function CheckoutContent() {
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [username, setUsername] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
+  const [usernameValid, setUsernameValid] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get package info from URL params if available
@@ -68,11 +71,61 @@ function CheckoutContent() {
     }
   }, [isPackageOpen]);
 
+  // Validate TikTok username via API
+  const validateUsername = async (usernameValue: string) => {
+    if (!usernameValue.trim()) {
+      setUsernameError("");
+      setUsernameValid(false);
+      return;
+    }
+
+    setIsValidating(true);
+    setUsernameError("");
+
+    try {
+      // Use the profile endpoint to validate username
+      const response = await fetch(`/api/social/tiktok/profile?username=${encodeURIComponent(usernameValue)}`);
+      const data = await response.json();
+
+      if (response.ok && data.profile) {
+        setUsernameValid(true);
+        setUsernameError("");
+      } else {
+        setUsernameValid(false);
+        setUsernameError(data.error || "Invalid username or profile not found");
+      }
+    } catch (error) {
+      console.error("Error validating username:", error);
+      setUsernameValid(false);
+      setUsernameError("Failed to validate username. Please try again.");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  // Debounce username validation
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (username.trim()) {
+        validateUsername(username);
+      } else {
+        setUsernameValid(false);
+        setUsernameError("");
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [username]);
+
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
+    if (username.trim() && usernameValid) {
       // Navigate to posts selection page
       router.push(`/tiktok/likes/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+    } else if (!username.trim()) {
+      setUsernameError("Please enter your TikTok username");
+    } else if (!usernameValid) {
+      setUsernameError("Please enter a valid TikTok username");
     }
   };
 
@@ -89,7 +142,7 @@ function CheckoutContent() {
 
           {/* Title and Subtitle */}
           <h1 className="checkout-title">TikTok Likes Checkout</h1>
-          <p className="checkout-subtitle">Start by entering your video link.</p>
+          <p className="checkout-subtitle">Start by entering your username.</p>
 
           {/* Features List Card */}
           <div className="checkout-card checkout-features-card">
@@ -117,14 +170,45 @@ function CheckoutContent() {
           <div className="checkout-card checkout-form-card">
             <form className="checkout-form" onSubmit={handleContinue}>
               <div className="checkout-form-group">
-                <label className="checkout-label">TikTok video link</label>
-                <input
-                  type="text"
-                  className="checkout-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your TikTok video URL"
-                />
+                <label className="checkout-label">TikTok username</label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    className={`checkout-input ${usernameError ? "checkout-input-error" : ""} ${usernameValid ? "checkout-input-valid" : ""}`}
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setUsernameError("");
+                    }}
+                    placeholder="Enter your TikTok username"
+                    disabled={isValidating}
+                  />
+                  {isValidating && (
+                    <span style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "14px",
+                      color: "#666"
+                    }}>
+                      Validating...
+                    </span>
+                  )}
+                  {usernameValid && !isValidating && (
+                    <span style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "14px",
+                      color: "#10b981"
+                    }}>
+                      ✓ Valid
+                    </span>
+                  )}
+                </div>
+                {usernameError && <p style={{ color: 'red', fontSize: '14px', marginTop: '5px' }}>{usernameError}</p>}
               </div>
 
               <div className="checkout-form-group">
@@ -165,7 +249,7 @@ function CheckoutContent() {
               </p>
 
               {/* Continue Button */}
-              <button type="submit" className="checkout-continue-btn">
+              <button type="submit" className="checkout-continue-btn" disabled={isValidating || !usernameValid}>
                 Continue
               </button>
 
