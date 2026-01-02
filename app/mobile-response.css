@@ -430,6 +430,94 @@ html.dark .mobile-dropdown {
     width: auto;
     filter: grayscale(100%) opacity(0.6);
   }
+
+  /* Platforms Section Mobile Response */
+  .platforms-title,
+  .platforms-subtitle {
+    text-align: center;
+  }
+
+  .platform-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hide YouTube card on mobile */
+  .platform-grid .p-card.youtube {
+    display: none !important;
+  }
+
+  /* Get Started Section Mobile Response */
+  .getstarted .container {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    width: auto;
+    padding: 1.25rem;
+  }
+
+  .gs-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .gs-right {
+    display: block !important;
+    border: none;
+    box-shadow: none;
+    padding-top: 2rem;
+    text-align: left;
+  }
+
+  /* Influence Section Mobile Response */
+  .influence-right {
+    display: none !important;
+  }
+
+  /* FAQ Section Mobile Response */
+  .faq-pagination {
+    display: none !important;
+  }
+
+  /* Footer Top Mobile Response */
+  .footer-top {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+  }
+
+  .footer-top-nav {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .footer-lang {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Footer Bottom Mobile Response */
+  .footer-bottom {
+    align-items: center !important;
+    gap: 1rem;
+  }
+
+  .footer-bottom .brand {
+    display: none !important;
+  }
+
+  .footer-bottom .copyright {
+    text-align: center;
+    width: 100%;
+  }
+
+  .footer-bottom .payments {
+    margin-left: 0 !important;
+    display: flex;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
