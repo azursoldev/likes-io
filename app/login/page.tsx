@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import LoginPage from "../components/LoginPage";
@@ -22,7 +23,9 @@ export default async function Page() {
   return (
     <div className="page-wrapper">
       <Header />
-      <LoginPage dbSiteKey={dbSiteKey} />
+      <Suspense fallback={<div className="container py-20 text-center">Loading...</div>}>
+        <LoginPage dbSiteKey={dbSiteKey} />
+      </Suspense>
       <Footer />
     </div>
   );

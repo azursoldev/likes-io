@@ -146,16 +146,52 @@ export default function Hero() {
   }, []);
 
   // Social update rotation every 3 seconds
-  const updates = [
-    { handle: "@fitfoodie", item: "5,000 Followers", time: "1m ago" },
-    { handle: "@yourbrand", item: "8.3k Views", time: "1h ago" },
-    { handle: "@davidArt", item: "1,000 Likes", time: "3m ago" },
-  ];
+  const [updates, setUpdates] = useState([
+    { handle: "@fitfoodie", item: "5,000 Followers", time: "1m ago", platform: "Instagram" },
+    { handle: "@yourbrand", item: "8.3k Views", time: "1h ago", platform: "Instagram" },
+    { handle: "@davidArt", item: "1,000 Likes", time: "3m ago", platform: "Instagram" },
+  ]);
   const [uIndex, setUIndex] = useState(0);
+
   useEffect(() => {
+    // Fetch social proof items
+    const fetchSocialProof = async () => {
+      try {
+        const res = await fetch('/api/admin/social-proof');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setUpdates(data.map((item: any) => ({
+              handle: item.username,
+              item: item.service,
+              time: item.timeText,
+              platform: item.platform
+            })));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch social proof:", error);
+      }
+    };
+    fetchSocialProof();
+  }, []);
+
+  useEffect(() => {
+    if (updates.length === 0) return;
     const id = setInterval(() => setUIndex((i) => (i + 1) % updates.length), 5000);
     return () => clearInterval(id);
-  }, []);
+  }, [updates]);
+
+  const currentSocialUpdate = updates.length > 0 ? updates[uIndex] : null;
+
+  const getPlatformClass = (platform: string) => {
+    switch(platform) {
+      case 'YouTube': return 'yt-logo';
+      case 'TikTok': return 'tt-logo';
+      default: return 'ig-logo';
+    }
+  };
+
 
   // Floating pill rotation: Likes, Followers, Views every 5 seconds
   const floatUpdates = [
@@ -268,15 +304,17 @@ export default function Hero() {
           </div>
         </div>
       </div>
-      <div className="social-update fadeup" key={uIndex}>
-        <span className="pill">
-          <span className="ig-logo" aria-hidden="true" />
-          <span className="handle">{updates[uIndex].handle}</span>      
-          <span className="muted">just purchased</span>
-          <b className="accent-num">{updates[uIndex].item}</b>
-          <span className="time">{updates[uIndex].time}</span>
-        </span>
-      </div>
+      {currentSocialUpdate && (
+        <div className="social-update fadeup" key={uIndex}>
+          <span className="pill">
+            <span className={getPlatformClass(currentSocialUpdate.platform)} aria-hidden="true" />
+            <span className="handle">{currentSocialUpdate.handle}</span>      
+            <span className="muted">just purchased</span>
+            <b className="accent-num">{currentSocialUpdate.item}</b>
+            <span className="time">{currentSocialUpdate.time}</span>
+          </span>
+        </div>
+      )}
     </section>
   );
 }

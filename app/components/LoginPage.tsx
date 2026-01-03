@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn, getProviders } from "next-auth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faEnvelope, 
@@ -18,6 +18,7 @@ declare global {
 
 export default function LoginPage({ dbSiteKey }: { dbSiteKey?: string | null }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,7 +27,27 @@ export default function LoginPage({ dbSiteKey }: { dbSiteKey?: string | null }) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recaptchaReady, setRecaptchaReady] = useState(false);
+  const [availableProviders, setAvailableProviders] = useState<any>(null);
   const siteKey = dbSiteKey || process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+
+  useEffect(() => {
+    getProviders().then(setAvailableProviders);
+  }, []);
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      if (errorParam === "OAuthAccountNotLinked") {
+        setError("This email is already associated with another account. Please sign in with your original method.");
+      } else if (errorParam === "OAuthCallback") {
+        setError("Social login failed. Please check your connection or try again.");
+      } else if (errorParam === "Callback") {
+         setError("Login callback failed. Please try again.");
+      } else {
+        setError("Authentication failed. Please try again.");
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!siteKey) return;
@@ -196,25 +217,31 @@ export default function LoginPage({ dbSiteKey }: { dbSiteKey?: string | null }) 
               </div>
 
               <div className="login-social">
+                {availableProviders?.google && (
                 <button
                   type="button"
                   className="login-social-btn"
-                  onClick={() => signIn("google")}
+                  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
                   aria-label="Sign in with Google"
                 >
                   <FontAwesomeIcon icon={faGoogle} />
                 </button>
+                )}
+                {availableProviders?.facebook && (
                 <button
                   type="button"
                   className="login-social-btn"
-                  onClick={() => signIn("facebook")}
+                  onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}
                   aria-label="Sign in with Facebook"
                 >
                   <FontAwesomeIcon icon={faFacebook} />
                 </button>
-                <button type="button" className="login-social-btn">
-                  <span className="login-social-icon">J</span>
-                </button>
+                )}
+                {!availableProviders?.google && !availableProviders?.facebook && (
+                  <div className="text-center text-xs text-gray-500 w-full">
+                    Social login not configured
+                  </div>
+                )}
               </div>
 
               <a href="/admin/login" className="login-admin-link">Are you an administrator?</a>

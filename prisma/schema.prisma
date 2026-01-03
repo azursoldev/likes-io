@@ -106,6 +106,17 @@ model SocialProfile {
   @@index([expiresAt])
 }
 
+model SocialProof {
+  id           String   @id @default(cuid())
+  platform     String
+  username     String
+  service      String
+  timeText     String
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model AdminSettings {
   id                     String   @id @default(cuid())
   japApiUrl              String?

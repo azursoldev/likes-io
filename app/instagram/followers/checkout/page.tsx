@@ -215,7 +215,7 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
       if (selectedServiceId) {
         params.append("serviceId", selectedServiceId);
       }
-      router.push(`/instagram/followers/checkout/posts?${params.toString()}`);
+      router.push(`/instagram/followers/checkout/final?${params.toString()}`);
     } else if (!username.trim()) {
       setUsernameError("Please enter your Instagram username");
     } else if (!usernameValid) {

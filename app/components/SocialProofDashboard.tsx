@@ -6,12 +6,12 @@ import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { faInstagram, faYoutube, faTiktok } from "@fortawesome/free-brands-svg-icons";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 type Platform = "Instagram" | "YouTube" | "TikTok";
 
 type SocialProofActivity = {
-  id: number;
+  id: string;
   platform: Platform;
   username: string;
   service: string;
@@ -24,25 +24,35 @@ const platformIconMap: Record<Platform, any> = {
   TikTok: faTiktok,
 };
 
-const initialActivities: SocialProofActivity[] = [
-  { id: 1, platform: "Instagram", username: "@stylebyjess", service: "1,000 Premium Likes", timeText: "12s ago" },
-  { id: 2, platform: "YouTube", username: "@dancemoves", service: "5,000 Views", timeText: "28s ago" },
-  { id: 3, platform: "YouTube", username: "@gamerpro", service: "500 Subscribers", timeText: "45s ago" },
-  { id: 4, platform: "Instagram", username: "@fitfoodie", service: "5,000 Followers", timeText: "1m ago" },
-  { id: 5, platform: "Instagram", username: "@travelvlogs", service: "10,000 Likes", timeText: "2m ago" },
-  { id: 6, platform: "Instagram", username: "@techreviews", service: "10,000 Views", timeText: "3m ago" },
-];
-
 export default function SocialProofDashboard() {
-  const [activities, setActivities] = useState<SocialProofActivity[]>(initialActivities);
+  const [activities, setActivities] = useState<SocialProofActivity[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [platform, setPlatform] = useState<Platform>("Instagram");
   const [username, setUsername] = useState("");
   const [service, setService] = useState("");
   const [timeText, setTimeText] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const isEditing = useMemo(() => editingId !== null, [editingId]);
+
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const fetchActivities = async () => {
+    try {
+      const res = await fetch('/api/admin/social-proof');
+      if (res.ok) {
+        const data = await res.json();
+        setActivities(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch activities", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetForm = () => {
     setPlatform("Instagram");
@@ -66,41 +76,64 @@ export default function SocialProofDashboard() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!username.trim() || !service.trim() || !timeText.trim()) return;
 
-    if (editingId !== null) {
-      setActivities((prev) =>
-        prev.map((item) =>
-          item.id === editingId
-            ? {
-                ...item,
-                platform,
-                username: username.trim(),
-                service: service.trim(),
-                timeText: timeText.trim(),
-              }
-            : item
-        )
-      );
-    } else {
-      const next: SocialProofActivity = {
-        id: Date.now(),
-        platform,
-        username: username.trim(),
-        service: service.trim(),
-        timeText: timeText.trim(),
-      };
-      setActivities((prev) => [...prev, next]);
+    try {
+      if (editingId !== null) {
+        // Update
+        const res = await fetch(`/api/admin/social-proof/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform, username, service, timeText })
+        });
+        
+        if (res.ok) {
+          const updated = await res.json();
+          setActivities(prev => prev.map(item => item.id === editingId ? updated : item));
+        } else {
+            const errorData = await res.json().catch(() => ({}));
+            alert(`Failed to update activity: ${errorData.error || 'Unknown error'}`);
+        }
+      } else {
+        // Create
+        const res = await fetch('/api/admin/social-proof', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform, username, service, timeText })
+        });
+        
+        if (res.ok) {
+          const created = await res.json();
+          setActivities(prev => [...prev, created]);
+        } else {
+            const errorData = await res.json().catch(() => ({}));
+            alert(`Failed to create activity: ${errorData.error || 'Unknown error'}`);
+        }
+      }
+      resetForm();
+      setShowModal(false);
+    } catch (error) {
+      console.error("Failed to save", error);
+      alert("Failed to save activity");
     }
-
-    resetForm();
-    setShowModal(false);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Delete this activity?")) return;
-    setActivities((prev) => prev.filter((item) => item.id !== id));
+    try {
+      const res = await fetch(`/api/admin/social-proof/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setActivities((prev) => prev.filter((item) => item.id !== id));
+      } else {
+        alert("Failed to delete activity");
+      }
+    } catch (error) {
+       console.error("Failed to delete", error);
+       alert("Failed to delete activity");
+    }
   };
 
   return (
@@ -123,39 +156,49 @@ export default function SocialProofDashboard() {
             </div>
 
             <div className="social-proof-card">
-              <table className="social-proof-table">
-                <thead>
-                  <tr>
-                    <th>Platform</th>
-                    <th>Username</th>
-                    <th>Service Purchased</th>
-                    <th>Time Text</th>
-                    <th className="actions-col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activities.map((item) => (
-                    <tr key={item.id}>
-                      <td className="platform-cell">
-                        <span className={`platform-pill platform-${item.platform.toLowerCase()}`}>
-                          <FontAwesomeIcon icon={platformIconMap[item.platform]} />
-                        </span>
-                      </td>
-                      <td className="username-cell">{item.username}</td>
-                      <td>{item.service}</td>
-                      <td>{item.timeText}</td>
-                      <td className="actions-cell">
-                        <button className="link-btn" onClick={() => handleStartEdit(item)}>
-                          Edit
-                        </button>
-                        <button className="link-btn danger" onClick={() => handleDelete(item.id)}>
-                          Delete
-                        </button>
-                      </td>
+              {loading ? (
+                <p>Loading...</p>
+              ) : (
+                <table className="social-proof-table">
+                  <thead>
+                    <tr>
+                      <th>Platform</th>
+                      <th>Username</th>
+                      <th>Service Purchased</th>
+                      <th>Time Text</th>
+                      <th className="actions-col">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {activities.length === 0 ? (
+                        <tr>
+                            <td colSpan={5} style={{textAlign: "center", padding: "20px"}}>No activities found. Add one to get started.</td>
+                        </tr>
+                    ) : (
+                        activities.map((item) => (
+                        <tr key={item.id}>
+                            <td className="platform-cell">
+                            <span className={`platform-pill platform-${item.platform.toLowerCase()}`}>
+                                <FontAwesomeIcon icon={platformIconMap[item.platform]} />
+                            </span>
+                            </td>
+                            <td className="username-cell">{item.username}</td>
+                            <td>{item.service}</td>
+                            <td>{item.timeText}</td>
+                            <td className="actions-cell">
+                            <button className="link-btn" onClick={() => handleStartEdit(item)}>
+                                Edit
+                            </button>
+                            <button className="link-btn danger" onClick={() => handleDelete(item.id)}>
+                                Delete
+                            </button>
+                            </td>
+                        </tr>
+                        ))
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </main>
@@ -197,38 +240,42 @@ export default function SocialProofDashboard() {
                   />
                 </label>
               </div>
-              <label className="faq-modal-label">
-                Service Purchased
-                <input
-                  className="faq-modal-input"
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  placeholder="e.g., 1,000 Premium Likes"
-                />
-              </label>
-              <label className="faq-modal-label">
-                Time Ago Text
-                <input
-                  className="faq-modal-input"
-                  value={timeText}
-                  onChange={(e) => setTimeText(e.target.value)}
-                  placeholder="e.g., 12s ago"
-                />
-              </label>
-            </div>
-            <div className="faq-modal-footer">
-              <button
-                className="faq-modal-cancel"
-                onClick={() => {
-                  resetForm();
-                  setShowModal(false);
-                }}
-              >
-                Cancel
-              </button>
-              <button className="faq-modal-save" onClick={handleSave} disabled={!username.trim() || !service.trim() || !timeText.trim()}>
-                Save
-              </button>
+
+              <div className="modal-row two-col">
+                <label className="faq-modal-label">
+                  Service
+                  <input
+                    className="faq-modal-input"
+                    value={service}
+                    onChange={(e) => setService(e.target.value)}
+                    placeholder="e.g. 1,000 Premium Likes"
+                  />
+                </label>
+                <label className="faq-modal-label">
+                  Time Text
+                  <input
+                    className="faq-modal-input"
+                    value={timeText}
+                    onChange={(e) => setTimeText(e.target.value)}
+                    placeholder="e.g. 12s ago"
+                  />
+                </label>
+              </div>
+
+              <div className="faq-modal-actions">
+                <button
+                  className="faq-btn-secondary"
+                  onClick={() => {
+                    resetForm();
+                    setShowModal(false);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button className="faq-btn-primary" onClick={handleSave}>
+                  Save
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -236,4 +283,3 @@ export default function SocialProofDashboard() {
     </div>
   );
 }
-

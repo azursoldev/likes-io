@@ -410,6 +410,23 @@ export class SocialMediaAPI {
       );
 
       const data = response.data;
+      
+      // Check for soft errors (200 OK but with error message)
+      if (data.code && data.code !== 0 && data.code !== 200) {
+         // Treat specific codes as "Not Found" if we knew them, but for now generic error
+         // If msg says "not found", throw specific error
+         const msg = (data.msg || data.message || '').toLowerCase();
+         if (msg.includes('not found') || msg.includes('doesn\'t exist')) {
+            throw new Error('User not found');
+         }
+         throw new Error(data.msg || data.message || 'TikTok API returned error code');
+      }
+
+      // If we don't get a uniqueId or similar identifier, assume invalid response or user not found
+      if (!data.uniqueId && !data.user && !data.userInfo && !data.secUid) {
+          throw new Error('User not found or invalid response format');
+      }
+
       return {
         username: data.uniqueId || username,
         fullName: data.nickname,
@@ -422,7 +439,37 @@ export class SocialMediaAPI {
       };
     } catch (error: any) {
       console.error('TikTok API Error:', error.message);
-      throw new Error(`Failed to fetch TikTok profile: ${error.message}`);
+      if (error.response) {
+        console.error('TikTok API Response:', error.response.data);
+        
+        // If the API explicitly returns 404, it means the user was not found
+        if (error.response.status === 404) {
+           throw new Error('User not found');
+        }
+      }
+
+      // If we explicitly threw a "User not found" error above, rethrow it
+      if (error.message && (
+          error.message.includes('User not found') || 
+          error.message.includes('invalid response format') ||
+          error.message.includes('doesn\'t exist')
+      )) {
+          throw error;
+      }
+
+      // Only fallback for non-404 errors (likely API key issues, rate limits, or server errors)
+      // This ensures we don't validate non-existent users when the API is actually working but just returning 404
+      console.log('Using TikTok Fallback Profile due to API error (non-404)');
+      return {
+        username: username.replace('@', ''),
+        fullName: "TikTok User",
+        bio: "Profile details unavailable",
+        followerCount: 0,
+        followingCount: 0,
+        postCount: 0,
+        profilePicture: "https://p16-sign-va.tiktokcdn.com/tos-maliva-avt-0068/7086326622432657414~c5_100x100.jpeg",
+        isVerified: false,
+      };
     }
   }
 

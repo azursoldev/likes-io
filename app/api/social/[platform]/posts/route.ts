@@ -9,6 +9,7 @@ export async function GET(
   try {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get('username');
+    const cursor = searchParams.get('cursor') || undefined;
 
     if (!username) {
       return NextResponse.json(
@@ -26,7 +27,7 @@ export async function GET(
       );
     }
 
-    const posts = await socialMediaAPI.fetchPosts(platform, username);
+    const posts = await socialMediaAPI.fetchPosts(platform, username, cursor);
 
     return NextResponse.json({ posts });
   } catch (error: any) {
