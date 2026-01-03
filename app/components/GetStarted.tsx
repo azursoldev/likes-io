@@ -486,7 +486,7 @@ export default function GetStarted() {
                 {usernameError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', marginLeft: '5px' }}>{usernameError}</div>}
               </div>
 
-              <button type="submit" className="btn buy-btn" style={{ marginTop: '15px' }}>Buy Now</button>
+              <button type="submit" className="btn buy-btn" style={{ marginTop: '15px' }}>Get Started</button>
 
               <div className="gs-trust">
                 <span className="trust-item">🛡️ 100% Safe Delivery</span>

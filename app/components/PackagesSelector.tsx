@@ -63,7 +63,7 @@ const DEFAULT_TABS: PackageTabConfig[] = [
 ];
 
 const DEFAULT_METRIC = "Likes";
-const DEFAULT_CTA_TEMPLATE = "Buy {qty} {metric} Now";
+const DEFAULT_CTA_TEMPLATE = "Get Started";
 
 export default function PackagesSelector({
   tabsConfig,
@@ -100,24 +100,7 @@ export default function PackagesSelector({
     return parseFloat(cleaned) || 0;
   };
 
-  // Helper to format perLike text with currency
-  const formatPerLike = (perLikeStr: string): string => {
-    const match = perLikeStr.match(/\$([\d.]+)\s*\/\s*(.+)/);
-    if (match) {
-      const price = parseFloat(match[1]);
-      const unit = match[2];
-      const formattedPrice = formatPrice(price);
-      return `${formattedPrice} / ${unit}`;
-    }
-    // If no match, try to find any price in the string
-    const priceMatch = perLikeStr.match(/\$([\d.]+)/);
-    if (priceMatch) {
-      const price = parseFloat(priceMatch[1]);
-      const formattedPrice = formatPrice(price);
-      return perLikeStr.replace(/\$[\d.]+/, formattedPrice);
-    }
-    return perLikeStr;
-  };
+
 
   useEffect(() => {
     if (!tabs.length) {
@@ -306,7 +289,7 @@ export default function PackagesSelector({
   const displayStrike = customPriceData?.strike ?? (selected?.strike ? formatDisplayStrike(selected.strike) : undefined);
   const displaySave = customPriceData?.save ?? (selected?.save ? formatDisplaySave(selected.save) : undefined);
   const formatButtonLabel = (pkg?: PackageOption, qty?: string) => {
-    if (!pkg) return `Buy ${metricLabel}`;
+    if (!pkg) return "Get Started";
     const qtyToUse = qty ?? String(pkg.qty);
     return ctaTemplate.replace("{qty}", qtyToUse).replace("{metric}", metricLabel);
   };
@@ -361,8 +344,7 @@ export default function PackagesSelector({
                     ? customQty.toLocaleString() + "+"
                     : p.qty}
                 </div>
-                <div className="pkg-label">{metricLabel}</div>
-                <div className="pkg-sub">{formatPerLike(p.perLike)}</div>
+
                 {p.offText && <div className="pkg-off">{p.offText}</div>}
                 {typeof p.qty === "string" && p.qty.includes("+") && (
                   <>
