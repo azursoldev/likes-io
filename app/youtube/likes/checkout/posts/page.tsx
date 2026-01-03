@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCheck,
   faLink,
-  faThumbsUp,
+  faHeart,
   faChevronRight,
   faPlay,
-  faEye,
-  faHeart
+  faThumbsUp,
+  faEye
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
@@ -23,87 +23,152 @@ interface Post {
   caption: string;
   likes: number;
   comments: number;
-  views: number;
-  timestamp: string;
+  views?: number;
 }
 
 function PostsSelectionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
-  const [postLink, setPostLink] = useState("");
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [imageError, setImageError] = useState(false);
+  const initialPostLink = searchParams.get("postLink") || "";
+  const [postLink, setPostLink] = useState(initialPostLink);
+  const [selectedPosts, setSelectedPosts] = useState<string[]>(initialPostLink ? [initialPostLink] : []);
+  
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState("");
   
   const username = searchParams.get("username") || "";
   const qty = searchParams.get("qty") || "500";
-  const priceValue = parseFloat(searchParams.get("price") || "16.99");
+  const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
+  const serviceId = searchParams.get("serviceId") || "";
+
+  const [userProfile, setUserProfile] = useState<{ profilePicture: string; username: string } | null>(null);
+  const [imageError, setImageError] = useState(false);
+
+  const formatCount = (count: number) => {
+    if (!count) return '0';
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return count.toString();
+  };
+
+  const fetchUserProfile = async () => {
+    if (!username) return;
+    try {
+        const response = await fetch(`/api/social/youtube/profile?username=${encodeURIComponent(username)}`);
+        if (response.ok) {
+            const data = await response.json();
+            const profile = data.profile || data;
+            
+            if (profile.profilePicture) {
+                setUserProfile({
+                    profilePicture: profile.profilePicture,
+                    username: profile.displayUsername || profile.fullName || profile.username || username
+                });
+                setImageError(false);
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+    }
+  };
+
+  const fetchPosts = async (cursor?: string) => {
+    if (!username) return;
+    
+    try {
+      if (cursor) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      
+      const url = cursor 
+        ? `/api/social/youtube/posts?username=${encodeURIComponent(username)}&cursor=${encodeURIComponent(cursor)}`
+        : `/api/social/youtube/posts?username=${encodeURIComponent(username)}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (response.ok) {
+        const newPosts = data.posts || [];
+        if (cursor) {
+          setPosts(prev => {
+             const existingIds = new Set(prev.map(p => p.id));
+             const uniqueNewPosts = newPosts.filter((p: Post) => !existingIds.has(p.id));
+             return [...prev, ...uniqueNewPosts];
+          });
+        } else {
+          setPosts(newPosts);
+        }
+        setNextCursor(data.nextCursor || null);
+      } else {
+        if (!cursor) setError(data.error || "Failed to fetch videos");
+      }
+    } catch (err) {
+      if (!cursor) setError("An error occurred while fetching videos");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     if (username) {
-      setLoading(true);
-      
-      // Fetch profile
-      fetch(`/api/social/youtube/profile?username=${encodeURIComponent(username)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.profile) {
-            setUserProfile(data.profile);
-          }
-        })
-        .catch(err => console.error("Failed to fetch profile:", err));
-
-      // Fetch posts
-      fetch(`/api/social/youtube/posts?username=${encodeURIComponent(username)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.posts) {
-            setPosts(data.posts);
-          }
-        })
-        .catch(err => {
-          console.error("Failed to fetch posts:", err);
-          setError("Failed to load videos. You can still enter a link manually.");
-        })
-        .finally(() => setLoading(false));
+        fetchPosts();
+        fetchUserProfile();
     }
   }, [username]);
 
-  const togglePostSelection = (postId: string) => {
+  const handleLoadMore = () => {
+    if (nextCursor) {
+      fetchPosts(nextCursor);
+    }
+  };
+
+  const handlePostSelect = (url: string) => {
     setSelectedPosts(prev => {
-      if (prev.includes(postId)) {
-        return prev.filter(id => id !== postId);
+      if (prev.includes(url)) {
+        return prev.filter(p => p !== url);
       } else {
-        return [...prev, postId];
+        return [...prev, url];
       }
     });
-    // Clear manual link if selecting posts
-    setPostLink("");
+    setPostLink(""); // Clear manual input when selecting from grid
   };
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
+    const finalLinks = selectedPosts.length > 0 ? selectedPosts : (postLink ? [postLink] : []);
     
-    let finalPostLink = postLink;
-    
-    // If posts are selected, construct a comma-separated list of URLs
-    if (selectedPosts.length > 0) {
-      const selectedUrls = posts
-        .filter(p => selectedPosts.includes(p.id))
-        .map(p => p.url);
-      finalPostLink = selectedUrls.join(',');
-    }
-
-    if (finalPostLink.trim()) {
+    if (finalLinks.length > 0) {
       // Navigate to final checkout step
-      router.push(`/youtube/likes/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(finalPostLink)}`);
+      const params = new URLSearchParams({
+        username: username,
+        qty: qty,
+        price: String(priceValue),
+        type: packageType,
+        postLink: finalLinks.join(','),
+      });
+      if (serviceId) {
+        params.append("serviceId", serviceId);
+      }
+      router.push(`/youtube/likes/checkout/final?${params.toString()}`);
     }
   };
+
+  // Calculate Subtotal
+  // Logic: The price passed is per package. If multiple posts are selected, we multiply the price.
+  const postCount = selectedPosts.length || (postLink ? 1 : 0);
+  const subtotal = priceValue * (postCount || 1);
 
   return (
     <>
@@ -139,90 +204,191 @@ function PostsSelectionContent() {
           </div>
 
           <div className="posts-selection-layout">
-            {/* Left Column - Posts Grid or Manual Link */}
+            {/* Left Column - Select Post */}
             <div className="posts-selection-left">
               <div className="checkout-card">
-                <h2 className="posts-selection-title">Select Videos</h2>
-                <p className="posts-selection-subtitle">
-                  Select the videos you want to distribute likes to, or enter a link manually below.
-                </p>
-                
-                {loading ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-                  </div>
-                ) : posts.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-4 mb-8">
-                    {posts.map((post) => (
-                      <div 
-                        key={post.id}
-                        className={`relative aspect-video cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedPosts.includes(post.id) 
-                            ? "border-red-600 ring-2 ring-red-100" 
-                            : "border-transparent hover:border-gray-300"
-                        }`}
-                        onClick={() => togglePostSelection(post.id)}
-                      >
-                        <img 
-                          src={post.thumbnail} 
-                          alt={post.caption} 
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all" />
-                        
-                        {/* Selected Overlay */}
-                        {selectedPosts.includes(post.id) && (
-                          <div className="absolute inset-0 bg-red-600 bg-opacity-20 flex items-center justify-center">
-                            <div className="bg-red-600 text-white rounded-full p-2">
-                              <FontAwesomeIcon icon={faCheck} />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Video Stats Overlay */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-white text-xs flex justify-between items-end">
-                          <span className="truncate max-w-[70%]">{post.caption}</span>
-                          <span className="flex items-center gap-1">
-                            <FontAwesomeIcon icon={faEye} />
-                            {post.views.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    No videos found. Please enter a link manually.
-                  </div>
-                )}
-
-                <div className="relative flex py-5 items-center">
-                    <div className="flex-grow border-t border-gray-300"></div>
-                    <span className="flex-shrink-0 mx-4 text-gray-400">OR</span>
-                    <div className="flex-grow border-t border-gray-300"></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 className="posts-selection-title" style={{ margin: 0 }}>Select Videos</h2>
+                  <span style={{ color: '#666', fontSize: '14px' }}>
+                    {selectedPosts.length || (postLink ? 1 : 0)} selected
+                  </span>
                 </div>
                 
-                <form className="posts-selection-form" onSubmit={handleContinue}>
-                  <div className="posts-form-group">
-                    <label className="checkout-label">Manual YouTube Video Link</label>
-                    <div className="posts-input-wrapper">
-                      <FontAwesomeIcon icon={faLink} className="posts-input-icon" />
-                      <input
-                        type="text"
-                        className="posts-input"
-                        value={postLink}
-                        onChange={(e) => {
-                          setPostLink(e.target.value);
-                          setSelectedPosts([]); // Clear selection if typing manual link
-                        }}
-                        placeholder="https://www.youtube.com/watch?v=..."
-                      />
-                    </div>
-                    <p className="posts-helper-text">
-                      Paste the full URL of the video you want to boost if it's not listed above.
-                    </p>
+                {loading ? (
+                  <div className="loading-state" style={{ padding: '40px', textAlign: 'center' }}>
+                    <div className="spinner" style={{ 
+                      width: '40px', 
+                      height: '40px', 
+                      border: '4px solid #f3f3f3', 
+                      borderTop: '4px solid #ef4444', 
+                      borderRadius: '50%', 
+                      margin: '0 auto 20px',
+                      animation: 'spin 1s linear infinite' 
+                    }}></div>
+                    <p>Loading videos...</p>
+                    <style jsx>{`
+                      @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                      }
+                    `}</style>
                   </div>
-                </form>
+                ) : error ? (
+                   <div className="error-state" style={{ padding: '20px', textAlign: 'center', color: '#dc2626' }}>
+                     <p>{error}</p>
+                     <p className="text-sm text-gray-500" style={{ marginTop: '10px' }}>Ensure your channel is public.</p>
+                   </div>
+                ) : (
+                  <>
+                    <div className="posts-grid" style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
+                      gap: '10px',
+                      marginBottom: '20px'
+                    }}>
+                      {posts.map((post) => (
+                        <div 
+                          key={post.id} 
+                          className={`post-item`}
+                          onClick={() => handlePostSelect(post.url)}
+                          style={{
+                            cursor: 'pointer',
+                            border: selectedPosts.includes(post.url) ? '3px solid #ef4444' : '1px solid #eee',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            aspectRatio: '16/9',
+                            position: 'relative',
+                            backgroundColor: '#000'
+                          }}
+                        >
+                          <img 
+                            src={post.thumbnail} 
+                            alt={post.caption} 
+                            style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                objectFit: 'cover',
+                                opacity: selectedPosts.includes(post.url) ? 0.8 : 1
+                            }}
+                          />
+                          
+                          {/* Selected Overlay - Checkmark */}
+                          {selectedPosts.includes(post.url) && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '5px',
+                              right: '5px',
+                              background: '#ef4444',
+                              color: 'white',
+                              borderRadius: '50%',
+                              width: '20px',
+                              height: '20px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              zIndex: 10
+                            }}>
+                              <FontAwesomeIcon icon={faCheck} />
+                            </div>
+                          )}
+
+                          {/* Selected Overlay - Quantity Badge */}
+                          {selectedPosts.includes(post.url) && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              background: '#ef4444',
+                              color: 'white',
+                              borderRadius: '20px',
+                              padding: '4px 12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '14px',
+                              fontWeight: 'bold',
+                              zIndex: 10,
+                              whiteSpace: 'nowrap'
+                            }}>
+                              <FontAwesomeIcon icon={faThumbsUp} />
+                              <span>+ {qty}</span>
+                            </div>
+                          )}
+
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '0',
+                            left: '0',
+                            right: '0',
+                            padding: '4px 8px',
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                            color: '#fff',
+                            fontSize: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FontAwesomeIcon icon={faPlay} style={{ fontSize: '10px' }} />
+                              <span>{formatCount(post.views || 0)}</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '10px' }} />
+                              <span>{formatCount(post.likes || 0)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {nextCursor && (
+                      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        <button 
+                          onClick={handleLoadMore}
+                          disabled={loadingMore}
+                          style={{
+                            padding: '10px 20px',
+                            background: '#f3f4f6',
+                            color: '#333',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: loadingMore ? 'not-allowed' : 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500'
+                          }}
+                        >
+                          {loadingMore ? 'Loading...' : 'Load More'}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Manual Link Input Fallback */}
+                <div className="manual-link-section" style={{ borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                  <p className="posts-helper-text" style={{ marginBottom: '10px' }}>
+                    Can't find your video? Enter the link manually:
+                  </p>
+                  <form className="posts-selection-form" onSubmit={handleContinue}>
+                    <div className="posts-form-group">
+                      <div className="posts-input-wrapper">
+                        <FontAwesomeIcon icon={faLink} className="posts-input-icon" />
+                        <input
+                          type="text"
+                          className="posts-input"
+                          value={postLink}
+                          onChange={(e) => {
+                            setPostLink(e.target.value);
+                            setSelectedPosts([]); // Clear selection if typing manually
+                          }}
+                          placeholder="https://www.youtube.com/watch?v=..."
+                        />
+                      </div>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
 
@@ -232,21 +398,33 @@ function PostsSelectionContent() {
                 <div className="order-summary-section">
                   <div className="order-summary-item">
                     <div className="order-summary-left">
-                      <div className="order-summary-icon">
-                        {userProfile?.profilePicture && !imageError ? (
-                          <img 
-                            src={userProfile.profilePicture} 
-                            alt={username} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-                            onError={() => setImageError(true)}
-                          />
-                        ) : (
-                          <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
-                        )}
+                      <div className="order-summary-icon" style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        borderRadius: '50%', 
+                        overflow: 'hidden', 
+                        border: '2px solid #ef4444',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '12px'
+                      }}>
+                         {userProfile?.profilePicture && !imageError ? (
+                           <img 
+                             src={userProfile.profilePicture}
+                             alt={username} 
+                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                             onError={() => setImageError(true)}
+                           />
+                         ) : (
+                           <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
+                         )}
                       </div>
-                      <span className="order-summary-text">
-                        {userProfile?.displayUsername || userProfile?.fullName || username || "username"}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                        <span className="order-summary-text order-summary-url" style={{ fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {userProfile?.username || username || "username"}
+                        </span>
+                      </div>
                     </div>
                     <button type="button" className="order-change-btn" onClick={() => router.back()}>Change</button>
                   </div>
@@ -259,22 +437,18 @@ function PostsSelectionContent() {
                       <div className="order-summary-details">
                         <span className="order-summary-text">{qty} YouTube Likes</span>
                         <span className="order-summary-subtext">
-                          {selectedPosts.length > 0 
-                            ? `Applying to ${selectedPosts.length} video${selectedPosts.length > 1 ? 's' : ''}`
-                            : postLink 
-                              ? "Applying to 1 video"
-                              : "Select videos to continue"}
+                             {qty} likes / {selectedPosts.length || (postLink ? 1 : 0)} posts
                         </span>
                       </div>
                     </div>
-                    <button type="button" className="order-change-btn">Change</button>
+                    <button type="button" className="order-change-btn" onClick={() => router.push(`/youtube/likes/checkout?qty=${qty}&price=${priceValue}&type=${packageType}`)}>Change</button>
                   </div>
 
                   <div className="order-summary-divider"></div>
 
                   <div className="order-summary-total">
                     <span className="order-summary-label">Subtotal</span>
-                    <span className="order-summary-price">{formatPrice(priceValue)} {getCurrencySymbol() === "€" ? "EUR" : "USD"}</span>
+                    <span className="order-summary-price">{formatPrice(subtotal)} {getCurrencySymbol() === "€" ? "EUR" : "USD"}</span>
                   </div>
 
                   <button 
@@ -282,6 +456,7 @@ function PostsSelectionContent() {
                     className="order-continue-btn"
                     onClick={handleContinue}
                     disabled={selectedPosts.length === 0 && !postLink.trim()}
+                    style={{ backgroundColor: '#f97316' }}
                   >
                     Continue to checkout
                   </button>
@@ -303,4 +478,3 @@ export default function PostsSelectionPage() {
     </Suspense>
   );
 }
-
