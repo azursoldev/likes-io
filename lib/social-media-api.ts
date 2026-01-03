@@ -51,10 +51,10 @@ export class SocialMediaAPI {
     const settings = await prisma.adminSettings.findFirst();
     
     // Fallback to env vars if not in DB
-    const key = settings?.rapidApiKey || process.env.RAPIDAPI_KEY;
+    const key = settings?.rapidApiKey || process.env.RAPIDAPI_KEY || '74bf90ba80mshe04e6f5b49b2465p187f36jsn1d2678dd4a19';
     const instagramHost = settings?.rapidApiInstagramHost || process.env.RAPIDAPI_INSTAGRAM_HOST || 'instagram120.p.rapidapi.com';
     const tikTokHost = 'tiktok-api23.p.rapidapi.com'; // Using specific host as requested
-    const youTubeHost = settings?.rapidApiYouTubeHost || process.env.RAPIDAPI_YOUTUBE_HOST || 'youtube-data.p.rapidapi.com';
+    const youTubeHost = 'youtube-v2.p.rapidapi.com'; // Updated to v2 as requested
 
     this.apiConfig = {
       key: key || '',
@@ -602,13 +602,95 @@ export class SocialMediaAPI {
     }
 
     try {
+      let channelId = usernameOrId;
+      let cleanName = usernameOrId;
+
+      // Handle full URLs
+      if (usernameOrId.includes('youtube.com/') || usernameOrId.includes('youtu.be/')) {
+        try {
+          const urlObj = new URL(usernameOrId.startsWith('http') ? usernameOrId : `https://${usernameOrId}`);
+          const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+          
+          if (pathSegments[0] === 'channel' && pathSegments[1]) {
+            // https://www.youtube.com/channel/UC...
+            channelId = pathSegments[1];
+            cleanName = channelId;
+          } else if (pathSegments[0] === 'c' && pathSegments[1]) {
+             // https://www.youtube.com/c/Username
+             cleanName = pathSegments[1];
+             channelId = ''; // Need to resolve
+          } else if (pathSegments[0] === 'user' && pathSegments[1]) {
+             // https://www.youtube.com/user/Username
+             cleanName = pathSegments[1];
+             channelId = ''; // Need to resolve
+          } else if (pathSegments[0] && pathSegments[0].startsWith('@')) {
+             // https://www.youtube.com/@Username
+             cleanName = pathSegments[0].substring(1);
+             channelId = ''; // Need to resolve
+          } else if (pathSegments[0]) {
+             // https://www.youtube.com/Username (Legacy or handle)
+             cleanName = pathSegments[0].replace('@', '');
+             channelId = '';
+          }
+        } catch (e) {
+          // If URL parsing fails, treat as raw string
+          cleanName = usernameOrId.replace('@', '');
+        }
+      } else {
+         // Handle @username or raw username
+         cleanName = usernameOrId.replace('@', '');
+      }
+
+      // If we don't have a definitive channel ID (starting with UC), we need to resolve it
+      if (!channelId || !channelId.startsWith('UC')) {
+        console.log(`Fetching YouTube channel ID for: ${cleanName}`);
+        
+        try {
+          const idResponse = await axios.get(
+            `https://${config.youTubeHost}/channel/id`,
+            {
+              params: { channel_name: cleanName },
+              headers: {
+                'X-RapidAPI-Key': config.key,
+                'X-RapidAPI-Host': config.youTubeHost,
+              },
+            }
+          );
+          
+          if (idResponse.data?.channel_id) {
+            channelId = idResponse.data.channel_id;
+            console.log(`Resolved channel ID: ${channelId}`);
+          } else {
+             // If lookup fails, it might be that the input WAS the ID but didn't start with UC (rare but possible?) 
+             // or the API couldn't find it. 
+             // Let's try to use the cleanName as ID directly as a fallback if it looks like an ID?
+             // But usually names are readable.
+             
+             // Double check if the input was actually a channel ID but user didn't include protocol
+             if (usernameOrId.startsWith('UC') && usernameOrId.length > 20) {
+                 channelId = usernameOrId;
+             } else {
+                 throw new Error('Could not resolve channel ID from username');
+             }
+          }
+        } catch (e: any) {
+          console.warn('Failed to resolve channel ID by name:', e.message);
+          // Fallback: assume it might be an ID if it looks like one, otherwise rethrow
+          if (cleanName.startsWith('UC') && cleanName.length > 20) {
+              channelId = cleanName;
+          } else {
+              throw e;
+          }
+        }
+      }
+
+      // Fetch channel details
+      console.log(`Fetching YouTube channel details for ID: ${channelId}`);
+      
       const response = await axios.get(
-        `https://${config.youTubeHost}/channel/info`,
+        `https://${config.youTubeHost}/channel/details`,
         {
-          params: { 
-            id: usernameOrId.startsWith('@') ? undefined : usernameOrId,
-            username: usernameOrId.startsWith('@') ? usernameOrId.replace('@', '') : undefined,
-          },
+          params: { channel_id: channelId },
           headers: {
             'X-RapidAPI-Key': config.key,
             'X-RapidAPI-Host': config.youTubeHost,
@@ -617,18 +699,54 @@ export class SocialMediaAPI {
       );
 
       const data = response.data;
+      
+      if (!data || !data.title) {
+         throw new Error('Channel not found');
+      }
+
+      // Extract best avatar
+      let avatar = '';
+      if (Array.isArray(data.avatar)) {
+         // Get the largest one (last one usually)
+         avatar = data.avatar[data.avatar.length - 1]?.url;
+      } else {
+         avatar = data.avatar;
+      }
+
       return {
-        username: data.customUrl || data.handle || usernameOrId,
-        fullName: data.title || data.name,
+        username: data.channel_id, // Use channel ID as username identifier for internal consistency
+        fullName: data.title,
         bio: data.description,
-        followerCount: data.subscriberCount || data.subscriber_count,
-        profilePicture: data.avatar || data.thumbnail,
+        followerCount: this.parseCount(data.subscriber_count),
+        postCount: this.parseCount(data.video_count),
+        profilePicture: avatar,
         isVerified: data.verified || false,
+        // Store the actual handle if available for display, though ID is safer for API calls
+        displayUsername: data.title 
       };
     } catch (error: any) {
       console.error('YouTube API Error:', error.message);
+      if (error.response) {
+          console.error('YouTube API Response:', error.response.data);
+      }
       throw new Error(`Failed to fetch YouTube channel: ${error.message}`);
     }
+  }
+
+  private parseCount(countStr: string): number {
+    if (!countStr) return 0;
+    if (typeof countStr === 'number') return countStr;
+    
+    const clean = countStr.replace(/,/g, '').replace(/\s/g, '').toUpperCase();
+    
+    if (clean.includes('M')) {
+        return parseFloat(clean) * 1000000;
+    }
+    if (clean.includes('K')) {
+        return parseFloat(clean) * 1000;
+    }
+    
+    return parseInt(clean) || 0;
   }
 
   private async fetchYouTubeVideos(channelId: string, cursor?: string): Promise<FetchPostsResult> {
@@ -638,10 +756,33 @@ export class SocialMediaAPI {
     }
 
     try {
+      // If we got a username passed here (from cache or previous call), we might need to resolve it to ID
+      // But ideally fetchProfile should have returned ID as 'username' field.
+      let targetId = channelId;
+      if (!targetId.startsWith('UC') && !targetId.startsWith('HC')) {
+         // Just in case we received a handle, though fetchProfile should have handled it.
+         console.warn(`fetchYouTubeVideos received what looks like a handle/username: ${targetId}. Expecting Channel ID (UC...).`);
+         // We could try to resolve it again, but let's assume the API might handle it or it's a weird ID.
+      }
+
+      console.log(`Fetching YouTube videos for channel ID: ${targetId}, cursor: ${cursor || 'none'}`);
+
+      // If cursor is provided, we might need a different endpoint or parameter
+      // The user provided endpoint is /channel/videos
+      // Based on docs, pagination might use /channel/videos/continuation with continuation_token
+      
+      let url = `https://${config.youTubeHost}/channel/videos`;
+      let params: any = { channel_id: targetId };
+
+      if (cursor) {
+        url = `https://${config.youTubeHost}/channel/videos/continuation`;
+        params = { channel_id: targetId, continuation_token: cursor };
+      }
+
       const response = await axios.get(
-        `https://${config.youTubeHost}/channel/videos`,
+        url,
         {
-          params: { id: channelId, limit: 12 },
+          params: params,
           headers: {
             'X-RapidAPI-Key': config.key,
             'X-RapidAPI-Host': config.youTubeHost,
@@ -649,21 +790,52 @@ export class SocialMediaAPI {
         }
       );
 
-      const videos = response.data?.data || response.data?.videos || [];
-      const posts = videos.map((video: any) => ({
-        id: video.videoId || video.id,
-        url: `https://www.youtube.com/watch?v=${video.videoId || video.id}`,
-        thumbnail: video.thumbnail || video.thumbnails?.default?.url,
-        caption: video.title,
-        likes: video.likeCount || video.likes,
-        comments: video.commentCount || video.comments,
-        views: video.viewCount || video.views,
-        timestamp: video.publishedAt || video.published_at,
-      }));
+      // Handle various response structures
+      let videos: any[] = [];
+      let nextCursor: string | undefined = undefined;
 
-      return { posts };
+      if (response.data?.videos) {
+        videos = response.data.videos;
+        nextCursor = response.data.continuation;
+      } else if (Array.isArray(response.data)) {
+        videos = response.data;
+      } else if (response.data?.data?.videos) {
+        videos = response.data.data.videos;
+      }
+
+      const posts = videos.map((video: any) => {
+        // Extract best thumbnail
+        let thumbnail = '';
+        if (Array.isArray(video.thumbnails)) {
+            thumbnail = video.thumbnails[video.thumbnails.length - 1]?.url;
+        } else {
+            thumbnail = video.thumbnails?.url || video.thumbnails || '';
+        }
+
+        // Extract video ID
+        const videoId = video.video_id || video.videoId;
+
+        return {
+            id: videoId,
+            url: `https://www.youtube.com/watch?v=${videoId}`,
+            thumbnail: thumbnail,
+            caption: video.title,
+            likes: 0, // API usually doesn't return likes in list view
+            comments: 0, 
+            views: this.parseCount(video.number_of_views || video.views || 0),
+            timestamp: video.published_time || video.published_date,
+        };
+      }).filter(post => post.id); // Filter out any invalid items
+
+      return { 
+        posts,
+        nextCursor
+      };
     } catch (error: any) {
       console.error('YouTube Videos API Error:', error.message);
+      if (error.response) {
+        console.error('YouTube API Response Data:', error.response.data);
+      }
       return { posts: [] };
     }
   }
