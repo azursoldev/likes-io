@@ -1,0 +1,624 @@
+/* Mobile Header CSS */
+
+/* Toggle Button - Hidden on Desktop */
+.mobile-menu-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: rgb(var(--color-text-primary));
+  font-size: 1.5rem;
+  z-index: 101;
+}
+
+.mobile-icons {
+  display: none;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+/* Mobile Menu Container - Full Screen Overlay */
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  z-index: 99999; /* Ensure it covers everything including sticky headers */
+  overflow-y: auto;
+  flex-direction: column;
+}
+
+/* Dark mode support for mobile menu */
+html.dark .mobile-menu {
+  background: #1f2937;
+}
+
+.mobile-menu.open {
+  display: flex;
+}
+
+/* Mobile Menu Header (Logo + Close) */
+.mobile-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+html.dark .mobile-menu-header {
+  border-bottom-color: rgba(255,255,255,0.06);
+}
+
+/* Ensure logo styles are consistent in mobile menu */
+.mobile-menu-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 800;
+  font-size: 1.75rem;
+}
+
+.mobile-menu-header .brand-logo {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.mobile-menu-header .logo-text {
+  color: rgb(var(--color-text-primary));
+}
+
+.mobile-menu-header .logo-dot {
+  color: rgb(var(--color-brand));
+}
+
+.mobile-menu-close {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #999;
+  transition: all 0.2s;
+}
+
+.mobile-menu-close:hover {
+  border-color: #333;
+  color: #333;
+}
+
+html.dark .mobile-menu-close {
+  border-color: rgba(255,255,255,0.2);
+  color: #ccc;
+}
+
+/* Mobile Nav Items */
+.mobile-nav-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-nav-item {
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+html.dark .mobile-nav-item {
+  border-bottom-color: rgba(255,255,255,0.06);
+}
+
+.mobile-nav-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  font-weight: 700;
+  color: rgb(var(--color-text-primary));
+  text-decoration: none;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box; /* Prevent overflow */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.nav-text-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+}
+
+.nav-icon {
+  color: #ff5722;
+  width: 16px;
+}
+
+.nav-chevron {
+  color: #ccc;
+  font-size: 12px;
+}
+
+.mobile-nav-link:hover {
+  background-color: rgba(0,0,0,0.02);
+}
+
+html.dark .mobile-nav-link:hover {
+  background-color: rgba(255,255,255,0.02);
+}
+
+/* Mobile Dropdown */
+.mobile-dropdown {
+  background-color: #f9f9f9;
+  display: none;
+  padding: 0;
+}
+
+html.dark .mobile-dropdown {
+  background-color: rgba(0,0,0,0.2);
+}
+
+.mobile-dropdown.open {
+  display: block;
+}
+
+.mobile-dropdown-link {
+  display: block;
+  padding: 0.75rem 2rem;
+  color: rgb(var(--color-text-secondary));
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.mobile-dropdown-link:last-child {
+  border-bottom: none;
+}
+
+.mobile-dropdown-link:hover {
+  color: rgb(var(--color-brand));
+  background-color: rgba(0,0,0,0.02);
+}
+
+/* Mobile Actions Section */
+.mobile-actions {
+  padding: 2rem 1.5rem;
+  margin-top: auto;
+  padding-bottom: 3rem; /* Extra padding for bottom safety */
+  width: 100%; /* Ensure container is full width */
+  box-sizing: border-box; /* Include padding in width */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center children horizontally */
+}
+
+.mobile-auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%; /* Ensure this container takes full width of parent */
+  align-items: center; /* Double check centering */
+}
+
+/* Primary Button (Sign Up) - Updated to match site gradient */
+.mobile-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 402.4px; /* Requested specific width */
+  max-width: 100%; /* Prevent overflow on smaller screens */
+  height: 52.5px; /* Requested specific height */
+  box-sizing: border-box; /* Fix width overflow */
+  background: linear-gradient(90deg, #f97316, #ef4444); /* Site standard orange gradient */
+  color: white;
+  font-weight: 700;
+  padding: 0 14px; /* Adjust padding for fixed height */
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+  margin: 0; /* Removed auto margins as requested */
+}
+
+.mobile-btn-primary:hover {
+  filter: brightness(0.95);
+  box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Secondary Button (Log In) */
+.mobile-btn-secondary {
+  display: flex; /* Changed to flex for vertical centering */
+  align-items: center;
+  justify-content: center;
+  width: 402.4px; /* Requested specific width */
+  max-width: 100%; /* Prevent overflow on smaller screens */
+  height: 52.5px; /* Requested specific height */
+  box-sizing: border-box; /* Fix width overflow */
+  text-align: center;
+  color: rgb(var(--color-text-primary));
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 0 10px; /* Adjust padding for fixed height */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin: 0; /* Removed auto margins as requested */
+}
+
+.mobile-btn-secondary:hover {
+  color: #f97316;
+}
+
+/* Media Query for Mobile Header */
+@media (max-width: 1024px) {
+  /* Show Mobile Icons */
+  .mobile-icons {
+    display: flex;
+  }
+
+  /* Hide Desktop Nav and Actions */
+  .site-header .nav,
+  .site-header .header-actions {
+    display: none;
+  }
+  
+  /* Adjust header inner layout */
+  .header-inner {
+    justify-content: space-between;
+  }
+}
+
+/* Hero Section Mobile Response */
+@media (max-width: 900px) {
+  .hero-section {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+  }
+
+  .hero-grid {
+    /* grid-template-columns: 1fr;  Already in globals.css but good to be explicit if needed */
+    text-align: center;
+    gap: 3rem; /* Increase gap between text and image */
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    order: 1; /* Ensure text is first */
+  }
+
+  .hero-right {
+    display: none;
+  }
+
+  .hero-title {
+    font-size: 2.5rem; /* Adjust for mobile if clamp isn't enough */
+    line-height: 1.1;
+    margin-top: 0;
+    margin-bottom: 0.15rem;
+  }
+
+  .hero-sub {
+    margin: 0 auto;
+    font-size: 1.125rem;
+  }
+
+  .reviews-pill {
+    margin: 1.5rem auto;
+    justify-content: center;
+  }
+
+  .cta {
+    justify-content: center;
+    width: 100%;
+    gap: 1rem;
+  }
+
+  .hero-section .btn {
+    width: 100%; /* Full width buttons on mobile */
+    justify-content: center;
+  }
+
+  .profile-card {
+    margin: 0 auto;
+    max-width: 340px; /* Limit width */
+    width: 100%;
+  }
+
+  /* Adjust blobs positioning for mobile */
+  .blob-1 {
+    right: 50%;
+    transform: translateX(50%);
+    top: -20px;
+    width: 250px;
+    height: 250px;
+  }
+  
+  .blob-2 {
+    right: 50%;
+    transform: translateX(50%);
+    top: 100px;
+    width: 200px;
+    height: 200px;
+  }
+
+  /* Featured On Section Mobile Response */
+  .featured-on {
+    padding: 2rem 0;
+    text-align: center;
+    background: #fbfbfc;
+  }
+
+  .featured-on .container {
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .featured-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #575c66;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  .featured-brands {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.25rem;
+    align-items: center;
+    width: 100%;
+  }
+
+  .featured-brands .brand,
+  .featured-brands a {
+    font-size: 21px;
+    font-weight: 700;
+    color: rgba(17, 24, 39, 0.7);
+    line-height: 36px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  /* Replace Entrepreneur with Tampabay on mobile */
+  .featured-brands > *:nth-child(3) .brand {
+    font-size: 0 !important;
+  }
+  
+  .featured-brands > *:nth-child(3) .brand::after {
+    content: "Tampabay";
+    font-size: 21px;
+    font-weight: 800;
+    color: rgba(17, 24, 39, 0.7);
+    line-height: 36px;
+    visibility: visible;
+  }
+
+  /* Force the 4th item (WIRED) to break to a new line */
+  .featured-brands > *:nth-child(4) {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .featured-brands img {
+    max-height: 20px;
+    width: auto;
+    filter: grayscale(100%) opacity(0.6);
+  }
+
+  /* Platforms Section Mobile Response */
+  .platforms-title,
+  .platforms-subtitle {
+    text-align: center;
+  }
+
+  .platform-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hide YouTube card on mobile */
+  .platform-grid .p-card.youtube {
+    display: none !important;
+  }
+
+  /* Get Started Section Mobile Response */
+  .getstarted .container {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    width: auto;
+    padding: 1.25rem;
+  }
+
+  .gs-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .gs-right {
+    display: block !important;
+    border: none;
+    box-shadow: none;
+    padding-top: 2rem;
+    text-align: left;
+  }
+
+  /* Influence Section Mobile Response */
+  .influence-right {
+    display: none !important;
+  }
+
+  /* FAQ Section Mobile Response */
+  .faq-pagination {
+    display: none !important;
+  }
+
+  /* Footer Top Mobile Response */
+  .footer-top {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+  }
+
+  .footer-top-nav {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .footer-lang {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Footer Bottom Mobile Response */
+  .footer-bottom {
+    align-items: center !important;
+    gap: 1rem;
+  }
+
+  .footer-bottom .brand {
+    display: none !important;
+  }
+
+  .footer-bottom .copyright {
+    text-align: center;
+    width: 100%;
+  }
+
+  .footer-bottom .payments {
+    margin-left: 0 !important;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* About Page Mobile Response */
+  .blog-hero-section {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .about-section-title {
+    font-size: 1.5rem !important;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .about-story,
+  .about-values {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .about-team {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    box-sizing: border-box;
+    text-align: center;
+    width: 100%;
+  }
+
+  .about-team .team-subtitle {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  /* Team Page Mobile Response */
+  .team-grid {
+    grid-template-columns: 1fr;
+    padding: 0 2rem;
+    box-sizing: border-box;
+  }
+
+  .team-card {
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  .team-name,
+  .team-role {
+    text-align: center;
+  }
+
+  .team-description {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .team-profile-btn {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  /* Contact Page Mobile Response */
+  .contact-content {
+    padding: 0 2rem;
+    box-sizing: border-box;
+  }
+
+  .contact-help-card {
+    border-radius: 20px !important;
+    border-right: 1px solid rgba(17, 24, 39, 0.12) !important;
+    text-align: left;
+    margin-bottom: 0;
+  }
+
+  .contact-form-card {
+    border-radius: 20px !important;
+    border-left: 1px solid rgba(17, 24, 39, 0.12) !important;
+  }
+  
+  .contact-card-title, 
+  .contact-card-intro {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-sub {
+    font-size: 1rem;
+  }
+  
+  .hero-section .btn {
+    width: 100%;
+  }
+}
