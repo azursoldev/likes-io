@@ -399,7 +399,7 @@ export default function PackagesSelector({
             <div className="pkg-safety">
               <span className="safety-item">
                 <FontAwesomeIcon icon={faShieldHalved} />
-                <span>100% Safe Delivery</span>
+                <span>Account-Safe Delivery</span>
               </span>
               <span className="safety-item">
                 <FontAwesomeIcon icon={faLock} />

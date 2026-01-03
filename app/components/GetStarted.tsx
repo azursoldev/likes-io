@@ -489,7 +489,7 @@ export default function GetStarted() {
               <button type="submit" className="btn buy-btn" style={{ marginTop: '15px' }}>Get Started</button>
 
               <div className="gs-trust">
-                <span className="trust-item">🛡️ 100% Safe Delivery</span>
+                <span className="trust-item">🛡️ Account-Safe Delivery</span>
                 <span className="trust-item">🔒 Secure Checkout</span>
               </div>
             </form>
