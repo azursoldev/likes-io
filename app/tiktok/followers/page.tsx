@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 const TIKTOK_FOLLOWER_TABS: PackageTabConfig[] = [
   {
     id: "high",
-    label: "High-Quality Followers",
+    label: "High-Quality",
     packages: [
       { qty: 100, perLike: "$0.139 / follower", price: "$13.99" },
       { qty: 250, perLike: "$0.124 / follower", price: "$30.99", offText: "Save 5%" },
@@ -58,7 +58,7 @@ const TIKTOK_FOLLOWER_TABS: PackageTabConfig[] = [
 
 const QUALITY_COLUMNS = [
   {
-    title: "High-Quality Followers",
+    title: "High-Quality",
     subtitle: "Budget-friendly audiences that still look authentic on your profile.",
     bullets: [
       "Real-looking TikTok accounts with profile photos",
