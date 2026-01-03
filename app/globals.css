@@ -523,7 +523,7 @@ html.dark .shimmer-bg {
   .getstarted .container { background: #fff; border: 1px solid rgba(17,24,39,0.08); border-radius: 18px; box-shadow: 0 22px 44px rgba(17,24,39,0.08); padding: 24px; max-width: 900px; }
   .gs-header { display: flex; align-items: center; justify-content: space-between; }
   .getstarted .gs-header h3 { font-size: clamp(1.2rem, 0.8rem + 2vw, 1.75rem) !important; line-height: 1.25; }
-  .gs-platforms {display: flex;gap: 10px;align-items: center;flex-wrap: nowrap;background: #F3F4F6;padding: 5px;border-radius: 10px;}
+  .gs-platforms {display: flex;gap: 0px;align-items: center;flex-wrap: nowrap;background: #F3F4F6;padding: 5px;border-radius: 10px;}
   /* Get Started platform tabs */
   .gs-platforms .pill {display: inline-flex;align-items: center;justify-content: center;gap: 8px;background: transparent;border: unset;height: 36px;padding: 0 12px;width: 120px;border-radius: 12px;font-weight: 700;font-size: 13px;color: rgb(var(--color-text-primary));box-shadow: unset;transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;}
   .gs-platforms .pill:hover, .gs-platforms .pill:focus-visible { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(17,24,39,0.10); border-color: rgba(17,24,39,0.12); }
