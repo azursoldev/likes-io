@@ -6,7 +6,8 @@ export default function InfluenceSection() {
   const [loading, setLoading] = useState(true);
   const [influenceContent, setInfluenceContent] = useState({
     title: "Build Your Empire of Influence",
-    subtitle: "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche."
+    subtitle: "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche.",
+    image: "/businesswoman-receiving-best-award.png"
   });
 
   React.useEffect(() => {
@@ -18,7 +19,8 @@ export default function InfluenceSection() {
           if (data.content) {
             setInfluenceContent({
               title: data.content.influenceTitle || "Build Your Empire of Influence",
-              subtitle: data.content.influenceSubtitle || "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche."
+              subtitle: data.content.influenceSubtitle || "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche.",
+              image: data.content.influenceImage || "/businesswoman-receiving-best-award.png"
             });
           }
         }
