@@ -23,7 +23,7 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
-function FinalCheckoutContent() {
+export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
