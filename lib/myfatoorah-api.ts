@@ -13,7 +13,7 @@ interface InitiatePaymentRequest {
 }
 
 interface ExecutePaymentRequest {
-  PaymentMethodId: string;
+  PaymentMethodId?: string;
   CustomerName: string;
   DisplayCurrencyIso: string;
   MobileCountryCode?: string;
