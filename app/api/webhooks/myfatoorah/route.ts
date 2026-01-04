@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     } catch (e) {
         console.error('Failed to fetch settings via raw query, falling back to prisma client:', e);
         const settings = await prisma.adminSettings.findFirst();
-        webhookSecret = settings?.myFatoorahWebhookSecret;
+        webhookSecret = settings?.myFatoorahWebhookSecret || undefined;
     }
 
     // Verify webhook signature
