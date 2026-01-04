@@ -15,8 +15,7 @@ import { faThumbsUp } from '@fortawesome/free-solid-svg-icons'
 export async function generateMetadata(): Promise<Metadata> {
   let settings: any;
   try {
-    const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`;
-    settings = Array.isArray(result) && result.length > 0 ? result[0] : null;
+    settings = await prisma.adminSettings.findFirst();
   } catch (error) {
     console.error('Error fetching settings for metadata:', error);
   }
@@ -31,10 +30,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let settings = {};
   try {
-    const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`;
-    if (Array.isArray(result) && result.length > 0) {
-      settings = result[0];
-      // console.log('Layout fetched settings:', settings);
+    const fetchedSettings = await prisma.adminSettings.findFirst();
+    if (fetchedSettings) {
+      settings = fetchedSettings;
     }
   } catch (error) {
     console.error('Error fetching settings for layout:', error);

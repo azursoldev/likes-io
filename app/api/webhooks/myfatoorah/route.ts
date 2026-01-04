@@ -22,18 +22,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Get secret from settings
-    // Use raw query to bypass Prisma Client cache/schema mismatch if client wasn't regenerated
     let webhookSecret: string | undefined;
     try {
-        // We select all or just the secret. Selecting * is safer to match existing pattern in settings route
-        const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`;
-        if (Array.isArray(result) && result.length > 0) {
-            webhookSecret = result[0].myFatoorahWebhookSecret;
-        }
-    } catch (e) {
-        console.error('Failed to fetch settings via raw query, falling back to prisma client:', e);
         const settings = await prisma.adminSettings.findFirst();
         webhookSecret = settings?.myFatoorahWebhookSecret || undefined;
+    } catch (e) {
+        console.error('Failed to fetch settings:', e);
     }
 
     // Verify webhook signature
