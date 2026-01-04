@@ -59,6 +59,7 @@ export default function SettingsDashboard() {
   const [myFatoorahToken, setMyFatoorahToken] = useState("••••••••");
   const [myFatoorahBaseURL, setMyFatoorahBaseURL] = useState("https://apitest.myfatoorah.com");
   const [myFatoorahTestMode, setMyFatoorahTestMode] = useState(true);
+  const [myFatoorahWebhookSecret, setMyFatoorahWebhookSecret] = useState("");
 
   // Fetch settings on mount
   useEffect(() => {
@@ -116,6 +117,7 @@ export default function SettingsDashboard() {
         if (data.myFatoorahToken) setMyFatoorahToken(data.myFatoorahToken);
         if (data.myFatoorahBaseURL) setMyFatoorahBaseURL(data.myFatoorahBaseURL);
         if (data.myFatoorahTestMode !== undefined) setMyFatoorahTestMode(data.myFatoorahTestMode);
+        if (data.myFatoorahWebhookSecret) setMyFatoorahWebhookSecret(data.myFatoorahWebhookSecret);
 
         // SEO & Branding
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
@@ -175,6 +177,7 @@ export default function SettingsDashboard() {
           myFatoorahToken: myFatoorahToken?.includes('••••') ? undefined : myFatoorahToken,
           myFatoorahBaseURL,
           myFatoorahTestMode,
+          myFatoorahWebhookSecret,
           // SEO & Branding
           homeMetaTitle,
           homeMetaDescription,
@@ -761,6 +764,16 @@ export default function SettingsDashboard() {
                     <span className="settings-toggle-slider"></span>
                   </label>
                 </div>
+                <label className="settings-label">
+                  Webhook Secret
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={myFatoorahWebhookSecret}
+                    onChange={(e) => setMyFatoorahWebhookSecret(e.target.value)}
+                    placeholder="Webhook Secret (starts with /jW...)"
+                  />
+                </label>
               </div>
             </div>
 

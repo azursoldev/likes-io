@@ -886,6 +886,26 @@
   color: #991b1b;
 }
 
+.order-status-processing {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.order-status-cancelled {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.order-status-refunded {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.order-status-pending_payment {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
 .order-history-pagination {
   display: flex;
   align-items: center;

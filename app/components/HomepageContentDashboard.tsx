@@ -388,7 +388,7 @@ export default function HomepageContentDashboard() {
         }
 
         const uploadData = await uploadResponse.json();
-        imageUrl = uploadData.url;
+        imageUrl = uploadData.publicUrl || uploadData.url;
         console.log('Admin Dashboard: Upload successful. New imageUrl:', imageUrl);
         setHeroProfileImage(imageUrl);
       } else {
@@ -411,7 +411,7 @@ export default function HomepageContentDashboard() {
         }
 
         const uploadData = await uploadResponse.json();
-        influenceImageUrl = uploadData.url;
+        influenceImageUrl = uploadData.publicUrl || uploadData.url;
         setInfluenceImage(influenceImageUrl);
       }
 

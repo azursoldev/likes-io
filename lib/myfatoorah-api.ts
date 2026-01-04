@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import crypto from 'crypto';
 
 interface MyFatoorahConfig {
   token: string;
@@ -47,8 +48,12 @@ export class MyFatoorahAPI {
     this.config = config;
   }
 
-  private async request(endpoint: string, method: string, body?: any) {
-    const url = `${this.config.baseURL}/v2/${endpoint}`;
+  get isTestMode() {
+    return this.config.testMode;
+  }
+
+  private async request(endpoint: string, method: string, body?: any, version: string = 'v2') {
+    const url = `${this.config.baseURL}/${version}/${endpoint}`;
     
     const headers = {
       'Accept': 'application/json',
@@ -88,6 +93,28 @@ export class MyFatoorahAPI {
     });
   }
 
+  async initiateSession(customerIdentifier?: string) {
+    // V2 Session
+    return this.request('InitiateSession', 'POST', {
+      CustomerIdentifier: customerIdentifier,
+      SaveToken: false
+    });
+  }
+
+  async initiateSessionV3(amount: number = 10, currency: string = 'KWD', customerIdentifier?: string) {
+    // V3 Session
+    return this.request('sessions', 'POST', {
+      CustomerIdentifier: customerIdentifier,
+      Order: {
+        Amount: amount,
+        Currency: currency
+      },
+      Configuration: {
+        SessionMode: "CompletePayment" // Or CollectDetails
+      }
+    }, 'v3');
+  }
+
   async createPayment(
     orderId: string,
     amount: number,
@@ -95,15 +122,17 @@ export class MyFatoorahAPI {
     customerName: string,
     customerEmail: string,
     callbackUrl: string,
-    errorUrl: string
+    errorUrl: string,
+    sessionId?: string
   ) {
     // Default to PaymentMethodId 2 (KNET/Credit Card depending on region, usually safe default for hosted page)
     // Or you can use InitiatePayment to get available methods and let user choose.
     // For direct integration as requested, we might need a specific ID or let MF handle it.
     // Using '2' as per user example, but ideally should be dynamic.
     
-    const body: ExecutePaymentRequest = {
-      PaymentMethodId: '2', 
+    const body: ExecutePaymentRequest & { SessionId?: string } = {
+      PaymentMethodId: sessionId ? undefined : '2', 
+      SessionId: sessionId,
       CustomerName: customerName,
       DisplayCurrencyIso: currency,
       CustomerEmail: customerEmail,
@@ -125,11 +154,29 @@ export class MyFatoorahAPI {
     return this.request('ExecutePayment', 'POST', body);
   }
 
-  async getPaymentStatus(paymentId: string) {
+  async getPaymentStatus(key: string, keyType: 'InvoiceId' | 'PaymentId' = 'PaymentId') {
     return this.request('GetPaymentStatus', 'POST', {
-      Key: paymentId,
-      KeyType: 'InvoiceId',
+      Key: key,
+      KeyType: keyType,
     });
+  }
+
+  verifyWebhookSignature(signature: string, payload: string, secret: string): boolean {
+    if (!signature || !payload || !secret) return false;
+
+    try {
+      // MyFatoorah secret is provided as Base64. We must decode it to get the actual key bytes.
+      const secretKey = Buffer.from(secret, 'base64');
+      
+      const hmac = crypto.createHmac('sha256', secretKey);
+      hmac.update(payload);
+      const calculatedSignature = hmac.digest('base64');
+      
+      return signature === calculatedSignature;
+    } catch (error) {
+      console.error('Webhook signature verification failed:', error);
+      return false;
+    }
   }
 }
 

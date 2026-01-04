@@ -157,8 +157,8 @@ export class SocialMediaAPI {
   }
 
   async fetchPosts(platform: Platform, username: string, cursor?: string): Promise<FetchPostsResult> {
-    // Only check cache for initial page, and skip for Instagram to ensure we get fresh cursor for pagination
-    if (!cursor && platform !== 'INSTAGRAM') {
+    // Only check cache for initial page, and skip for Instagram and YouTube to ensure we get fresh cursor for pagination
+    if (!cursor && platform !== 'INSTAGRAM' && platform !== 'YOUTUBE') {
       const cached = await prisma.socialProfile.findUnique({
         where: {
           platform_username: {
@@ -382,6 +382,22 @@ export class SocialMediaAPI {
       console.error('Instagram Posts API Error:', error.message);
       if (error.response) {
         console.error('Error details:', error.response.status, JSON.stringify(error.response.data));
+        
+        // Return Mock Data if quota exceeded (429) or other API errors in dev/test
+        if (error.response.status === 429 || process.env.NODE_ENV === 'development') {
+           console.log('Returning MOCK POSTS data due to API error/quota');
+           const mockPosts = Array.from({ length: 12 }).map((_, i) => ({
+             id: `mock_post_${i}_${Date.now()}`,
+             url: `https://www.instagram.com/p/mock${i}`,
+             thumbnail: `https://picsum.photos/300/300?random=${i}`,
+             caption: `This is a mock post #${i + 1} (API Quota Exceeded)`,
+             likes: Math.floor(Math.random() * 5000) + 100,
+             comments: Math.floor(Math.random() * 100) + 5,
+             views: Math.floor(Math.random() * 10000) + 500,
+             timestamp: new Date().toISOString()
+           }));
+           return { posts: mockPosts };
+        }
       }
       return { posts: [] };
     }
@@ -729,6 +745,22 @@ export class SocialMediaAPI {
       if (error.response) {
           console.error('YouTube API Response:', error.response.data);
       }
+      
+      // MOCK DATA FALLBACK for Development/Testing/Quota Exceeded
+      if (process.env.NODE_ENV === 'development' || error.response?.status === 429) {
+        console.log('Returning MOCK YOUTUBE CHANNEL data due to API error/quota');
+        return {
+            username: usernameOrId,
+            fullName: "Mock Channel (API Quota)",
+            bio: "This is a mock channel profile because the API quota is exceeded.",
+            followerCount: 1000000,
+            postCount: 500,
+            profilePicture: "https://yt3.googleusercontent.com/ytc/AIdro_kX4j_9g9_j_j_j_j_j_j_j_j_j_j=s176-c-k-c0x00ffffff-no-rj",
+            isVerified: true,
+            displayUsername: "Mock Channel"
+        };
+      }
+
       throw new Error(`Failed to fetch YouTube channel: ${error.message}`);
     }
   }
@@ -757,12 +789,39 @@ export class SocialMediaAPI {
 
     try {
       // If we got a username passed here (from cache or previous call), we might need to resolve it to ID
-      // But ideally fetchProfile should have returned ID as 'username' field.
       let targetId = channelId;
+      
+      // Resolve Channel ID if not in UC format (and not HC for topic channels)
       if (!targetId.startsWith('UC') && !targetId.startsWith('HC')) {
-         // Just in case we received a handle, though fetchProfile should have handled it.
-         console.warn(`fetchYouTubeVideos received what looks like a handle/username: ${targetId}. Expecting Channel ID (UC...).`);
-         // We could try to resolve it again, but let's assume the API might handle it or it's a weird ID.
+         console.log(`Resolving YouTube channel ID for: ${targetId}`);
+         try {
+             // Handle URLs if passed
+             let cleanName = targetId;
+             if (targetId.includes('youtube.com/') || targetId.includes('youtu.be/')) {
+                 const urlParts = targetId.split('/');
+                 cleanName = urlParts[urlParts.length - 1].replace('@', '');
+             } else {
+                 cleanName = targetId.replace('@', '');
+             }
+
+             const idResponse = await axios.get(
+                `https://${config.youTubeHost}/channel/id`,
+                {
+                  params: { channel_name: cleanName },
+                  headers: {
+                    'X-RapidAPI-Key': config.key,
+                    'X-RapidAPI-Host': config.youTubeHost,
+                  },
+                }
+              );
+              
+              if (idResponse.data?.channel_id) {
+                targetId = idResponse.data.channel_id;
+                console.log(`Resolved channel ID to: ${targetId}`);
+              }
+         } catch (e: any) {
+             console.warn('Failed to resolve channel ID in fetchYouTubeVideos, proceeding with original:', e.message);
+         }
       }
 
       console.log(`Fetching YouTube videos for channel ID: ${targetId}, cursor: ${cursor || 'none'}`);
@@ -777,6 +836,9 @@ export class SocialMediaAPI {
       if (cursor) {
         url = `https://${config.youTubeHost}/channel/videos/continuation`;
         params = { channel_id: targetId, continuation_token: cursor };
+      } else {
+        // Only for initial request, try to get shorts too if possible, or ensure sorting
+        params.sort_by = 'newest'; 
       }
 
       const response = await axios.get(
@@ -796,7 +858,7 @@ export class SocialMediaAPI {
 
       if (response.data?.videos) {
         videos = response.data.videos;
-        nextCursor = response.data.continuation;
+        nextCursor = response.data.continuation_token || response.data.continuation;
       } else if (Array.isArray(response.data)) {
         videos = response.data;
       } else if (response.data?.data?.videos) {
@@ -836,6 +898,23 @@ export class SocialMediaAPI {
       if (error.response) {
         console.error('YouTube API Response Data:', error.response.data);
       }
+      
+      // MOCK DATA FALLBACK for Development/Testing/Quota Exceeded
+      if (process.env.NODE_ENV === 'development' || error.response?.status === 429) {
+        console.log('Returning MOCK YOUTUBE VIDEOS data due to API error/quota');
+        const mockVideos = Array.from({ length: 12 }).map((_, i) => ({
+          id: `mock_video_${i}_${Date.now()}`,
+          url: `https://www.youtube.com/watch?v=mock${i}`,
+          thumbnail: `https://picsum.photos/320/180?random=${i}`,
+          caption: `Mock Video Title #${i + 1} (API Unavailable)`,
+          likes: Math.floor(Math.random() * 5000) + 100,
+          comments: Math.floor(Math.random() * 100) + 5,
+          views: Math.floor(Math.random() * 10000) + 500,
+          timestamp: new Date().toISOString()
+        }));
+        return { posts: mockVideos };
+      }
+
       return { posts: [] };
     }
   }

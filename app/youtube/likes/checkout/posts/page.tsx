@@ -48,6 +48,8 @@ function PostsSelectionContent() {
 
   const [userProfile, setUserProfile] = useState<{ profilePicture: string; username: string } | null>(null);
   const [imageError, setImageError] = useState(false);
+  
+  const [visibleCount, setVisibleCount] = useState(12);
 
   const formatCount = (count: number) => {
     if (!count) return '0';
@@ -129,8 +131,11 @@ function PostsSelectionContent() {
   }, [username]);
 
   const handleLoadMore = () => {
-    if (nextCursor) {
+    if (visibleCount < posts.length) {
+      setVisibleCount(prev => prev + 12);
+    } else if (nextCursor) {
       fetchPosts(nextCursor);
+      setVisibleCount(prev => prev + 12);
     }
   };
 
@@ -220,7 +225,7 @@ function PostsSelectionContent() {
                       width: '40px', 
                       height: '40px', 
                       border: '4px solid #f3f3f3', 
-                      borderTop: '4px solid #ef4444', 
+                      borderTop: '4px solid #f97316', 
                       borderRadius: '50%', 
                       margin: '0 auto 20px',
                       animation: 'spin 1s linear infinite' 
@@ -231,10 +236,31 @@ function PostsSelectionContent() {
                         0% { transform: rotate(0deg); }
                         100% { transform: rotate(360deg); }
                       }
+                      .posts-grid {
+                        display: grid;
+                        grid-template-columns: repeat(5, 1fr);
+                        gap: 10px;
+                        margin-bottom: 20px;
+                      }
+                      @media (max-width: 1024px) {
+                        .posts-grid {
+                           grid-template-columns: repeat(4, 1fr);
+                        }
+                      }
+                      @media (max-width: 768px) {
+                        .posts-grid {
+                           grid-template-columns: repeat(3, 1fr);
+                        }
+                      }
+                      @media (max-width: 480px) {
+                        .posts-grid {
+                           grid-template-columns: repeat(2, 1fr);
+                        }
+                      }
                     `}</style>
                   </div>
                 ) : error ? (
-                   <div className="error-state" style={{ padding: '20px', textAlign: 'center', color: '#dc2626' }}>
+                   <div className="error-state" style={{ padding: '20px', textAlign: 'center', color: '#ea580c' }}>
                      <p>{error}</p>
                      <p className="text-sm text-gray-500" style={{ marginTop: '10px' }}>Ensure your channel is public.</p>
                    </div>
@@ -253,7 +279,7 @@ function PostsSelectionContent() {
                           onClick={() => handlePostSelect(post.url)}
                           style={{
                             cursor: 'pointer',
-                            border: selectedPosts.includes(post.url) ? '3px solid #ef4444' : '1px solid #eee',
+                            border: selectedPosts.includes(post.url) ? '3px solid #f97316' : '1px solid #eee',
                             borderRadius: '8px',
                             overflow: 'hidden',
                             aspectRatio: '16/9',
@@ -278,7 +304,7 @@ function PostsSelectionContent() {
                               position: 'absolute',
                               top: '5px',
                               right: '5px',
-                              background: '#ef4444',
+                              background: '#f97316',
                               color: 'white',
                               borderRadius: '50%',
                               width: '20px',
@@ -300,7 +326,7 @@ function PostsSelectionContent() {
                               top: '50%',
                               left: '50%',
                               transform: 'translate(-50%, -50%)',
-                              background: '#ef4444',
+                              background: '#f97316',
                               color: 'white',
                               borderRadius: '20px',
                               padding: '4px 12px',
@@ -403,7 +429,7 @@ function PostsSelectionContent() {
                         height: '40px', 
                         borderRadius: '50%', 
                         overflow: 'hidden', 
-                        border: '2px solid #ef4444',
+                        border: '2px solid #f97316',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

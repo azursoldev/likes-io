@@ -36,11 +36,11 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
-  const [videoLink, setVideoLink] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
-  const [linkError, setLinkError] = useState("");
-  const [linkValid, setLinkValid] = useState(false);
+  const [error, setError] = useState("");
+  const [inputType, setInputType] = useState<"video" | "channel" | null>(null);
   const [packages, setPackages] = useState<PackageTab[]>(initialPackages || []);
   const [loadingPackages, setLoadingPackages] = useState(!initialPackages);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -116,36 +116,31 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
     };
   }, []);
 
-  const validateLink = async (link: string) => {
-    if (!link) {
-      setLinkError("");
-      setLinkValid(false);
+  const validateInput = (value: string) => {
+    if (!value) {
+      setError("");
+      setInputType(null);
       return;
     }
 
-    // Basic YouTube link validation regex
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    if (!youtubeRegex.test(link)) {
-        // Also allow channel links? No, views are for videos.
-        setLinkError("Please enter a valid YouTube video URL");
-        setLinkValid(false);
-        return;
+    // Check for Video Link
+    const videoRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    if (videoRegex.test(value)) {
+      setInputType("video");
+      setError("");
+      return;
     }
 
-    setIsValidating(true);
-    setLinkError("");
-
-    // Simulate API validation (or implement real one if needed)
-    setTimeout(() => {
-      setIsValidating(false);
-      setLinkValid(true);
-    }, 500);
+    // Assume Channel/Username if not video
+    // We don't strictly validate channel regex here because usernames can be anything
+    setInputType("channel");
+    setError("");
   };
 
-  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setVideoLink(val);
-    validateLink(val);
+    setInputValue(val);
+    validateInput(val);
   };
 
   const handlePackageSelect = (pkg: PackageOption) => {
@@ -157,26 +152,64 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
     setIsPackageOpen(false);
   };
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (videoLink.trim() && linkValid) {
-      // Navigate to final checkout directly, skipping posts selection
-      const params = new URLSearchParams({
-        videoLink: videoLink,
-        qty: typeof qty === "string" ? qty : String(qty),
-        price: String(priceValue),
-        type: packageType,
-      });
-      
-      if (selectedServiceId) {
-        params.append("serviceId", selectedServiceId);
+    if (!inputValue.trim()) {
+      setError("Please enter a video link or channel username");
+      return;
+    }
+
+    setIsValidating(true);
+    setError("");
+
+    try {
+      if (inputType === "video") {
+         // Direct to Final Checkout
+         const params = new URLSearchParams({
+            videoLink: inputValue,
+            qty: typeof qty === "string" ? qty : String(qty),
+            price: String(priceValue),
+            type: packageType,
+         });
+         
+         if (selectedServiceId) {
+            params.append("serviceId", selectedServiceId);
+         }
+         
+         const baseUrl = basePath || "/youtube/views";
+         router.push(`${baseUrl}/checkout/final?${params.toString()}`);
+
+      } else {
+         // Validate Channel and Go to Posts Selection
+         const response = await fetch(`/api/social/youtube/profile?username=${encodeURIComponent(inputValue.trim())}`);
+         const data = await response.json();
+
+         if (!response.ok) {
+            throw new Error(data.error || "Failed to fetch channel");
+         }
+
+         if (data.profile) {
+            const resolvedUsername = data.profile.username;
+            const params = new URLSearchParams({
+                username: resolvedUsername,
+                qty: typeof qty === "string" ? qty : String(qty),
+                price: String(priceValue),
+                type: packageType,
+            });
+            if (selectedServiceId) {
+                params.append("serviceId", selectedServiceId);
+            }
+            const baseUrl = basePath || "/youtube/views";
+            router.push(`${baseUrl}/checkout/posts?${params.toString()}`);
+         } else {
+            throw new Error("Channel not found");
+         }
       }
-      
-      const baseUrl = basePath || "/youtube/views";
-      router.push(`${baseUrl}/checkout/final?${params.toString()}`);
-    } else if (!videoLink.trim()) {
-        setLinkError("Please enter a video link");
+    } catch (err: any) {
+      setError(err.message || "Could not validate input. Please check your link or username.");
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -185,399 +218,167 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
       <Header />
       <main className="checkout-page">
         <div className="checkout-container">
+          {/* Selection Indicator */}
+          <div className="checkout-indicator">
+            <div className="checkout-indicator-dot"></div>
+            <span className="checkout-indicator-text">SELECTION</span>
+          </div>
+
+          {/* Title and Subtitle */}
           <h1 className="checkout-title">YouTube Views Checkout</h1>
-          
-          <div className="checkout-steps">
-            <div className="step active">
-              <span className="step-number">1</span>
-              <span className="step-label">Details</span>
-            </div>
-            <div className="step-line"></div>
-            <div className="step">
-              <span className="step-number">2</span>
-              <span className="step-label">Checkout</span>
+          <p className="checkout-subtitle">Start by entering your video link or channel username.</p>
+
+          {/* Features List Card */}
+          <div className="checkout-card checkout-features-card">
+            <div className="checkout-features">
+              <div className="checkout-feature-item">
+                <FontAwesomeIcon icon={faThumbsUp} className="checkout-feature-icon" />
+                <span>Internationally acclaimed services & top ratings.</span>
+              </div>
+              <div className="checkout-feature-item">
+                <FontAwesomeIcon icon={faCoffee} className="checkout-feature-icon" />
+                <span>24/7 support team ready to help.</span>
+              </div>
+              <div className="checkout-feature-item">
+                <FontAwesomeIcon icon={faClock} className="checkout-feature-icon" />
+                <span>10+ years in the marketing business.</span>
+              </div>
+              <div className="checkout-feature-item">
+                <FontAwesomeIcon icon={faShield} className="checkout-feature-icon" />
+                <span>PCI DSS compliant payment system using 256-bit encryption.</span>
+              </div>
             </div>
           </div>
 
-          <form className="checkout-form" onSubmit={handleContinue}>
-            <div className="form-group">
-              <label htmlFor="videoLink" className="form-label">
-                YouTube Video Link
-              </label>
-              <div className="input-with-icon">
-                <FontAwesomeIcon icon={faVideo} className="input-icon" />
-                <input
-                  type="text"
-                  id="videoLink"
-                  className={`form-input ${linkError ? "error" : ""} ${linkValid ? "valid" : ""}`}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  value={videoLink}
-                  onChange={handleLinkChange}
-                />
-                {isValidating && <div className="spinner-sm"></div>}
-              </div>
-              {linkError && <p className="error-message">{linkError}</p>}
-            </div>
-
-            <div className="form-group" ref={dropdownRef}>
-              <label className="form-label">Select Package</label>
-              <div 
-                className={`package-selector ${isPackageOpen ? "open" : ""}`}
-                onClick={() => setIsPackageOpen(!isPackageOpen)}
-              >
-                <div className="selected-package">
-                  <span>{selectedPackage}</span>
-                  <FontAwesomeIcon icon={faAngleDown} />
-                </div>
-                
-                {isPackageOpen && (
-                  <div className="package-dropdown">
-                    {packages.length > 0 ? (
-                      packages.map((tab) => (
-                        <div key={tab.id} className="package-group">
-                          <div className="package-group-title">{tab.label}</div>
-                          {tab.packages.map((pkg, index) => (
-                            <div 
-                              key={index} 
-                              className="package-option"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePackageSelect(pkg);
-                              }}
-                            >
-                              <span className="pkg-qty">{pkg.qty} Views</span>
-                              <span className="pkg-price">{pkg.price}</span>
-                            </div>
-                          ))}
+          {/* Form Section Card */}
+          <div className="checkout-card checkout-form-card">
+            <form className="checkout-form" onSubmit={handleContinue}>
+              <div className="checkout-form-group">
+                <label className="checkout-label">YouTube Channel / Video Link</label>
+                <div style={{ position: 'relative' }}>
+                    <input
+                    type="text"
+                    className="checkout-input"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    placeholder="Enter YouTube Video Link or Channel Username"
+                    />
+                    {isValidating && (
+                        <div style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)' }}>
+                            <div className="spinner-sm" style={{ 
+                                width: '20px', 
+                                height: '20px', 
+                                border: '2px solid #f3f3f3', 
+                                borderTop: '2px solid #0070f3', 
+                                borderRadius: '50%',
+                                animation: 'spin 1s linear infinite' 
+                            }}></div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="package-option">
-                        <span>Loading packages...</span>
-                      </div>
                     )}
-                  </div>
-                )}
+                </div>
+                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+              </div>
+
+              <div className="checkout-form-group">
+                <label className="checkout-label">Product package</label>
+                <div className="checkout-dropdown-wrapper" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    className="checkout-dropdown"
+                    onClick={() => setIsPackageOpen(!isPackageOpen)}
+                  >
+                    <span>{selectedPackage}</span>
+                    <FontAwesomeIcon icon={faAngleDown} className="checkout-dropdown-icon" />
+                  </button>
+                  {isPackageOpen && (
+                    <div className="checkout-dropdown-menu" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      {packages.length > 0 ? (
+                        packages.map((tab) => (
+                          <div key={tab.id}>
+                            <div style={{ padding: '8px 15px', background: '#f8f9fa', fontWeight: 600, fontSize: '0.85rem', color: '#6c757d' }}>
+                                {tab.label}
+                            </div>
+                            {tab.packages.map((pkg, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                className="checkout-dropdown-item"
+                                style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}
+                                onClick={() => handlePackageSelect(pkg)}
+                              >
+                                <span>{pkg.qty} Views</span>
+                                <span>{pkg.price}</span>
+                              </button>
+                            ))}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="checkout-dropdown-item">Loading packages...</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Legal Disclaimer */}
+              <p className="checkout-legal">
+                By continuing, you agree to our{" "}
+                <a href="/terms" className="checkout-link">terms of service</a> and{" "}
+                <a href="/privacy" className="checkout-link">privacy policy</a>.
+              </p>
+
+              {/* Continue Button */}
+              <button 
+                type="submit" 
+                className="checkout-continue-btn" 
+                disabled={!inputValue || isValidating}
+              >
+                {isValidating ? "Validating..." : "Continue"}
+              </button>
+
+              {/* Security Assurance */}
+              <div className="checkout-security">
+                <div className="checkout-security-item">
+                  <FontAwesomeIcon icon={faShieldHalved} className="checkout-security-icon" />
+                  <span>Account-Safe Delivery</span>
+                </div>
+                <div className="checkout-security-item">
+                  <FontAwesomeIcon icon={faLock} className="checkout-security-icon" />
+                  <span>Secure Checkout</span>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Payment Methods Card */}
+          <div className="checkout-card checkout-payment-card">
+            <div className="checkout-payment">
+              <span className="checkout-payment-label">Pay securely with</span>
+              <div className="checkout-payment-icons">
+                {/* iCH Logo */}
+                <div className="checkout-payment-icon-wrapper">
+                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="60" height="40" rx="6" fill="#0066CC"/>
+                    <circle cx="12" cy="12" r="3" fill="#FFA500"/>
+                    <text x="30" y="26" fontFamily="Arial, sans-serif" fontSize="18" fontWeight="bold" fill="white" textAnchor="middle" letterSpacing="1px">iCH</text>
+                  </svg>
+                </div>
+                {/* Mastercard Logo */}
+                <div className="checkout-payment-icon-wrapper">
+                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="60" height="40" rx="6" fill="#1A1F71"/>
+                    <circle cx="20" cy="20" r="9" fill="#EB001B"/>
+                    <circle cx="40" cy="20" r="9" fill="#F79E1B"/>
+                    <circle cx="30" cy="20" r="8.5" fill="#FF5F00"/>
+                  </svg>
+                </div>
               </div>
             </div>
-
-            <div className="order-summary-box">
-              <h3>Order Summary</h3>
-              <div className="summary-row">
-                <span>Service</span>
-                <span>YouTube Views</span>
-              </div>
-              <div className="summary-row">
-                <span>Quantity</span>
-                <span>{qty}</span>
-              </div>
-              <div className="summary-divider"></div>
-              <div className="summary-row total">
-                <span>Total</span>
-                <span>{formatPrice(priceValue)}</span>
-              </div>
-            </div>
-
-            <div className="features-grid">
-              <div className="feature-item">
-                <FontAwesomeIcon icon={faThumbsUp} className="feature-icon" />
-                <span>High Quality</span>
-              </div>
-              <div className="feature-item">
-                <FontAwesomeIcon icon={faShieldHalved} className="feature-icon" />
-                <span>Non-Drop</span>
-              </div>
-              <div className="feature-item">
-                <FontAwesomeIcon icon={faClock} className="feature-icon" />
-                <span>Fast Delivery</span>
-              </div>
-              <div className="feature-item">
-                <FontAwesomeIcon icon={faLock} className="feature-icon" />
-                <span>Secure</span>
-              </div>
-            </div>
-
-            <button 
-              type="submit" 
-              className="checkout-continue-btn"
-              disabled={!linkValid || !videoLink}
-            >
-              Continue
-            </button>
-          </form>
+          </div>
         </div>
       </main>
       <Footer />
-      
-      <style jsx>{`
-        .checkout-page {
-          min-height: 80vh;
-          padding: 120px 20px 60px;
-          background-color: #f8f9fa;
-        }
-        
-        .checkout-container {
-          max-width: 600px;
-          margin: 0 auto;
-          background: white;
-          padding: 40px;
-          border-radius: 20px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        
-        .checkout-title {
-          text-align: center;
-          margin-bottom: 30px;
-          font-size: 2rem;
-          color: #1a1a1a;
-        }
-        
-        .checkout-steps {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 40px;
-        }
-        
-        .step {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 5px;
-          position: relative;
-          z-index: 2;
-        }
-        
-        .step-number {
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          background: #e9ecef;
-          color: #adb5bd;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          transition: all 0.3s ease;
-        }
-        
-        .step.active .step-number {
-          background: #0070f3;
-          color: white;
-        }
-        
-        .step-label {
-          font-size: 0.8rem;
-          color: #adb5bd;
-          font-weight: 500;
-        }
-        
-        .step.active .step-label {
-          color: #0070f3;
-        }
-        
-        .step-line {
-          width: 60px;
-          height: 2px;
-          background: #e9ecef;
-          margin: 0 10px;
-          margin-bottom: 20px;
-        }
-        
-        .form-group {
-          margin-bottom: 25px;
-          position: relative;
-        }
-        
-        .form-label {
-          display: block;
-          margin-bottom: 10px;
-          font-weight: 600;
-          color: #495057;
-        }
-        
-        .input-with-icon {
-          position: relative;
-        }
-        
-        .input-icon {
-          position: absolute;
-          left: 15px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #adb5bd;
-        }
-        
-        .form-input {
-          width: 100%;
-          padding: 15px 15px 15px 45px;
-          border: 2px solid #e9ecef;
-          border-radius: 12px;
-          font-size: 1rem;
-          transition: all 0.3s ease;
-        }
-        
-        .form-input:focus {
-          border-color: #0070f3;
-          outline: none;
-          box-shadow: 0 0 0 4px rgba(0,112,243,0.1);
-        }
-        
-        .form-input.valid {
-          border-color: #28a745;
-        }
-        
-        .form-input.error {
-          border-color: #dc3545;
-        }
-        
-        .error-message {
-          color: #dc3545;
-          font-size: 0.875rem;
-          margin-top: 5px;
-        }
-        
-        .package-selector {
-          position: relative;
-          cursor: pointer;
-        }
-        
-        .selected-package {
-          width: 100%;
-          padding: 15px;
-          border: 2px solid #e9ecef;
-          border-radius: 12px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background: white;
-          transition: all 0.3s ease;
-        }
-        
-        .package-selector.open .selected-package {
-          border-color: #0070f3;
-        }
-        
-        .package-dropdown {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          background: white;
-          border: 1px solid #e9ecef;
-          border-radius: 12px;
-          margin-top: 5px;
-          max-height: 300px;
-          overflow-y: auto;
-          z-index: 10;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
-        .package-group-title {
-          padding: 10px 15px;
-          background: #f8f9fa;
-          font-weight: 600;
-          font-size: 0.85rem;
-          color: #6c757d;
-        }
-        
-        .package-option {
-          padding: 12px 15px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          transition: background 0.2s;
-        }
-        
-        .package-option:hover {
-          background: #f1f3f5;
-        }
-        
-        .order-summary-box {
-          background: #f8f9fa;
-          padding: 20px;
-          border-radius: 12px;
-          margin-bottom: 25px;
-        }
-        
-        .order-summary-box h3 {
-          margin-bottom: 15px;
-          font-size: 1.1rem;
-        }
-        
-        .summary-row {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 10px;
-          color: #6c757d;
-        }
-        
-        .summary-divider {
-          height: 1px;
-          background: #e9ecef;
-          margin: 15px 0;
-        }
-        
-        .summary-row.total {
-          color: #1a1a1a;
-          font-weight: 700;
-          font-size: 1.1rem;
-        }
-        
-        .features-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
-          margin-bottom: 30px;
-        }
-        
-        .feature-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          color: #6c757d;
-          font-size: 0.9rem;
-        }
-        
-        .feature-icon {
-          color: #0070f3;
-        }
-        
-        .checkout-continue-btn {
-          width: 100%;
-          padding: 16px;
-          background: #0070f3;
-          color: white;
-          border: none;
-          border-radius: 12px;
-          font-size: 1.1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.3s ease;
-        }
-        
-        .checkout-continue-btn:hover {
-          background: #0051a2;
-        }
-        
-        .checkout-continue-btn:disabled {
-          background: #a0c4f2;
-          cursor: not-allowed;
-        }
-
-        .spinner-sm {
-          width: 20px;
-          height: 20px;
-          border: 2px solid #f3f3f3;
-          border-top: 2px solid #0070f3;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          position: absolute;
-          right: 15px;
-          top: 50%;
-          transform: translateY(-50%);
-        }
-        
+      <style jsx global>{`
         @keyframes spin {
           0% { transform: translateY(-50%) rotate(0deg); }
           100% { transform: translateY(-50%) rotate(360deg); }

@@ -26,62 +26,19 @@ type Order = {
     type: string;
     lastFour: string;
   };
-  status: "COMPLETED" | "PENDING" | "FAILED";
+  status: string;
   email: string;
   smmOrderId?: string;
 };
 
-const orders: Order[] = [
-  {
-    id: "1",
-    date: "18 October 2025",
-    profile: "@zainjo",
-    package: "+50 likes",
-    currency: "USD",
-    amount: "$1.99",
-    paidWith: {
-      type: "Mastercard",
-      lastFour: "0293",
-    },
-    status: "COMPLETED",
-    email: "webmaster@howsociable.com",
-    smmOrderId: "N/A",
-  },
-  {
-    id: "2",
-    date: "18 Oct 2025",
-    profile: "@zainjo",
-    package: "+500 views",
-    currency: "USD",
-    amount: "$2.49",
-    paidWith: {
-      type: "Mastercard",
-      lastFour: "0293",
-    },
-    status: "COMPLETED",
-    email: "webmaster@howsociable.com",
-    smmOrderId: "N/A",
-  },
-  {
-    id: "3",
-    date: "6 Oct 2025",
-    profile: "@zainjo",
-    package: "+50 likes",
-    currency: "USD",
-    amount: "$1.99",
-    paidWith: {
-      type: "Mastercard",
-      lastFour: "0293",
-    },
-    status: "COMPLETED",
-    email: "webmaster@howsociable.com",
-    smmOrderId: "N/A",
-  },
-];
+interface OrderHistoryProps {
+  initialOrders: Order[];
+}
 
-export default function OrderHistory() {
+export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) {
+  const [orders] = useState<Order[]>(initialOrders);
   const totalOrders = orders.length;
-  const startIndex = 1;
+  const startIndex = totalOrders > 0 ? 1 : 0;
   const endIndex = totalOrders;
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 

@@ -119,6 +119,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
       const paymentResponse = await fetch("/api/payments/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           platform: platformUpper,
           serviceType,

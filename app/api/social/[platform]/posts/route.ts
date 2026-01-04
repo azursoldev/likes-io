@@ -29,7 +29,11 @@ export async function GET(
 
     const result = await socialMediaAPI.fetchPosts(platform, username, cursor);
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
+    });
   } catch (error: any) {
     console.error('Posts API Error:', error);
     return NextResponse.json(

@@ -133,13 +133,19 @@ function PostsSelectionContent() {
   };
 
   const handlePostSelect = (url: string) => {
-    setSelectedPosts(prev => {
-      if (prev.includes(url)) {
-        return prev.filter(p => p !== url);
-      } else {
-        return [...prev, url];
+    if (selectedPosts.includes(url)) {
+      setSelectedPosts(prev => prev.filter(p => p !== url));
+    } else {
+      const newCount = selectedPosts.length + 1;
+      const potentialLikesPerPost = Math.floor(parseInt(qty) / newCount);
+      
+      if (potentialLikesPerPost < 50) {
+        alert(`Cannot select more posts. Minimum 50 likes per post required.\nCurrent package: ${qty} likes.`);
+        return;
       }
-    });
+      
+      setSelectedPosts(prev => [...prev, url]);
+    }
     setPostLink(""); // Clear manual input when selecting from grid
   };
 
@@ -163,9 +169,10 @@ function PostsSelectionContent() {
     }
   };
 
-  // Calculate Subtotal
+  // Calculate Subtotal - Price is now total for the package, not per post
   const postCount = selectedPosts.length || (postLink ? 1 : 0);
-  const subtotal = priceValue * (postCount || 1);
+  const subtotal = priceValue;
+  const likesPerPost = Math.floor(parseInt(qty) / (postCount || 1));
 
   return (
     <>
@@ -404,7 +411,9 @@ function PostsSelectionContent() {
                       </div>
                       <div className="order-summary-details">
                         <span className="order-summary-text">{qty} Instagram Likes</span>
-                        <span className="order-summary-subtext">Applying to {selectedPosts.length || (postLink ? 1 : 0)} post{postCount !== 1 ? 's' : ''}.</span>
+                        <span className="order-summary-subtext">
+                          {likesPerPost} likes / {postCount} post{postCount !== 1 ? 's' : ''}
+                        </span>
                       </div>
                     </div>
                     <button type="button" className="order-change-btn" onClick={() => router.push(`/instagram/likes/checkout?qty=${qty}&price=${priceValue}&type=${packageType}`)}>Change</button>

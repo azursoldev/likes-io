@@ -1,64 +1,134 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
+import Script from "next/script";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCheck,
-  faHeart,
+  faThumbsUp,
   faChevronRight,
   faLock,
   faCreditCard,
   faInfoCircle,
   faLink,
+  faUserPlus,
   faShieldHalved,
   faTag,
   faCoins,
-  faVideo,
-  faPlay
+  faEye
 } from "@fortawesome/free-solid-svg-icons";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
-export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
+function FinalCheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
   
-  const videoLink = searchParams.get("videoLink") || "";
+  const username = searchParams.get("username") || "";
   const qty = searchParams.get("qty") || "1000";
   const priceValue = parseFloat(searchParams.get("price") || "29.99");
   const packageType = searchParams.get("type") || "High-Retention";
-  const packageServiceId = searchParams.get("serviceId") || "";
-
-  // Get platform and service from pathname or use basePath
-  const pathParts = pathname?.split("/") || [];
-  const platform = pathParts[1] || "youtube";
-  const service = pathParts[2] || "views";
-  
-  // Create URLs for navigation
-  const baseUrl = basePath || `/${platform}/${service}`;
-  const detailsUrl = `${baseUrl}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
+  const videoLink = searchParams.get("videoLink") || "";
+  // If we have a videoLink, display that. If not, maybe username.
+  const displayLink = videoLink || (username ? `@${username}` : "");
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
-  const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvc, setCvc] = useState("");
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  
+  // MyFatoorah State
+  const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
+  const [isMfLoaded, setIsMfLoaded] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
-  // YouTube specific offers
+  useEffect(() => {
+    if (paymentMethod === "card" && !mfSession) {
+      // Initiate MyFatoorah Session
+      fetch("/api/payments/initiate-session", {
+        method: "POST",
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            console.error("MF Init Error:", data.error);
+            setError("Failed to load payment form");
+          } else {
+            setMfSession(data);
+          }
+        })
+        .catch(err => {
+          console.error("MF Fetch Error:", err);
+          setError("Failed to load payment form");
+        });
+    }
+  }, [paymentMethod, mfSession]);
+
+  useEffect(() => {
+    if (paymentMethod === "card" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+      try {
+        const config = {
+          countryCode: mfSession.countryCode,
+          sessionId: mfSession.sessionId,
+          cardViewId: "mf-card-element",
+          supportedNetworks: "visa,mastercard,amex,mada",
+          style: {
+            direction: "ltr",
+            cardHeight: 130,
+            input: {
+              color: "black",
+              fontSize: "13px",
+              fontFamily: "sans-serif",
+              inputHeight: "32px",
+              inputMargin: "0px",
+              borderColor: "e2e8f0",
+              borderWidth: "1px",
+              borderRadius: "8px",
+              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+              placeHolder: {
+                holderName: "Name On Card",
+                cardNumber: "Number",
+                expiryDate: "MM / YY",
+                securityCode: "CVV",
+              }
+            },
+            label: {
+              display: false,
+              color: "black",
+              fontSize: "13px",
+              fontWeight: "normal",
+              fontFamily: "sans-serif",
+              text: {
+                holderName: "Card Holder Name",
+                cardNumber: "Card Number",
+                expiryDate: "Expiry Date",
+                securityCode: "Security Code",
+              },
+            },
+            error: {
+              borderColor: "red",
+              borderRadius: "8px",
+              boxShadow: "0px",
+            },
+          },
+        };
+        (window as any).myFatoorah.init(config);
+      } catch (err) {
+        console.error("MF Init Exception:", err);
+      }
+    }
+  }, [paymentMethod, mfSession, isMfLoaded]);
+
+  // Views specific offers
   const offers = [
-    { id: "offer1", text: "100 Likes", price: 5.99, icon: faHeart },
-    { id: "offer2", text: "50 Subscribers", price: 11.24, icon: faVideo },
+    { id: "offer1", text: "100 Likes", price: 5.99, icon: faThumbsUp },
+    { id: "offer2", text: "50 Subscribers", price: 11.24, icon: faUserPlus },
     { id: "offer3", text: "20 Comments", price: 8.99, icon: faLink }
   ];
 
@@ -82,343 +152,322 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
     setError("");
 
     try {
-      // Validate required fields
       if (paymentMethod === "card") {
-        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
-          setError("Please fill in all card details");
-          setProcessing(false);
-          return;
+        if (!mfSession || !(window as any).myFatoorah) {
+          throw new Error("Payment form not loaded");
         }
-      }
 
-      if (!videoLink) {
-        setError("Video link is required");
-        setProcessing(false);
-        return;
-      }
+        // Process MyFatoorah Embedded Payment
+        const mfResponse = await (window as any).myFatoorah.submit();
+        
+        console.log("MF Submit Response:", mfResponse);
 
-      const serviceType = "VIEWS";
-      const platformUpper = "YOUTUBE";
+        if (!mfResponse || !mfResponse.SessionId) {
+          throw new Error("Invalid payment data");
+        }
 
-      const paymentResponse = await fetch("/api/payments/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          platform: platformUpper,
-          serviceType,
-          quantity: parseInt(qty) || 1000,
-          price: totalPrice,
-          link: videoLink,
-          paymentMethod: paymentMethod,
-          currency: currencyCode,
-          packageServiceId: packageServiceId || undefined,
-          email: email, // Include email for receipt
-        }),
-      });
+        // Now call our backend with the card token (SessionId)
+        await processBackendPayment(mfResponse.SessionId);
 
-      if (!paymentResponse.ok) {
-        const errorData = await paymentResponse.json();
-        throw new Error(errorData.error || "Payment failed");
-      }
-
-      const paymentData = await paymentResponse.json();
-      
-      // Redirect to success page or payment gateway
-      if (paymentData.url) {
-        window.location.href = paymentData.url;
       } else {
-        // Fallback for demo/testing
-        alert("Payment successful! (Simulation)");
-        router.push("/");
+        // Crypto or other methods
+        await processBackendPayment();
       }
-
     } catch (err: any) {
-      console.error("Payment error:", err);
-      setError(err.message || "Failed to process payment. Please try again.");
+      console.error("Payment Error:", err);
+      if (err.message && err.message.includes("MyFatoorah")) {
+         setError("Please check your card details.");
+      } else {
+         setError(err.message || "Payment failed");
+      }
       setProcessing(false);
     }
   };
 
-  // Helper to get icon for metric
-  const getMetricIcon = () => faPlay;
-  const getMetricLabel = () => "Views";
+  const processBackendPayment = async (cardSessionId?: string) => {
+    const platformUpper = "YOUTUBE";
+    const serviceType = "VIEWS"; // Hardcoded for this page
+
+    const paymentResponse = await fetch("/api/payments/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        platform: platformUpper,
+        serviceType,
+        quantity: parseInt(qty) || 1000,
+        price: totalPrice,
+        link: videoLink || username, // Use videoLink or username
+        paymentMethod: paymentMethod === "card" ? "myfatoorah" : paymentMethod,
+        currency: currencyCode,
+        email: email, 
+        sessionId: cardSessionId
+      }),
+    });
+
+    if (!paymentResponse.ok) {
+      const errorData = await paymentResponse.json();
+      if (paymentResponse.status === 401) {
+        throw new Error("Please log in to complete your purchase");
+      }
+      throw new Error(errorData.error || "Failed to process payment");
+    }
+
+    const data = await paymentResponse.json();
+    
+    if (data.checkoutUrl) {
+      window.location.href = data.checkoutUrl;
+    } else if (data.paymentStatus === "Paid" || data.paymentStatus === "Success") {
+      window.location.href = `/checkout/success?orderId=${data.orderId}`;
+    } else {
+      window.location.href = `/checkout/success?orderId=${data.orderId}`;
+    }
+  };
 
   return (
     <>
       <Header />
+      {mfSession?.scriptUrl && (
+        <Script 
+          src={mfSession.scriptUrl}
+          strategy="lazyOnload"
+          onLoad={() => setIsMfLoaded(true)}
+        />
+      )}
       <main className="final-checkout-page">
         <div className="final-checkout-container">
           <div className="checkout-progress">
-            <Link href={detailsUrl} className="progress-step completed">
+            <div className="progress-step completed">
               <div className="progress-step-icon">
                 <FontAwesomeIcon icon={faCheck} />
               </div>
               <span className="progress-step-label">Details</span>
-            </Link>
+            </div>
+            <div className="progress-arrow">
+              <FontAwesomeIcon icon={faChevronRight} />
+            </div>
+            <div className="progress-step completed">
+              <div className="progress-step-icon">
+                <FontAwesomeIcon icon={faCheck} />
+              </div>
+              <span className="progress-step-label">Videos</span>
+            </div>
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
             <div className="progress-step active">
               <div className="progress-step-icon">
-                <span>2</span>
+                <span>3</span>
               </div>
               <span className="progress-step-label">Checkout</span>
             </div>
           </div>
 
-          <div className="checkout-content-grid">
-            <div className="payment-column">
-              <h2 className="section-title">Payment Method</h2>
-              
-              {error && (
-                <div className="error-alert">
-                  <FontAwesomeIcon icon={faInfoCircle} />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <div className="payment-methods">
-                <div 
-                  className={`payment-method ${paymentMethod === "card" ? "active" : ""}`}
-                  onClick={() => setPaymentMethod("card")}
-                >
-                  <div className="method-radio"></div>
-                  <FontAwesomeIcon icon={faCreditCard} className="method-icon" />
-                  <span className="method-name">Credit Card</span>
-                  <div className="method-badges">
-                    <span className="badge">Visa</span>
-                    <span className="badge">Mastercard</span>
-                  </div>
-                </div>
+          <div className="final-checkout-layout">
+            <div className="final-checkout-left">
+              <div className="checkout-card">
+                <h2 className="final-checkout-title">Review & Pay</h2>
                 
-                <div 
-                  className={`payment-method ${paymentMethod === "crypto" ? "active" : ""}`}
-                  onClick={() => setPaymentMethod("crypto")}
-                >
-                  <div className="method-radio"></div>
-                  <FontAwesomeIcon icon={faCoins} className="method-icon" />
-                  <span className="method-name">Crypto</span>
-                  <div className="method-badges">
-                    <span className="badge">BTC</span>
-                    <span className="badge">ETH</span>
-                    <span className="badge">-10%</span>
+                <form className="payment-form" onSubmit={handlePayment}>
+                  <div className="payment-method-section">
+                    <h3 className="payment-method-heading">Payment method</h3>
+                    
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="card"
+                          checked={paymentMethod === "card"}
+                          onChange={() => setPaymentMethod("card")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
+                        <span>Card</span>
+                      </label>
+                      
+                      {paymentMethod === "card" && (
+                        <div className="card-form">
+                          {/* MyFatoorah Embedded Container */}
+                          <div style={{ width: "100%", minHeight: "150px" }}>
+                            {!isMfLoaded && <p>Loading payment form...</p>}
+                            <div id="mf-card-element" style={{ width: "100%" }}></div>
+                          </div>
+                          
+                          <div className="form-group" style={{ marginTop: "1rem" }}>
+                            <label className="form-label">Email address</label>
+                            <input
+                              type="email"
+                              className="form-input"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="john@example.com"
+                              required
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="crypto"
+                          checked={paymentMethod === "crypto"}
+                          onChange={() => setPaymentMethod("crypto")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faCoins} className="payment-option-icon" />
+                        <span>Pay with Crypto</span>
+                      </label>
+                      
+                      {paymentMethod === "crypto" && (
+                        <div className="crypto-form">
+                          <div className="crypto-message-box">
+                            <p>You will be redirected to Cryptomus to complete your payment securely.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {error && (
+                    <div className="error-alert" style={{color: 'red', marginBottom: '10px'}}>
+                      <FontAwesomeIcon icon={faInfoCircle} /> {error}
+                    </div>
+                  )}
+
+                  <button type="submit" className="pay-button" disabled={processing}>
+                    <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
+                    {processing ? "Processing..." : `Pay ${formatPrice(totalPrice)}`}
+                  </button>
+
+                  <div className="payment-guarantees">
+                    <div className="guarantee-item">
+                      <FontAwesomeIcon icon={faCheck} className="guarantee-icon" />
+                      <span>100% Safe Payment</span>
+                    </div>
+                    <div className="guarantee-item">
+                      <span className="money-icon">💰</span>
+                      <span>Money-Back Guarantee</span>
+                    </div>
+                  </div>
+
+                  <p className="payment-terms">
+                    By clicking Pay, you agree to the{" "}
+                    <a href="/terms" className="payment-link">Terms of Service</a> and{" "}
+                    <a href="/privacy" className="payment-link">Privacy Policy</a>.
+                  </p>
+                </form>
+              </div>
+
+              <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
+              
+              <div className="checkout-card exclusive-offers">
+                {offers.map((offer, index) => (
+                  <div key={offer.id} className={`offer-item ${index % 2 === 0 ? 'offer-green' : 'offer-pink'} ${addedOffers.find(o => o.id === offer.id) ? "offer-added" : ""}`}>
+                    <div className="offer-badge">25%</div>
+                    <FontAwesomeIcon icon={offer.icon} className="offer-icon" />
+                    <div className="offer-details">
+                      <span className="offer-text">{offer.text}</span>
+                      <div className="offer-price">
+                        <span className="offer-price-new">Only {formatPrice(offer.price)}</span>
+                      </div>
+                    </div>
+                    <button 
+                      className="offer-add-btn"
+                      onClick={() => handleAddOffer(offer)}
+                      disabled={!!addedOffers.find(o => o.id === offer.id)}
+                    >
+                      {addedOffers.find(o => o.id === offer.id) ? "Added" : "+ Add"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="final-checkout-right">
+              <div className="checkout-card">
+                <div className="account-info-item">
+                  <div className="account-info-left">
+                    <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
+                    <span className="account-info-url">{displayLink}</span>
+                  </div>
+                  <button type="button" className="change-button" onClick={() => window.history.back()}>Change</button>
                 </div>
               </div>
 
-              <form className="payment-form" onSubmit={handlePayment}>
-                {paymentMethod === "card" && (
-                  <div className="card-details">
-                    <div className="form-group">
-                      <label>Email Address</label>
-                      <input 
-                        type="email" 
-                        placeholder="your@email.com" 
-                        className="form-input"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Cardholder Name</label>
-                      <input 
-                        type="text" 
-                        placeholder="John Doe" 
-                        className="form-input"
-                        value={cardholderName}
-                        onChange={(e) => setCardholderName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Card Number</label>
-                      <div className="input-with-icon">
-                        <FontAwesomeIcon icon={faCreditCard} className="input-icon" />
-                        <input 
-                          type="text" 
-                          placeholder="0000 0000 0000 0000" 
-                          className="form-input"
-                          value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Expiry Date</label>
-                        <input 
-                          type="text" 
-                          placeholder="MM/YY" 
-                          className="form-input"
-                          value={expiry}
-                          onChange={(e) => setExpiry(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>CVC</label>
-                        <div className="input-with-icon">
-                          <FontAwesomeIcon icon={faLock} className="input-icon" />
-                          <input 
-                            type="text" 
-                            placeholder="123" 
-                            className="form-input"
-                            value={cvc}
-                            onChange={(e) => setCvc(e.target.value)}
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              <div className="checkout-card order-summary-final">
+                <h3 className="order-summary-title">Order summary</h3>
                 
-                {paymentMethod === "crypto" && (
-                  <div className="crypto-details">
-                    <p>You will be redirected to Coinbase Commerce to complete your payment securely.</p>
-                    <div className="crypto-logos">
-                      {/* Add crypto logos if needed */}
+                <div className="order-item">
+                  <div className="order-item-left">
+                    <FontAwesomeIcon icon={faEye} className="order-item-icon" />
+                    <div className="order-item-details">
+                      <span className="order-item-text">{qty} YouTube Views</span>
+                      <span className="order-item-subtext">{packageType}</span>
                     </div>
                   </div>
-                )}
+                  <span className="order-item-price">{formatPrice(priceValue)}</span>
+                </div>
+
+                {addedOffers.map((offer) => (
+                  <div key={offer.id} className="order-item">
+                    <div className="order-item-left">
+                      <FontAwesomeIcon icon={offer.icon} className="order-item-icon" />
+                      <div className="order-item-details">
+                        <span className="order-item-text">{offer.text}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span className="order-item-price">{formatPrice(offer.price)}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveOffer(offer.id)}
+                        className="remove-offer-btn"
+                        style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "18px", padding: "0 4px" }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
 
                 <div className="coupon-section">
-                  <div 
-                    className="coupon-toggle"
-                    onClick={() => setHasCoupon(!hasCoupon)}
-                  >
-                    <FontAwesomeIcon icon={faTag} />
-                    <span>Have a coupon code?</span>
-                  </div>
-                  
+                  <label className="coupon-toggle">
+                    <span>I have a coupon code</span>
+                    <div className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={hasCoupon}
+                        onChange={(e) => setHasCoupon(e.target.checked)}
+                        className="coupon-checkbox"
+                      />
+                      <span className="toggle-slider"></span>
+                    </div>
+                  </label>
                   {hasCoupon && (
-                    <div className="coupon-input-group">
-                      <input 
-                        type="text" 
-                        placeholder="Enter code" 
+                    <div className="coupon-input-wrapper">
+                      <input
+                        type="text"
                         className="coupon-input"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Enter coupon"
                       />
-                      <button type="button" className="coupon-btn">Apply</button>
+                      <button type="button" className="coupon-apply-btn">Apply</button>
                     </div>
                   )}
                 </div>
 
-                <button 
-                  type="submit" 
-                  className="pay-button"
-                  disabled={processing}
-                >
-                  {processing ? (
-                    <>Processing...</>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon icon={faLock} />
-                      Pay {formatPrice(totalPrice)}
-                    </>
-                  )}
-                </button>
-                
-                <p className="secure-note">
-                  <FontAwesomeIcon icon={faShieldHalved} />
-                  Your payment information is encrypted and secure.
-                </p>
-              </form>
-            </div>
-
-            <div className="summary-column">
-              <div className="summary-card">
-                <h3>Order Summary</h3>
-                
-                <div className="summary-main-item">
-                  <div className="item-icon">
-                    <FontAwesomeIcon icon={getMetricIcon()} />
+                <div className="order-total">
+                  <span className="total-label">Total to pay</span>
+                  <div className="total-price-wrapper">
+                    <button className="currency-button">{currencyCode}</button>
+                    <span className="total-price">{formatPrice(totalPrice)}</span>
                   </div>
-                  <div className="item-details">
-                    <div className="item-title">{qty} YouTube {getMetricLabel()}</div>
-                    <div className="item-subtitle">{packageType}</div>
-                    {videoLink && (
-                      <div className="item-link" title={videoLink}>
-                         {videoLink.length > 30 ? videoLink.substring(0, 30) + "..." : videoLink}
-                      </div>
-                    )}
-                  </div>
-                  <div className="item-price">{formatPrice(priceValue)}</div>
-                </div>
-
-                {addedOffers.length > 0 && (
-                  <div className="added-offers-list">
-                    {addedOffers.map(offer => (
-                      <div key={offer.id} className="added-offer-item">
-                        <div className="offer-info">
-                          <FontAwesomeIcon icon={offer.icon} className="offer-icon" />
-                          <span>{offer.text}</span>
-                        </div>
-                        <div className="offer-price-action">
-                          <span>{formatPrice(offer.price)}</span>
-                          <button 
-                            className="remove-offer-btn"
-                            onClick={() => handleRemoveOffer(offer.id)}
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="summary-totals">
-                  <div className="total-row">
-                    <span>Subtotal</span>
-                    <span>{formatPrice(priceValue)}</span>
-                  </div>
-                  {addedOffers.length > 0 && (
-                    <div className="total-row">
-                      <span>Add-ons</span>
-                      <span>{formatPrice(offersTotal)}</span>
-                    </div>
-                  )}
-                  {paymentMethod === "crypto" && (
-                    <div className="total-row discount">
-                      <span>Crypto Discount (10%)</span>
-                      <span>-{formatPrice(totalPrice * 0.1)}</span>
-                    </div>
-                  )}
-                  <div className="total-divider"></div>
-                  <div className="total-row final">
-                    <span>Total</span>
-                    <span>{formatPrice(paymentMethod === "crypto" ? totalPrice * 0.9 : totalPrice)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="upsell-box">
-                <h4>Frequently Bought Together</h4>
-                <div className="upsell-list">
-                  {offers.filter(o => !addedOffers.find(ao => ao.id === o.id)).map(offer => (
-                    <div key={offer.id} className="upsell-item">
-                      <div className="upsell-icon">
-                        <FontAwesomeIcon icon={offer.icon} />
-                      </div>
-                      <div className="upsell-info">
-                        <div className="upsell-text">{offer.text}</div>
-                        <div className="upsell-price">{formatPrice(offer.price)}</div>
-                      </div>
-                      <button 
-                        className="upsell-add-btn"
-                        onClick={() => handleAddOffer(offer)}
-                      >
-                        Add
-                      </button>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
@@ -497,99 +546,432 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
           font-size: 0.8rem;
         }
         
-        .checkout-content-grid {
+        .final-checkout-layout {
           display: grid;
           grid-template-columns: 1.5fr 1fr;
           gap: 30px;
         }
         
         @media (max-width: 900px) {
-          .checkout-content-grid {
+          .final-checkout-layout {
             grid-template-columns: 1fr;
-          }
-          
-          .summary-column {
-            order: -1;
           }
         }
         
-        .payment-column {
+        .checkout-card {
           background: white;
           padding: 30px;
           border-radius: 20px;
           box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+          margin-bottom: 30px;
         }
         
-        .section-title {
+        .final-checkout-title {
           margin-bottom: 25px;
           font-size: 1.5rem;
           color: #1a1a1a;
         }
         
-        .payment-methods {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
+        .payment-method-section {
           margin-bottom: 30px;
         }
         
-        .payment-method {
+        .payment-method-heading {
+          font-size: 1.1rem;
+          margin-bottom: 15px;
+          color: #495057;
+        }
+        
+        .payment-option {
+          margin-bottom: 15px;
+        }
+        
+        .payment-option-label {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 15px;
           border: 2px solid #e9ecef;
           border-radius: 12px;
-          padding: 15px;
           cursor: pointer;
-          position: relative;
-          transition: all 0.3s ease;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 10px;
+          transition: all 0.2s;
         }
         
-        .payment-method.active {
-          border-color: #0070f3;
-          background: #f0f7ff;
-        }
-        
-        .method-radio {
-          width: 20px;
-          height: 20px;
-          border: 2px solid #adb5bd;
-          border-radius: 50%;
-          position: absolute;
-          top: 15px;
-          right: 15px;
-        }
-        
-        .payment-method.active .method-radio {
-          border-color: #0070f3;
-          background: #0070f3;
-          box-shadow: inset 0 0 0 4px white;
-        }
-        
-        .method-icon {
-          font-size: 1.5rem;
-          color: #495057;
-          margin-top: 10px;
-        }
-        
-        .payment-method.active .method-icon {
+        .payment-radio:checked + .payment-option-icon + span {
           color: #0070f3;
+          font-weight: 600;
         }
         
-        .method-name {
-          font-weight: 600;
+        .payment-radio:checked ~ .payment-option-label {
+          border-color: #0070f3;
+          background: #f8f9fa;
+        }
+        
+        .payment-option-icon {
+          font-size: 1.2rem;
+          color: #6c757d;
+        }
+        
+        .card-form {
+          margin-top: 15px;
+          padding: 20px;
+          background: #f8f9fa;
+          border-radius: 12px;
+          border: 1px solid #e9ecef;
+        }
+        
+        .form-group {
+          margin-bottom: 15px;
+        }
+        
+        .form-label {
+          display: block;
+          margin-bottom: 8px;
+          font-size: 0.9rem;
+          font-weight: 500;
           color: #495057;
         }
         
-        .method-badges {
+        .form-input {
+          width: 100%;
+          padding: 12px;
+          border: 1px solid #ced4da;
+          border-radius: 8px;
+          font-size: 1rem;
+        }
+        
+        .pay-button {
+          width: 100%;
+          padding: 16px;
+          background: #0070f3;
+          color: white;
+          border: none;
+          border-radius: 12px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          cursor: pointer;
           display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          transition: background 0.2s;
+        }
+        
+        .pay-button:hover {
+          background: #0051a2;
+        }
+        
+        .pay-button:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+        }
+        
+        .payment-guarantees {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          margin-top: 20px;
+          color: #6c757d;
+          font-size: 0.9rem;
+        }
+        
+        .guarantee-item {
+          display: flex;
+          align-items: center;
           gap: 5px;
         }
         
-        .badge {
+        .guarantee-icon {
+          color: #28a745;
+        }
+        
+        .payment-terms {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 0.85rem;
+          color: #adb5bd;
+        }
+        
+        .payment-link {
+          color: #0070f3;
+          text-decoration: none;
+        }
+        
+        .account-info-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .account-info-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        
+        .account-info-url {
+          font-weight: 600;
+          color: #1a1a1a;
+        }
+        
+        .change-button {
+          color: #0070f3;
+          background: none;
+          border: none;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        
+        .order-summary-title {
+          font-size: 1.2rem;
+          margin-bottom: 20px;
+        }
+        
+        .order-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding-bottom: 15px;
+          border-bottom: 1px solid #e9ecef;
+          margin-bottom: 15px;
+        }
+        
+        .order-item-left {
+          display: flex;
+          gap: 15px;
+        }
+        
+        .order-item-icon {
+          color: #0070f3;
+          margin-top: 4px;
+        }
+        
+        .order-item-details {
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .order-item-text {
+          font-weight: 600;
+          color: #1a1a1a;
+        }
+        
+        .order-item-subtext {
+          font-size: 0.9rem;
+          color: #6c757d;
+        }
+        
+        .order-item-price {
+          font-weight: 600;
+        }
+        
+        .coupon-section {
+          margin: 20px 0;
+          padding: 15px;
           background: #f8f9fa;
+          border-radius: 12px;
+        }
+        
+        .coupon-toggle {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          cursor: pointer;
+        }
+        
+        .toggle-switch {
+          position: relative;
+          width: 40px;
+          height: 24px;
+        }
+        
+        .coupon-checkbox {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        
+        .toggle-slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: .4s;
+          border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+          position: absolute;
+          content: "";
+          height: 16px;
+          width: 16px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          transition: .4s;
+          border-radius: 50%;
+        }
+        
+        .coupon-checkbox:checked + .toggle-slider {
+          background-color: #0070f3;
+        }
+        
+        .coupon-checkbox:checked + .toggle-slider:before {
+          transform: translateX(16px);
+        }
+        
+        .coupon-input-wrapper {
+          display: flex;
+          gap: 10px;
+          margin-top: 15px;
+        }
+        
+        .coupon-input {
+          flex: 1;
+          padding: 10px;
+          border: 1px solid #ced4da;
+          border-radius: 8px;
+        }
+        
+        .coupon-apply-btn {
+          padding: 0 20px;
+          background: #1a1a1a;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+        }
+        
+        .order-total {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 20px;
+          padding-top: 20px;
+          border-top: 2px solid #e9ecef;
+        }
+        
+        .total-label {
+          font-weight: 600;
+          font-size: 1.1rem;
+        }
+        
+        .total-price-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        
+        .currency-button {
+          padding: 4px 8px;
+          background: #e9ecef;
+          border: none;
+          border-radius: 4px;
+          font-weight: 600;
+          font-size: 0.8rem;
+        }
+        
+        .total-price {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #0070f3;
+        }
+
+        .offers-title {
+          font-size: 1.2rem;
+          margin-bottom: 20px;
+          color: #1a1a1a;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .exclusive-offers {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .offer-item {
+          display: flex;
+          align-items: center;
+          padding: 15px;
+          border: 1px solid #e9ecef;
+          border-radius: 12px;
+          position: relative;
+          gap: 15px;
+        }
+
+        .offer-green {
+          background: #f0fff4;
+          border-color: #c3e6cb;
+        }
+
+        .offer-pink {
+          background: #fff0f6;
+          border-color: #fcc2d7;
+        }
+
+        .offer-added {
+          border-color: #0070f3;
+          background: #f0f7ff;
+        }
+
+        .offer-badge {
+          position: absolute;
+          top: -10px;
+          left: 10px;
+          background: #ff4757;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 10px;
+          font-size: 0.7rem;
+          font-weight: bold;
+        }
+
+        .offer-icon {
+          font-size: 1.5rem;
+          color: #495057;
+        }
+
+        .offer-details {
+          flex: 1;
+        }
+
+        .offer-text {
+          display: block;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+
+        .offer-price-new {
+          color: #0070f3;
+          font-weight: 700;
+        }
+
+        .offer-add-btn {
+          padding: 6px 15px;
+          background: #1a1a1a;
+          color: white;
+          border: none;
+          border-radius: 20px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .offer-add-btn:hover {
+          transform: scale(1.05);
+        }
+
+        .offer-add-btn:disabled {
+          background: #28a745;
+          cursor: default;
+          transform: none;
+        }
+        .badge {
           padding: 2px 6px;
           border-radius: 4px;
           font-size: 0.7rem;

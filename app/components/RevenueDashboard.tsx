@@ -13,35 +13,55 @@ import {
   faDollarSign,
 } from "@fortawesome/free-solid-svg-icons";
 
-const summaryCards = [
-  { title: "Today’s Revenue", value: "$0.00" },
-  { title: "This Week’s Revenue", value: "$0.00" },
-  { title: "This Month’s Revenue", value: "$0.00" },
-  { title: "Total Revenue", value: "$62.46" },
-];
+export type TransactionRow = {
+  id: string;
+  date: string;
+  amount: string;
+  method: string;
+  status: string;
+  orderId: string;
+};
 
-const transactions = [
-  { id: "txn_1z1xatz12", date: "August 10, 2024", amount: "$29.99", method: "Card", status: "Completed", orderId: "#12345" },
-  { id: "txn_2y1x3brf3", date: "August 10, 2024", amount: "$7.99", method: "Crypto", status: "Completed", orderId: "#12344" },
-  { id: "txn_3z1ucc54", date: "August 9, 2024", amount: "$39.99", method: "Card", status: "Pending", orderId: "#12343" },
-  { id: "txn_4faxd5fs", date: "August 9, 2024", amount: "$28.89", method: "Card", status: "Failed", orderId: "#12342" },
-  { id: "txn_5fbwe616", date: "August 8, 2024", amount: "$5.99", method: "Crypto", status: "Completed", orderId: "#12341" },
-  { id: "txn_6kcx7f7f", date: "August 7, 2024", amount: "$18.49", method: "Card", status: "Completed", orderId: "#12340" },
-];
+export type RevenueSummary = {
+  today: string;
+  week: string;
+  month: string;
+  total: string;
+};
 
 const paymentIcon = (method: string) => {
-  if (method.toLowerCase() === "crypto") return faBitcoinSign;
+  if (method.toLowerCase().includes("crypto")) return faBitcoinSign;
   return faCreditCard;
 };
 
 const statusIcon = (status: string) => {
   const key = status.toLowerCase();
-  if (key === "completed") return faCheckCircle;
+  if (key === "completed" || key === "success") return faCheckCircle;
   if (key === "pending") return faClock;
   return faTimesCircle;
 };
 
-export default function RevenueDashboard() {
+interface RevenueDashboardProps {
+  initialTransactions?: TransactionRow[];
+  summary?: RevenueSummary;
+}
+
+export default function RevenueDashboard({ 
+  initialTransactions = [], 
+  summary = {
+    today: "$0.00",
+    week: "$0.00",
+    month: "$0.00",
+    total: "$0.00"
+  }
+}: RevenueDashboardProps) {
+  const summaryCards = [
+    { title: "Today’s Revenue", value: summary.today },
+    { title: "This Week’s Revenue", value: summary.week },
+    { title: "This Month’s Revenue", value: summary.month },
+    { title: "Total Revenue", value: summary.total },
+  ];
+
   return (
     <div className="admin-wrapper">
       <PromoBar />
@@ -117,7 +137,7 @@ export default function RevenueDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((txn) => (
+                    {initialTransactions.map((txn) => (
                       <tr key={txn.id}>
                         <td>{txn.id}</td>
                         <td>{txn.date}</td>

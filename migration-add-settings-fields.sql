@@ -41,3 +41,9 @@ ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpSecure" BOOLEAN DEFAU
 ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpUser" TEXT;
 ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpPass" TEXT;
 ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "smtpFrom" TEXT;
+
+-- Add MyFatoorah settings fields
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "myFatoorahToken" TEXT;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "myFatoorahBaseURL" TEXT DEFAULT 'https://apitest.myfatoorah.com';
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "myFatoorahTestMode" BOOLEAN DEFAULT true;
+ALTER TABLE "admin_settings" ADD COLUMN IF NOT EXISTS "myFatoorahWebhookSecret" TEXT;

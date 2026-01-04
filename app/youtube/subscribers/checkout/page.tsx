@@ -71,8 +71,8 @@ function CheckoutContent() {
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim()) {
-      // Navigate to posts selection page (if exists) or final checkout
-      router.push(`/youtube/subscribers/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+      // Navigate directly to final checkout step for subscribers
+      router.push(`/youtube/subscribers/checkout/final?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
     }
   };
 

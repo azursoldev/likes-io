@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
+import Script from "next/script";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -34,7 +35,8 @@ function FinalCheckoutContent() {
   // Calculate total price based on number of posts
   const postLinks = postLink.split(',').filter(link => link.trim() !== "");
   const postCount = postLinks.length || 1;
-  const basePrice = priceValue * postCount;
+  const basePrice = priceValue; // Price is total, not per post
+  const likesPerPost = Math.floor(parseInt(qty) / postCount);
 
   // Set platform and service (hardcoded for this route)
   const platform = "instagram";
@@ -55,6 +57,72 @@ function FinalCheckoutContent() {
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+
+  // MyFatoorah State
+  const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
+  const [isMfLoaded, setIsMfLoaded] = useState(false);
+
+  useEffect(() => {
+    if (paymentMethod === "myfatoorah" && !mfSession) {
+      fetch("/api/payments/initiate-session", { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            console.error("MF Init Error:", data.error);
+            setError("Failed to load payment form");
+          } else {
+            setMfSession(data);
+          }
+        })
+        .catch(err => {
+          console.error("MF Fetch Error:", err);
+          setError("Failed to load payment form");
+        });
+    }
+  }, [paymentMethod, mfSession]);
+
+  useEffect(() => {
+    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+      try {
+        const config = {
+          countryCode: mfSession.countryCode,
+          sessionId: mfSession.sessionId,
+          cardViewId: "mf-card-element",
+          supportedNetworks: "visa,mastercard,amex,mada",
+          style: {
+            direction: "ltr",
+            cardHeight: 130,
+            input: {
+              color: "black",
+              fontSize: "13px",
+              fontFamily: "sans-serif",
+              inputHeight: "32px",
+              inputMargin: "0px",
+              borderColor: "e2e8f0",
+              borderWidth: "1px",
+              borderRadius: "8px",
+              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+              placeHolder: {
+                holderName: "Name On Card",
+                cardNumber: "Number",
+                expiryDate: "MM / YY",
+                securityCode: "CVV",
+              }
+            },
+            label: { display: false },
+            error: {
+              borderColor: "red",
+              borderRadius: "8px",
+              boxShadow: "0px",
+            },
+          },
+        };
+        (window as any).myFatoorah.init(config);
+      } catch (err) {
+        console.error("MF Init Exception:", err);
+      }
+    }
+  }, [paymentMethod, mfSession, isMfLoaded]);
 
   const offers = [
     { id: "offer1", text: "50 likes x 10 posts", price: 5.99, icon: faHeart },
@@ -91,6 +159,8 @@ function FinalCheckoutContent() {
       // Check if user is logged in (we'll check this via the API response)
       // For now, proceed - the API will return 401 if not authenticated
       
+      let cardSessionId: string | undefined;
+
       // Validate required fields
       if (paymentMethod === "card") {
         if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
@@ -98,6 +168,15 @@ function FinalCheckoutContent() {
           setProcessing(false);
           return;
         }
+      } else if (paymentMethod === "myfatoorah") {
+        if (!mfSession || !(window as any).myFatoorah) {
+           throw new Error("Payment form not loaded");
+        }
+        const mfResponse = await (window as any).myFatoorah.submit();
+        if (!mfResponse || !mfResponse.SessionId) {
+          throw new Error("Invalid payment data");
+        }
+        cardSessionId = mfResponse.SessionId;
       }
 
       if (!username) {
@@ -121,15 +200,17 @@ function FinalCheckoutContent() {
       const paymentResponse = await fetch("/api/payments/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 50,
           price: totalPrice,
           link: postLink || null,
-          paymentMethod: paymentMethod, // 'card' or 'crypto'
+          paymentMethod: paymentMethod, // 'card' or 'crypto' or 'myfatoorah'
           currency: currencyCode,
           packageServiceId: packageServiceId || undefined, // Service ID from package (JAP Service ID)
+          sessionId: cardSessionId
         }),
       });
 
@@ -141,18 +222,24 @@ function FinalCheckoutContent() {
         throw new Error(errorData.error || "Failed to process payment");
       }
 
-      const { checkoutUrl, paymentId, paymentStatus } = await paymentResponse.json();
+      const { checkoutUrl, paymentId, paymentStatus, orderId } = await paymentResponse.json();
       
       if (checkoutUrl) {
         // For crypto payments, redirect to Cryptomus payment page
         // For card payments, redirect to Checkout.com
         window.location.href = checkoutUrl;
+      } else if (paymentStatus === "Paid" || paymentStatus === "Success") {
+        window.location.href = `/checkout/success?orderId=${orderId}`;
       } else {
-        throw new Error("No checkout URL received");
+        window.location.href = `/checkout/success?orderId=${orderId}`;
       }
     } catch (err: any) {
       console.error("Payment error:", err);
-      setError(err.message || "Failed to process payment. Please try again.");
+      if (err.message && err.message.includes("MyFatoorah")) {
+        setError("Please check your card details.");
+      } else {
+        setError(err.message || "Failed to process payment. Please try again.");
+      }
       setProcessing(false);
     }
   };
@@ -169,6 +256,13 @@ function FinalCheckoutContent() {
   return (
     <>
       <Header />
+      {mfSession?.scriptUrl && (
+        <Script 
+          src={mfSession.scriptUrl}
+          strategy="lazyOnload"
+          onLoad={() => setIsMfLoaded(true)}
+        />
+      )}
       <main className="final-checkout-page">
         <div className="final-checkout-container">
           {/* Progress Indicator */}
@@ -354,8 +448,10 @@ function FinalCheckoutContent() {
                       
                       {paymentMethod === "myfatoorah" && (
                         <div className="crypto-form">
-                          <div className="crypto-message-box">
-                            <p>You will be redirected to MyFatoorah to complete your payment securely.</p>
+                          {/* MyFatoorah Embedded Container */}
+                          <div style={{ width: "100%", minHeight: "150px" }}>
+                            {!isMfLoaded && <p>Loading payment form...</p>}
+                            <div id="mf-card-element" style={{ width: "100%" }}></div>
                           </div>
                         </div>
                       )}
@@ -454,7 +550,9 @@ function FinalCheckoutContent() {
                     <FontAwesomeIcon icon={getMetricIcon()} className="order-item-icon" />
                     <div className="order-item-details">
                       <span className="order-item-text">{qty} {getPlatformName()} {getMetricLabel()}</span>
-                      <span className="order-item-subtext">Applying to {postCount} post{postCount > 1 ? 's' : ''}.</span>
+                      <span className="order-item-subtext">
+                        {likesPerPost} likes / {postCount} post{postCount > 1 ? 's' : ''}
+                      </span>
                     </div>
                   </div>
                   <span className="order-item-price">{formatPrice(basePrice)}</span>
