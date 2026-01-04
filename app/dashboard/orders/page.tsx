@@ -49,7 +49,7 @@ export default async function Page() {
     let lastFour = "****";
 
     if (order.payment) {
-      if (order.payment.gateway === "STRIPE" || order.payment.gateway === "CHECKOUT_COM") {
+      if (order.payment.gateway === "CHECKOUT_COM") {
         paymentType = "Card";
         // If we had card details stored, we would use them. For now, use generic.
         lastFour = "****"; 
