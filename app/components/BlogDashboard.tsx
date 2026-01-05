@@ -34,12 +34,15 @@ export default function BlogDashboard() {
   const [featuredImageFile, setFeaturedImageFile] = useState<File | null>(null);
   const [editForm, setEditForm] = useState({
     title: "",
+    slug: "",
     excerpt: "",
     content: "",
     featuredImageUrl: "",
     category: "General",
     publishDate: "",
     published: false,
+    metaTitle: "",
+    metaDescription: "",
   });
 
   const loadPosts = async () => {
@@ -432,6 +435,18 @@ export default function BlogDashboard() {
                   className="blog-edit-input"
                   value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                />
+              </div>
+
+              <div className="blog-edit-form-group">
+                <label htmlFor="edit-slug">Slug (URL)</label>
+                <input
+                  type="text"
+                  id="edit-slug"
+                  className="blog-edit-input"
+                  value={editForm.slug}
+                  onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
+                  placeholder="custom-url-slug"
                 />
               </div>
 
