@@ -45,15 +45,50 @@ function CheckoutContent() {
   const premiumQuantities = [100, 250, 500, "1K", "2.5K", "5K", "10K"];
 
   // Use the appropriate package list based on packageType
-  const packagePrices = packageType === "Premium" ? premiumPrices : highQualityPrices;
-  const packageQuantities = packageType === "Premium" ? premiumQuantities : highQualityQuantities;
+  const isPremium = packageType.includes("Premium");
+  const packagePrices = isPremium ? premiumPrices : highQualityPrices;
+  const packageQuantities = isPremium ? premiumQuantities : highQualityQuantities;
   
-  const packages = packageQuantities.map((qty, idx) => {
-    if (qty === "25K+") return "25K+ Custom";
-    return `${qty} Likes / ${formatPrice(packagePrices[idx])} ${currencyCode}`;
-  });
+  // Check if current package is a custom/special package
+  const currentQtyIndex = packageQuantities.findIndex(q => String(q) === qty);
+  const isCustomPrice = currentQtyIndex !== -1 && Math.abs(packagePrices[currentQtyIndex] - priceValue) > 0.01;
+  const isCustomQty = currentQtyIndex === -1;
+  const isCustomPackage = isCustomPrice || isCustomQty;
+
+  let packages: string[];
   
-  packages.push("25K+ Custom");
+  if (isCustomPackage) {
+    // If it's a custom package (different price or quantity than standard), 
+    // show only this package to avoid confusion
+    packages = [`${qty} Likes / ${formatPrice(priceValue)} ${currencyCode}`];
+  } else {
+    packages = packageQuantities.map((q, idx) => {
+      if (q === "25K+") return "25K+ Custom";
+      return `${q} Likes / ${formatPrice(packagePrices[idx])} ${currencyCode}`;
+    });
+    packages.push("25K+ Custom");
+  }
+
+  const handlePackageSelect = (index: number) => {
+    setIsPackageOpen(false);
+    
+    if (isCustomPackage) {
+      // If it's a custom package, there's only one option (index 0)
+      return;
+    }
+
+    // Handle custom package case (last item)
+    if (index >= packageQuantities.length) {
+      // Logic for custom package if needed, or just close for now
+      return;
+    }
+
+    const newQty = packageQuantities[index];
+    const newPrice = packagePrices[index];
+    
+    // Update URL with new package details
+    router.push(`/tiktok/likes/checkout?qty=${newQty}&price=${newPrice}&type=${encodeURIComponent(packageType)}`);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -229,9 +264,7 @@ function CheckoutContent() {
                           key={idx}
                           type="button"
                           className="checkout-dropdown-item"
-                          onClick={() => {
-                            setIsPackageOpen(false);
-                          }}
+                          onClick={() => handlePackageSelect(idx)}
                         >
                           {pkg}
                         </button>
@@ -257,7 +290,7 @@ function CheckoutContent() {
               <div className="checkout-security">
                 <div className="checkout-security-item">
                   <FontAwesomeIcon icon={faShieldHalved} className="checkout-security-icon" />
-                  <span>100% Safe Delivery</span>
+                  <span>Account-Safe Delivery</span>
                 </div>
                 <div className="checkout-security-item">
                   <FontAwesomeIcon icon={faLock} className="checkout-security-icon" />

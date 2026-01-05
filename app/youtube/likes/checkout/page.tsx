@@ -22,6 +22,8 @@ function CheckoutContent() {
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [username, setUsername] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get package info from URL params if available
@@ -68,11 +70,37 @@ function CheckoutContent() {
     }
   }, [isPackageOpen]);
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
-      // Navigate to posts selection page (if exists) or final checkout
-      router.push(`/youtube/likes/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+    if (!username.trim()) {
+      setError("Please enter a YouTube channel URL or username");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/social/youtube/profile?username=${encodeURIComponent(username.trim())}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch channel");
+      }
+
+      if (data.profile) {
+        // Use the resolved username (Channel ID) for the next step to ensure consistency
+        // But we might want to keep the original input if the user prefers, 
+        // however passing the ID ensures the next page doesn't need to re-resolve it.
+        const resolvedUsername = data.profile.username; 
+        router.push(`/youtube/likes/checkout/posts?username=${encodeURIComponent(resolvedUsername)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+      } else {
+        throw new Error("Channel not found");
+      }
+    } catch (err: any) {
+      setError(err.message || "Could not find this YouTube channel. Please check the username.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -117,14 +145,19 @@ function CheckoutContent() {
           <div className="checkout-card checkout-form-card">
             <form className="checkout-form" onSubmit={handleContinue}>
               <div className="checkout-form-group">
-                <label className="checkout-label">YouTube video link</label>
+                <label className="checkout-label">YouTube Channel</label>
                 <input
                   type="text"
                   className="checkout-input"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your YouTube video URL"
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Enter YouTube Channel URL or Username (e.g. LinusTechTips)"
+                  disabled={isLoading}
                 />
+                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
               </div>
 
               <div className="checkout-form-group">
@@ -165,15 +198,15 @@ function CheckoutContent() {
               </p>
 
               {/* Continue Button */}
-              <button type="submit" className="checkout-continue-btn">
-                Continue
+              <button type="submit" className="checkout-continue-btn" disabled={isLoading}>
+                {isLoading ? "Checking..." : "Continue"}
               </button>
 
               {/* Security Assurance */}
               <div className="checkout-security">
                 <div className="checkout-security-item">
                   <FontAwesomeIcon icon={faShieldHalved} className="checkout-security-icon" />
-                  <span>100% Safe Delivery</span>
+                  <span>Account-Safe Delivery</span>
                 </div>
                 <div className="checkout-security-item">
                   <FontAwesomeIcon icon={faLock} className="checkout-security-icon" />

@@ -19,51 +19,69 @@ import {
   faCloud,
 } from "@fortawesome/free-solid-svg-icons";
 
-const stats = [
-  {
-    title: "Daily Revenue",
-    value: "$0.00",
-    delta: "5.2% vs last week",
-    icon: faDollarSign,
-    iconColor: "#16a34a",
-    trend: "up",
-  },
-  {
-    title: "Total Revenue",
-    value: "$62.46",
-    delta: "12.5% vs last week",
-    icon: faChartLine,
-    iconColor: "#2563eb",
-    trend: "up",
-  },
-  {
-    title: "Total Orders",
-    value: "6",
-    delta: "8.2% vs last week",
-    icon: faClipboardList,
-    iconColor: "#f97316",
-    trend: "up",
-  },
-  {
-    title: "New Users",
-    value: "45",
-    delta: "2.1% vs last week",
-    icon: faCloud,
-    iconColor: "#9333ea",
-    trend: "down",
-  },
-];
+interface DashboardData {
+  dailyRevenue: number;
+  totalRevenue: number;
+  totalOrders: number;
+  totalUsers: number;
+  orders: {
+    id: string;
+    customer: string;
+    service: string;
+    amount: string;
+    status: string;
+  }[];
+}
 
-const orders = [
-  { id: "#12345", customer: "John Doe", service: "1K Premium Likes", amount: "$29.99", status: "Completed" },
-  { id: "#12344", customer: "Emily White", service: "500 Followers", amount: "$7.99", status: "Completed" },
-  { id: "#12343", customer: "Jane Smith", service: "10K Views", amount: "$39.99", status: "Processing" },
-  { id: "#12342", customer: "Mike Johnson", service: "2.5K Followers", amount: "$28.89", status: "Failed" },
-  { id: "#12341", customer: "Chris Green", service: "100 Premium Likes", amount: "$5.99", status: "Completed" },
-];
+interface AdminDashboardProps {
+  initialData?: DashboardData;
+}
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ initialData }: AdminDashboardProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const stats = [
+    {
+      title: "Daily Revenue",
+      value: initialData ? `$${initialData.dailyRevenue.toFixed(2)}` : "$0.00",
+      delta: "vs last week",
+      icon: faDollarSign,
+      iconColor: "#16a34a",
+      trend: "up",
+    },
+    {
+      title: "Total Revenue",
+      value: initialData ? `$${initialData.totalRevenue.toFixed(2)}` : "$62.46",
+      delta: "vs last week",
+      icon: faChartLine,
+      iconColor: "#2563eb",
+      trend: "up",
+    },
+    {
+      title: "Total Orders",
+      value: initialData ? initialData.totalOrders.toString() : "6",
+      delta: "vs last week",
+      icon: faClipboardList,
+      iconColor: "#f97316",
+      trend: "up",
+    },
+    {
+      title: "Total Users",
+      value: initialData ? initialData.totalUsers.toString() : "45",
+      delta: "vs last week",
+      icon: faCloud,
+      iconColor: "#9333ea",
+      trend: "down",
+    },
+  ];
+
+  const orders = initialData?.orders || [
+    { id: "#12345", customer: "John Doe", service: "1K Premium Likes", amount: "$29.99", status: "Completed" },
+    { id: "#12344", customer: "Emily White", service: "500 Followers", amount: "$7.99", status: "Completed" },
+    { id: "#12343", customer: "Jane Smith", service: "10K Views", amount: "$39.99", status: "Processing" },
+    { id: "#12342", customer: "Mike Johnson", service: "2.5K Followers", amount: "$28.89", status: "Failed" },
+    { id: "#12341", customer: "Chris Green", service: "100 Premium Likes", amount: "$5.99", status: "Completed" },
+  ];
 
   return (
     <div className="admin-wrapper">
@@ -154,7 +172,7 @@ export default function AdminDashboard() {
                       <td>{order.service}</td>
                       <td>{order.amount}</td>
                       <td>
-                        <span className={`admin-status admin-status-${order.status.toLowerCase()}`}>{order.status}</span>
+                        <span className={`order-status order-status-${order.status.toLowerCase()}`}>{order.status}</span>
                       </td>
                     </tr>
                   ))}

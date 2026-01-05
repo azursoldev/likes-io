@@ -18,26 +18,17 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
-type OrderRow = {
+export type OrderRow = {
   id: string;
   date: string;
   customer: string;
   email: string;
   service: string;
-  serviceIcon: "instagram" | "tiktok" | "youtube";
+  serviceIcon: string;
   smmOrderId: string;
   amount: string;
-  status: "Completed" | "Processing" | "Failed";
+  status: string;
 };
-
-const orders: OrderRow[] = [
-  { id: "#12345", date: "August 10, 2024", customer: "John Doe", email: "john.d@example.com", service: "1K Premium Likes", serviceIcon: "instagram", smmOrderId: "1001", amount: "$29.99", status: "Completed" },
-  { id: "#12344", date: "August 10, 2024", customer: "Emily White", email: "emily.w@example.com", service: "500 Followers", serviceIcon: "tiktok", smmOrderId: "1002", amount: "$7.99", status: "Completed" },
-  { id: "#12343", date: "August 9, 2024", customer: "Jane Smith", email: "jane.s@example.com", service: "10K Views", serviceIcon: "youtube", smmOrderId: "1003", amount: "$39.99", status: "Processing" },
-  { id: "#12342", date: "August 9, 2024", customer: "Mike Johnson", email: "mike.j@example.com", service: "2.5K Followers", serviceIcon: "instagram", smmOrderId: "N/A", amount: "$28.89", status: "Failed" },
-  { id: "#12341", date: "August 8, 2024", customer: "Chris Green", email: "chris.g@example.com", service: "100 Premium Likes", serviceIcon: "instagram", smmOrderId: "1005", amount: "$5.99", status: "Completed" },
-  { id: "#12340", date: "August 7, 2024", customer: "John Doe", email: "john.d@example.com", service: "5K Views", serviceIcon: "tiktok", smmOrderId: "1006", amount: "$18.49", status: "Completed" },
-];
 
 const getServiceIcon = (icon: string) => {
   if (icon === "instagram") return faInstagram;
@@ -46,12 +37,35 @@ const getServiceIcon = (icon: string) => {
   return faList;
 };
 
-export default function OrdersDashboard() {
+import { useRouter, useSearchParams } from "next/navigation";
+
+interface OrdersDashboardProps {
+  initialOrders?: OrderRow[];
+  currentPage?: number;
+  totalPages?: number;
+  totalOrders?: number;
+  currentStatus?: string;
+}
+
+export default function OrdersDashboard({ 
+  initialOrders = [], 
+  currentPage = 1, 
+  totalPages = 1, 
+  totalOrders = 0,
+  currentStatus = "All"
+}: OrdersDashboardProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [statusFilter, setStatusFilter] = useState<string>(currentStatus);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync internal state with props
+  useEffect(() => {
+    setStatusFilter(currentStatus);
+  }, [currentStatus]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -68,6 +82,28 @@ export default function OrdersDashboard() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showStatusDropdown]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`?${params.toString()}`);
+  };
+
+  const handleStatusSelect = (status: string) => {
+    setStatusFilter(status);
+    setShowStatusDropdown(false);
+    
+    // Update URL for server-side filtering
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1"); // Reset to page 1 on filter change
+    if (status === "All") {
+      params.delete("status");
+    } else {
+      params.set("status", status);
+    }
+    router.push(`?${params.toString()}`);
+  };
 
   const handleDetailsClick = (order: OrderRow) => {
     setSelectedOrder(order);
@@ -86,16 +122,17 @@ export default function OrdersDashboard() {
     return "Unknown";
   };
 
-  const filteredOrders = statusFilter === "All" 
-    ? orders 
-    : orders.filter(order => order.status === statusFilter);
-
-  const handleStatusSelect = (status: string) => {
-    setStatusFilter(status);
-    setShowStatusDropdown(false);
+  const formatStatus = (status: string) => {
+    return status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
   };
 
-  const statusOptions = ["All", "Completed", "Processing", "Failed"];
+  // We rely on server-side filtering now, so initialOrders is already filtered
+  const filteredOrders = initialOrders;
+
+  const statusOptions = ["All", "PENDING_PAYMENT", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED", "REFUNDED"];
+
+  const startItem = (currentPage - 1) * 10 + 1;
+  const endItem = Math.min(currentPage * 10, totalOrders);
 
   return (
     <div className="admin-wrapper">
@@ -149,7 +186,7 @@ export default function OrdersDashboard() {
                     className="orders-filter-dropdown"
                     onClick={() => setShowStatusDropdown(!showStatusDropdown)}
                   >
-                    <span>Status: {statusFilter}</span>
+                    <span>Status: {statusFilter === "All" ? "All" : formatStatus(statusFilter)}</span>
                     <FontAwesomeIcon icon={faChevronDown} />
                   </div>
                   {showStatusDropdown && (
@@ -160,7 +197,7 @@ export default function OrdersDashboard() {
                           className={`orders-filter-option ${statusFilter === option ? "active" : ""}`}
                           onClick={() => handleStatusSelect(option)}
                         >
-                          {option}
+                          {option === "All" ? "All" : formatStatus(option)}
                         </div>
                       ))}
                     </div>
@@ -202,7 +239,7 @@ export default function OrdersDashboard() {
                     <td>{order.amount}</td>
                     <td>
                       <span className={`order-status-badge order-status-${order.status.toLowerCase()}`}>
-                        {order.status}
+                        {formatStatus(order.status)}
                       </span>
                     </td>
                     <td>
@@ -214,12 +251,27 @@ export default function OrdersDashboard() {
             </table>
 
             <div className="orders-footer">
-              <span className="orders-footer-text">Showing 1 to {filteredOrders.length} of {filteredOrders.length} orders</span>
+              <span className="orders-footer-text">
+                Showing {totalOrders === 0 ? 0 : startItem} to {endItem} of {totalOrders} orders
+              </span>
               <div className="orders-pagination">
-                <button className="pager-btn" disabled>
+                <button 
+                  className="pager-btn" 
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                >
                   Previous
                 </button>
-                <button className="pager-btn">Next</button>
+                <div className="pagination-info">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <button 
+                  className="pager-btn" 
+                  disabled={currentPage >= totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                >
+                  Next
+                </button>
               </div>
             </div>
           </div>
@@ -269,7 +321,7 @@ export default function OrdersDashboard() {
                 <div className="order-details-row">
                   <span className="order-details-label">Status</span>
                   <span className={`order-details-value order-status-badge order-status-${selectedOrder.status.toLowerCase()}`}>
-                    {selectedOrder.status}
+                    {formatStatus(selectedOrder.status)}
                   </span>
                 </div>
                 <div className="order-details-row">

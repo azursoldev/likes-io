@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { PostsSelectionContent as YouTubeViewsPostsPage } from '../../../youtube/views/checkout/posts/page';
 
 export default async function CheckoutPostsPage({ 
   params, 
@@ -38,7 +40,11 @@ export default async function CheckoutPostsPage({
   }
   
   if (platform === 'youtube' && serviceType === 'views') {
-    redirect(`/${params.slug}/checkout/final${searchString}`);
+    return (
+      <Suspense fallback={<div>Loading...</div>}>
+        <YouTubeViewsPostsPage basePath={basePath} />
+      </Suspense>
+    );
   }
 
   // For other services (like Likes), redirect to their specific checkout posts page

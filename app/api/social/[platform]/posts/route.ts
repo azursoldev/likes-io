@@ -27,9 +27,13 @@ export async function GET(
       );
     }
 
-    const posts = await socialMediaAPI.fetchPosts(platform, username, cursor);
+    const result = await socialMediaAPI.fetchPosts(platform, username, cursor);
 
-    return NextResponse.json({ posts });
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
+    });
   } catch (error: any) {
     console.error('Posts API Error:', error);
     return NextResponse.json(

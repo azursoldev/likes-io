@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       currency = 'USD',
       serviceId, // Optional: serviceId from package data (database service ID)
       packageServiceId, // Optional: JAP Service ID from package (SMM Panel Integration)
+      sessionId, // Optional: MyFatoorah session ID (for embedded payment)
     } = body;
 
     if (!platform || !serviceType || !quantity || !price) {
@@ -195,7 +196,8 @@ export async function POST(request: NextRequest) {
           user.name || 'Customer',
           user.email,
           `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/success?orderId=${order.id}`,
-          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/error?orderId=${order.id}`
+          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/error?orderId=${order.id}`,
+          sessionId
         );
 
         // Create payment record

@@ -54,7 +54,7 @@ export default function ServicesGrid() {
             <h3>{s.title}</h3>
             <p>{s.description}</p>
             <div className="card-actions">
-              <a href={getLink(s.platform, s.serviceType)} className="btn primary">Buy Now</a>
+              <a href={getLink(s.platform, s.serviceType)} className="btn primary">Get Started</a>
               <a href={getLink(s.platform, s.serviceType)} className="btn">Learn More</a>
             </div>
           </article>

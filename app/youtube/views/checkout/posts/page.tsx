@@ -7,9 +7,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCheck,
   faLink,
-  faEye,
+  faHeart,
   faChevronRight,
-  faPlay
+  faPlay,
+  faThumbsUp,
+  faEye
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
@@ -24,7 +26,7 @@ interface Post {
   views?: number;
 }
 
-function PostsSelectionContent() {
+export function PostsSelectionContent({ basePath }: { basePath?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -39,13 +41,15 @@ function PostsSelectionContent() {
   const [error, setError] = useState("");
   
   const username = searchParams.get("username") || "";
-  const qty = searchParams.get("qty") || "500";
-  const priceValue = parseFloat(searchParams.get("price") || "2.49");
-  const packageType = searchParams.get("type") || "High-Quality";
+  const qty = searchParams.get("qty") || "1000";
+  const priceValue = parseFloat(searchParams.get("price") || "29.99");
+  const packageType = searchParams.get("type") || "High-Retention";
   const serviceId = searchParams.get("serviceId") || "";
 
   const [userProfile, setUserProfile] = useState<{ profilePicture: string; username: string } | null>(null);
   const [imageError, setImageError] = useState(false);
+  
+  const [visibleCount, setVisibleCount] = useState(100);
 
   const formatCount = (count: number) => {
     if (!count) return '0';
@@ -61,7 +65,7 @@ function PostsSelectionContent() {
   const fetchUserProfile = async () => {
     if (!username) return;
     try {
-        const response = await fetch(`/api/social/instagram/profile?username=${username}`);
+        const response = await fetch(`/api/social/youtube/profile?username=${encodeURIComponent(username)}`);
         if (response.ok) {
             const data = await response.json();
             const profile = data.profile || data;
@@ -69,7 +73,7 @@ function PostsSelectionContent() {
             if (profile.profilePicture) {
                 setUserProfile({
                     profilePicture: profile.profilePicture,
-                    username: profile.username
+                    username: profile.displayUsername || profile.fullName || profile.username || username
                 });
                 setImageError(false);
             }
@@ -89,11 +93,18 @@ function PostsSelectionContent() {
         setLoading(true);
       }
       
+      const timestamp = new Date().getTime();
       const url = cursor 
-        ? `/api/instagram/posts?username=${username}&cursor=${encodeURIComponent(cursor)}`
-        : `/api/instagram/posts?username=${username}`;
+        ? `/api/social/youtube/posts?username=${encodeURIComponent(username)}&cursor=${encodeURIComponent(cursor)}&_t=${timestamp}`
+        : `/api/social/youtube/posts?username=${encodeURIComponent(username)}&_t=${timestamp}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       const data = await response.json();
       
       if (response.ok) {
@@ -108,11 +119,21 @@ function PostsSelectionContent() {
           setPosts(newPosts);
         }
         setNextCursor(data.nextCursor || null);
+        
+        // If we fetched more posts, ensure visible count covers them if it was restricting
+        if (cursor) {
+             setVisibleCount(prev => Math.max(prev, newPosts.length + posts.length));
+        } else {
+             // Initial load - show all (up to a reasonable limit, e.g. 100)
+             setVisibleCount(Math.max(100, newPosts.length));
+        }
       } else {
-        if (!cursor) setError(data.error || "Failed to fetch posts");
+        if (!cursor) setError(data.error || "Failed to fetch videos");
+        else setNextCursor(null); // Stop auto-loading on error
       }
     } catch (err) {
-      if (!cursor) setError("An error occurred while fetching posts");
+      if (!cursor) setError("An error occurred while fetching videos");
+      else setNextCursor(null); // Stop auto-loading on error
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -126,26 +147,32 @@ function PostsSelectionContent() {
     }
   }, [username]);
 
+  // Auto-load more posts if we haven't filled the visible count (e.g. initial 50)
+  /* 
+  useEffect(() => {
+    if (!loading && !loadingMore && nextCursor && posts.length < visibleCount) {
+        fetchPosts(nextCursor);
+    }
+  }, [loading, loadingMore, nextCursor, posts.length, visibleCount]);
+  */
+
   const handleLoadMore = () => {
+    // Just fetch next page directly
     if (nextCursor) {
       fetchPosts(nextCursor);
     }
+    // Also increase visible count to ensure new posts are shown
+    setVisibleCount(prev => prev + 50);
   };
 
   const handlePostSelect = (url: string) => {
-    if (selectedPosts.includes(url)) {
-      setSelectedPosts(prev => prev.filter(p => p !== url));
-    } else {
-      const newCount = selectedPosts.length + 1;
-      const potentialViewsPerPost = Math.floor(parseInt(qty) / newCount);
-      
-      if (potentialViewsPerPost < 50) {
-        alert(`Cannot select more posts. Minimum 50 views per post required.\nCurrent package: ${qty} views.`);
-        return;
+    setSelectedPosts(prev => {
+      if (prev.includes(url)) {
+        return prev.filter(p => p !== url);
+      } else {
+        return [...prev, url];
       }
-      
-      setSelectedPosts(prev => [...prev, url]);
-    }
+    });
     setPostLink(""); // Clear manual input when selecting from grid
   };
 
@@ -154,25 +181,28 @@ function PostsSelectionContent() {
     const finalLinks = selectedPosts.length > 0 ? selectedPosts : (postLink ? [postLink] : []);
     
     if (finalLinks.length > 0) {
-      // Navigate to final checkout step
+      // Calculate total price based on number of videos selected
+      const count = finalLinks.length;
+      const totalBasePrice = priceValue * count;
+
       const params = new URLSearchParams({
-        username: username,
+        videoLink: finalLinks.join(','),
         qty: qty,
-        price: String(priceValue),
+        price: String(totalBasePrice), // Pass the calculated total price
         type: packageType,
-        postLink: finalLinks.join(','),
       });
       if (serviceId) {
         params.append("serviceId", serviceId);
       }
-      router.push(`/instagram/views/checkout/final?${params.toString()}`);
+      
+      const baseUrl = basePath || "/youtube/views";
+      router.push(`${baseUrl}/checkout/final?${params.toString()}`);
     }
   };
 
-  // Calculate Subtotal - Price is now total for the package, not per post
+  // Calculate Subtotal
   const postCount = selectedPosts.length || (postLink ? 1 : 0);
-  const subtotal = priceValue;
-  const viewsPerPost = Math.floor(parseInt(qty) / (postCount || 1));
+  const subtotal = priceValue * (postCount || 1);
 
   return (
     <>
@@ -194,7 +224,7 @@ function PostsSelectionContent() {
               <div className="progress-step-icon">
                 <span>2</span>
               </div>
-              <span className="progress-step-label">Posts</span>
+              <span className="progress-step-label">Videos</span>
             </div>
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
@@ -212,7 +242,7 @@ function PostsSelectionContent() {
             <div className="posts-selection-left">
               <div className="checkout-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h2 className="posts-selection-title" style={{ margin: 0 }}>Select Posts</h2>
+                  <h2 className="posts-selection-title" style={{ margin: 0 }}>Select Videos</h2>
                   <span style={{ color: '#666', fontSize: '14px' }}>
                     {selectedPosts.length || (postLink ? 1 : 0)} selected
                   </span>
@@ -229,30 +259,21 @@ function PostsSelectionContent() {
                       margin: '0 auto 20px',
                       animation: 'spin 1s linear infinite' 
                     }}></div>
-                    <p>Loading posts...</p>
-                    <style jsx>{`
-                      @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                      }
-                    `}</style>
+                    <p>Loading videos...</p>
                   </div>
                 ) : error ? (
-                   <div className="error-state" style={{ padding: '20px', textAlign: 'center', color: '#dc2626' }}>
+                   <div className="error-state" style={{ padding: '20px', textAlign: 'center', color: '#ea580c' }}>
                      <p>{error}</p>
-                     <p className="text-sm text-gray-500" style={{ marginTop: '10px' }}>Ensure your account is public.</p>
+                     <p className="text-sm text-gray-500" style={{ marginTop: '10px' }}>Ensure your channel is public.</p>
                    </div>
                 ) : (
                   <>
                     <div className="posts-grid" style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
-                      gap: '10px',
                       marginBottom: '20px'
                     }}>
-                      {posts.map((post) => (
+                      {posts.slice(0, visibleCount).map((post) => (
                         <div 
-                          key={post.id} 
+                          key={post.id}  
                           className={`post-item`}
                           onClick={() => handlePostSelect(post.url)}
                           style={{
@@ -260,7 +281,7 @@ function PostsSelectionContent() {
                             border: selectedPosts.includes(post.url) ? '3px solid #f97316' : '1px solid #eee',
                             borderRadius: '8px',
                             overflow: 'hidden',
-                            aspectRatio: '1/1',
+                            aspectRatio: '16/9',
                             position: 'relative',
                             backgroundColor: '#000'
                           }}
@@ -275,6 +296,8 @@ function PostsSelectionContent() {
                                 opacity: selectedPosts.includes(post.url) ? 0.8 : 1
                             }}
                           />
+                          
+                          {/* Selected Overlay - Checkmark */}
                           {selectedPosts.includes(post.url) && (
                             <div style={{
                               position: 'absolute',
@@ -294,6 +317,31 @@ function PostsSelectionContent() {
                               <FontAwesomeIcon icon={faCheck} />
                             </div>
                           )}
+
+                          {/* Selected Overlay - Quantity Badge */}
+                          {selectedPosts.includes(post.url) && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              background: '#f97316',
+                              color: 'white',
+                              borderRadius: '20px',
+                              padding: '4px 12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '14px',
+                              fontWeight: 'bold',
+                              zIndex: 10,
+                              whiteSpace: 'nowrap'
+                            }}>
+                              <FontAwesomeIcon icon={faEye} />
+                              <span>+ {qty}</span>
+                            </div>
+                          )}
+
                           <div style={{
                             position: 'absolute',
                             bottom: '0',
@@ -304,16 +352,23 @@ function PostsSelectionContent() {
                             color: '#fff',
                             fontSize: '10px',
                             display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'space-between'
                           }}>
-                            <span><FontAwesomeIcon icon={faPlay} style={{ marginRight: '4px' }} />{formatCount(post.views || 0)}</span>
-                            <span><FontAwesomeIcon icon={faCheck} style={{ marginRight: '4px' }} />{formatCount(post.likes || 0)}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FontAwesomeIcon icon={faEye} style={{ fontSize: '10px' }} />
+                              <span>{formatCount(post.views || 0)}</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '10px' }} />
+                              <span>{formatCount(post.likes || 0)}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                     
-                    {nextCursor && (
+                    { (nextCursor || visibleCount < posts.length) && (
                       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                         <button 
                           onClick={handleLoadMore}
@@ -339,7 +394,7 @@ function PostsSelectionContent() {
                 {/* Manual Link Input Fallback */}
                 <div className="manual-link-section" style={{ borderTop: '1px solid #eee', paddingTop: '20px' }}>
                   <p className="posts-helper-text" style={{ marginBottom: '10px' }}>
-                    Can't find your post? Enter the link manually:
+                    Can't find your video? Enter the link manually:
                   </p>
                   <form className="posts-selection-form" onSubmit={handleContinue}>
                     <div className="posts-form-group">
@@ -351,9 +406,9 @@ function PostsSelectionContent() {
                           value={postLink}
                           onChange={(e) => {
                             setPostLink(e.target.value);
-                            if (e.target.value) setSelectedPosts([]);
+                            setSelectedPosts([]); // Clear selection if typing manually
                           }}
-                          placeholder="https://www.instagram.com/p/C..."
+                          placeholder="https://www.youtube.com/watch?v=..."
                         />
                       </div>
                     </div>
@@ -379,21 +434,22 @@ function PostsSelectionContent() {
                         justifyContent: 'center',
                         marginRight: '12px'
                       }}>
-                        {userProfile?.profilePicture && !imageError ? (
-                            <img 
-                                key={userProfile.profilePicture}
-                                src={`/api/image-proxy?url=${encodeURIComponent(userProfile.profilePicture)}`}
-                                alt={userProfile.username} 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                onError={() => setImageError(true)}
-                            />
-                        ) : (
-                            <img src="/instagram-11.png" alt="Instagram" width={20} height={20} />
-                        )}
+                         {userProfile?.profilePicture && !imageError ? (
+                           <img 
+                             src={userProfile.profilePicture}
+                             alt={username} 
+                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                             onError={() => setImageError(true)}
+                           />
+                         ) : (
+                           <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
+                         )}
                       </div>
-                      <span className="order-summary-text order-summary-url" style={{ fontWeight: '600' }}>
-                        @{userProfile?.username || username || "username"}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                        <span className="order-summary-text order-summary-url" style={{ fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {userProfile?.username || username || "username"}
+                        </span>
+                      </div>
                     </div>
                     <button type="button" className="order-change-btn" onClick={() => router.back()}>Change</button>
                   </div>
@@ -404,13 +460,13 @@ function PostsSelectionContent() {
                         <FontAwesomeIcon icon={faEye} />
                       </div>
                       <div className="order-summary-details">
-                        <span className="order-summary-text">{qty} Instagram Views</span>
+                        <span className="order-summary-text">{qty} YouTube Views</span>
                         <span className="order-summary-subtext">
-                          {viewsPerPost} views / {postCount} post{postCount > 1 ? 's' : ''}
+                             {qty} views / {selectedPosts.length || (postLink ? 1 : 0)} videos
                         </span>
                       </div>
                     </div>
-                    <button type="button" className="order-change-btn" onClick={() => router.push(`/instagram/views/checkout?qty=${qty}&price=${priceValue}&type=${packageType}`)}>Change</button>
+                    <button type="button" className="order-change-btn" onClick={() => router.push(`/youtube/views/checkout?qty=${qty}&price=${priceValue}&type=${packageType}`)}>Change</button>
                   </div>
 
                   <div className="order-summary-divider"></div>
@@ -425,7 +481,7 @@ function PostsSelectionContent() {
                     className="order-continue-btn"
                     onClick={handleContinue}
                     disabled={selectedPosts.length === 0 && !postLink.trim()}
-                    style={{ opacity: (selectedPosts.length === 0 && !postLink.trim()) ? 0.7 : 1 }}
+                    style={{ backgroundColor: '#f97316' }}
                   >
                     Continue to checkout
                   </button>
@@ -436,11 +492,44 @@ function PostsSelectionContent() {
         </div>
       </main>
       <Footer />
+      <style jsx global>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .posts-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr) !important;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+        @media (max-width: 1024px) {
+          .posts-grid {
+             grid-template-columns: repeat(4, 1fr);
+          }
+        }
+        @media (max-width: 768px) {
+          .posts-grid {
+             grid-template-columns: repeat(3, 1fr);
+          }
+          .posts-selection-layout {
+            flex-direction: column;
+          }
+          .posts-selection-right {
+            margin-top: 20px;
+          }
+        }
+        @media (max-width: 480px) {
+          .posts-grid {
+             grid-template-columns: repeat(2, 1fr);
+          }
+        }
+      `}</style>
     </>
   );
 }
 
-export default function PostsSelectionPage() {
+export default function Page() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <PostsSelectionContent />

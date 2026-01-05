@@ -105,12 +105,13 @@ export async function GET() {
       hasBigPayMeConfig: !!settings.bigPayMeApiKey,
       hasRapidApiConfig: !!settings.rapidApiKey,
       hasSmtpConfig: !!settings.smtpHost,
-      // MyFatoorah
+      // MyFatoorah Settings
       myFatoorahToken: maskApiKey(getField(settings, 'myFatoorahToken', null)),
       myFatoorahBaseURL: getField(settings, 'myFatoorahBaseURL', 'https://apitest.myfatoorah.com'),
       myFatoorahTestMode: getField(settings, 'myFatoorahTestMode', true),
+      myFatoorahWebhookSecret: maskApiKey(getField(settings, 'myFatoorahWebhookSecret', null)),
 
-      // SMTP Configuration
+      // SEO & BrandingSMTP Configuration
       smtpHost: getField(settings, 'smtpHost', ''),
       smtpPort: getField(settings, 'smtpPort', 587),
       smtpSecure: getField(settings, 'smtpSecure', false),
@@ -304,6 +305,9 @@ export async function PUT(request: NextRequest) {
     }
     if (myFatoorahBaseURL !== undefined) updateData.myFatoorahBaseURL = myFatoorahBaseURL;
     if (myFatoorahTestMode !== undefined) updateData.myFatoorahTestMode = myFatoorahTestMode;
+    if (body.myFatoorahWebhookSecret !== undefined && !body.myFatoorahWebhookSecret.includes('••••')) {
+      updateData.myFatoorahWebhookSecret = body.myFatoorahWebhookSecret || null;
+    }
 
     if (defaultCurrency !== undefined) updateData.defaultCurrency = defaultCurrency;
 

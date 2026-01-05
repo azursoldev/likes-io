@@ -370,7 +370,7 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
               <div className="checkout-security">
                 <div className="checkout-security-item">
                   <FontAwesomeIcon icon={faShieldHalved} className="checkout-security-icon" />
-                  <span>100% Safe Delivery</span>
+                  <span>Account-Safe Delivery</span>
                 </div>
                 <div className="checkout-security-item">
                   <FontAwesomeIcon icon={faLock} className="checkout-security-icon" />

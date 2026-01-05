@@ -171,6 +171,7 @@ model AdminSettings {
   myFatoorahToken        String?
   myFatoorahBaseURL      String?  @default("https://apitest.myfatoorah.com")
   myFatoorahTestMode     Boolean  @default(true)
+  myFatoorahWebhookSecret String?
 
   @@map("admin_settings")
 }

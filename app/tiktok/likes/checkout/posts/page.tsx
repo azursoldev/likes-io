@@ -30,7 +30,7 @@ function PostsSelectionContent() {
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const initialPostLink = searchParams.get("postLink") || "";
   const [postLink, setPostLink] = useState(initialPostLink);
-  const [selectedPost, setSelectedPost] = useState<string>(initialPostLink);
+  const [selectedPosts, setSelectedPosts] = useState<string[]>(initialPostLink ? [initialPostLink] : []);
   
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +42,48 @@ function PostsSelectionContent() {
   const qty = searchParams.get("qty") || "500";
   const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
+
+  const formatCount = (count: number) => {
+    if (!count) return '0';
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return count.toString();
+  };
+
+  const [userProfile, setUserProfile] = useState<{ profilePicture: string; username: string } | null>(null);
+  const [imageError, setImageError] = useState(false);
+
+  const fetchUserProfile = async () => {
+    if (!username) return;
+    try {
+        console.log("Fetching user profile for:", username);
+        const response = await fetch(`/api/social/tiktok/profile?username=${username}`);
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Profile API Response:", data);
+            const profile = data.profile || data;
+            
+            if (profile.profilePicture) {
+                console.log("Setting profile picture:", profile.profilePicture);
+                setUserProfile({
+                    profilePicture: profile.profilePicture,
+                    username: profile.username
+                });
+                setImageError(false);
+            } else {
+                console.warn("No profile picture found in data");
+            }
+        } else {
+            console.error("Profile fetch failed:", response.status);
+        }
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+    }
+  };
 
   const fetchPosts = async (cursor?: string) => {
     if (!username) return;
@@ -57,21 +99,35 @@ function PostsSelectionContent() {
         ? `/api/social/tiktok/posts?username=${username}&cursor=${encodeURIComponent(cursor)}`
         : `/api/social/tiktok/posts?username=${username}`;
 
+      console.log('Fetching posts from:', url);
+
       const response = await fetch(url);
       const data = await response.json();
       
+      console.log('API Response:', data);
+
       if (response.ok) {
         // data.posts is the result object containing { posts: [...], nextCursor: ... }
         const result = data.posts;
+        if (!result) {
+            console.error('Invalid response structure: data.posts is undefined', data);
+            throw new Error('Invalid API response');
+        }
         const newPosts = result.posts || [];
+        console.log('Parsed posts:', newPosts.length);
         
         if (cursor) {
-          setPosts(prev => [...prev, ...newPosts]);
+          setPosts(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const uniqueNewPosts = newPosts.filter((p: Post) => !existingIds.has(p.id));
+            return [...prev, ...uniqueNewPosts];
+          });
         } else {
           setPosts(newPosts);
         }
         setNextCursor(result.nextCursor || null);
       } else {
+        console.error('API Error:', data.error);
         if (!cursor) setError(data.error || "Failed to fetch posts");
       }
     } catch (err) {
@@ -87,6 +143,7 @@ function PostsSelectionContent() {
     // If we have a username but no specific post link, fetch posts
     if (username && !initialPostLink) {
       fetchPosts();
+      fetchUserProfile();
     }
   }, [username, initialPostLink]);
 
@@ -97,17 +154,24 @@ function PostsSelectionContent() {
   };
 
   const handlePostSelect = (url: string) => {
-    setSelectedPost(url);
-    setPostLink(url); // Sync manual input
+    setSelectedPosts(prev => {
+      if (prev.includes(url)) {
+        return prev.filter(p => p !== url);
+      } else {
+        return [...prev, url];
+      }
+    });
+    setPostLink(""); // Clear manual input when selecting from grid to avoid confusion
   };
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalLink = selectedPost || postLink;
+    const finalLinks = selectedPosts.length > 0 ? selectedPosts : (postLink ? [postLink] : []);
 
-    if (finalLink.trim()) {
+    if (finalLinks.length > 0) {
       // Navigate to final checkout step
-      router.push(`/tiktok/likes/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${packageType}&postLink=${encodeURIComponent(finalLink)}`);
+      // Pass comma-separated links
+      router.push(`/tiktok/likes/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${packageType}&postLink=${encodeURIComponent(finalLinks.join(','))}`);
     }
   };
 
@@ -148,7 +212,12 @@ function PostsSelectionContent() {
             {/* Left Column - Select Post */}
             <div className="posts-selection-left">
               <div className="checkout-card">
-                <h2 className="posts-selection-title">Select Post</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 className="posts-selection-title" style={{ margin: 0 }}>Select Posts</h2>
+                  <span style={{ color: '#666', fontSize: '14px' }}>
+                    {selectedPosts.length || (postLink ? 1 : 0)} selected
+                  </span>
+                </div>
                 
                 {loading ? (
                   <div className="loading-state" style={{ padding: '40px', textAlign: 'center' }}>
@@ -191,10 +260,10 @@ function PostsSelectionContent() {
                           onClick={() => handlePostSelect(post.url)}
                           style={{
                             cursor: 'pointer',
-                            border: selectedPost === post.url ? '3px solid #f97316' : '1px solid #eee',
+                            border: selectedPosts.includes(post.url) ? '3px solid #f97316' : '1px solid #eee',
                             borderRadius: '8px',
                             overflow: 'hidden',
-                            aspectRatio: '9/16',
+                            aspectRatio: '1/1',
                             position: 'relative',
                             backgroundColor: '#000'
                           }}
@@ -202,21 +271,29 @@ function PostsSelectionContent() {
                           <img 
                             src={post.thumbnail} 
                             alt="TikTok video" 
+                            referrerPolicy="no-referrer"
                             style={{ 
                               width: '100%', 
                               height: '100%', 
                               objectFit: 'cover',
-                              opacity: selectedPost === post.url ? 0.8 : 1
+                              opacity: selectedPosts.includes(post.url) ? 0.8 : 1
                             }} 
                           />
-                          {selectedPost === post.url && (
+                          {selectedPosts.includes(post.url) && (
                             <div style={{
                               position: 'absolute',
-                              top: '50%',
-                              left: '50%',
-                              transform: 'translate(-50%, -50%)',
-                              color: '#fff',
-                              fontSize: '24px'
+                              top: '5px',
+                              right: '5px',
+                              background: '#f97316',
+                              color: 'white',
+                              borderRadius: '50%',
+                              width: '20px',
+                              height: '20px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              zIndex: 10
                             }}>
                               <FontAwesomeIcon icon={faCheck} />
                             </div>
@@ -232,10 +309,16 @@ function PostsSelectionContent() {
                             fontSize: '10px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '4px'
+                            justifyContent: 'space-between'
                           }}>
-                            <FontAwesomeIcon icon={faPlay} style={{ fontSize: '8px' }} />
-                            <span>{post.views || 0}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FontAwesomeIcon icon={faPlay} style={{ fontSize: '10px' }} />
+                              <span>{formatCount(post.views || 0)}</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FontAwesomeIcon icon={faHeart} style={{ fontSize: '10px' }} />
+                              <span>{formatCount(post.likes || 0)}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -279,7 +362,7 @@ function PostsSelectionContent() {
                           value={postLink}
                           onChange={(e) => {
                             setPostLink(e.target.value);
-                            setSelectedPost(e.target.value);
+                            setSelectedPosts([]); // Clear grid selection when manually typing
                           }}
                           placeholder="https://www.tiktok.com/@username/video/..."
                         />
@@ -296,11 +379,34 @@ function PostsSelectionContent() {
                 <div className="order-summary-section">
                   <div className="order-summary-item">
                     <div className="order-summary-left">
-                      <div className="order-summary-icon">
-                        <img src="/tiktok-9.png" alt="TikTok" width={20} height={20} />
+                      <div className="order-summary-icon" style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        borderRadius: '50%', 
+                        overflow: 'hidden', 
+                        border: '2px solid #f97316',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '12px'
+                      }}>
+                         {userProfile?.profilePicture && !imageError ? (
+                           <img 
+                             src={`/api/image-proxy?url=${encodeURIComponent(userProfile.profilePicture)}`}
+                             alt={username} 
+                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                             referrerPolicy="no-referrer"
+                             onError={(e) => {
+                               console.error("Image load error for URL:", userProfile.profilePicture);
+                               setImageError(true);
+                             }}
+                           />
+                         ) : (
+                           <img src="/tiktok-9.png" alt="TikTok" width={20} height={20} />
+                         )}
                       </div>
-                      <span className="order-summary-text order-summary-url">
-                        {postLink ? 'Video Selected' : `@${username}`}
+                      <span className="order-summary-text order-summary-url" style={{ fontWeight: '600' }}>
+                        @{username || "username"}
                       </span>
                     </div>
                     <button type="button" className="order-change-btn" onClick={() => router.back()}>Change</button>
@@ -313,9 +419,10 @@ function PostsSelectionContent() {
                       </div>
                       <div className="order-summary-details">
                         <span className="order-summary-text">{qty} TikTok Likes</span>
-                        <span className="order-summary-subtext">Applying to 1 post.</span>
+                        <span className="order-summary-subtext">Applying to {selectedPosts.length || (postLink ? 1 : 0)} post{selectedPosts.length !== 1 && (selectedPosts.length !== 0 || !postLink) ? 's' : ''}.</span>
                       </div>
                     </div>
+                    <button type="button" className="order-change-btn" onClick={() => router.push(`/tiktok/likes/checkout?qty=${qty}&price=${priceValue}&type=${packageType}`)}>Change</button>
                   </div>
 
                   <div className="order-summary-divider"></div>
@@ -329,7 +436,7 @@ function PostsSelectionContent() {
                     type="button" 
                     className="order-continue-btn"
                     onClick={handleContinue}
-                    disabled={!selectedPost && !postLink.trim()}
+                    disabled={selectedPosts.length === 0 && !postLink.trim()}
                   >
                     Continue to checkout
                   </button>

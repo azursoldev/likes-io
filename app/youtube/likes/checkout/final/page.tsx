@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
+import Script from "next/script";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -40,6 +41,89 @@ function FinalCheckoutContent() {
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  
+  // MyFatoorah State
+  const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
+  const [isMfLoaded, setIsMfLoaded] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (paymentMethod === "card" && !mfSession) {
+      // Initiate MyFatoorah Session
+      fetch("/api/payments/initiate-session", {
+        method: "POST",
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            console.error("MF Init Error:", data.error);
+            setError("Failed to load payment form");
+          } else {
+            setMfSession(data);
+          }
+        })
+        .catch(err => {
+          console.error("MF Fetch Error:", err);
+          setError("Failed to load payment form");
+        });
+    }
+  }, [paymentMethod, mfSession]);
+
+  useEffect(() => {
+    if (paymentMethod === "card" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+      try {
+        const config = {
+          countryCode: mfSession.countryCode,
+          sessionId: mfSession.sessionId,
+          cardViewId: "mf-card-element",
+          supportedNetworks: "visa,mastercard,amex,mada",
+          style: {
+            direction: "ltr",
+            cardHeight: 130,
+            input: {
+              color: "black",
+              fontSize: "13px",
+              fontFamily: "sans-serif",
+              inputHeight: "32px",
+              inputMargin: "0px",
+              borderColor: "e2e8f0",
+              borderWidth: "1px",
+              borderRadius: "8px",
+              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+              placeHolder: {
+                holderName: "Name On Card",
+                cardNumber: "Number",
+                expiryDate: "MM / YY",
+                securityCode: "CVV",
+              }
+            },
+            label: {
+              display: false,
+              color: "black",
+              fontSize: "13px",
+              fontWeight: "normal",
+              fontFamily: "sans-serif",
+              text: {
+                holderName: "Card Holder Name",
+                cardNumber: "Card Number",
+                expiryDate: "Expiry Date",
+                securityCode: "Security Code",
+              },
+            },
+            error: {
+              borderColor: "red",
+              borderRadius: "8px",
+              boxShadow: "0px",
+            },
+          },
+        };
+        (window as any).myFatoorah.init(config);
+      } catch (err) {
+        console.error("MF Init Exception:", err);
+      }
+    }
+  }, [paymentMethod, mfSession, isMfLoaded]);
 
   const offers = [
     { id: "offer1", text: "50 likes x 10 videos", price: 5.99, icon: faThumbsUp },
@@ -61,14 +145,100 @@ function FinalCheckoutContent() {
   const totalPrice = priceValue + offersTotal;
   const currencyCode = currency;
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Processing payment...");
+    setProcessing(true);
+    setError("");
+
+    try {
+      if (paymentMethod === "card") {
+        if (!mfSession || !(window as any).myFatoorah) {
+          throw new Error("Payment form not loaded");
+        }
+
+        // Process MyFatoorah Embedded Payment
+        const mfResponse = await (window as any).myFatoorah.submit();
+        // The response format for V2 embedded is usually { SessionId: "...", CardBrand: "..." } if successful
+        // Or it might throw/return error.
+        
+        console.log("MF Submit Response:", mfResponse);
+
+        if (!mfResponse || !mfResponse.SessionId) {
+          throw new Error("Invalid payment data");
+        }
+
+        // Now call our backend with the card token (SessionId)
+        await processBackendPayment(mfResponse.SessionId);
+
+      } else {
+        // Crypto or other methods
+        await processBackendPayment();
+      }
+    } catch (err: any) {
+      console.error("Payment Error:", err);
+      // Check if it's a validation error from MyFatoorah
+      if (err.message && err.message.includes("MyFatoorah")) {
+         setError("Please check your card details.");
+      } else {
+         setError(err.message || "Payment failed");
+      }
+      setProcessing(false);
+    }
+  };
+
+  const processBackendPayment = async (cardSessionId?: string) => {
+    const platformUpper = "YOUTUBE";
+    const serviceType = "LIKES"; // Hardcoded for this page
+
+    const paymentResponse = await fetch("/api/payments/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        platform: platformUpper,
+        serviceType,
+        quantity: parseInt(qty) || 500,
+        price: totalPrice,
+        link: postLink,
+        paymentMethod: paymentMethod === "card" ? "myfatoorah" : paymentMethod,
+        currency: currencyCode,
+        email: email, // Email might be needed for receipt
+        sessionId: cardSessionId // Pass the card token
+      }),
+    });
+
+    if (!paymentResponse.ok) {
+      const errorData = await paymentResponse.json();
+      if (paymentResponse.status === 401) {
+        throw new Error("Please log in to complete your purchase");
+      }
+      throw new Error(errorData.error || "Failed to process payment");
+    }
+
+    const data = await paymentResponse.json();
+    
+    // For embedded, we might get a success immediately or a redirect (3DS)
+    if (data.checkoutUrl) {
+      window.location.href = data.checkoutUrl;
+    } else if (data.paymentStatus === "Paid" || data.paymentStatus === "Success") {
+      // Direct success
+      window.location.href = `/checkout/success?orderId=${data.orderId}`;
+    } else {
+      // Pending or other
+      window.location.href = `/checkout/success?orderId=${data.orderId}`;
+    }
   };
 
   return (
     <>
       <Header />
+      {mfSession?.scriptUrl && (
+        <Script 
+          src={mfSession.scriptUrl}
+          strategy="lazyOnload"
+          onLoad={() => setIsMfLoaded(true)}
+        />
+      )}
       <main className="final-checkout-page">
         <div className="final-checkout-container">
           <div className="checkout-progress">
@@ -123,19 +293,15 @@ function FinalCheckoutContent() {
                       
                       {paymentMethod === "card" && (
                         <div className="card-form">
-                          <div className="form-group">
-                            <label className="form-label">Cardholder name</label>
-                            <input
-                              type="text"
-                              className="form-input"
-                              value={cardholderName}
-                              onChange={(e) => setCardholderName(e.target.value)}
-                              placeholder="John Doe"
-                              required
-                            />
+                          {/* MyFatoorah Embedded Container */}
+                          <div style={{ width: "100%", minHeight: "150px" }}>
+                            {!isMfLoaded && <p>Loading payment form...</p>}
+                            <div id="mf-card-element" style={{ width: "100%" }}></div>
                           </div>
                           
-                          <div className="form-group">
+                          {/* Fallback or additional fields if needed, but usually MF handles card data */}
+                          {/* We might still need email if not collected elsewhere, but it's in state */}
+                          <div className="form-group" style={{ marginTop: "1rem" }}>
                             <label className="form-label">Email address</label>
                             <input
                               type="email"
@@ -145,66 +311,6 @@ function FinalCheckoutContent() {
                               placeholder="john@example.com"
                               required
                             />
-                          </div>
-                          
-                          <div className="form-group">
-                            <label className="form-label">Card number</label>
-                            <div className="card-input-wrapper">
-                              <input
-                                type="text"
-                                className="form-input card-number"
-                                value={cardNumber}
-                                onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, "").slice(0, 16))}
-                                placeholder="1234 5678 9012 3456"
-                                maxLength={19}
-                                required
-                              />
-                              <div className="card-icons">
-                                <span className="card-icon">Visa</span>
-                                <span className="card-icon">MC</span>
-                                <span className="card-icon">Amex</span>
-                                <span className="card-icon">Disc</span>
-                                <span className="card-icon">JCB</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="form-row">
-                            <div className="form-group">
-                              <label className="form-label">MM/YY</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                value={expiry}
-                                onChange={(e) => {
-                                  const value = e.target.value.replace(/\D/g, "").slice(0, 4);
-                                  if (value.length >= 2) {
-                                    setExpiry(value.slice(0, 2) + "/" + value.slice(2));
-                                  } else {
-                                    setExpiry(value);
-                                  }
-                                }}
-                                placeholder="MM/YY"
-                                maxLength={5}
-                                required
-                              />
-                            </div>
-                            
-                            <div className="form-group">
-                              <label className="form-label">
-                                CVC
-                                <FontAwesomeIcon icon={faInfoCircle} className="info-icon" />
-                              </label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                value={cvc}
-                                onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                                placeholder="123"
-                                maxLength={4}
-                                required
-                              />
-                            </div>
                           </div>
                         </div>
                       )}
