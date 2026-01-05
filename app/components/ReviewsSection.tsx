@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { useServiceContent } from "./ServicePageContent";
 
 export type ReviewItem = {
@@ -49,10 +49,19 @@ export default function ReviewsSection({
   const reviews = propReviews || (context?.testimonials && context.testimonials.length > 0 ? context.testimonials : DEFAULT_REVIEWS);
 
   const total = reviews.length;
-  const CARD_W = 344; // card width used for sliding (desktop)
+  const [isMobile, setIsMobile] = useState(false);
+  const CARD_W = isMobile ? 300 : 344; // card width used for sliding
   const GAP = 24; // spacing between cards in the track
-  const VISIBLE = 3; // show three cards per view
-  const STEP_W = CARD_W + GAP; // pixels to move per step (one card at a time)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 900);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const VISIBLE = isMobile ? 1 : 3; // show one card on mobile, three on desktop
+  const STEP_W = CARD_W + GAP; // pixels to move per step
   const MAX_INDEX = Math.max(0, total - 1); // allow scrolling to show last card
 
   const next = () => setIndex((i) => Math.min(i + 1, MAX_INDEX));
@@ -65,7 +74,9 @@ export default function ReviewsSection({
         <p className="reviews-sub">{subtitle}</p>
 
         <div className="reviews-wrap">
-          <button className={`reviews-nav left ${index === 0 ? "disabled" : ""}`} aria-label="Previous" aria-disabled={index===0} onClick={prev}>←</button>
+          <button className={`reviews-nav left ${index === 0 ? "disabled" : ""}`} aria-label="Previous" aria-disabled={index===0} onClick={prev}>
+            <FontAwesomeIcon icon={faChevronLeft} />
+          </button>
           <div className="reviews-viewport" style={{ width: `${VISIBLE * CARD_W + (VISIBLE - 1) * GAP}px` }}>
             <div className="reviews-track" style={{ transform: `translateX(-${index * STEP_W}px)` }}>
               {reviews.map((r, idx) => (
@@ -91,7 +102,9 @@ export default function ReviewsSection({
               ))}
             </div>
           </div>
-          <button className={`reviews-nav right ${index >= MAX_INDEX ? "disabled" : ""}`} aria-label="Next" aria-disabled={index>=MAX_INDEX} onClick={next}>→</button>
+          <button className={`reviews-nav right ${index >= MAX_INDEX ? "disabled" : ""}`} aria-label="Next" aria-disabled={index>=MAX_INDEX} onClick={next}>
+            <FontAwesomeIcon icon={faChevronRight} />
+          </button>
         </div>
 
         <div className="reviews-dots">

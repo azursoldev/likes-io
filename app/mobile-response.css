@@ -607,6 +607,112 @@ html.dark .mobile-dropdown {
   .contact-card-intro {
     text-align: left;
   }
+  
+  /* Package Selector Mobile Response */
+  .packages {
+    padding-top: 2rem !important;
+  }
+  
+  .packages .packages-card {
+    padding: 1.5rem 1rem !important;
+    border-radius: 20px !important;
+  }
+  
+  .pkg-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
+    background: #F3F4F6 !important;
+    padding: 4px !important;
+    border-radius: 8px !important;
+    margin-bottom: 1.5rem !important;
+    width: 100% !important;
+  }
+  
+  .pkg-tab {
+    flex: 1 !important;
+    padding: 15px 24px !important;
+    text-align: center;
+    white-space: nowrap;
+    width: auto !important;
+    background: transparent !important;
+    color: #4B5563 !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .pkg-tab.active {
+    background: #F97316 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+  }
+  
+  .packages .pkg-grid {
+    display: grid !important; /* Force grid layout */
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  
+  .packages button.pkg-item {
+    min-width: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 12px 8px !important;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .packages button.pkg-item:last-child {
+    width: 100% !important;
+  }
+  
+  .pkg-bottom {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .buy-btn {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.5rem;
+    background: #f97316 !important; /* Orange background */
+    color: #ffffff !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    font-size: 18px !important;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3) !important;
+    text-decoration: none !important;
+    border: none !important;
+    max-width: 100% !important;
+  }
+
+  /* Compare Like Quality Mobile Response */
+  .quality-compare {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+  
+  .qc-columns {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2rem !important;
+  }
+  
+  .qc-col {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -620,5 +726,112 @@ html.dark .mobile-dropdown {
   
   .hero-section .btn {
     width: 100%;
+  }
+
+  .pkg-tabs-inner{
+    flex: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .review-card {
+    width: 300px !important;
+    min-width: 300px !important;
+  }
+  
+  .reviews-viewport {
+    width: 300px !important;
+    overflow: hidden !important;
+  }
+
+  .reviews-nav {
+    display: grid !important;
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 20 !important;
+    background: #fff !important;
+    border: 1px solid rgba(17,24,39,0.1) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+  }
+  
+  .reviews-nav.left {
+    left: -12px !important;
+  }
+  
+  .reviews-nav.right {
+    right: -12px !important;
+  }
+}
+
+/* Free Instagram Likes and Followers Page Fixes */
+@media (max-width: 900px) {
+  .free-likes-form-card-wrapper {
+    padding: 0 1rem !important;
+    display: flex !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+  
+  .free-likes-form-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .free-likes-hero .container {
+    padding: 0 2rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .affiliate-how-it-works .container {
+    padding: 0 2rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .affiliate-form-section .container {
+    padding: 0 2rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .free-likes-progress {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 5px !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+  }
+
+  .progress-step-label {
+    font-size: 12px !important;
+  }
+
+  .progress-line {
+    width: auto !important;
+    flex: 1 !important;
+    min-width: 10px !important;
+    margin: 0 5px !important;
+    margin-top: -20px !important;
+  }
+
+  /* Homepage Get Started Platform Tabs Fix */
+  .gs-platforms {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    gap: 4px !important;
+    padding: 4px !important;
+  }
+
+  .gs-platforms .pill {
+    flex: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 4px !important;
+    font-size: 12px !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
   }
 }
