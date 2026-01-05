@@ -140,10 +140,20 @@ function PostsSelectionContent() {
   };
 
   const handlePostSelect = (url: string) => {
+    const totalQty = parseInt(qty) || 0;
+
     setSelectedPosts(prev => {
       if (prev.includes(url)) {
         return prev.filter(p => p !== url);
       } else {
+        const newCount = prev.length + 1;
+        const newLikesPerPost = Math.floor(totalQty / newCount);
+        
+        if (newLikesPerPost < 50 && newCount > 1) {
+          alert(`Cannot split ${totalQty} likes into ${newCount} posts. Minimum 50 likes per post required.`);
+          return prev;
+        }
+
         return [...prev, url];
       }
     });
@@ -170,10 +180,11 @@ function PostsSelectionContent() {
     }
   };
 
-  // Calculate Subtotal
-  // Logic: The price passed is per package. If multiple posts are selected, we multiply the price.
-  const postCount = selectedPosts.length || (postLink ? 1 : 0);
-  const subtotal = priceValue * (postCount || 1);
+  // Calculate Subtotal and Likes per post
+  // Logic: The price is fixed for the package. We split the likes across selected posts.
+  const postCount = selectedPosts.length || (postLink ? 1 : 1);
+  const subtotal = priceValue; // Price stays the same regardless of post count
+  const likesPerPost = Math.floor(parseInt(qty) / postCount);
 
   return (
     <>
@@ -339,7 +350,7 @@ function PostsSelectionContent() {
                               whiteSpace: 'nowrap'
                             }}>
                               <FontAwesomeIcon icon={faThumbsUp} />
-                              <span>+ {qty}</span>
+                              <span>+ {likesPerPost}</span>
                             </div>
                           )}
 
