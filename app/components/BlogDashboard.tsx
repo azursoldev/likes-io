@@ -330,12 +330,15 @@ export default function BlogDashboard() {
                     setSelectedPost(null);
                     setEditForm({
                       title: "",
+                      slug: "",
                       excerpt: "",
                       content: "",
                       featuredImageUrl: "",
                       category: "General",
                       publishDate: new Date().toISOString().slice(0, 10),
                       published: false,
+                      metaTitle: "",
+                      metaDescription: "",
                     });
                     setShowEditModal(true);
                   }}
