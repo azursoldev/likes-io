@@ -279,7 +279,7 @@ function PostsSelectionContent() {
                   <>
                     <div className="posts-grid" style={{ 
                       display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
+                      gridTemplateColumns: 'repeat(5, 1fr)', 
                       gap: '10px',
                       marginBottom: '20px'
                     }}>
@@ -474,7 +474,7 @@ function PostsSelectionContent() {
                       <div className="order-summary-details">
                         <span className="order-summary-text">{qty} YouTube Likes</span>
                         <span className="order-summary-subtext">
-                             {qty} likes / {selectedPosts.length || (postLink ? 1 : 0)} posts
+                             {likesPerPost} likes / {selectedPosts.length || (postLink ? 1 : 0)} posts
                         </span>
                       </div>
                     </div>

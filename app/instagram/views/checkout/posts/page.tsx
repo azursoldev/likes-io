@@ -246,7 +246,7 @@ function PostsSelectionContent() {
                   <>
                     <div className="posts-grid" style={{ 
                       display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
+                      gridTemplateColumns: 'repeat(5, 1fr)', 
                       gap: '10px',
                       marginBottom: '20px'
                     }}>

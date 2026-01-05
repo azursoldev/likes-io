@@ -15,8 +15,14 @@ import {
   faLink,
   faShieldHalved,
   faTag,
-  faCoins
+  faCoins,
+  faWallet
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  faApple,
+  faGoogle,
+  faBitcoin
+} from "@fortawesome/free-brands-svg-icons";
 import { useSearchParams } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
@@ -46,7 +52,7 @@ function FinalCheckoutContent() {
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later" | "apple_pay" | "google_pay">("card");
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -407,6 +413,50 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="apple_pay"
+                          checked={paymentMethod === "apple_pay"}
+                          onChange={() => setPaymentMethod("apple_pay")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faApple} className="payment-option-icon" />
+                        <span>Apple Pay</span>
+                      </label>
+                      {paymentMethod === "apple_pay" && (
+                         <div className="crypto-form">
+                           <div className="crypto-message-box">
+                             <p>You will be redirected to Apple Pay to complete your payment.</p>
+                           </div>
+                         </div>
+                       )}
+                    </div>
+
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="google_pay"
+                          checked={paymentMethod === "google_pay"}
+                          onChange={() => setPaymentMethod("google_pay")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faGoogle} className="payment-option-icon" />
+                        <span>Google Pay</span>
+                      </label>
+                      {paymentMethod === "google_pay" && (
+                         <div className="crypto-form">
+                           <div className="crypto-message-box">
+                             <p>You will be redirected to Google Pay to complete your payment.</p>
+                           </div>
+                         </div>
+                       )}
+                    </div>
+
                     {/* Crypto Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
@@ -418,7 +468,7 @@ function FinalCheckoutContent() {
                           onChange={() => setPaymentMethod("crypto")}
                           className="payment-radio"
                         />
-                        <FontAwesomeIcon icon={faCoins} className="payment-option-icon" />
+                        <FontAwesomeIcon icon={faBitcoin} className="payment-option-icon" />
                         <span>Pay with Crypto</span>
                       </label>
                       

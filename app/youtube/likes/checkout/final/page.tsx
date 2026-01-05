@@ -16,8 +16,14 @@ import {
   faUserPlus,
   faShieldHalved,
   faTag,
-  faCoins
+  faCoins,
+  faWallet
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  faApple,
+  faGoogle,
+  faBitcoin
+} from "@fortawesome/free-brands-svg-icons";
 import { useSearchParams, usePathname } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
@@ -32,7 +38,7 @@ function FinalCheckoutContent() {
   const packageType = searchParams.get("type") || "High-Quality";
   const postLink = searchParams.get("postLink") || "";
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later" | "apple_pay" | "google_pay">("card");
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -49,7 +55,7 @@ function FinalCheckoutContent() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (paymentMethod === "card" && !mfSession) {
+    if (paymentMethod === "myfatoorah" && !mfSession) {
       // Initiate MyFatoorah Session
       fetch("/api/payments/initiate-session", {
         method: "POST",
@@ -71,7 +77,7 @@ function FinalCheckoutContent() {
   }, [paymentMethod, mfSession]);
 
   useEffect(() => {
-    if (paymentMethod === "card" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
       try {
         const config = {
           countryCode: mfSession.countryCode,
@@ -98,19 +104,7 @@ function FinalCheckoutContent() {
                 securityCode: "CVV",
               }
             },
-            label: {
-              display: false,
-              color: "black",
-              fontSize: "13px",
-              fontWeight: "normal",
-              fontFamily: "sans-serif",
-              text: {
-                holderName: "Card Holder Name",
-                cardNumber: "Card Number",
-                expiryDate: "Expiry Date",
-                securityCode: "Security Code",
-              },
-            },
+            label: { display: false },
             error: {
               borderColor: "red",
               borderRadius: "8px",
@@ -150,82 +144,82 @@ function FinalCheckoutContent() {
     setProcessing(true);
     setError("");
 
+    if (paymentMethod === 'pay_later') {
+      alert(`Test Checkout Successful!\n\nPlatform: YouTube\nService: Likes\nQuantity: ${qty}\nTotal Price: ${formatPrice(totalPrice)}`);
+      setProcessing(false);
+      return;
+    }
+
     try {
+      let cardSessionId: string | undefined;
+
+      // Validate required fields
       if (paymentMethod === "card") {
-        if (!mfSession || !(window as any).myFatoorah) {
-          throw new Error("Payment form not loaded");
+        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
+          setError("Please fill in all card details");
+          setProcessing(false);
+          return;
         }
-
-        // Process MyFatoorah Embedded Payment
+      } else if (paymentMethod === "myfatoorah") {
+        if (!mfSession || !(window as any).myFatoorah) {
+           throw new Error("Payment form not loaded");
+        }
         const mfResponse = await (window as any).myFatoorah.submit();
-        // The response format for V2 embedded is usually { SessionId: "...", CardBrand: "..." } if successful
-        // Or it might throw/return error.
-        
-        console.log("MF Submit Response:", mfResponse);
-
         if (!mfResponse || !mfResponse.SessionId) {
           throw new Error("Invalid payment data");
         }
+        cardSessionId = mfResponse.SessionId;
+      }
 
-        // Now call our backend with the card token (SessionId)
-        await processBackendPayment(mfResponse.SessionId);
+      if (!postLink && !username) {
+         // Should have at least one
+      }
 
+      const platformUpper = "YOUTUBE";
+      const serviceType = "LIKES";
+
+      const paymentResponse = await fetch("/api/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          platform: platformUpper,
+          serviceType,
+          quantity: parseInt(qty) || 500,
+          price: totalPrice,
+          link: postLink || `https://youtube.com/@${username}`,
+          paymentMethod: paymentMethod,
+          currency: currencyCode,
+          email: email,
+          sessionId: cardSessionId
+        }),
+      });
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        if (paymentResponse.status === 401) {
+          throw new Error("Please log in to complete your purchase");
+        }
+        throw new Error(errorData.error || "Failed to process payment");
+      }
+
+      const { checkoutUrl, paymentId, paymentStatus, orderId } = await paymentResponse.json();
+      
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else if (paymentStatus === "Paid" || paymentStatus === "Success") {
+        window.location.href = `/checkout/success?orderId=${orderId}`;
       } else {
-        // Crypto or other methods
-        await processBackendPayment();
+        window.location.href = `/checkout/success?orderId=${orderId}`;
       }
     } catch (err: any) {
-      console.error("Payment Error:", err);
-      // Check if it's a validation error from MyFatoorah
+      console.error("Payment error:", err);
       if (err.message && err.message.includes("MyFatoorah")) {
-         setError("Please check your card details.");
+        setError("Please check your card details.");
       } else {
-         setError(err.message || "Payment failed");
+        setError(err.message || "Failed to process payment. Please try again.");
       }
       setProcessing(false);
-    }
-  };
-
-  const processBackendPayment = async (cardSessionId?: string) => {
-    const platformUpper = "YOUTUBE";
-    const serviceType = "LIKES"; // Hardcoded for this page
-
-    const paymentResponse = await fetch("/api/payments/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        platform: platformUpper,
-        serviceType,
-        quantity: parseInt(qty) || 500,
-        price: totalPrice,
-        link: postLink,
-        paymentMethod: paymentMethod === "card" ? "myfatoorah" : paymentMethod,
-        currency: currencyCode,
-        email: email, // Email might be needed for receipt
-        sessionId: cardSessionId // Pass the card token
-      }),
-    });
-
-    if (!paymentResponse.ok) {
-      const errorData = await paymentResponse.json();
-      if (paymentResponse.status === 401) {
-        throw new Error("Please log in to complete your purchase");
-      }
-      throw new Error(errorData.error || "Failed to process payment");
-    }
-
-    const data = await paymentResponse.json();
-    
-    // For embedded, we might get a success immediately or a redirect (3DS)
-    if (data.checkoutUrl) {
-      window.location.href = data.checkoutUrl;
-    } else if (data.paymentStatus === "Paid" || data.paymentStatus === "Success") {
-      // Direct success
-      window.location.href = `/checkout/success?orderId=${data.orderId}`;
-    } else {
-      // Pending or other
-      window.location.href = `/checkout/success?orderId=${data.orderId}`;
     }
   };
 
@@ -277,6 +271,7 @@ function FinalCheckoutContent() {
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     
+                    {/* Card Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
@@ -293,15 +288,19 @@ function FinalCheckoutContent() {
                       
                       {paymentMethod === "card" && (
                         <div className="card-form">
-                          {/* MyFatoorah Embedded Container */}
-                          <div style={{ width: "100%", minHeight: "150px" }}>
-                            {!isMfLoaded && <p>Loading payment form...</p>}
-                            <div id="mf-card-element" style={{ width: "100%" }}></div>
+                          <div className="form-group">
+                            <label className="form-label">Cardholder name</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              value={cardholderName}
+                              onChange={(e) => setCardholderName(e.target.value)}
+                              placeholder="John Doe"
+                              required
+                            />
                           </div>
                           
-                          {/* Fallback or additional fields if needed, but usually MF handles card data */}
-                          {/* We might still need email if not collected elsewhere, but it's in state */}
-                          <div className="form-group" style={{ marginTop: "1rem" }}>
+                          <div className="form-group">
                             <label className="form-label">Email address</label>
                             <input
                               type="email"
@@ -312,10 +311,115 @@ function FinalCheckoutContent() {
                               required
                             />
                           </div>
+                          
+                          <div className="form-group">
+                            <label className="form-label">Card number</label>
+                            <div className="card-input-wrapper">
+                              <input
+                                type="text"
+                                className="form-input card-number"
+                                value={cardNumber}
+                                onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, "").slice(0, 16))}
+                                placeholder="1234 5678 9012 3456"
+                                maxLength={19}
+                                required
+                              />
+                              <div className="card-icons">
+                                <span className="card-icon">Visa</span>
+                                <span className="card-icon">MC</span>
+                                <span className="card-icon">Amex</span>
+                                <span className="card-icon">Disc</span>
+                                <span className="card-icon">JCB</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label className="form-label">MM/YY</label>
+                              <input
+                                type="text"
+                                className="form-input"
+                                value={expiry}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, "").slice(0, 4);
+                                  if (value.length >= 2) {
+                                    setExpiry(value.slice(0, 2) + "/" + value.slice(2));
+                                  } else {
+                                    setExpiry(value);
+                                  }
+                                }}
+                                placeholder="MM/YY"
+                                maxLength={5}
+                                required
+                              />
+                            </div>
+                            
+                            <div className="form-group">
+                              <label className="form-label">
+                                CVC
+                                <FontAwesomeIcon icon={faInfoCircle} className="info-icon" />
+                              </label>
+                              <input
+                                type="text"
+                                className="form-input"
+                                value={cvc}
+                                onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                                placeholder="123"
+                                maxLength={4}
+                                required
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
 
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="apple_pay"
+                          checked={paymentMethod === "apple_pay"}
+                          onChange={() => setPaymentMethod("apple_pay")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faApple} className="payment-option-icon" />
+                        <span>Apple Pay</span>
+                      </label>
+                      {paymentMethod === "apple_pay" && (
+                         <div className="crypto-form">
+                           <div className="crypto-message-box">
+                             <p>You will be redirected to Apple Pay to complete your payment.</p>
+                           </div>
+                         </div>
+                       )}
+                    </div>
+
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="google_pay"
+                          checked={paymentMethod === "google_pay"}
+                          onChange={() => setPaymentMethod("google_pay")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faGoogle} className="payment-option-icon" />
+                        <span>Google Pay</span>
+                      </label>
+                      {paymentMethod === "google_pay" && (
+                         <div className="crypto-form">
+                           <div className="crypto-message-box">
+                             <p>You will be redirected to Google Pay to complete your payment.</p>
+                           </div>
+                         </div>
+                       )}
+                    </div>
+
+                    {/* Crypto Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
@@ -326,7 +430,7 @@ function FinalCheckoutContent() {
                           onChange={() => setPaymentMethod("crypto")}
                           className="payment-radio"
                         />
-                        <FontAwesomeIcon icon={faCoins} className="payment-option-icon" />
+                        <FontAwesomeIcon icon={faBitcoin} className="payment-option-icon" />
                         <span>Pay with Crypto</span>
                       </label>
                       
@@ -334,6 +438,56 @@ function FinalCheckoutContent() {
                         <div className="crypto-form">
                           <div className="crypto-message-box">
                             <p>You will be redirected to Cryptomus to complete your payment securely.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* MyFatoorah Payment Option */}
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="myfatoorah"
+                          checked={paymentMethod === "myfatoorah"}
+                          onChange={() => setPaymentMethod("myfatoorah")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
+                        <span>MyFatoorah (KNET, Visa/Master)</span>
+                      </label>
+                      
+                      {paymentMethod === "myfatoorah" && (
+                        <div className="crypto-form">
+                          {/* MyFatoorah Embedded Container */}
+                          <div style={{ width: "100%", minHeight: "150px" }}>
+                            {!isMfLoaded && <p>Loading payment form...</p>}
+                            <div id="mf-card-element" style={{ width: "100%" }}></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Pay Later (Test) Option */}
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="pay_later"
+                          checked={paymentMethod === "pay_later"}
+                          onChange={() => setPaymentMethod("pay_later")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faShieldHalved} className="payment-option-icon" />
+                        <span>Pay Later (Test)</span>
+                      </label>
+                      
+                      {paymentMethod === "pay_later" && (
+                        <div className="crypto-form">
+                          <div className="crypto-message-box">
+                            <p>This is a test payment method. No actual charge will be made.</p>
                           </div>
                         </div>
                       )}
