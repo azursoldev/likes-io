@@ -9,8 +9,25 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     const category = searchParams.get('category');
     const published = searchParams.get('published') === 'true';
+
+    if (id) {
+        const post = await prisma.blogPost.findUnique({
+            where: { id },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+        return NextResponse.json({ post });
+    }
 
     const where: any = {};
     // if (category) where.category = category;
@@ -44,6 +61,23 @@ export async function GET(request: NextRequest) {
   }
 }
 
+async function ensureUniqueSlug(slug: string, postId?: string) {
+  let uniqueSlug = slug;
+  let counter = 1;
+  while (true) {
+    const existing = await prisma.blogPost.findUnique({
+      where: { slug: uniqueSlug },
+    });
+    // If no existing post, or existing post is the same one we are updating, it's safe
+    if (!existing || (postId && existing.id === postId)) {
+      return uniqueSlug;
+    }
+    // Increment counter and try again
+    counter++;
+    uniqueSlug = `${slug}-${counter}`;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -66,6 +100,8 @@ export async function POST(request: NextRequest) {
       tags,
       isPublished = false,
       seoMeta,
+      metaTitle,
+      metaDescription,
     } = body;
 
     if (!title || !slug || !content) {
@@ -75,15 +111,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure unique slug
+    const uniqueSlug = await ensureUniqueSlug(slug);
+
     const post = await prisma.blogPost.create({
       data: {
         title,
-        slug,
+        slug: uniqueSlug,
         excerpt,
         content,
         coverImage: featuredImage,
         authorId: session.user.id,
-        // category,
+        category,
+        metaTitle,
+        metaDescription,
         // tags: tags ? (tags as any) : null,
         isPublished,
         publishedAt: isPublished ? new Date() : null,
@@ -127,6 +168,7 @@ export async function PUT(request: NextRequest) {
 
     const {
       title,
+      slug,
       excerpt,
       content,
       featuredImage,
@@ -135,16 +177,34 @@ export async function PUT(request: NextRequest) {
       isPublished,
       seoMeta,
       publishedAt,
+      metaTitle,
+      metaDescription
     } = body;
+
+    // Check if slug exists and belongs to another post
+    if (slug) {
+        const existingPost = await prisma.blogPost.findUnique({
+            where: { slug },
+        });
+        if (existingPost && existingPost.id !== postId) {
+            return NextResponse.json(
+                { error: 'Slug already exists' },
+                { status: 400 }
+            );
+        }
+    }
 
     const updated = await prisma.blogPost.update({
       where: { id: postId },
       data: {
         title,
+        slug,
         excerpt,
         content,
         coverImage: featuredImage,
-        // category,
+        category,
+        metaTitle,
+        metaDescription,
         // tags: tags ? (tags as any) : undefined,
         isPublished,
         publishedAt: typeof publishedAt === 'string' ? new Date(publishedAt) : publishedAt,

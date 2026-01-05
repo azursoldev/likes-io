@@ -14,6 +14,7 @@ type UiBlogPost = {
   authorAvatar?: string;
   date: string;
   readTime: string;
+  image?: string;
 };
 
 const CATEGORIES = [
@@ -61,6 +62,7 @@ export default function BlogPage() {
               day: "numeric",
             }),
             readTime: "5 min read",
+            image: p.coverImage || "",
           };
         });
         setPosts(mapped);
@@ -117,9 +119,24 @@ export default function BlogPage() {
             >
               <div className="blog-featured">
                 <div className="blog-featured-image">
-                  <div className="blog-featured-image-placeholder">
-                    {featuredPost.title}
-                  </div>
+                  {featuredPost.image ? (
+                    <img 
+                      src={featuredPost.image} 
+                      alt={featuredPost.title} 
+                      style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover' 
+                      }} 
+                    />
+                  ) : (
+                    <div className="blog-featured-image-placeholder">
+                      {featuredPost.title}
+                    </div>
+                  )}
                   <div className="blog-featured-overlay">
                     <span className="blog-featured-category">
                       {featuredPost.category}
@@ -200,9 +217,24 @@ export default function BlogPage() {
               <Link key={post.id} href={`/blog/${post.slug}`} className="blog-post-card-link">
                 <article className="blog-post-card">
                   <div className="blog-post-image">
-                    <div className="blog-post-image-placeholder">
-                      {post.title}
-                    </div>
+                    {post.image ? (
+                      <img 
+                        src={post.image} 
+                        alt={post.title} 
+                        style={{ 
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover' 
+                        }} 
+                      />
+                    ) : (
+                      <div className="blog-post-image-placeholder">
+                        {post.title}
+                      </div>
+                    )}
                   </div>
                   <div className="blog-post-content">
                     <span className="blog-category-badge">{post.category}</span>

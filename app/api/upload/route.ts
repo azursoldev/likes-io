@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type and size
-    const allowedExt = ['.svg', '.png', '.jpg', '.jpeg', '.webp'];
+    const allowedExt = ['.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif'];
     const ext = path.extname(file.name).toLowerCase();
     if (!allowedExt.includes(ext)) {
       return NextResponse.json(

@@ -5619,9 +5619,13 @@
   gap: 12px;
   padding: 20px 24px;
   border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
 }
 
 .blog-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 10px 20px;
   border-radius: 8px;
   font-size: 14px;
@@ -5629,25 +5633,30 @@
   cursor: pointer;
   transition: all 0.2s;
   border: none;
+  white-space: nowrap;
+  line-height: 1.5;
 }
 
 .blog-edit-btn.cancel {
   background: #fff;
   color: #374151;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d1d5db;
 }
 
 .blog-edit-btn.cancel:hover {
-  background: #f9fafb;
+  background: #f3f4f6;
+  border-color: #c4c8d0;
+  color: #111827;
 }
 
 .blog-edit-btn.save {
-  background: #111827;
+  background: #6366f1;
   color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .blog-edit-btn.save:hover {
-  background: #0f172a;
+  background: #4f46e5;
 }
 
 /* Review Moderation Styles */

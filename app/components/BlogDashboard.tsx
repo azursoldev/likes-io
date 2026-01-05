@@ -31,6 +31,7 @@ export default function BlogDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<BlogRow | null>(null);
+  const [featuredImageFile, setFeaturedImageFile] = useState<File | null>(null);
   const [editForm, setEditForm] = useState({
     title: "",
     excerpt: "",
@@ -78,20 +79,48 @@ export default function BlogDashboard() {
     );
   };
 
-  const handleEdit = (id: number) => {
+  const handleEdit = async (id: number) => {
     const post = posts.find(p => p.id === id);
     if (post) {
       setSelectedPost(post);
-      setEditForm({
-        title: post.title,
-        excerpt: post.description,
-        content: "",
-        featuredImageUrl: "",
-        category: post.category || "General",
-        publishDate: post.date,
-        published: post.status,
-      });
-      setShowEditModal(true);
+      try {
+        const res = await fetch(`/api/cms/blog?id=${id}`);
+        const data = await res.json();
+        const fullPost = data.post;
+
+        if (fullPost) {
+          setEditForm({
+            title: fullPost.title,
+            slug: fullPost.slug || "",
+            excerpt: fullPost.excerpt || "",
+            content: fullPost.content || "",
+            featuredImageUrl: fullPost.coverImage || "",
+            category: fullPost.category || "General",
+            publishDate: fullPost.publishedAt ? new Date(fullPost.publishedAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+            published: fullPost.isPublished,
+            metaTitle: fullPost.metaTitle || "",
+            metaDescription: fullPost.metaDescription || "",
+          });
+          setFeaturedImageFile(null);
+          setShowEditModal(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch post details", err);
+        // Fallback to basic info if fetch fails
+        setEditForm({
+          title: post.title,
+          slug: "",
+          excerpt: post.description,
+          content: "",
+          featuredImageUrl: "",
+          category: post.category || "General",
+          publishDate: typeof post.date === 'string' ? post.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
+          published: post.status,
+          metaTitle: "",
+          metaDescription: "",
+        });
+        setShowEditModal(true);
+      }
     }
   };
 
@@ -100,22 +129,43 @@ export default function BlogDashboard() {
     setSelectedPost(null);
     setEditForm({
       title: "",
+      slug: "",
       excerpt: "",
       content: "",
       featuredImageUrl: "",
       category: "General",
       publishDate: "",
       published: false,
+      metaTitle: "",
+      metaDescription: "",
     });
+    setFeaturedImageFile(null);
   };
 
   const handleSavePost = async () => {
     try {
       setError(null);
+      
+      let imageUrl = editForm.featuredImageUrl;
+      if (featuredImageFile) {
+        const formData = new FormData();
+        formData.append('file', featuredImageFile);
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+           throw new Error("Failed to upload image");
+        }
+
+        const uploadData = await uploadResponse.json();
+        imageUrl = uploadData.url || uploadData.publicUrl;
+      }
 
       // Create NEW post when no post is selected
       if (!selectedPost) {
-        const slug = editForm.title
+        const slug = editForm.slug || editForm.title
           .toLowerCase()
           .trim()
           .replace(/[^a-z0-9]+/g, "-")
@@ -129,11 +179,13 @@ export default function BlogDashboard() {
             slug,
             excerpt: editForm.excerpt,
             content: editForm.content || "Draft content",
-            featuredImage: editForm.featuredImageUrl || null,
+            featuredImage: imageUrl || null,
             category: editForm.category || null,
             tags: null,
             isPublished: editForm.published,
             seoMeta: null,
+            metaTitle: editForm.metaTitle,
+            metaDescription: editForm.metaDescription,
           }),
         });
 
@@ -153,14 +205,17 @@ export default function BlogDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: editForm.title,
+          slug: editForm.slug,
           excerpt: editForm.excerpt,
           content: editForm.content,
-          featuredImage: editForm.featuredImageUrl || null,
+          featuredImage: imageUrl || null,
           category: editForm.category || null,
           tags: null,
           isPublished: editForm.published,
           publishedAt: editForm.publishDate || null,
           seoMeta: null,
+          metaTitle: editForm.metaTitle,
+          metaDescription: editForm.metaDescription,
         }),
       });
 
@@ -216,6 +271,14 @@ export default function BlogDashboard() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   };
 
   return (
@@ -429,14 +492,117 @@ export default function BlogDashboard() {
               </div>
 
               <div className="blog-edit-form-group">
-                <label htmlFor="edit-featured-image">Featured Image URL</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Featured Image</label>
+                
+                {/* Preview Area */}
+                {(editForm.featuredImageUrl || featuredImageFile) && (
+                  <div style={{ marginBottom: '15px', position: 'relative', width: 'fit-content' }}>
+                    <img 
+                      src={editForm.featuredImageUrl} 
+                      alt="Featured Preview" 
+                      style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', border: '1px solid #ddd', objectFit: 'cover' }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditForm({ ...editForm, featuredImageUrl: "" });
+                        setFeaturedImageFile(null);
+                      }}
+                      style={{
+                        position: 'absolute', top: '-10px', right: '-10px',
+                        background: '#ef4444', color: 'white',
+                        border: '2px solid white', borderRadius: '50%', width: '28px', height: '28px',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                      title="Remove Image"
+                    >
+                      <FontAwesomeIcon icon={faTimes} size="sm" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Upload Control */}
+                <div 
+                     style={{ 
+                        border: '2px dashed #e5e7eb', 
+                        padding: '30px', 
+                        borderRadius: '8px', 
+                        textAlign: 'center', 
+                        cursor: 'pointer', 
+                        backgroundColor: '#f9fafb',
+                        transition: 'border-color 0.2s'
+                     }}
+                     onMouseOver={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                     onMouseOut={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                     onClick={() => document.getElementById('featured-image-upload')?.click()}
+                >
+                  <input
+                    type="file"
+                    id="featured-image-upload"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setFeaturedImageFile(e.target.files[0]);
+                        const url = URL.createObjectURL(e.target.files[0]);
+                        setEditForm({ ...editForm, featuredImageUrl: url });
+                      }
+                    }}
+                  />
+                  <div style={{ marginBottom: '8px' }}>
+                    <FontAwesomeIcon icon={faPlus} style={{ fontSize: '24px', color: '#9ca3af' }} />
+                  </div>
+                  <div style={{ color: '#4b5563', fontSize: '0.95rem', fontWeight: '500' }}>
+                    Click to upload image
+                  </div>
+                  <div style={{ color: '#9ca3af', fontSize: '0.8rem', marginTop: '4px' }}>
+                    SVG, PNG, JPG or GIF (max. 5MB)
+                  </div>
+                </div>
+
+                {/* URL Fallback */}
+                <div style={{ marginTop: '15px' }}>
+                  <details>
+                    <summary style={{ fontSize: '0.85rem', color: '#6b7280', cursor: 'pointer', userSelect: 'none' }}>Or use image URL</summary>
+                    <input
+                      type="text"
+                      className="blog-edit-input"
+                      style={{ marginTop: '8px' }}
+                      value={editForm.featuredImageUrl}
+                      onChange={(e) => {
+                        setEditForm({ ...editForm, featuredImageUrl: e.target.value });
+                        setFeaturedImageFile(null); 
+                      }}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </details>
+                </div>
+              </div>
+
+              <div className="blog-edit-form-group">
+                <label style={{ fontWeight: 'bold', marginTop: '20px', display: 'block', marginBottom: '10px', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>SEO Settings</label>
+                <label htmlFor="edit-meta-title" style={{ fontSize: '0.9rem' }}>Meta Title</label>
                 <input
                   type="text"
-                  id="edit-featured-image"
+                  id="edit-meta-title"
                   className="blog-edit-input"
-                  value={editForm.featuredImageUrl}
-                  onChange={(e) => setEditForm({ ...editForm, featuredImageUrl: e.target.value })}
-                  placeholder="https://source.unsplash.com/800x500/?social-"
+                  value={editForm.metaTitle}
+                  onChange={(e) => setEditForm({ ...editForm, metaTitle: e.target.value })}
+                  placeholder="SEO Title (defaults to post title)"
+                />
+              </div>
+
+              <div className="blog-edit-form-group">
+                <label htmlFor="edit-meta-desc" style={{ fontSize: '0.9rem' }}>Meta Description</label>
+                <textarea
+                  id="edit-meta-desc"
+                  className="blog-edit-textarea"
+                  rows={2}
+                  value={editForm.metaDescription}
+                  onChange={(e) => setEditForm({ ...editForm, metaDescription: e.target.value })}
+                  placeholder="SEO Description (150-160 characters)"
                 />
               </div>
 
@@ -470,6 +636,17 @@ export default function BlogDashboard() {
             </div>
 
             <div className="blog-edit-modal-footer">
+              {editForm.slug && (
+                  <a 
+                    href={`/blog/${editForm.slug}`} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="blog-edit-btn"
+                    style={{ marginRight: 'auto', backgroundColor: '#6366f1', color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                      Preview Post
+                  </a>
+              )}
               <button className="blog-edit-btn cancel" onClick={handleCloseModal}>
                 Cancel
               </button>

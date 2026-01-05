@@ -21,8 +21,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${post.title} | Likes.io Blog`,
-    description: post.excerpt || "", 
+    title: post.metaTitle || `${post.title} | Likes.io Blog`,
+    description: post.metaDescription || post.excerpt || "", 
+    openGraph: {
+      title: post.metaTitle || post.title,
+      description: post.metaDescription || post.excerpt || "",
+      images: post.coverImage ? [{ url: post.coverImage }] : [],
+    },
   };
 }
 
