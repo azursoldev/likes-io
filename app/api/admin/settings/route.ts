@@ -135,6 +135,7 @@ export async function GET() {
       faviconUrl: getField(settings, 'faviconUrl', ''),
       headerLogoUrl: getField(settings, 'headerLogoUrl', ''),
       footerLogoUrl: getField(settings, 'footerLogoUrl', ''),
+      robotsTxtContent: getField(settings, 'robotsTxtContent', 'User-agent: *\nAllow: /'),
     });
   } catch (error: any) {
     console.error('Get settings error:', error);
@@ -182,6 +183,7 @@ export async function PUT(request: NextRequest) {
       // SEO & Branding
       homeMetaTitle,
       homeMetaDescription,
+      robotsTxtContent,
       faviconUrl,
       headerLogoUrl,
       footerLogoUrl,
@@ -346,6 +348,7 @@ export async function PUT(request: NextRequest) {
 
            const safeTitle = getVal(homeMetaTitle, settings.homeMetaTitle);
            const safeDesc = getVal(homeMetaDescription, settings.homeMetaDescription);
+           const safeRobots = getVal(robotsTxtContent, settings.robotsTxtContent);
            const safeFavicon = getVal(faviconUrl, settings.faviconUrl);
            const safeHeader = getVal(headerLogoUrl, settings.headerLogoUrl);
            const safeFooter = getVal(footerLogoUrl, settings.footerLogoUrl);
@@ -355,6 +358,7 @@ export async function PUT(request: NextRequest) {
              SET 
                "homeMetaTitle" = ${safeTitle},
                "homeMetaDescription" = ${safeDesc},
+               "robotsTxtContent" = ${safeRobots},
                "faviconUrl" = ${safeFavicon},
                "headerLogoUrl" = ${safeHeader},
                "footerLogoUrl" = ${safeFooter}

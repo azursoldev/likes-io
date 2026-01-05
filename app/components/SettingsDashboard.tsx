@@ -29,6 +29,7 @@ export default function SettingsDashboard() {
   // SEO & Branding
   const [homeMetaTitle, setHomeMetaTitle] = useState("");
   const [homeMetaDescription, setHomeMetaDescription] = useState("");
+  const [robotsTxtContent, setRobotsTxtContent] = useState("User-agent: *\nAllow: /");
   const [faviconUrl, setFaviconUrl] = useState("");
   const [headerLogoUrl, setHeaderLogoUrl] = useState("");
   const [footerLogoUrl, setFooterLogoUrl] = useState("");
@@ -122,6 +123,7 @@ export default function SettingsDashboard() {
         // SEO & Branding
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
         if (data.homeMetaDescription) setHomeMetaDescription(data.homeMetaDescription);
+        if (data.robotsTxtContent) setRobotsTxtContent(data.robotsTxtContent);
         if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
         if (data.headerLogoUrl) setHeaderLogoUrl(data.headerLogoUrl);
         if (data.footerLogoUrl) setFooterLogoUrl(data.footerLogoUrl);
@@ -181,6 +183,7 @@ export default function SettingsDashboard() {
           // SEO & Branding
           homeMetaTitle,
           homeMetaDescription,
+          robotsTxtContent,
           faviconUrl,
           headerLogoUrl,
           footerLogoUrl,
@@ -420,6 +423,27 @@ export default function SettingsDashboard() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Technical SEO */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Technical SEO</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Robots.txt Content
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span className="settings-helper-text">Configure robots.txt rules. One rule per line.</span>
+                  </div>
+                  <textarea
+                    className="settings-input"
+                    value={robotsTxtContent}
+                    onChange={(e) => setRobotsTxtContent(e.target.value)}
+                    placeholder="User-agent: *&#10;Allow: /"
+                    rows={8}
+                    style={{ fontFamily: 'monospace', resize: 'vertical' }}
+                  />
+                </label>
               </div>
             </div>
 

@@ -160,6 +160,7 @@ model AdminSettings {
   headerLogoUrl          String?
   homeMetaDescription    String?
   homeMetaTitle          String?
+  robotsTxtContent       String?  @default("User-agent: *\nAllow: /")
   recaptchaSecretKey     String?
   recaptchaSiteKey       String?
   googleClientId         String?
