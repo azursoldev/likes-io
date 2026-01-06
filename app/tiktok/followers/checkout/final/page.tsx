@@ -17,19 +17,21 @@ import {
   faTag,
   faCoins
 } from "@fortawesome/free-solid-svg-icons";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
 function FinalCheckoutContent() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
   
   const username = searchParams.get("username") || "";
   const qty = searchParams.get("qty") || "500";
   const priceValue = parseFloat(searchParams.get("price") || "15.99");
   const packageType = searchParams.get("type") || "High-Quality";
+  const packageServiceId = searchParams.get("serviceId") || "";
 
   // Get platform and service from pathname
   const pathParts = pathname?.split("/") || [];
@@ -48,7 +50,17 @@ function FinalCheckoutContent() {
   const [cvc, setCvc] = useState("");
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    type: "PERCENT" | "FIXED";
+    value: number;
+  } | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
 
   const offers = [
     { id: "offer1", text: "50 likes x 10 posts", price: 5.99, icon: faHeart },
@@ -68,11 +80,110 @@ function FinalCheckoutContent() {
 
   const offersTotal = addedOffers.reduce((sum, offer) => sum + offer.price, 0);
   const totalPrice = priceValue + offersTotal;
+
+  // Discount calculation
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "PERCENT") {
+      discountAmount = (totalPrice * appliedCoupon.value) / 100;
+    } else {
+      discountAmount = appliedCoupon.value;
+    }
+  }
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
+
   const currencyCode = currency;
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    setCouponSuccess("");
+    
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode,
+          orderAmount: totalPrice,
+          serviceType: `${platform}_${service}`,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.valid) {
+        setAppliedCoupon(data.coupon);
+        setCouponSuccess(data.message);
+        setCouponError("");
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(data.message);
+        setCouponSuccess("");
+      }
+    } catch (error) {
+      setCouponError("Failed to validate coupon");
+      setCouponSuccess("");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Processing payment...");
+    setProcessing(true);
+    setError("");
+
+    try {
+      if (paymentMethod === "card") {
+        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
+          setError("Please fill in all card details");
+          setProcessing(false);
+          return;
+        }
+      }
+
+      const platformUpper = platform.toUpperCase();
+      const serviceType = service.toUpperCase(); // FOLLOWERS
+
+      const paymentResponse = await fetch("/api/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          platform: platformUpper,
+          serviceType,
+          quantity: parseInt(qty) || 500,
+          price: finalPrice,
+          link: username ? `https://tiktok.com/@${username}` : null,
+          paymentMethod: paymentMethod,
+          currency: currencyCode,
+          packageServiceId: packageServiceId || undefined,
+          couponCode: appliedCoupon?.code,
+        }),
+      });
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        if (paymentResponse.status === 401) {
+          throw new Error("Please log in to complete your purchase");
+        }
+        throw new Error(errorData.error || "Failed to process payment");
+      }
+
+      const { checkoutUrl } = await paymentResponse.json();
+      
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error("No checkout URL received");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      setError(err.message || "Failed to process payment. Please try again.");
+      setProcessing(false);
+    }
   };
 
   return (
@@ -242,10 +353,29 @@ function FinalCheckoutContent() {
                       )}
                     </div>
                   </div>
+                  
+                  {error && (
+                    <div style={{ 
+                      padding: "12px", 
+                      background: "#fef2f2", 
+                      border: "1px solid #fecaca", 
+                      borderRadius: "6px", 
+                      color: "#dc2626",
+                      marginBottom: "16px",
+                      fontSize: "14px"
+                    }}>
+                      {error}
+                    </div>
+                  )}
 
-                  <button type="submit" className="pay-button">
+                  <button 
+                    type="submit" 
+                    className="pay-button"
+                    disabled={processing}
+                    style={{ opacity: processing ? 0.6 : 1, cursor: processing ? "not-allowed" : "pointer" }}
+                  >
                     <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                    Pay {formatPrice(totalPrice)}
+                    {processing ? "Processing..." : `Pay ${formatPrice(finalPrice)}`}
                   </button>
 
                   <div className="payment-guarantees">
@@ -315,6 +445,18 @@ function FinalCheckoutContent() {
                   </div>
                 ))}
 
+                {appliedCoupon && (
+                  <div className="order-item discount-item" style={{ color: "#22c55e" }}>
+                    <div className="order-item-left">
+                      <FontAwesomeIcon icon={faTag} className="order-item-icon" />
+                      <div className="order-item-details">
+                        <span className="order-item-text">Discount ({appliedCoupon.code})</span>
+                      </div>
+                    </div>
+                    <span className="order-item-price">-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
+
                 <div className="coupon-section">
                   <label className="coupon-toggle">
                     <span>I have a coupon code</span>
@@ -329,15 +471,44 @@ function FinalCheckoutContent() {
                     </div>
                   </label>
                   {hasCoupon && (
-                    <div className="coupon-input-wrapper">
-                      <input
-                        type="text"
-                        className="coupon-input"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Enter coupon"
-                      />
-                      <button type="button" className="coupon-apply-btn">Apply</button>
+                    <div className="coupon-input-wrapper" style={{ flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                        <input
+                          type="text"
+                          className="coupon-input"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          placeholder="Enter coupon"
+                          disabled={isValidatingCoupon || !!appliedCoupon}
+                          style={{ flex: 1 }}
+                        />
+                        {appliedCoupon ? (
+                          <button 
+                            type="button" 
+                            className="coupon-apply-btn"
+                            onClick={() => {
+                              setAppliedCoupon(null);
+                              setCouponCode("");
+                              setCouponSuccess("");
+                              setCouponError("");
+                            }}
+                            style={{ background: "#ef4444" }}
+                          >
+                            Remove
+                          </button>
+                        ) : (
+                          <button 
+                            type="button" 
+                            className="coupon-apply-btn"
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode}
+                          >
+                            {isValidatingCoupon ? "..." : "Apply"}
+                          </button>
+                        )}
+                      </div>
+                      {couponError && <p style={{color: '#ef4444', fontSize: '12px', margin: 0}}>{couponError}</p>}
+                      {couponSuccess && <p style={{color: '#22c55e', fontSize: '12px', margin: 0}}>{couponSuccess}</p>}
                     </div>
                   )}
                 </div>
@@ -346,7 +517,7 @@ function FinalCheckoutContent() {
                   <span className="total-label">Total to pay</span>
                   <div className="total-price-wrapper">
                     <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(totalPrice)}</span>
+                    <span className="total-price">{formatPrice(finalPrice)}</span>
                   </div>
                 </div>
               </div>

@@ -61,6 +61,10 @@ function FinalCheckoutContent() {
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
@@ -148,7 +152,55 @@ function FinalCheckoutContent() {
 
   const offersTotal = addedOffers.reduce((sum, offer) => sum + offer.price, 0);
   const totalPrice = basePrice + offersTotal;
+
+  // Discount calculation
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "PERCENT") {
+      discountAmount = (totalPrice * appliedCoupon.value) / 100;
+    } else {
+      discountAmount = appliedCoupon.value;
+    }
+  }
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
+
   const currencyCode = currency;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    setCouponSuccess("");
+    
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode,
+          orderAmount: totalPrice,
+          serviceType: `${platform}_${service}`,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.valid) {
+        setAppliedCoupon(data.coupon);
+        setCouponSuccess(data.message);
+        setCouponError("");
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(data.message);
+        setCouponSuccess("");
+      }
+    } catch (error) {
+      setCouponError("Failed to validate coupon");
+      setCouponSuccess("");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,7 +263,7 @@ function FinalCheckoutContent() {
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 50,
-          price: totalPrice,
+          price: finalPrice,
           link: postLink || null,
           paymentMethod: paymentMethod, // 'card' or 'crypto' or 'myfatoorah'
           currency: currencyCode,
@@ -630,6 +682,18 @@ function FinalCheckoutContent() {
                   </div>
                 ))}
 
+                {appliedCoupon && (
+                  <div className="order-item discount-item" style={{ color: "#22c55e" }}>
+                    <div className="order-item-left">
+                      <FontAwesomeIcon icon={faTag} className="order-item-icon" />
+                      <div className="order-item-details">
+                        <span className="order-item-text">Discount ({appliedCoupon.code})</span>
+                      </div>
+                    </div>
+                    <span className="order-item-price">-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
+
                 <div className="coupon-section">
                   <label className="coupon-toggle">
                     <span>I have a coupon code</span>
@@ -651,9 +715,43 @@ function FinalCheckoutContent() {
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
                         placeholder="Enter coupon"
+                        disabled={isValidatingCoupon || !!appliedCoupon}
                       />
-                      <button type="button" className="coupon-apply-btn">Apply</button>
+                      {appliedCoupon ? (
+                         <button 
+                           type="button" 
+                           className="coupon-apply-btn remove-btn"
+                           onClick={() => {
+                             setAppliedCoupon(null);
+                             setCouponCode("");
+                             setCouponSuccess("");
+                             setCouponError("");
+                           }}
+                           style={{ background: "#ef4444", color: "white", border: "none" }}
+                         >
+                           Remove
+                         </button>
+                      ) : (
+                        <button 
+                          type="button" 
+                          className="coupon-apply-btn"
+                          onClick={handleApplyCoupon}
+                          disabled={isValidatingCoupon || !couponCode}
+                        >
+                          {isValidatingCoupon ? "..." : "Apply"}
+                        </button>
+                      )}
                     </div>
+                  )}
+                  {couponError && (
+                    <p className="coupon-message error" style={{ color: "#ef4444", fontSize: "12px", marginTop: "4px" }}>
+                      {couponError}
+                    </p>
+                  )}
+                  {couponSuccess && (
+                    <p className="coupon-message success" style={{ color: "#22c55e", fontSize: "12px", marginTop: "4px" }}>
+                      {couponSuccess}
+                    </p>
                   )}
                 </div>
 
@@ -661,7 +759,7 @@ function FinalCheckoutContent() {
                   <span className="total-label">Total to pay</span>
                   <div className="total-price-wrapper">
                     <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(totalPrice)}</span>
+                    <span className="total-price">{formatPrice(finalPrice)}</span>
                   </div>
                 </div>
               </div>

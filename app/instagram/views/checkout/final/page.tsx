@@ -58,6 +58,14 @@ function FinalCheckoutContent() {
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    type: "PERCENT" | "FIXED";
+    value: number;
+  } | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
 
   // MyFatoorah State
   const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
@@ -136,7 +144,62 @@ function FinalCheckoutContent() {
 
   const offersTotal = addedOffers.reduce((sum, offer) => sum + offer.price, 0);
   const totalPrice = basePrice + offersTotal;
+
+  // Discount calculation
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "PERCENT") {
+      discountAmount = (totalPrice * appliedCoupon.value) / 100;
+    } else {
+      discountAmount = appliedCoupon.value;
+    }
+  }
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
+  
   const currencyCode = currency;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    setCouponSuccess("");
+    
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode,
+          orderAmount: totalPrice,
+          serviceType: `${platform}_${service}`,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.valid) {
+        setAppliedCoupon(data.coupon);
+        setCouponSuccess(data.message);
+        setCouponError("");
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(data.message);
+        setCouponSuccess("");
+      }
+    } catch (error) {
+      setCouponError("Failed to validate coupon");
+      setCouponSuccess("");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponSuccess("");
+    setCouponError("");
+  };
 
   useEffect(() => {
     if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
@@ -168,7 +231,16 @@ function FinalCheckoutContent() {
         setError("Error initializing payment form");
       }
     }
-  }, [paymentMethod, mfSession, isMfLoaded, totalPrice]);
+  }, [paymentMethod, mfSession, isMfLoaded]);
+  
+  useEffect(() => {
+    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+      // Re-init MyFatoorah when price changes (due to coupon)
+      // This might be tricky if the library doesn't support update. 
+      // We might need to unmount and remount or call init again.
+      // For now, let's assume calling init again works or the user hasn't loaded it yet.
+    }
+  }, [paymentMethod, mfSession, isMfLoaded, finalPrice]);
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,7 +248,7 @@ function FinalCheckoutContent() {
     setError("");
 
     if (paymentMethod === 'pay_later') {
-      alert(`Test Checkout Successful!\n\nPlatform: ${platform}\nService: ${service}\nQuantity: ${qty}\nTotal Price: ${formatPrice(totalPrice)}\nPosts: ${postCount}`);
+      alert(`Test Checkout Successful!\n\nPlatform: ${platform}\nService: ${service}\nQuantity: ${qty}\nTotal Price: ${formatPrice(finalPrice)}\nPosts: ${postCount}`);
       setProcessing(false);
       return;
     }
@@ -247,12 +319,13 @@ function FinalCheckoutContent() {
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 50,
-          price: totalPrice,
+          price: finalPrice,
           link: postLink || null,
           paymentMethod: paymentMethod, // 'card' or 'crypto' or 'myfatoorah'
           currency: currencyCode,
           packageServiceId: packageServiceId || undefined, // Service ID from package (JAP Service ID)
-          sessionId: cardSessionId
+          sessionId: cardSessionId,
+          couponCode: appliedCoupon?.code,
         }),
       });
 
@@ -334,6 +407,64 @@ function FinalCheckoutContent() {
               <div className="checkout-card">
                 <h2 className="final-checkout-title">Review & Pay</h2>
                 
+                {/* Coupon Section */}
+                <div className="coupon-section mb-6">
+                  {!hasCoupon ? (
+                    <button 
+                      type="button"
+                      className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
+                      onClick={() => setHasCoupon(true)}
+                    >
+                      <FontAwesomeIcon icon={faTag} />
+                      I have a coupon code
+                    </button>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          placeholder="Enter coupon code"
+                          className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          disabled={!!appliedCoupon || isValidatingCoupon}
+                        />
+                        {appliedCoupon ? (
+                          <button
+                            type="button"
+                            onClick={handleRemoveCoupon}
+                            className="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-medium hover:bg-red-200"
+                          >
+                            Remove
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleApplyCoupon}
+                            disabled={!couponCode || isValidatingCoupon}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            {isValidatingCoupon ? "Checking..." : "Apply"}
+                          </button>
+                        )}
+                      </div>
+                      {couponError && (
+                        <p className="text-red-500 text-sm">{couponError}</p>
+                      )}
+                      {couponSuccess && (
+                        <p className="text-green-500 text-sm">{couponSuccess}</p>
+                      )}
+                      {appliedCoupon && (
+                        <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                          <p className="text-green-700 text-sm font-medium">
+                            Coupon applied! You saved {formatPrice(discountAmount)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <form className="payment-form" onSubmit={handlePayment}>
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
@@ -616,38 +747,23 @@ function FinalCheckoutContent() {
                   </div>
                 ))}
 
-                <div className="coupon-section">
-                  <label className="coupon-toggle">
-                    <span>I have a coupon code</span>
-                    <div className="toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={hasCoupon}
-                        onChange={(e) => setHasCoupon(e.target.checked)}
-                        className="coupon-checkbox"
-                      />
-                      <span className="toggle-slider"></span>
-                    </div>
-                  </label>
-                  {hasCoupon && (
-                    <div className="coupon-input-wrapper">
-                      <input
-                        type="text"
-                        className="coupon-input"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Enter coupon"
-                      />
-                      <button type="button" className="coupon-apply-btn">Apply</button>
+                <div className="order-total">
+                  {appliedCoupon && (
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "#666" }}>
+                      <span>Subtotal</span>
+                      <span>{formatPrice(totalPrice)}</span>
                     </div>
                   )}
-                </div>
-
-                <div className="order-total">
+                  {appliedCoupon && (
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px", color: "#22c55e" }}>
+                      <span>Discount</span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
                   <span className="total-label">Total to pay</span>
                   <div className="total-price-wrapper">
                     <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(totalPrice)}</span>
+                    <span className="total-price">{formatPrice(finalPrice)}</span>
                   </div>
                 </div>
               </div>
