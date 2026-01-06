@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import crypto from 'crypto';
 
 export async function recordCouponRedemption(orderId: string, webhookData: any, userId: string) {
   if (!webhookData || !webhookData.couponCode) {

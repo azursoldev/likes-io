@@ -26,6 +26,7 @@ import Link from "next/link";
 function FinalCheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
   
   const username = searchParams.get("username") || "";
@@ -57,6 +58,23 @@ function FinalCheckoutContent() {
   // MyFatoorah State
   const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
   const [isMfLoaded, setIsMfLoaded] = useState(false);
+  const [channelInfo, setChannelInfo] = useState<{ name: string; avatar: string } | null>(null);
+
+  useEffect(() => {
+    if (username) {
+      fetch(`/api/social/YOUTUBE/profile?username=${username}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.profile) {
+            setChannelInfo({
+              name: data.profile.fullName || data.profile.username,
+              avatar: data.profile.profilePicture || data.profile.profilePicUrl || data.profile.avatar
+            });
+          }
+        })
+        .catch(err => console.error("Failed to fetch profile:", err));
+    }
+  }, [username]);
 
   useEffect(() => {
     if (paymentMethod === "card" && !mfSession) {
@@ -120,11 +138,59 @@ function FinalCheckoutContent() {
     }
   }, [paymentMethod, mfSession, isMfLoaded]);
 
-  const offers = [
-    { id: "offer1", text: "50 likes x 10 videos", price: 5.99, icon: faThumbsUp },
-    { id: "offer2", text: "100 likes x 10 videos", price: 11.24, icon: faThumbsUp },
-    { id: "offer3", text: "1K views", price: 11.24, icon: faLink }
-  ];
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; icon: any}>>([]);
+
+  useEffect(() => {
+    fetch('/api/upsells?platform=YOUTUBE&serviceType=SUBSCRIBERS')
+      .then(res => res.json())
+      .then(data => {
+        if (data.upsells && Array.isArray(data.upsells) && data.upsells.length > 0) {
+          setOffers(data.upsells.map((u: any) => {
+             let p = u.basePrice;
+             if (u.discountType === 'PERCENT') {
+               p -= (p * u.discountValue / 100);
+             } else {
+               p -= u.discountValue;
+             }
+             return {
+               id: u.id,
+               text: u.title,
+               price: Math.max(0, p),
+               originalPrice: u.basePrice,
+               icon: u.badgeIcon === 'user-plus' ? faUserPlus : faThumbsUp
+             };
+          }));
+        } else {
+          setOffers([]);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch upsells:", err);
+        setOffers([]);
+      });
+  }, []);
+
+  useEffect(() => {
+    const offersParam = searchParams.get("offers") || "";
+    const ids = offersParam ? offersParam.split(",").filter(Boolean) : [];
+    const selected = offers.filter(o => ids.includes(o.id));
+    const currentIds = addedOffers.map(o => o.id).join(",");
+    const nextIds = selected.map(o => o.id).join(",");
+    if (currentIds !== nextIds) {
+      setAddedOffers(selected);
+    }
+  }, [searchParams, offers]);
+
+  useEffect(() => {
+    const current = searchParams.get("offers") || "";
+    const next = addedOffers.map(o => o.id).join(",");
+    if (current !== next) {
+      const params = new URLSearchParams(searchParams.toString());
+      if (next) params.set("offers", next);
+      else params.delete("offers");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [addedOffers]);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
     if (!addedOffers.find(o => o.id === offer.id)) {
@@ -405,14 +471,37 @@ function FinalCheckoutContent() {
             <div className="final-checkout-right">
               <div className="checkout-card">
                 <div className="account-info-item">
-                  <div className="account-info-left">
-                    <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
-                    <span className="account-info-url">{postLink || `@${username || "username"}`}</span>
+                  <div className="account-info-left" style={{ alignItems: "center" }}>
+                    {channelInfo ? (
+                      <>
+                        <img 
+                          src={channelInfo.avatar} 
+                          alt={channelInfo.name} 
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/youtube-7.png";
+                            target.style.objectFit = "contain";
+                            target.style.padding = "4px";
+                          }}
+                          style={{ borderRadius: "50%", width: "40px", height: "40px", objectFit: "cover", marginRight: "10px" }} 
+                        />
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                           <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{channelInfo.name}</span>
+                           <span className="account-info-url" style={{ fontSize: "12px", color: "#666" }}>@{username}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
+                        <span className="account-info-url">{postLink || `@${username || "username"}`}</span>
+                      </>
+                    )}
                   </div>
                   <button 
                     type="button" 
                     className="change-button"
-                    onClick={() => router.push(`/youtube/subscribers/checkout?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`)}
+                    onClick={() => router.push(`/youtube/subscribers/checkout?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}${addedOffers.length ? `&offers=${encodeURIComponent(addedOffers.map(o => o.id).join(","))}` : ""}`)}
                   >
                     Change
                   </button>
@@ -532,66 +621,37 @@ function FinalCheckoutContent() {
                 </div>
               </div>
 
-              <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
-              
-              <div className="checkout-card exclusive-offers">
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer1") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faThumbsUp} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">50 likes x 10 videos</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(5.99)}</span>
-                      <span className="offer-price-old">{formatPrice(7.99)}</span>
-                    </div>
+              {offers.length > 0 && (
+                <>
+                  <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
+                  <div className="checkout-card exclusive-offers">
+                    {offers.slice(0, 3).map((offer, idx) => {
+                      const colorClass = idx === 2 ? "offer-pink" : "offer-green";
+                      const isAdded = !!addedOffers.find(o => o.id === offer.id);
+                      return (
+                        <div key={offer.id} className={`offer-item ${colorClass} ${isAdded ? "offer-added" : ""}`}>
+                          <div className="offer-badge">25%</div>
+                          <FontAwesomeIcon icon={offer.icon} className="offer-icon" />
+                          <div className="offer-details">
+                            <span className="offer-text">{offer.text}</span>
+                            <div className="offer-price">
+                              <span className="offer-price-new">For only {formatPrice(offer.price)}</span>
+                              <span className="offer-price-old">{formatPrice(offer.originalPrice)}</span>
+                            </div>
+                          </div>
+                          <button 
+                            className="offer-add-btn"
+                            onClick={() => handleAddOffer(offer)}
+                            disabled={isAdded}
+                          >
+                            {isAdded ? "Added" : "+ Add"}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[0])}
-                    disabled={!!addedOffers.find(o => o.id === "offer1")}
-                  >
-                    {addedOffers.find(o => o.id === "offer1") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer2") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faThumbsUp} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">100 likes x 10 videos</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[1])}
-                    disabled={!!addedOffers.find(o => o.id === "offer2")}
-                  >
-                    {addedOffers.find(o => o.id === "offer2") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-pink ${addedOffers.find(o => o.id === "offer3") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faLink} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">1K views</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[2])}
-                    disabled={!!addedOffers.find(o => o.id === "offer3")}
-                  >
-                    {addedOffers.find(o => o.id === "offer3") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
 
               <div className="checkout-card security-guarantees">
                 <div className="guarantee-item">

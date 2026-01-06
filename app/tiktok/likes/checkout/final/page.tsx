@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -68,11 +68,31 @@ function FinalCheckoutContent() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
-  const offers = [
-    { id: "offer1", text: "50 likes x 10 posts", price: 5.99, icon: faHeart },
-    { id: "offer2", text: "100 likes x 10 posts", price: 11.24, icon: faHeart },
-    { id: "offer3", text: "1K followers", price: 11.24, icon: faUserPlus }
-  ];
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+
+  useEffect(() => {
+    fetch('/api/upsells?platform=TIKTOK&serviceType=LIKES')
+      .then(res => res.json())
+      .then(data => {
+        if (data.upsells) {
+          setOffers(data.upsells.map((u: any) => {
+            let p = u.basePrice;
+            if (u.discountType === 'PERCENT') {
+              p -= (p * u.discountValue / 100);
+            } else {
+              p -= u.discountValue;
+            }
+            return {
+              id: u.id,
+              text: u.title,
+              price: Math.max(0, p),
+              icon: faHeart
+            };
+          }));
+        }
+      })
+      .catch(err => console.error("Failed to fetch upsells:", err));
+  }, []);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
     if (!addedOffers.find(o => o.id === offer.id)) {
@@ -169,12 +189,13 @@ function FinalCheckoutContent() {
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 500,
-          price: finalPrice,
+          price: basePrice,
           link: postLink || null, // For likes we might have multiple links or one
           paymentMethod: paymentMethod, // 'card' or 'crypto'
           currency: currencyCode,
           packageServiceId: packageServiceId || undefined,
           couponCode: appliedCoupon?.code,
+          upsellIds: addedOffers.map(o => o.id),
         }),
       });
 

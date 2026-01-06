@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       packageServiceId, // Optional: JAP Service ID from package (SMM Panel Integration)
       sessionId, // Optional: MyFatoorah session ID (for embedded payment)
       couponCode, // Optional: Coupon code
+      upsellIds, // Optional: Array of upsell IDs
     } = body;
 
     if (!platform || !serviceType || !quantity || !price) {
@@ -69,8 +70,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Upsell Calculation
+    let upsellTotal = 0;
+    const upsellData: any[] = [];
+    
+    if (upsellIds && Array.isArray(upsellIds) && upsellIds.length > 0) {
+      try {
+        // @ts-ignore
+        const upsells = await prisma.upsell.findMany({
+          where: { id: { in: upsellIds }, isActive: true }
+        });
+        
+        for (const upsell of upsells) {
+          let itemPrice = upsell.basePrice;
+          if (upsell.discountType === 'PERCENT') {
+            itemPrice -= (itemPrice * upsell.discountValue / 100);
+          } else {
+            itemPrice -= upsell.discountValue;
+          }
+          if (itemPrice < 0) itemPrice = 0;
+          
+          upsellTotal += itemPrice;
+          upsellData.push({
+            id: upsell.id,
+            title: upsell.title,
+            price: itemPrice,
+            originalPrice: upsell.basePrice
+          });
+        }
+      } catch (e) {
+        console.error("Error fetching upsells:", e);
+      }
+    }
+
     // Coupon Validation and Price Calculation
-    let finalPrice = parseFloat(price);
+    // We assume 'price' passed from client is the Service Price (excluding upsells if upsellIds provided)
+    // If no upsellIds, 'price' is the Total Price (legacy/standard behavior)
+    let servicePrice = parseFloat(price);
+    let totalBeforeDiscount = servicePrice + upsellTotal;
+    let finalPrice = totalBeforeDiscount;
+    
     let appliedCoupon = null;
     let discountAmount = 0;
 
@@ -153,6 +192,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Final price after coupon
+    finalPrice = Math.max(0, totalBeforeDiscount - discountAmount);
+
     // Find service - first try by serviceId if provided, otherwise find by platform/serviceType
     let service = null;
     
@@ -176,7 +218,7 @@ export async function POST(request: NextRequest) {
     // If no service exists, create a basic one (fallback)
     if (!service) {
       // Calculate price per unit from total price and quantity
-      const pricePerUnit = parseFloat(price) / parseInt(quantity);
+      const pricePerUnit = servicePrice / parseInt(quantity);
       
       service = await prisma.service.create({
         data: {
@@ -209,10 +251,11 @@ export async function POST(request: NextRequest) {
         platform: platform.toUpperCase() as Platform,
         serviceType: serviceType.toUpperCase() as ServiceType,
         quantity: parseInt(quantity),
-        price: parseFloat(price),
+        price: finalPrice,
         currency,
         status: 'PENDING_PAYMENT',
         link: link || null,
+        upsellData: upsellData.length ? upsellData : undefined,
       },
     });
 

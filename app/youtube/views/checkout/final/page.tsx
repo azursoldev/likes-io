@@ -56,6 +56,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const [isMfLoaded, setIsMfLoaded] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [channelInfo, setChannelInfo] = useState<{ name: string; avatar: string } | null>(null);
 
   useEffect(() => {
     if (paymentMethod === "card" && !mfSession) {
@@ -133,13 +134,49 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
       }
     }
   }, [paymentMethod, mfSession, isMfLoaded]);
+  
+  useEffect(() => {
+    if (username) {
+      fetch(`/api/social/YOUTUBE/profile?username=${username}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.profile) {
+            setChannelInfo({
+              name: data.profile.fullName || data.profile.username,
+              avatar: data.profile.profilePicture || data.profile.profilePicUrl || data.profile.avatar
+            });
+          }
+        })
+        .catch(err => console.error("Failed to fetch profile:", err));
+    }
+  }, [username]);
 
-  // Views specific offers
-  const offers = [
-    { id: "offer1", text: "100 Likes", price: 5.99, icon: faThumbsUp },
-    { id: "offer2", text: "50 Subscribers", price: 11.24, icon: faUserPlus },
-    { id: "offer3", text: "20 Comments", price: 8.99, icon: faLink }
-  ];
+  // Views specific offers (dynamic)
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  
+  useEffect(() => {
+    fetch('/api/upsells?platform=YOUTUBE&serviceType=VIEWS')
+      .then(res => res.json())
+      .then(data => {
+        if (data.upsells) {
+          setOffers(data.upsells.map((u: any) => {
+            let p = u.basePrice;
+            if (u.discountType === 'PERCENT') {
+              p -= (p * u.discountValue / 100);
+            } else {
+              p -= u.discountValue;
+            }
+            return {
+              id: u.id,
+              text: u.title,
+              price: Math.max(0, p),
+              icon: faEye
+            };
+          }));
+        }
+      })
+      .catch(err => console.error("Failed to fetch upsells:", err));
+  }, []);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
     if (!addedOffers.find(o => o.id === offer.id)) {
@@ -253,7 +290,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
         platform: platformUpper,
         serviceType,
         quantity: parseInt(qty) || 1000,
-        price: finalPrice,
+        price: priceValue,
         link: videoLink || username, // Use videoLink or username
         paymentMethod: paymentMethod === "card" ? "myfatoorah" : paymentMethod,
         currency: currencyCode,
@@ -261,6 +298,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
         sessionId: cardSessionId,
         packageServiceId: packageServiceId || undefined,
         couponCode: appliedCoupon?.code,
+        upsellIds: addedOffers.map(o => o.id),
       }),
     });
 
@@ -450,9 +488,32 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
             <div className="final-checkout-right">
               <div className="checkout-card">
                 <div className="account-info-item">
-                  <div className="account-info-left">
-                    <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
-                    <span className="account-info-url">{displayLink}</span>
+                  <div className="account-info-left" style={{ alignItems: "center" }}>
+                    {channelInfo ? (
+                      <>
+                        <img
+                          src={channelInfo.avatar}
+                          alt={channelInfo.name}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/youtube-7.png";
+                            target.style.objectFit = "contain";
+                            target.style.padding = "4px";
+                          }}
+                          style={{ borderRadius: "50%", width: "40px", height: "40px", objectFit: "cover", marginRight: "10px" }}
+                        />
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{channelInfo.name}</span>
+                          <span className="account-info-url" style={{ fontSize: "12px", color: "#666" }}>{displayLink}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
+                        <span className="account-info-url">{displayLink}</span>
+                      </>
+                    )}
                   </div>
                   <button type="button" className="change-button" onClick={() => window.history.back()}>Change</button>
                 </div>

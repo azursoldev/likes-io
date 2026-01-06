@@ -28,6 +28,7 @@ import {
   faFileContract,
   faShieldHalved,
   faTicket,
+  faTag,
 } from "@fortawesome/free-solid-svg-icons";
 import { getAdminUrl } from "@/lib/url-utils";
 
@@ -68,8 +69,9 @@ type AdminSidebarProps = {
   | "iconManagement"
   | "support"
   | "terms"
-  | "privacy"
-  | "coupons";
+    | "privacy"
+    | "coupons"
+    | "upsells";
 };
 
 export default function AdminSidebar({ activePage }: AdminSidebarProps) {
@@ -115,6 +117,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
       title: "Marketing",
       items: [
         { label: "Coupons", icon: faTicket, active: activePage === "coupons", href: getAdminUrl("coupons") },
+        { label: "Upsells", icon: faTag, active: activePage === "upsells", href: getAdminUrl("upsells") },
         { label: "Notifications", icon: faBell, active: activePage === "notifications", href: getAdminUrl("notifications") },
         { label: "Affiliates", icon: faHandshake, active: activePage === "affiliate", href: getAdminUrl("affiliate") },
         { label: "Payouts", icon: faMoneyBillWave, active: activePage === "payouts", href: getAdminUrl("payouts") },

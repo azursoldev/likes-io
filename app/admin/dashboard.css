@@ -2159,12 +2159,27 @@
   flex-direction: column;
   gap: 20px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .edit-user-form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Inline variant: label and input on one row */
+.edit-user-form-group.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.edit-user-form-group.inline label {
+  width: 140px;
+  margin: 0;
+}
+.edit-user-form-group.inline .edit-user-input {
+  flex: 1 1;
 }
 
 .edit-user-form-group label {

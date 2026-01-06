@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -64,11 +64,37 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
-  const offers = [
-    { id: "offer1", text: "50 likes x 10 posts", price: 5.99, icon: faHeart },
-    { id: "offer2", text: "100 likes x 10 posts", price: 11.24, icon: faHeart },
-    { id: "offer3", text: "1K followers", price: 11.24, icon: faLink }
-  ];
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; icon: any}>>([]);
+
+  useEffect(() => {
+    fetch('/api/upsells?platform=INSTAGRAM&serviceType=FOLLOWERS')
+      .then(res => res.json())
+      .then(data => {
+        if (data.upsells && Array.isArray(data.upsells) && data.upsells.length > 0) {
+          setOffers(data.upsells.map((u: any) => {
+            let p = u.basePrice;
+            if (u.discountType === 'PERCENT') {
+              p -= (p * u.discountValue / 100);
+            } else {
+              p -= u.discountValue;
+            }
+            return {
+              id: u.id,
+              text: u.title,
+              price: Math.max(0, p),
+              originalPrice: u.basePrice,
+              icon: u.badgeIcon === 'tag' ? faTag : faUser
+            };
+          }));
+        } else {
+          setOffers([]);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch upsells:", err);
+        setOffers([]);
+      });
+  }, []);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
     if (!addedOffers.find(o => o.id === offer.id)) {
@@ -180,12 +206,13 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 50,
-          price: finalPrice,
+          price: priceValue,
           link: targetLink || null,
           paymentMethod: paymentMethod, // 'card' or 'crypto'
           currency: currencyCode,
           packageServiceId: packageServiceId || undefined,
           couponCode: appliedCoupon?.code,
+          upsellIds: addedOffers.map(o => o.id),
         }),
       });
 
@@ -556,66 +583,37 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
               </div>
 
               {/* Exclusive Offers */}
-              <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
-              
-              <div className="checkout-card exclusive-offers">
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer1") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faHeart} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">50 likes x 10 posts</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(5.99)}</span>
-                      <span className="offer-price-old">{formatPrice(7.99)}</span>
-                    </div>
+              {offers.length > 0 && (
+                <>
+                  <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
+                  <div className="checkout-card exclusive-offers">
+                    {offers.slice(0, 3).map((offer, idx) => {
+                      const colorClass = idx === 2 ? "offer-pink" : "offer-green";
+                      const isAdded = !!addedOffers.find(o => o.id === offer.id);
+                      return (
+                        <div key={offer.id} className={`offer-item ${colorClass} ${isAdded ? "offer-added" : ""}`}>
+                          <div className="offer-badge">25%</div>
+                          <FontAwesomeIcon icon={offer.icon} className="offer-icon" />
+                          <div className="offer-details">
+                            <span className="offer-text">{offer.text}</span>
+                            <div className="offer-price">
+                              <span className="offer-price-new">For only {formatPrice(offer.price)}</span>
+                              <span className="offer-price-old">{formatPrice(offer.originalPrice)}</span>
+                            </div>
+                          </div>
+                          <button 
+                            className="offer-add-btn"
+                            onClick={() => handleAddOffer(offer)}
+                            disabled={isAdded}
+                          >
+                            {isAdded ? "Added" : "+ Add"}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[0])}
-                    disabled={!!addedOffers.find(o => o.id === "offer1")}
-                  >
-                    {addedOffers.find(o => o.id === "offer1") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer2") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faHeart} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">100 likes x 10 posts</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[1])}
-                    disabled={!!addedOffers.find(o => o.id === "offer2")}
-                  >
-                    {addedOffers.find(o => o.id === "offer2") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-pink ${addedOffers.find(o => o.id === "offer3") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faLink} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">1K followers</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[2])}
-                    disabled={!!addedOffers.find(o => o.id === "offer3")}
-                  >
-                    {addedOffers.find(o => o.id === "offer3") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
 
               {/* Security Guarantees */}
               <div className="checkout-card security-guarantees">

@@ -24,19 +24,29 @@ import {
   faGoogle,
   faBitcoin
 } from "@fortawesome/free-brands-svg-icons";
-import { useSearchParams, usePathname } from "next/navigation";
+import { } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
 function FinalCheckoutContent() {
-  const searchParams = useSearchParams();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
   
-  const username = searchParams.get("username") || "";
-  const qty = searchParams.get("qty") || "500";
-  const priceValue = parseFloat(searchParams.get("price") || "17.99");
-  const packageType = searchParams.get("type") || "High-Quality";
-  const postLink = searchParams.get("postLink") || "";
+  const [username, setUsername] = useState("");
+  const [qty, setQty] = useState("500");
+  const [priceValue, setPriceValue] = useState<number>(17.99);
+  const [packageType, setPackageType] = useState("High-Quality");
+  const [postLink, setPostLink] = useState("");
+  
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      setUsername(sp.get("username") || "");
+      setQty(sp.get("qty") || "500");
+      setPriceValue(parseFloat(sp.get("price") || "17.99"));
+      setPackageType(sp.get("type") || "High-Quality");
+      setPostLink(sp.get("postLink") || "");
+    }
+  }, []);
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later" | "apple_pay" | "google_pay">("card");
   const [cardholderName, setCardholderName] = useState("");
@@ -127,11 +137,50 @@ function FinalCheckoutContent() {
     }
   }, [paymentMethod, mfSession, isMfLoaded]);
 
-  const offers = [
-    { id: "offer1", text: "50 likes x 10 videos", price: 5.99, icon: faThumbsUp },
-    { id: "offer2", text: "100 likes x 10 videos", price: 11.24, icon: faThumbsUp },
-    { id: "offer3", text: "1K subscribers", price: 11.24, icon: faUserPlus }
-  ];
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; discount: number; icon: any}>>([]);
+  const [channelInfo, setChannelInfo] = useState<{ name: string; avatar: string } | null>(null);
+
+  useEffect(() => {
+    if (username) {
+      fetch(`/api/social/YOUTUBE/profile?username=${username}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.profile) {
+            setChannelInfo({
+              name: data.profile.fullName || data.profile.username,
+              avatar: data.profile.profilePicture || data.profile.profilePicUrl || data.profile.avatar
+            });
+          }
+        })
+        .catch(err => console.error("Failed to fetch profile:", err));
+    }
+  }, [username]);
+
+  useEffect(() => {
+    fetch('/api/upsells?platform=YOUTUBE&serviceType=LIKES')
+      .then(res => res.json())
+      .then(data => {
+        if (data.upsells) {
+          setOffers(data.upsells.map((u: any) => {
+             let p = u.basePrice;
+             if (u.discountType === 'PERCENT') {
+               p -= (p * u.discountValue / 100);
+             } else {
+               p -= u.discountValue;
+             }
+             return {
+               id: u.id,
+               text: u.title,
+               price: Math.max(0, p),
+               originalPrice: u.basePrice,
+               discount: u.discountValue,
+               icon: u.badgeIcon === 'user-plus' ? faUserPlus : faThumbsUp // Simple mapping for now
+             };
+          }));
+        }
+      })
+      .catch(err => console.error("Failed to fetch upsells:", err));
+  }, []);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
     if (!addedOffers.find(o => o.id === offer.id)) {
@@ -250,7 +299,9 @@ function FinalCheckoutContent() {
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 500,
-          price: finalPrice,
+          price: priceValue, // Send base price, let backend calculate totals with upsells/coupons
+          upsellIds: addedOffers.map(o => o.id),
+          couponCode: appliedCoupon?.code,
           link: postLink || `https://youtube.com/@${username}`,
           paymentMethod: paymentMethod,
           currency: currencyCode,
@@ -586,9 +637,32 @@ function FinalCheckoutContent() {
             <div className="final-checkout-right">
               <div className="checkout-card">
                 <div className="account-info-item">
-                  <div className="account-info-left">
-                    <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
-                    <span className="account-info-url">{postLink || `@${username || "username"}`}</span>
+                  <div className="account-info-left" style={{ alignItems: "center" }}>
+                    {channelInfo ? (
+                      <>
+                        <img 
+                          src={channelInfo.avatar} 
+                          alt={channelInfo.name} 
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/youtube-7.png";
+                            target.style.objectFit = "contain";
+                            target.style.padding = "4px";
+                          }}
+                          style={{ borderRadius: "50%", width: "40px", height: "40px", objectFit: "cover", marginRight: "10px" }} 
+                        />
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                           <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{channelInfo.name}</span>
+                           <span className="account-info-url" style={{ fontSize: "12px", color: "#666" }}>@{username}</span>
+                        </div>
+                      </>
+                     ) : (
+                       <>
+                         <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
+                         <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{`@${username || "username"}`}</span>
+                       </>
+                     )}
                   </div>
                   <button type="button" className="change-button">Change</button>
                 </div>
@@ -602,7 +676,7 @@ function FinalCheckoutContent() {
                     <FontAwesomeIcon icon={faThumbsUp} className="order-item-icon" />
                     <div className="order-item-details">
                       <span className="order-item-text">{qty} YouTube Likes</span>
-                      <span className="order-item-subtext">Applying to 1 video.</span>
+                      <span className="order-item-subtext" style={{ marginTop: "4px", display: "block" }}>Applying to 1 video.</span>
                     </div>
                   </div>
                   <span className="order-item-price">{formatPrice(priceValue)}</span>
@@ -714,66 +788,39 @@ function FinalCheckoutContent() {
                 </div>
               </div>
 
-              <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
-              
-              <div className="checkout-card exclusive-offers">
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer1") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faThumbsUp} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">50 likes x 10 videos</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(5.99)}</span>
-                      <span className="offer-price-old">{formatPrice(7.99)}</span>
-                    </div>
+              {offers.length > 0 && (
+                <>
+                  <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
+                  
+                  <div className="checkout-card exclusive-offers">
+                     {offers.map((offer, index) => {
+                       const discountPercent = offer.originalPrice > 0 
+                         ? Math.round((1 - offer.price / offer.originalPrice) * 100) 
+                         : 0;
+                       return (
+                         <div key={offer.id} className={`offer-item ${index % 2 === 0 ? 'offer-green' : 'offer-pink'} ${addedOffers.find(o => o.id === offer.id) ? "offer-added" : ""}`}>
+                           <div className="offer-badge">{discountPercent}%</div>
+                          <FontAwesomeIcon icon={offer.icon} className="offer-icon" />
+                          <div className="offer-details">
+                            <span className="offer-text">{offer.text}</span>
+                            <div className="offer-price">
+                              <span className="offer-price-new">For only {formatPrice(offer.price)}</span>
+                              <span className="offer-price-old">{formatPrice(offer.originalPrice)}</span>
+                            </div>
+                          </div>
+                          <button 
+                            className="offer-add-btn"
+                            onClick={() => handleAddOffer(offer)}
+                            disabled={!!addedOffers.find(o => o.id === offer.id)}
+                          >
+                            {addedOffers.find(o => o.id === offer.id) ? "Added" : "+ Add"}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[0])}
-                    disabled={!!addedOffers.find(o => o.id === "offer1")}
-                  >
-                    {addedOffers.find(o => o.id === "offer1") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className="offer-item offer-green">
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faThumbsUp} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">100 likes x 10 videos</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[1])}
-                    disabled={!!addedOffers.find(o => o.id === "offer2")}
-                  >
-                    {addedOffers.find(o => o.id === "offer2") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-pink ${addedOffers.find(o => o.id === "offer3") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faUserPlus} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">1K subscribers</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[2])}
-                    disabled={!!addedOffers.find(o => o.id === "offer3")}
-                  >
-                    {addedOffers.find(o => o.id === "offer3") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
 
               <div className="checkout-card security-guarantees">
                 <div className="guarantee-item">

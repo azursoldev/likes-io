@@ -1,0 +1,644 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://doadmin:AVNS_3QAE8fNMNCwGe-m6az8@db-postgresql-sfo2-44294-do-user-28518962-0.k.db.ondigitalocean.com:25060/defaultdb?sslmode=require"
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  password            String
+  name                String?
+  role                UserRole             @default(USER)
+  isBlocked           Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  avatarUrl           String?
+  blogPosts           BlogPost[]
+  orders              Order[]
+  reviews             Review[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  serviceId   String
+  platform    Platform
+  serviceType ServiceType
+  quantity    Int
+  price       Float
+  currency    String      @default("USD")
+  status      OrderStatus @default(PENDING_PAYMENT)
+  link        String?
+  japOrderId  String?
+  japStatus   String?
+  upsellData  Json? // Stores [{ upsellId, price, title }]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  service     Service     @relation(fields: [serviceId], references: [id])
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment     Payment?
+  reviews     Review[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([platform])
+  @@index([createdAt])
+}
+
+model Service {
+  id           String      @id @default(cuid())
+  name         String
+  platform     Platform
+  serviceType  ServiceType
+  japServiceId String?
+  basePrice    Float
+  markup       Float       @default(0)
+  finalPrice   Float
+  minQuantity  Int?
+  maxQuantity  Int?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  orders       Order[]
+
+  @@unique([platform, serviceType, japServiceId])
+  @@index([platform])
+  @@index([serviceType])
+  @@index([isActive])
+}
+
+model Payment {
+  id            String         @id @default(cuid())
+  orderId       String         @unique
+  gateway       PaymentGateway
+  transactionId String?
+  amount        Float
+  currency      String         @default("USD")
+  status        PaymentStatus  @default(PENDING)
+  webhookData   Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([gateway])
+  @@index([createdAt])
+}
+
+model Upsell {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+
+  // Mapping
+  serviceId String? // Optional: maps to a Service
+  packageId String? // Optional: if using package ID
+
+  // Pricing
+  basePrice     Float
+  discountType  DiscountType @default(PERCENT)
+  discountValue Float
+
+  // Display
+  badgeText  String?
+  badgeColor String? @default("red")
+  badgeIcon  String? // "thumbs-up", "user-plus", etc.
+
+  // Targeting rules
+  platform    Platform?
+  serviceType ServiceType?
+  minSubtotal Float?
+
+  // State
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([platform, serviceType])
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+model SocialProfile {
+  id          String   @id @default(cuid())
+  platform    Platform
+  username    String
+  profileData Json
+  posts       Json?
+  cachedAt    DateTime @default(now())
+  expiresAt   DateTime
+
+  @@unique([platform, username])
+  @@index([platform, username])
+  @@index([expiresAt])
+}
+
+model SocialProof {
+  id           String   @id @default(cuid())
+  platform     String
+  username     String
+  service      String
+  timeText     String
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AdminSettings {
+  id                     String   @id @default(cuid())
+  japApiUrl              String?
+  japApiKey              String?
+  checkoutApiKey         String?
+  checkoutWebhookSecret  String?
+  bigPayMeApiKey         String?
+  bigPayMeWebhookSecret  String?
+  rapidApiKey            String?
+  rapidApiInstagramHost  String?
+  rapidApiTikTokHost     String?
+  rapidApiYouTubeHost    String?
+  smtpHost               String?
+  smtpPort               Int?
+  smtpSecure             Boolean  @default(false)
+  smtpUser               String?
+  smtpPass               String?
+  smtpFrom               String?
+  defaultCurrency        String   @default("USD")
+  cryptomusMerchantId    String?
+  cryptomusApiKey        String?
+  cryptomusDisplayName   String?
+  cryptomusTestMode      Boolean  @default(false)
+  bigPayMerchantId       String?
+  bigPayDisplayName      String?
+  bigPayApiSecret        String?
+  bigPayTestMode         Boolean  @default(false)
+  exitIntentEnabled      Boolean  @default(false)
+  exitIntentTitle        String?
+  exitIntentSubtitle     String?
+  exitIntentDiscountCode String?
+  newServiceIndicator    Boolean  @default(true)
+  supportEmail           String?
+  updatedAt              DateTime @updatedAt
+  bannerDurationHours    Int      @default(24)
+  bannerEnabled          Boolean  @default(true)
+  inboxCount             Int      @default(0)
+  teamCount              Int      @default(0)
+  faviconUrl             String?
+  footerLogoUrl          String?
+  headerLogoUrl          String?
+  homeMetaDescription    String?
+  homeMetaTitle          String?
+  robotsTxtContent       String?  @default("User-agent: *\nAllow: /")
+  recaptchaSecretKey     String?
+  recaptchaSiteKey       String?
+  googleClientId         String?
+  googleClientSecret     String?
+  facebookClientId       String?
+  facebookClientSecret   String?
+
+  // MyFatoorah Settings
+  myFatoorahToken         String?
+  myFatoorahBaseURL       String? @default("https://apitest.myfatoorah.com")
+  myFatoorahTestMode      Boolean @default(true)
+  myFatoorahWebhookSecret String?
+
+  @@map("admin_settings")
+}
+
+model HomepageContent {
+  id                     String   @id @default(cuid())
+  heroTitle              String
+  heroSubtitle           String
+  heroRating             String?
+  heroReviewCount        String?
+  heroCtaButtons         Json?
+  isActive               Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
+  benefits               Json?
+  heroProfileEngagement  String?
+  heroProfileFollowers   String?
+  heroProfileHandle      String?
+  heroProfileLikes       String?
+  heroProfileRole        String?
+  influenceSubtitle      String?
+  influenceTitle         String?
+  platformSubtitle       String?
+  platformTitle          String?
+  quickStartDescription1 String?
+  quickStartDescription2 String?
+  quickStartTitle        String?
+  whyChooseSubtitle      String?
+  whyChooseTitle         String?
+  platformCards          Json?
+  heroProfileImage       String?
+  influenceImage         String?
+  influenceSteps         Json?
+  quickStartButtons      Json?
+
+  @@map("homepage_content")
+}
+
+model TeamMember {
+  id           String   @id @default(cuid())
+  name         String
+  role         String
+  description  String
+  twitterUrl   String?
+  linkedinUrl  String?
+  avatarUrl    String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@map("team_members")
+}
+
+model HeroSocialUpdate {
+  id           Int     @id @default(autoincrement())
+  handle       String
+  item         String
+  time         String
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
+
+  @@index([displayOrder])
+  @@map("hero_social_updates")
+}
+
+model PromoBar {
+  id               String   @id @default(cuid())
+  messages         Json
+  countdownSeconds Int?
+  isVisible        Boolean  @default(true)
+  displayOrder     Int      @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@map("promo_bar")
+}
+
+model FeaturedOn {
+  id           Int                  @id @default(autoincrement())
+  brandName    String
+  logoUrl      String?
+  displayOrder Int                  @default(0)
+  isActive     Boolean              @default(true)
+  pageLinks    FeaturedOnPageLink[]
+
+  @@index([displayOrder])
+  @@map("featured_on")
+}
+
+model FeaturedOnPageLink {
+  id           Int        @id @default(autoincrement())
+  featuredOnId Int
+  pagePath     String
+  link         String?
+  nofollow     Boolean    @default(false)
+  featuredOn   FeaturedOn @relation(fields: [featuredOnId], references: [id], onDelete: Cascade)
+
+  @@index([featuredOnId])
+  @@map("featured_on_page_links")
+}
+
+model PlatformSection {
+  id          Int      @id @default(autoincrement())
+  platform    Platform @unique
+  title       String
+  description String
+  tags        Json
+  ctaText     String
+  isActive    Boolean  @default(true)
+
+  @@map("platform_section")
+}
+
+model GetStartedContent {
+  id          Int         @id @default(autoincrement())
+  platform    Platform
+  packType    ServiceType
+  quality     String
+  features    Json
+  explanation String?
+  pricing     Json?
+  isActive    Boolean     @default(true)
+
+  @@unique([platform, packType, quality])
+  @@index([platform])
+  @@map("get_started_content")
+}
+
+model InfluenceSection {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  steps       Json
+  isActive    Boolean @default(true)
+
+  @@map("influence_section")
+}
+
+model AdvantageSection {
+  id       Int     @id @default(autoincrement())
+  title    String
+  subtitle String
+  items    Json
+  isActive Boolean @default(true)
+
+  @@map("advantage_section")
+}
+
+model QuickStartSection {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  buttons     Json
+  isActive    Boolean @default(true)
+
+  @@map("quick_start_section")
+}
+
+model ServicePageContent {
+  id                    Int         @id @default(autoincrement())
+  platform              Platform
+  serviceType           ServiceType
+  slug                  String?     @unique
+  metaTitle             String?
+  metaDescription       String?
+  heroTitle             String
+  heroSubtitle          String
+  heroRating            String?
+  heroReviewCount       String?
+  assuranceCardText     String?
+  learnMoreText         String?
+  learnMoreModalContent String?
+  packages              Json
+  qualityCompare        Json?
+  howItWorks            Json?
+  isActive              Boolean     @default(true)
+  updatedAt             DateTime    @updatedAt
+  benefits              Json?
+  moreServicesTitle     String?
+  moreServicesHighlight String?
+  moreServicesBody      String?
+  moreServicesButtons   Json?
+
+  @@unique([platform, serviceType])
+  @@index([platform, serviceType])
+  @@map("service_page_content")
+}
+
+model FAQ {
+  id           String       @id @default(cuid())
+  question     String
+  answer       String
+  category     String?
+  platform     Platform?
+  serviceType  ServiceType?
+  displayOrder Int          @default(0)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime?    @updatedAt
+
+  @@index([category])
+  @@index([platform])
+  @@index([serviceType])
+  @@map("faqs")
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  userId      String?
+  orderId     String?
+  rating      Int
+  comment     String
+  authorName  String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order?   @relation(fields: [orderId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([isPublished])
+  @@index([rating])
+  @@map("reviews")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Testimonial {
+  id           String       @id @default(cuid())
+  handle       String
+  text         String
+  rating       Int
+  role         String?      @default("Verified Buyer")
+  platform     Platform?
+  serviceType  ServiceType?
+  isApproved   Boolean      @default(false)
+  isFeatured   Boolean      @default(false)
+  displayOrder Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([isApproved])
+  @@index([platform])
+  @@index([serviceType])
+  @@map("testimonials")
+}
+
+model BlogPost {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  content         String
+  excerpt         String?
+  coverImage      String?
+  authorId        String
+  category        String?
+  metaTitle       String?
+  metaDescription String?
+  isPublished     Boolean   @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  author          User      @relation(fields: [authorId], references: [id])
+
+  @@index([slug])
+  @@index([isPublished])
+}
+
+model LegalPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  sections  Json
+  updatedAt DateTime @updatedAt
+
+  @@map("legal_pages")
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  type      String
+  subject   String
+  body      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+model BellNotification {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String
+  priority    String   @default("low")
+  category    String   @default("system")
+  iconBg      String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("bell_notifications")
+}
+
+model BannerMessage {
+  id        String   @id @default(cuid())
+  text      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  icon      String   @default("🔥")
+
+  @@map("banner_messages")
+}
+
+model IconAsset {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  category     String?
+  url          String?
+  alt          String?
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("icon_assets")
+}
+
+model Coupon {
+  id                    String       @id @default(cuid())
+  code                  String       @unique
+  type                  CouponType
+  value                 Float
+  currency              String?      @default("USD")
+  status                CouponStatus @default(ACTIVE)
+  startsAt              DateTime?
+  expiresAt             DateTime?
+  maxRedemptions        Int?
+  maxRedemptionsPerUser Int?
+  minOrderAmount        Float?
+  applicableServices    Json? // Array of service IDs or types
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  redemptions CouponRedemption[]
+
+  @@index([code])
+  @@index([status])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id         String   @id @default(cuid())
+  couponId   String
+  userId     String?
+  orderId    String?
+  redeemedAt DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+
+  @@index([couponId])
+  @@index([userId])
+  @@map("coupon_redemptions")
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+enum CouponStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Platform {
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+  REVIEWS
+}
+
+enum ServiceType {
+  LIKES
+  FOLLOWERS
+  VIEWS
+  SUBSCRIBERS
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentGateway {
+  CHECKOUT_COM
+  BIGPAYME
+  CRYPTOMUS
+  MYFATOORAH
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
