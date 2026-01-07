@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
         `;
         const currentBalance = Array.isArray(rows) && rows.length > 0 && rows[0].walletBalance != null
           ? Number(rows[0].walletBalance)
-          : Number(user as any)?.walletBalance || 0;
+          : Number((user as any)?.walletBalance || 0);
 
         if (currentBalance < order.price) {
           return NextResponse.json(

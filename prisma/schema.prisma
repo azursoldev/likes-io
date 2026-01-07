@@ -22,6 +22,7 @@ model User {
   orders    Order[]
   reviews   Review[]
   passwordResetTokens PasswordResetToken[]
+  walletTransactions WalletTransaction[]
 
   @@index([email])
   @@index([role])
