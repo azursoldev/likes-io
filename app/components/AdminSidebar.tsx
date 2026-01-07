@@ -80,7 +80,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
   const handleLogout = async () => {
     try {
       await signOut({ 
-        callbackUrl: "/",
+        callbackUrl: window.location.origin + "/",
         redirect: true 
       });
     } catch (error) {

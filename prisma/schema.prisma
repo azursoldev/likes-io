@@ -209,6 +209,10 @@ model AdminSettings {
   facebookClientId       String?
   facebookClientSecret   String?
 
+  // Google Analytics & Search Console
+  googleAnalyticsId      String?
+  googleSiteVerification String?
+
   // MyFatoorah Settings
   myFatoorahToken        String?
   myFatoorahBaseURL      String?  @default("https://apitest.myfatoorah.com")

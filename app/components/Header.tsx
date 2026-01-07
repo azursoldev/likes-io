@@ -145,7 +145,7 @@ export default function Header() {
                 <button
                   type="button"
                   className="signup"
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={() => signOut({ callbackUrl: window.location.origin + "/login" })}
                 >
                   Logout
                 </button>
@@ -272,7 +272,7 @@ export default function Header() {
               {status === "authenticated" ? (
                 <>
                   <a className="mobile-btn-secondary" href="/dashboard">My account</a>
-                  <button className="mobile-btn-primary" onClick={() => signOut({ callbackUrl: "/login" })}>Logout</button>
+                  <button className="mobile-btn-primary" onClick={() => signOut({ callbackUrl: window.location.origin + "/login" })}>Logout</button>
                 </>
               ) : (
                 <>

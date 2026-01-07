@@ -21,6 +21,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
+import { useGoogleAnalytics } from "../../../../hooks/useGoogleAnalytics";
 import Link from "next/link";
 
 function FinalCheckoutContent() {
@@ -59,6 +60,20 @@ function FinalCheckoutContent() {
   const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
   const [isMfLoaded, setIsMfLoaded] = useState(false);
   const [channelInfo, setChannelInfo] = useState<{ name: string; avatar: string } | null>(null);
+  const { trackBeginCheckout } = useGoogleAnalytics();
+
+  useEffect(() => {
+    if (priceValue > 0) {
+      trackBeginCheckout([
+        {
+          item_id: 'YOUTUBE_SUBSCRIBERS',
+          item_name: 'YouTube Subscribers',
+          price: priceValue,
+          quantity: parseInt(qty) || 0,
+        }
+      ], priceValue, 'USD');
+    }
+  }, [priceValue, qty, trackBeginCheckout]);
 
   useEffect(() => {
     if (username) {

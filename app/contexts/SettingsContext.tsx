@@ -8,6 +8,8 @@ type Settings = {
   faviconUrl?: string | null;
   homeMetaTitle?: string | null;
   homeMetaDescription?: string | null;
+  googleAnalyticsId?: string | null;
+  googleSiteVerification?: string | null;
   // Add other settings as needed
 };
 

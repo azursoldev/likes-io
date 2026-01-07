@@ -187,6 +187,11 @@ export async function PUT(request: NextRequest) {
       faviconUrl,
       headerLogoUrl,
       footerLogoUrl,
+      
+      // Analytics & Integrations
+      googleAnalyticsId,
+      googleSiteVerification,
+
       // Existing fields
       japApiUrl,
       japApiKey,
@@ -300,6 +305,10 @@ export async function PUT(request: NextRequest) {
     if (smtpUser !== undefined) updateData.smtpUser = smtpUser;
     if (smtpPass !== undefined) updateData.smtpPass = smtpPass;
     if (smtpFrom !== undefined) updateData.smtpFrom = smtpFrom;
+
+    // Analytics & Integrations
+    if (googleAnalyticsId !== undefined) updateData.googleAnalyticsId = googleAnalyticsId || null;
+    if (googleSiteVerification !== undefined) updateData.googleSiteVerification = googleSiteVerification || null;
 
     // MyFatoorah Settings
     if (myFatoorahToken !== undefined && !myFatoorahToken.includes('••••')) {

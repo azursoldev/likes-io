@@ -35,6 +35,10 @@ export default function SettingsDashboard() {
   const [footerLogoUrl, setFooterLogoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   
+  // Analytics & Integrations
+  const [googleAnalyticsId, setGoogleAnalyticsId] = useState("");
+  const [googleSiteVerification, setGoogleSiteVerification] = useState("");
+  
   // RapidAPI
   const [rapidApiKey, setRapidApiKey] = useState("••••••••");
   const [rapidApiInstagramHost, setRapidApiInstagramHost] = useState("instagram120.p.rapidapi.com");
@@ -423,6 +427,36 @@ export default function SettingsDashboard() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Analytics & Integrations */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Analytics & Integrations</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Google Analytics (GA4) Measurement ID
+                  <span className="settings-helper-text">Format: G-XXXXXXXXXX. This will inject the GA4 script site-wide.</span>
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={googleAnalyticsId}
+                    onChange={(e) => setGoogleAnalyticsId(e.target.value)}
+                    placeholder="G-XXXXXXXXXX"
+                  />
+                </label>
+
+                <label className="settings-label">
+                  Google Search Console Verification Code
+                  <span className="settings-helper-text">Enter the content of the google-site-verification meta tag.</span>
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={googleSiteVerification}
+                    onChange={(e) => setGoogleSiteVerification(e.target.value)}
+                    placeholder="Enter verification code"
+                  />
+                </label>
               </div>
             </div>
 

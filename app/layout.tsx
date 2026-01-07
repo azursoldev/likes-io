@@ -1,5 +1,6 @@
 import './globals.css';
 import ScrollTopButton from './components/ScrollTopButton';
+import GoogleAnalytics from './components/GoogleAnalytics';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import NextAuthSessionProvider from '@/lib/session-provider';
@@ -28,11 +29,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  let settings = {};
+  let settings: any = {};
   try {
-    const fetchedSettings = await prisma.adminSettings.findFirst();
-    if (fetchedSettings) {
-      settings = fetchedSettings;
+    // Use raw query to ensure we get all fields even if client is outdated
+    const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`;
+    if (Array.isArray(result) && result.length > 0) {
+      settings = result[0];
     }
   } catch (error) {
     console.error('Error fetching settings for layout:', error);
@@ -40,11 +42,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        {settings?.googleSiteVerification && (
+          <meta name="google-site-verification" content={settings.googleSiteVerification} />
+        )}
+      </head>
       <body suppressHydrationWarning>
         <NextAuthSessionProvider>
           <SettingsProvider settings={settings}>
             <CurrencyProvider>
+              {settings?.googleAnalyticsId && <GoogleAnalytics gaId={settings.googleAnalyticsId} />}
               {children}
               <ScrollTopButton />
             </CurrencyProvider>
