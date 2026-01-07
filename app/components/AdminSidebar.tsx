@@ -79,10 +79,8 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
 
   const handleLogout = async () => {
     try {
-      await signOut({ 
-        callbackUrl: window.location.origin + "/",
-        redirect: true 
-      });
+      await signOut({ redirect: false });
+      window.location.href = window.location.origin + "/";
     } catch (error) {
       console.error("Logout error:", error);
       // Fallback: redirect manually if signOut fails

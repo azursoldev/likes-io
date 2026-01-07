@@ -19,8 +19,12 @@ type SidebarProps =
   | "settings";
 
 export default function UserSidebar({ active = "dashboard" as SidebarProps }) {
-  const handleLogout = () => {
-    signOut({ callbackUrl: window.location.origin + "/login" });
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirect: false });
+    } finally {
+      window.location.href = window.location.origin + "/login";
+    }
   };
 
   return (
