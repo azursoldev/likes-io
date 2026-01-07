@@ -16,7 +16,8 @@ import {
   faShieldHalved,
   faTag,
   faCoins,
-  faEye
+  faEye,
+  faWallet
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
@@ -47,7 +48,8 @@ function FinalCheckoutContent() {
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "wallet">("card");
+  const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -58,6 +60,8 @@ function FinalCheckoutContent() {
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [userProfile, setUserProfile] = useState<{ profilePicture?: string, username?: string } | null>(null);
+  const [imageError, setImageError] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
     type: "PERCENT" | "FIXED";
@@ -66,6 +70,45 @@ function FinalCheckoutContent() {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!username) return;
+      try {
+        const res = await fetch(`/api/social/instagram/profile?username=${username}`);
+        if (res.ok) {
+          const data = await res.json();
+          const profile = data.profile || data;
+          if (profile.profilePicture) {
+            setUserProfile({
+              profilePicture: profile.profilePicture,
+              username: profile.username
+            });
+            setImageError(false);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [username]);
+
+  // Fetch wallet balance
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data && typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch wallet balance:", err));
+  }, []);
 
   // MyFatoorah State
   const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
@@ -268,11 +311,7 @@ function FinalCheckoutContent() {
     setProcessing(true);
     setError("");
 
-    if (paymentMethod === 'pay_later') {
-      alert(`Test Checkout Successful!\n\nPlatform: ${platform}\nService: ${service}\nQuantity: ${qty}\nTotal Price: ${formatPrice(finalPrice)}\nPosts: ${postCount}`);
-      setProcessing(false);
-      return;
-    }
+
 
     try {
       // Check if user is logged in (we'll check this via the API response)
@@ -284,6 +323,12 @@ function FinalCheckoutContent() {
       if (paymentMethod === "card") {
         if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
           setError("Please fill in all card details");
+          setProcessing(false);
+          return;
+        }
+      } else if (paymentMethod === "wallet") {
+        if (walletBalance < finalPrice) {
+          setError("Insufficient wallet balance");
           setProcessing(false);
           return;
         }
@@ -429,68 +474,44 @@ function FinalCheckoutContent() {
               <div className="checkout-card">
                 <h2 className="final-checkout-title">Review & Pay</h2>
                 
-                {/* Coupon Section */}
-                <div className="coupon-section mb-6">
-                  {!hasCoupon ? (
-                    <button 
-                      type="button"
-                      className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
-                      onClick={() => setHasCoupon(true)}
-                    >
-                      <FontAwesomeIcon icon={faTag} />
-                      I have a coupon code
-                    </button>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={couponCode}
-                          onChange={(e) => setCouponCode(e.target.value)}
-                          placeholder="Enter coupon code"
-                          className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                          disabled={!!appliedCoupon || isValidatingCoupon}
-                        />
-                        {appliedCoupon ? (
-                          <button
-                            type="button"
-                            onClick={handleRemoveCoupon}
-                            className="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-medium hover:bg-red-200"
-                          >
-                            Remove
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleApplyCoupon}
-                            disabled={!couponCode || isValidatingCoupon}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
-                          >
-                            {isValidatingCoupon ? "Checking..." : "Apply"}
-                          </button>
-                        )}
-                      </div>
-                      {couponError && (
-                        <p className="text-red-500 text-sm">{couponError}</p>
-                      )}
-                      {couponSuccess && (
-                        <p className="text-green-500 text-sm">{couponSuccess}</p>
-                      )}
-                      {appliedCoupon && (
-                        <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-                          <p className="text-green-700 text-sm font-medium">
-                            Coupon applied! You saved {formatPrice(discountAmount)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                {/* Coupon Section removed from here */}
 
                 <form className="payment-form" onSubmit={handlePayment}>
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     
+                    {/* Wallet Payment Option */}
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="wallet"
+                          checked={paymentMethod === "wallet"}
+                          onChange={() => setPaymentMethod("wallet")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faWallet} className="payment-option-icon" />
+                        <span>Wallet (Balance: {formatPrice(walletBalance)})</span>
+                      </label>
+                      
+                      {paymentMethod === "wallet" && (
+                        <div className="crypto-form">
+                          <div className="crypto-message-box">
+                            {walletBalance >= finalPrice ? (
+                               <p style={{ color: '#16a34a' }}>
+                                 Use your wallet balance to pay for this order instantly.
+                               </p>
+                            ) : (
+                               <p style={{ color: '#dc2626' }}>
+                                 Insufficient balance. Please add funds to your wallet or choose another payment method.
+                               </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Card Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
@@ -645,29 +666,7 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
-                    {/* Pay Later (Test) Option */}
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="pay_later"
-                          checked={paymentMethod === "pay_later"}
-                          onChange={() => setPaymentMethod("pay_later")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faShieldHalved} className="payment-option-icon" />
-                        <span>Pay Later (Test)</span>
-                      </label>
-                      
-                      {paymentMethod === "pay_later" && (
-                        <div className="crypto-form">
-                          <div className="crypto-message-box">
-                            <p>This is a test payment method. No actual charge will be made.</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+
                   </div>
 
                   {error && (
@@ -721,7 +720,18 @@ function FinalCheckoutContent() {
               <div className="checkout-card">
                 <div className="account-info-item">
                   <div className="account-info-left">
-                    <img src="/instagram-11.png" alt="Instagram" width={20} height={20} />
+                    <div style={{ position: 'relative', width: '24px', height: '24px', marginRight: '8px' }}>
+                      {!imageError && userProfile?.profilePicture ? (
+                        <img
+                          src={`/api/image-proxy?url=${encodeURIComponent(userProfile.profilePicture)}`}
+                          alt={username}
+                          style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <img src="/instagram-11.png" alt="Instagram" width={24} height={24} />
+                      )}
+                    </div>
                     <span>@{username || "username"}</span>
                   </div>
                   <button type="button" className="change-button">Change</button>
@@ -734,14 +744,16 @@ function FinalCheckoutContent() {
                 <div className="order-item">
                   <div className="order-item-left">
                     <FontAwesomeIcon icon={getMetricIcon()} className="order-item-icon" />
-                    <div className="order-item-details">
+                    <div className="order-item-details" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <span className="order-item-text">{qty} {getMetricLabel()}</span>
-                      <span className="order-item-subtext">Applying to {postCount} post{postCount !== 1 ? 's' : ''}.</span>
-                      {postCount > 1 && (
-                         <span className="order-item-subtext" style={{ fontSize: "11px", color: "#666" }}>
-                           (~{viewsPerPost} {getMetricLabel().toLowerCase()}/post)
-                         </span>
-                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span className="order-item-subtext">Applying to {postCount} post{postCount !== 1 ? 's' : ''}.</span>
+                        {postCount > 1 && (
+                           <span className="order-item-subtext" style={{ fontSize: "11px", color: "#666" }}>
+                             (~{viewsPerPost} {getMetricLabel().toLowerCase()}/post)
+                           </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <span className="order-item-price">{formatPrice(basePrice)}</span>
@@ -768,6 +780,57 @@ function FinalCheckoutContent() {
                     </div>
                   </div>
                 ))}
+
+                <div className="coupon-section">
+                  <label className="coupon-toggle">
+                    <span>I have a coupon code</span>
+                    <div className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={hasCoupon}
+                        onChange={(e) => setHasCoupon(e.target.checked)}
+                        className="coupon-checkbox"
+                      />
+                      <span className="toggle-slider"></span>
+                    </div>
+                  </label>
+                  {hasCoupon && (
+                    <div className="coupon-input-wrapper" style={{ flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                        <input
+                          type="text"
+                          className="coupon-input"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          placeholder="Enter coupon"
+                          disabled={isValidatingCoupon || !!appliedCoupon}
+                          style={{ flex: 1 }}
+                        />
+                        {appliedCoupon ? (
+                          <button 
+                            type="button" 
+                            className="coupon-apply-btn"
+                            onClick={handleRemoveCoupon}
+                            style={{ background: "#ef4444" }}
+                          >
+                            Remove
+                          </button>
+                        ) : (
+                          <button 
+                            type="button" 
+                            className="coupon-apply-btn"
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode}
+                          >
+                            {isValidatingCoupon ? "..." : "Apply"}
+                          </button>
+                        )}
+                      </div>
+                      {couponError && <p style={{color: '#ef4444', fontSize: '12px', margin: 0}}>{couponError}</p>}
+                      {couponSuccess && <p style={{color: '#22c55e', fontSize: '12px', margin: 0}}>{couponSuccess}</p>}
+                    </div>
+                  )}
+                </div>
 
                 <div className="order-total">
                   {appliedCoupon && (

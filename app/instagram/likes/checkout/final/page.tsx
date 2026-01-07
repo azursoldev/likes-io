@@ -19,8 +19,6 @@ import {
   faWallet
 } from "@fortawesome/free-solid-svg-icons";
 import {
-  faApple,
-  faGoogle,
   faBitcoin
 } from "@fortawesome/free-brands-svg-icons";
 import { useSearchParams } from "next/navigation";
@@ -52,7 +50,7 @@ function FinalCheckoutContent() {
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later" | "apple_pay" | "google_pay" | "wallet">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "wallet">("card");
   const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
@@ -68,6 +66,33 @@ function FinalCheckoutContent() {
   const [couponSuccess, setCouponSuccess] = useState("");
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [userProfile, setUserProfile] = useState<{ profilePicture?: string, username?: string } | null>(null);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!username) return;
+      try {
+        const response = await fetch(`/api/social/instagram/profile?username=${username}`);
+        if (response.ok) {
+          const data = await response.json();
+          const profile = data.profile || data;
+          
+          if (profile.profilePicture) {
+            setUserProfile({
+              profilePicture: profile.profilePicture,
+              username: profile.username
+            });
+            setImageError(false);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [username]);
 
   // MyFatoorah State
   const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
@@ -244,11 +269,10 @@ function FinalCheckoutContent() {
     setProcessing(true);
     setError("");
 
-    if (paymentMethod === 'pay_later') {
-      alert(`Test Checkout Successful!\n\nPlatform: ${platform}\nService: ${service}\nQuantity: ${qty}\nTotal Price: ${formatPrice(totalPrice)}\nPosts: ${postCount}`);
-      setProcessing(false);
-      return;
+    if (paymentMethod === 'card') {
+      // Logic for card payment is handled below
     }
+
 
     try {
       // Check if user is logged in (we'll check this via the API response)
@@ -536,49 +560,7 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="apple_pay"
-                          checked={paymentMethod === "apple_pay"}
-                          onChange={() => setPaymentMethod("apple_pay")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faApple} className="payment-option-icon" />
-                        <span>Apple Pay</span>
-                      </label>
-                      {paymentMethod === "apple_pay" && (
-                         <div className="crypto-form">
-                           <div className="crypto-message-box">
-                             <p>You will be redirected to Apple Pay to complete your payment.</p>
-                           </div>
-                         </div>
-                       )}
-                    </div>
 
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="google_pay"
-                          checked={paymentMethod === "google_pay"}
-                          onChange={() => setPaymentMethod("google_pay")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faGoogle} className="payment-option-icon" />
-                        <span>Google Pay</span>
-                      </label>
-                      {paymentMethod === "google_pay" && (
-                         <div className="crypto-form">
-                           <div className="crypto-message-box">
-                             <p>You will be redirected to Google Pay to complete your payment.</p>
-                           </div>
-                         </div>
-                       )}
-                    </div>
 
                     {/* Crypto Payment Option */}
                     <div className="payment-option">
@@ -630,29 +612,7 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
-                    {/* Pay Later (Test) Option */}
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="pay_later"
-                          checked={paymentMethod === "pay_later"}
-                          onChange={() => setPaymentMethod("pay_later")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faShieldHalved} className="payment-option-icon" />
-                        <span>Pay Later (Test)</span>
-                      </label>
-                      
-                      {paymentMethod === "pay_later" && (
-                        <div className="crypto-form">
-                          <div className="crypto-message-box">
-                            <p>This is a test payment method. No actual charge will be made.</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+
                   </div>
 
                   {error && (
@@ -705,10 +665,35 @@ function FinalCheckoutContent() {
               <div className="checkout-card">
                 <div className="account-info-item">
                   <div className="account-info-left">
-                    <img src={getPlatformIcon()} alt={getPlatformName()} width={20} height={20} />
-                    <span className="account-info-url">
-                      {postCount > 1 ? `${postCount} posts selected` : (postLink || `@${username || "username"}`)}
-                    </span>
+                    <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '50%', 
+                        overflow: 'hidden', 
+                        border: '1px solid #eee',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '12px',
+                        flexShrink: 0
+                      }}>
+                        {userProfile?.profilePicture && !imageError ? (
+                           <img 
+                             src={`/api/image-proxy?url=${encodeURIComponent(userProfile.profilePicture)}`}
+                             alt={username} 
+                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                             onError={() => setImageError(true)}
+                           />
+                         ) : (
+                           <img src={getPlatformIcon()} alt={getPlatformName()} width={20} height={20} />
+                         )}
+                    </div>
+                    <div className="account-info-details" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <span className="account-info-username" style={{ fontWeight: '600', fontSize: '14px', lineHeight: '1.2' }}>@{username || "username"}</span>
+                      <span className="account-info-posts" style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                        {postCount > 1 ? `${postCount} posts selected` : '1 post selected'}
+                      </span>
+                    </div>
                   </div>
                   <button type="button" className="change-button">Change</button>
                 </div>
@@ -721,7 +706,7 @@ function FinalCheckoutContent() {
                 <div className="order-item">
                   <div className="order-item-left">
                     <FontAwesomeIcon icon={getMetricIcon()} className="order-item-icon" />
-                    <div className="order-item-details">
+                    <div className="order-item-details" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <span className="order-item-text">{qty} {getPlatformName()} {getMetricLabel()}</span>
                       <span className="order-item-subtext">
                         {likesPerPost} likes / {postCount} post{postCount > 1 ? 's' : ''}

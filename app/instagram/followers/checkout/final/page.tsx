@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense, useEffect } from "react";
+import Script from "next/script";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,7 +16,8 @@ import {
   faShieldHalved,
   faTag,
   faCoins,
-  faUser
+  faUser,
+  faWallet
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
@@ -44,7 +46,8 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const detailsUrl = `${baseUrl}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   // No postsUrl for followers
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet" | "myfatoorah">("card");
+  const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -63,6 +66,114 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [userProfile, setUserProfile] = useState<{ profilePicture?: string, username?: string } | null>(null);
+  const [imageError, setImageError] = useState(false);
+
+  // MyFatoorah State
+  const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
+  const [isMfLoaded, setIsMfLoaded] = useState(false);
+
+  useEffect(() => {
+    if (paymentMethod === "myfatoorah" && !mfSession) {
+      fetch("/api/payments/initiate-session", { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            console.error("MF Init Error:", data.error);
+            setError("Failed to load payment form");
+          } else {
+            setMfSession(data);
+          }
+        })
+        .catch(err => {
+          console.error("MF Fetch Error:", err);
+          setError("Failed to load payment form");
+        });
+    }
+  }, [paymentMethod, mfSession]);
+
+  useEffect(() => {
+    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+      try {
+        const config = {
+          countryCode: mfSession.countryCode,
+          sessionId: mfSession.sessionId,
+          cardViewId: "mf-card-element",
+          supportedNetworks: "visa,mastercard,amex,mada",
+          style: {
+            direction: "ltr",
+            cardHeight: 130,
+            input: {
+              color: "black",
+              fontSize: "13px",
+              fontFamily: "sans-serif",
+              inputHeight: "32px",
+              inputMargin: "0px",
+              borderColor: "e2e8f0",
+              borderWidth: "1px",
+              borderRadius: "8px",
+              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+              placeHolder: {
+                holderName: "Name On Card",
+                cardNumber: "Number",
+                expiryDate: "MM / YY",
+                securityCode: "CVV",
+              }
+            },
+            label: { display: false },
+            error: {
+              borderColor: "red",
+              borderRadius: "8px",
+              boxShadow: "0px",
+            },
+          },
+        };
+        (window as any).myFatoorah.init(config);
+      } catch (err) {
+        console.error("MF Init Exception:", err);
+      }
+    }
+  }, [paymentMethod, mfSession, isMfLoaded]);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!username) return;
+      try {
+        const response = await fetch(`/api/social/instagram/profile?username=${username}`);
+        if (response.ok) {
+          const data = await response.json();
+          const profile = data.profile || data;
+          
+          if (profile.profilePicture) {
+            setUserProfile({
+              profilePicture: profile.profilePicture,
+              username: profile.username
+            });
+            setImageError(false);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [username]);
+
+  // Fetch wallet balance
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data && typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch wallet balance:", err));
+  }, []);
 
   const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; icon: any}>>([]);
 
@@ -164,6 +275,11 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
     setError("");
 
     try {
+      // Check if user is logged in (we'll check this via the API response)
+      // For now, proceed - the API will return 401 if not authenticated
+      
+      let cardSessionId: string | undefined;
+
       // Validate required fields
       if (paymentMethod === "card") {
         if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
@@ -171,6 +287,15 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
           setProcessing(false);
           return;
         }
+      } else if (paymentMethod === "myfatoorah") {
+        if (!mfSession || !(window as any).myFatoorah) {
+           throw new Error("Payment form not loaded");
+        }
+        const mfResponse = await (window as any).myFatoorah.submit();
+        if (!mfResponse || !mfResponse.SessionId) {
+          throw new Error("Invalid payment data");
+        }
+        cardSessionId = mfResponse.SessionId;
       }
 
       if (!username) {
@@ -208,11 +333,12 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
           quantity: parseInt(qty) || 50,
           price: priceValue,
           link: targetLink || null,
-          paymentMethod: paymentMethod, // 'card' or 'crypto'
+          paymentMethod: paymentMethod, // 'card' or 'crypto' or 'myfatoorah'
           currency: currencyCode,
           packageServiceId: packageServiceId || undefined,
           couponCode: appliedCoupon?.code,
           upsellIds: addedOffers.map(o => o.id),
+          sessionId: cardSessionId
         }),
       });
 
@@ -224,16 +350,22 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
         throw new Error(errorData.error || "Failed to process payment");
       }
 
-      const { checkoutUrl } = await paymentResponse.json();
+      const { checkoutUrl, paymentId, paymentStatus, orderId } = await paymentResponse.json();
       
       if (checkoutUrl) {
         window.location.href = checkoutUrl;
+      } else if (paymentStatus === "Paid" || paymentStatus === "Success") {
+        window.location.href = `/checkout/success?orderId=${orderId}`;
       } else {
-        throw new Error("No checkout URL received");
+        window.location.href = `/checkout/success?orderId=${orderId}`;
       }
     } catch (err: any) {
       console.error("Payment error:", err);
-      setError(err.message || "Failed to process payment. Please try again.");
+      if (err.message && err.message.includes("MyFatoorah")) {
+        setError("Please check your card details.");
+      } else {
+        setError(err.message || "Failed to process payment. Please try again.");
+      }
       setProcessing(false);
     }
   };
@@ -250,6 +382,13 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   return (
     <>
       <Header />
+      {mfSession?.scriptUrl && (
+        <Script 
+          src={mfSession.scriptUrl}
+          strategy="lazyOnload"
+          onLoad={() => setIsMfLoaded(true)}
+        />
+      )}
       <main className="final-checkout-page">
         <div className="final-checkout-container">
           {/* Progress Indicator */}
@@ -282,6 +421,60 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     
+                    {/* Wallet Payment Option */}
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="wallet"
+                          checked={paymentMethod === "wallet"}
+                          onChange={() => setPaymentMethod("wallet")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faWallet} className="payment-option-icon" />
+                        <span>Wallet (Balance: {formatPrice(walletBalance)})</span>
+                      </label>
+                      
+                      {paymentMethod === "wallet" && (
+                        <div className="crypto-form">
+                          <div className="crypto-message-box">
+                            {walletBalance >= finalPrice ? (
+                               <p style={{ color: '#16a34a' }}>
+                                 Use your wallet balance to pay for this order instantly.
+                               </p>
+                            ) : (
+                               <p style={{ color: '#dc2626' }}>
+                                 Insufficient balance. Please add funds to your wallet or choose another payment method.
+                               </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* MyFatoorah Payment Option */}
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="myfatoorah"
+                          checked={paymentMethod === "myfatoorah"}
+                          onChange={() => setPaymentMethod("myfatoorah")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
+                        <span>MyFatoorah (KNET, Visa/Master)</span>
+                      </label>
+                      
+                      {paymentMethod === "myfatoorah" && (
+                        <div className="card-form" style={{ minHeight: '150px' }}>
+                          <div id="mf-card-element" style={{ width: '100%' }}></div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Card Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
@@ -461,7 +654,29 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
               <div className="checkout-card">
                 <div className="account-info-item">
                   <div className="account-info-left">
-                    <img src={getPlatformIcon()} alt={getPlatformName()} width={20} height={20} />
+                    <div style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '50%', 
+                      overflow: 'hidden', 
+                      border: '1px solid #eee',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: '12px',
+                      flexShrink: 0
+                    }}>
+                      {userProfile?.profilePicture && !imageError ? (
+                        <img 
+                          src={`/api/image-proxy?url=${encodeURIComponent(userProfile.profilePicture)}`}
+                          alt={username} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <img src={getPlatformIcon()} alt={getPlatformName()} width={20} height={20} />
+                      )}
+                    </div>
                     <span>@{username || "username"}</span>
                   </div>
                   <button type="button" className="change-button">Change</button>
@@ -475,9 +690,26 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                 <div className="order-item">
                   <div className="order-item-left">
                     <FontAwesomeIcon icon={getMetricIcon()} className="order-item-icon" />
-                    <div className="order-item-details">
+                    <div className="order-item-details" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <span className="order-item-text">{qty} {getPlatformName()} {getMetricLabel()}</span>
-                      <span className="order-item-subtext">Target: @{username}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="order-item-subtext" style={{ fontSize: '13px', color: '#666' }}>Target:</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ width: '16px', height: '16px', borderRadius: '50%', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #eee' }}>
+                            {userProfile?.profilePicture && !imageError ? (
+                              <img 
+                                src={`/api/image-proxy?url=${encodeURIComponent(userProfile.profilePicture)}`}
+                                alt={username}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={() => setImageError(true)}
+                              />
+                            ) : (
+                              <img src={getPlatformIcon()} alt={getPlatformName()} width={16} height={16} />
+                            )}
+                          </div>
+                          <span className="order-item-subtext" style={{ fontSize: '13px', color: '#666' }}>@{username}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <span className="order-item-price">{formatPrice(priceValue)}</span>
