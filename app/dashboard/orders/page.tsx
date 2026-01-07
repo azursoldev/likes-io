@@ -17,6 +17,10 @@ export default async function Page() {
     redirect("/login");
   }
 
+  if (!session.user.id) {
+    return <OrderHistory initialOrders={[]} />;
+  }
+
   const orders = await prisma.order.findMany({
     where: {
       userId: session.user.id,

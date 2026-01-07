@@ -170,6 +170,15 @@ export function PostsSelectionContent({ basePath }: { basePath?: string }) {
       if (prev.includes(url)) {
         return prev.filter(p => p !== url);
       } else {
+        // Check if adding another post would result in less than 50 views per post
+        const newCount = prev.length + 1;
+        const potentialSplitQty = Math.floor(parseInt(qty) / newCount);
+        
+        if (potentialSplitQty < 50) {
+          alert(`You cannot select more videos. Minimum 50 views per video required.`);
+          return prev;
+        }
+
         return [...prev, url];
       }
     });
@@ -183,11 +192,14 @@ export function PostsSelectionContent({ basePath }: { basePath?: string }) {
     if (finalLinks.length > 0) {
       // Calculate total price based on number of videos selected
       const count = finalLinks.length;
-      const totalBasePrice = priceValue * count;
+      // Don't multiply price, keep base price
+      const totalBasePrice = priceValue;
+      // Split quantity across posts
+      const splitQty = Math.floor(parseInt(qty) / count);
 
       const params = new URLSearchParams({
         videoLink: finalLinks.join(','),
-        qty: qty,
+        qty: String(splitQty),
         price: String(totalBasePrice), // Pass the calculated total price
         type: packageType,
       });
@@ -202,7 +214,8 @@ export function PostsSelectionContent({ basePath }: { basePath?: string }) {
 
   // Calculate Subtotal
   const postCount = selectedPosts.length || (postLink ? 1 : 0);
-  const subtotal = priceValue * (postCount || 1);
+  const subtotal = priceValue; // Price stays same regardless of post count
+  const displayQtyPerPost = Math.floor(parseInt(qty) / (postCount || 1));
 
   return (
     <>
@@ -338,7 +351,7 @@ export function PostsSelectionContent({ basePath }: { basePath?: string }) {
                               whiteSpace: 'nowrap'
                             }}>
                               <FontAwesomeIcon icon={faEye} />
-                              <span>+ {qty}</span>
+                              <span>+ {displayQtyPerPost}</span>
                             </div>
                           )}
 
@@ -462,7 +475,7 @@ export function PostsSelectionContent({ basePath }: { basePath?: string }) {
                       <div className="order-summary-details">
                         <span className="order-summary-text">{qty} YouTube Views</span>
                         <span className="order-summary-subtext">
-                             {qty} views / {selectedPosts.length || (postLink ? 1 : 0)} videos
+                             {displayQtyPerPost} views / {postCount} video{postCount !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>

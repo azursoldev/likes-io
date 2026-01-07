@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       quantity,
       price,
       link,
-      paymentMethod, // 'card' or 'crypto'
+      paymentMethod, // 'card' or 'crypto' or 'wallet'
       currency = 'USD',
       serviceId, // Optional: serviceId from package data (database service ID)
       packageServiceId, // Optional: JAP Service ID from package (SMM Panel Integration)
@@ -260,7 +260,68 @@ export async function POST(request: NextRequest) {
     });
 
     // Create payment session based on payment method
-    if (paymentMethod === 'crypto') {
+    if (paymentMethod === 'wallet') {
+      // Wallet payment: deduct balance and mark order as paid immediately
+      try {
+        // Get current balance (raw to avoid client staleness)
+        const rows: any = await prisma.$queryRaw`
+          SELECT "walletBalance" FROM "User" WHERE "id" = ${user.id} LIMIT 1
+        `;
+        const currentBalance = Array.isArray(rows) && rows.length > 0 && rows[0].walletBalance != null
+          ? Number(rows[0].walletBalance)
+          : Number(user as any)?.walletBalance || 0;
+
+        if (currentBalance < order.price) {
+          return NextResponse.json(
+            { error: 'Insufficient wallet balance' },
+            { status: 400 }
+          );
+        }
+
+        // Deduct and create transaction in a transaction block
+        await prisma.$transaction([
+          prisma.user.update({
+            where: { id: user.id },
+            data: { walletBalance: currentBalance - order.price }
+          }),
+          prisma.payment.create({
+            data: {
+              orderId: order.id,
+              gateway: 'WALLET',
+              transactionId: null,
+              amount: order.price,
+              currency: order.currency,
+              status: 'SUCCESS',
+              webhookData: appliedCoupon ? { couponCode: appliedCoupon.code, discountAmount } : undefined,
+            },
+          }),
+          prisma.walletTransaction.create({
+            data: {
+              userId: user.id,
+              amount: order.price,
+              currency: order.currency,
+              type: 'DEBIT',
+              note: `Order ${order.id} payment`
+            }
+          }),
+          prisma.order.update({
+            where: { id: order.id },
+            data: { status: 'PROCESSING' }
+          })
+        ]);
+
+        return NextResponse.json({
+          orderId: order.id,
+          paymentStatus: 'SUCCESS'
+        });
+      } catch (error: any) {
+        console.error('Wallet payment error:', error);
+        return NextResponse.json(
+          { error: error.message || 'Failed to process wallet payment' },
+          { status: 500 }
+        );
+      }
+    } else if (paymentMethod === 'crypto') {
       // Cryptomus payment
       try {
         const cryptomusAPI = await getCryptomusAPI();

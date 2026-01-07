@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "../admin/dashboard.css";
 import {
@@ -24,6 +24,16 @@ export default function MyAccount() {
   const [orderUpdates, setOrderUpdates] = useState(true);
   const [promotions, setPromotions] = useState(true);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+
+  useEffect(() => {
+    fetch('/api/wallet/balance')
+      .then(res => res.json())
+      .then(data => {
+        if (data.balance != null) setWalletBalance(Number(data.balance));
+      })
+      .catch(() => {});
+  }, []);
 
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,13 +81,13 @@ export default function MyAccount() {
                   <div className="wallet-icon-wrapper">
                     <FontAwesomeIcon icon={faWallet} className="wallet-icon" />
                   </div>
-                  <div className="wallet-details">
-                    <h3 className="wallet-title">My Wallet</h3>
-                    <p className="wallet-balance">$125.50</p>
-                  </div>
+                <div className="wallet-details">
+                  <h3 className="wallet-title">My Wallet</h3>
+                  <p className="wallet-balance">${walletBalance.toFixed(2)}</p>
                 </div>
-                <button className="wallet-add-funds-btn">+ Add Funds</button>
               </div>
+              <button className="wallet-add-funds-btn">+ Add Funds</button>
+            </div>
 
               {/* Profile Details */}
               <div className="my-account-profile-card">
