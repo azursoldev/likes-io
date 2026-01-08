@@ -415,7 +415,7 @@ function FinalCheckoutContent() {
           </div>
 
           <div className="final-checkout-layout">
-            {/* Left Column - Payment Form */}
+            {/* Left Column - Payment Form */} 
             <div className="final-checkout-left">
               <div className="checkout-card">
                 <h2 className="final-checkout-title">Review & Pay</h2>
