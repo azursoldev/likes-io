@@ -24,6 +24,7 @@ interface PostData {
   comments?: number;
   views?: number;
   timestamp?: string;
+  isVideo?: boolean;
   [key: string]: any;
 }
 
@@ -373,6 +374,7 @@ export class SocialMediaAPI {
           comments: post.edge_media_to_comment?.count || post.comment_count || 0,
           views: post.video_view_count || post.view_count || post.play_count || 0,
           timestamp: post.taken_at_timestamp || post.taken_at || post.timestamp,
+          isVideo: post.media_type === 2 || post.is_video === true || !!post.video_versions || (!!post.video_view_count && post.video_view_count > 0),
         };
       });
 
@@ -394,7 +396,8 @@ export class SocialMediaAPI {
              likes: Math.floor(Math.random() * 5000) + 100,
              comments: Math.floor(Math.random() * 100) + 5,
              views: Math.floor(Math.random() * 10000) + 500,
-             timestamp: new Date().toISOString()
+             timestamp: new Date().toISOString(),
+             isVideo: Math.random() > 0.3 // 70% chance of being a video for testing
            }));
            return { posts: mockPosts };
         }
