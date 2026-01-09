@@ -78,9 +78,15 @@ async function getServiceContent(slug: string): Promise<ServicePageContentData |
         heroRating: "4.9/5",
         heroReviewCount: "1000+ reviews",
         packages: [
-           { id: 1, name: `100 ${serviceName}`, price: 2.99, amount: 100 },
-           { id: 2, name: `500 ${serviceName}`, price: 6.99, amount: 500 },
-           { id: 3, name: `1000 ${serviceName}`, price: 11.99, amount: 1000 },
+          {
+            id: "standard",
+            label: "Standard",
+            packages: [
+              { qty: 100, price: "$2.99", perLike: "$0.0299 / unit", offText: "Save 10%" },
+              { qty: 500, price: "$6.99", perLike: "$0.0139 / unit", offText: "Save 20%" },
+              { qty: 1000, price: "$11.99", perLike: "$0.0119 / unit", offText: "Save 30%" }
+            ]
+          }
         ],
         benefits: {
           title: "Why Choose Us?",
