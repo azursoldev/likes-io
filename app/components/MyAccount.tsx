@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import "../admin/dashboard.css";
+import "../dashboard/dashboard.css";
 import {
   faWallet,
   faUser,

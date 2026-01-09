@@ -41,9 +41,10 @@ export default function MoreServicesCTA({
   body = "Instagram likes are powerful tools, but they're not the only engagements available from Likes.io. We offer more growth services that can rapidly boost your Instagram fan base or engagement rates even more. Please give them a try to see how quickly you can become popular and important on the app!",
   buttons,
 }: MoreServicesCTAProps) {
-  const { getLink } = useNavigation();
+  const { getLink, loading } = useNavigation();
 
   const resolveHref = (btn: CTAButton) => {
+    if (loading) return "#";
     if (btn.href) return btn.href;
     if (btn.platform && btn.serviceType) return getLink(btn.platform, btn.serviceType);
     return "#";

@@ -3,7 +3,7 @@ import UserSettings from "../../components/UserSettings";
 import UserSidebar from "../../components/UserSidebar";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import "../../admin/dashboard.css";
+import "../dashboard.css";
 export const metadata: Metadata = {
   title: "Settings | Likes.io",
   description: "Manage your account settings, profile information, and notification preferences.",

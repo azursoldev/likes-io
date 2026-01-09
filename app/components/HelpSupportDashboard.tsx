@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import "../admin/dashboard.css";
+import "../dashboard/dashboard.css";
 
 import {
   faSearch,

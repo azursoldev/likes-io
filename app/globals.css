@@ -3596,7 +3596,7 @@ h3.affiliate-benefit-title {
   .service-hero .hero-grid { grid-template-columns: 1fr; }
   .service-hero .hero-left { display: flex; flex-direction: column; align-items: center; }
   .service-hero .hero-title { text-align: center; }
-  .service-hero .reviews-pill {margin-left: auto;margin-right: auto;border: 0;background: transparent;box-shadow: unset;margin-bottom: 0;gap: 0px;}
+  .service-hero .reviews-pill {margin-left: auto;margin-right: auto;border: 0;background: transparent;box-shadow: unset;margin-bottom: 0;gap: 0px; display:none;}
   
   
   .service-hero {

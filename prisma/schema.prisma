@@ -15,6 +15,7 @@ model User {
   role      UserRole   @default(USER)
   isBlocked Boolean    @default(false)
   walletBalance Float  @default(0)
+  walletTransactions WalletTransaction[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   avatarUrl String?
@@ -203,6 +204,8 @@ model AdminSettings {
   homeMetaDescription    String?
   homeMetaTitle          String?
   robotsTxtContent       String?  @default("User-agent: *\nAllow: /")
+  customSitemapXml       String?  @db.Text
+  sitemapEnabled         Boolean  @default(true)
   recaptchaSecretKey     String?
   recaptchaSiteKey       String?
   googleClientId         String?

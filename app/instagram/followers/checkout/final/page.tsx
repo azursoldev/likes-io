@@ -23,7 +23,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
-export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
+function FinalCheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -42,7 +42,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
   const service = pathParts[2] || "followers";
   
   // Create URLs for navigation
-  const baseUrl = basePath || `/${platform}/${service}`;
+  const baseUrl = service === "checkout" ? `/${platform}` : `/${platform}/${service}`;
   const detailsUrl = `${baseUrl}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   // No postsUrl for followers
 
@@ -296,6 +296,12 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
           throw new Error("Invalid payment data");
         }
         cardSessionId = mfResponse.SessionId;
+      } else if (paymentMethod === "wallet") {
+        if (walletBalance < finalPrice) {
+          setError("Insufficient wallet balance");
+          setProcessing(false);
+          return;
+        }
       }
 
       if (!username) {
@@ -422,6 +428,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                     <h3 className="payment-method-heading">Payment method</h3>
                     
                     {/* Wallet Payment Option */}
+                    {walletBalance > 0 && (
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
@@ -452,6 +459,7 @@ export function FinalCheckoutContent({ basePath }: { basePath?: string }) {
                         </div>
                       )}
                     </div>
+                    )}
 
                     {/* MyFatoorah Payment Option */}
                     <div className="payment-option">

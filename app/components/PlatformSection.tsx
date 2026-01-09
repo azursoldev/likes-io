@@ -43,7 +43,7 @@ const PLATFORMS: PlatformCard[] = [
 ];
 
 export default function PlatformSection() {
-  const { getLink } = useNavigation();
+  const { getLink, loading: navLoading } = useNavigation();
   const [loading, setLoading] = React.useState(true);
 
   const [platformContent, setPlatformContent] = React.useState({
@@ -76,7 +76,7 @@ export default function PlatformSection() {
     fetchContent();
   }, []);
 
-  if (loading) {
+  if (loading || navLoading) {
     return (
       <section className="platforms">
         <div className="container">

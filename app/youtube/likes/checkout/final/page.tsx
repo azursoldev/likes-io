@@ -20,8 +20,6 @@ import {
   faWallet
 } from "@fortawesome/free-solid-svg-icons";
 import {
-  faApple,
-  faGoogle,
   faBitcoin
 } from "@fortawesome/free-brands-svg-icons";
 import { } from "next/navigation";
@@ -48,7 +46,24 @@ function FinalCheckoutContent() {
     }
   }, []);
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later" | "apple_pay" | "google_pay">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "wallet">("card");
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  // Fetch wallet balance
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data && typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch wallet balance:", err));
+  }, []);
+
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -257,11 +272,7 @@ function FinalCheckoutContent() {
     setProcessing(true);
     setError("");
 
-    if (paymentMethod === 'pay_later') {
-      alert(`Test Checkout Successful!\n\nPlatform: YouTube\nService: Likes\nQuantity: ${qty}\nTotal Price: ${formatPrice(totalPrice)}`);
-      setProcessing(false);
-      return;
-    }
+
 
     try {
       let cardSessionId: string | undefined;
@@ -282,6 +293,12 @@ function FinalCheckoutContent() {
           throw new Error("Invalid payment data");
         }
         cardSessionId = mfResponse.SessionId;
+      } else if (paymentMethod === "wallet") {
+        if (walletBalance < finalPrice) {
+          setError("Insufficient wallet balance");
+          setProcessing(false);
+          return;
+        }
       }
 
       if (!postLink && !username) {
@@ -386,6 +403,40 @@ function FinalCheckoutContent() {
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     
+                    {/* Wallet Payment Option */}
+                    {walletBalance > 0 && (
+                      <div className="payment-option">
+                        <label className="payment-option-label">
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="wallet"
+                            checked={paymentMethod === "wallet"}
+                            onChange={() => setPaymentMethod("wallet")}
+                            className="payment-radio"
+                          />
+                          <FontAwesomeIcon icon={faWallet} className="payment-option-icon" />
+                          <span>Wallet (Balance: {formatPrice(walletBalance)})</span>
+                        </label>
+                        
+                        {paymentMethod === "wallet" && (
+                          <div className="crypto-form">
+                            <div className="crypto-message-box">
+                              {walletBalance >= finalPrice ? (
+                                <p style={{ color: '#16a34a' }}>
+                                  Use your wallet balance to pay for this order instantly.
+                                </p>
+                              ) : (
+                                <p style={{ color: '#dc2626' }}>
+                                  Insufficient balance. Please add funds to your wallet or choose another payment method.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Card Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
@@ -490,49 +541,7 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="apple_pay"
-                          checked={paymentMethod === "apple_pay"}
-                          onChange={() => setPaymentMethod("apple_pay")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faApple} className="payment-option-icon" />
-                        <span>Apple Pay</span>
-                      </label>
-                      {paymentMethod === "apple_pay" && (
-                         <div className="crypto-form">
-                           <div className="crypto-message-box">
-                             <p>You will be redirected to Apple Pay to complete your payment.</p>
-                           </div>
-                         </div>
-                       )}
-                    </div>
 
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="google_pay"
-                          checked={paymentMethod === "google_pay"}
-                          onChange={() => setPaymentMethod("google_pay")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faGoogle} className="payment-option-icon" />
-                        <span>Google Pay</span>
-                      </label>
-                      {paymentMethod === "google_pay" && (
-                         <div className="crypto-form">
-                           <div className="crypto-message-box">
-                             <p>You will be redirected to Google Pay to complete your payment.</p>
-                           </div>
-                         </div>
-                       )}
-                    </div>
 
                     {/* Crypto Payment Option */}
                     <div className="payment-option">
@@ -584,29 +593,7 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
-                    {/* Pay Later (Test) Option */}
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="pay_later"
-                          checked={paymentMethod === "pay_later"}
-                          onChange={() => setPaymentMethod("pay_later")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faShieldHalved} className="payment-option-icon" />
-                        <span>Pay Later (Test)</span>
-                      </label>
-                      
-                      {paymentMethod === "pay_later" && (
-                        <div className="crypto-form">
-                          <div className="crypto-message-box">
-                            <p>This is a test payment method. No actual charge will be made.</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+
                   </div>
 
                   <button type="submit" className="pay-button">

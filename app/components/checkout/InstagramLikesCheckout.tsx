@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, Suspense, useEffect, useRef, useMemo } from "react";
-import Header from "../../../components/Header";
-import Footer from "../../../components/Footer";
+import Header from "../Header";
+import Footer from "../Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faThumbsUp, 
   faCoffee, 
   faClock, 
-  faShield, 
+  faShield,
   faShieldHalved,
   faLock,
-  faAngleDown,
-  faUser
+  faAngleDown
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useCurrency } from "../../../contexts/CurrencyContext";
+import { useCurrency } from "../../contexts/CurrencyContext";
 
 type PackageOption = {
   qty: number | string;
@@ -31,7 +30,7 @@ type PackageTab = {
   packages: PackageOption[];
 };
 
-function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: string; packages?: any[] }) {
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -40,8 +39,8 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const [isValidating, setIsValidating] = useState(false);
   const [usernameError, setUsernameError] = useState("");
   const [usernameValid, setUsernameValid] = useState(false);
-  const [packages, setPackages] = useState<PackageTab[]>(initialPackages || []);
-  const [loadingPackages, setLoadingPackages] = useState(!initialPackages);
+  const [packages, setPackages] = useState<PackageTab[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get package info from URL params if available
@@ -53,13 +52,11 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const [priceValue, setPriceValue] = useState(initialPrice);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   
-  // Fetch packages from CMS if not provided via props
+  // Fetch packages from CMS
   useEffect(() => {
-    if (initialPackages && initialPackages.length > 0) return;
-    
     const fetchPackages = async () => {
       try {
-        const response = await fetch("/api/cms/service-pages/instagram/followers");
+        const response = await fetch("/api/cms/service-pages/instagram/likes");
         if (response.ok) {
           const data = await response.json();
           if (data.packages && Array.isArray(data.packages) && data.packages.length > 0) {
@@ -103,7 +100,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const currencyCode = getCurrencySymbol() === "€" ? "EUR" : "USD";
   const selectedPackage = useMemo(() => {
     const qtyDisplay = typeof qty === "string" ? qty : String(qty);
-    return `${qtyDisplay} Followers / ${formatPrice(priceValue)} ${currencyCode}`;
+    return `${qtyDisplay} Likes / ${formatPrice(priceValue)} ${currencyCode}`;
   }, [qty, priceValue, formatPrice, currencyCode]);
 
   // Build package options list from CMS data (remove duplicates, prioritize ones with serviceId)
@@ -123,7 +120,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
         if (!existing || pkg.offText || (pkg.serviceId && !existing.serviceId)) {
           const offText = pkg.offText ? ` - ${pkg.offText}` : "";
           optionsMap.set(uniqueKey, {
-            label: `${qtyDisplay} Followers / ${formatPrice(priceNum)} ${currencyCode}${offText}`,
+            label: `${qtyDisplay} Likes / ${formatPrice(priceNum)} ${currencyCode}${offText}`,
             qty: pkg.qty,
             price: priceNum,
             tabLabel: tab.label,
@@ -205,7 +202,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim() && usernameValid) {
-      // Navigate to posts selection page
+      // Navigate to posts selection page, include serviceId if available
       const params = new URLSearchParams({
         username: username,
         qty: typeof qty === "string" ? qty : String(qty),
@@ -215,7 +212,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
       if (selectedServiceId) {
         params.append("serviceId", selectedServiceId);
       }
-      router.push(`/instagram/followers/checkout/final?${params.toString()}`);
+      router.push(`/instagram/likes/checkout/posts?${params.toString()}`);
     } else if (!username.trim()) {
       setUsernameError("Please enter your Instagram username");
     } else if (!usernameValid) {
@@ -235,14 +232,14 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
           </div>
 
           {/* Title and Subtitle */}
-          <h1 className="checkout-title">Instagram Followers Checkout</h1>
+          <h1 className="checkout-title">Instagram Likes Checkout</h1>
           <p className="checkout-subtitle">Start by entering your username.</p>
 
           {/* Features List Card */}
           <div className="checkout-card checkout-features-card">
             <div className="checkout-features">
               <div className="checkout-feature-item">
-                <FontAwesomeIcon icon={faUser} className="checkout-feature-icon" />
+                <FontAwesomeIcon icon={faThumbsUp} className="checkout-feature-icon" />
                 <span>Internationally acclaimed services & top ratings.</span>
               </div>
               <div className="checkout-feature-item">
@@ -412,10 +409,10 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   );
 }
 
-export default function CheckoutPage({ basePath, packages }: { basePath?: string; packages?: any[] } = {}) {
+export default function InstagramLikesCheckout() {
   return (
-    <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
-      <CheckoutContent basePath={basePath} packages={packages} />
+    <Suspense fallback={<div>Loading...</div>}>
+      <CheckoutContent />
     </Suspense>
   );
 }

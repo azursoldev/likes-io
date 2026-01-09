@@ -16,6 +16,7 @@ import {
   faShieldHalved,
   faTag,
   faCoins,
+  faWallet,
   faUserPlus
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
@@ -44,7 +45,8 @@ function FinalCheckoutContent() {
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet">("card");
+  const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -65,6 +67,21 @@ function FinalCheckoutContent() {
   const [error, setError] = useState("");
 
   const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+
+  // Fetch wallet balance
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data && typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch wallet balance:", err));
+  }, []);
 
   useEffect(() => {
     fetch('/api/upsells?platform=TIKTOK&serviceType=VIEWS')

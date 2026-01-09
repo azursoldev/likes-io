@@ -1,6 +1,6 @@
 "use client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import "../admin/dashboard.css";
+import "../dashboard/dashboard.css";
 import Header from "./Header";
 import Footer from "./Footer";
 import UserSidebar from "./UserSidebar";
@@ -14,14 +14,14 @@ import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { useNavigation } from "@/app/hooks/useNavigation";
 
 export default function Dashboard() {
-  const { getLink } = useNavigation();
+  const { getLink, loading } = useNavigation();
 
   const services = [
     {
       platform: "Instagram",
       type: "Likes",
       icon: faThumbsUp,
-      href: getLink("instagram", "likes"),
+      href: loading ? "#" : getLink("instagram", "likes"),
       text: "Get likes now",
       iconBgClass: "icon-bg-instagram-likes",
     },
@@ -29,7 +29,7 @@ export default function Dashboard() {
       platform: "Instagram",
       type: "Followers",
       icon: faUser,
-      href: getLink("instagram", "followers"),
+      href: loading ? "#" : getLink("instagram", "followers"),
       text: "Get followers now",
       iconBgClass: "icon-bg-instagram-followers",
     },
@@ -37,7 +37,7 @@ export default function Dashboard() {
       platform: "Instagram",
       type: "Views",
       icon: faEye,
-      href: getLink("instagram", "views"),
+      href: loading ? "#" : getLink("instagram", "views"),
       text: "Get views now",
       iconBgClass: "icon-bg-instagram-views",
     },
@@ -45,7 +45,7 @@ export default function Dashboard() {
       platform: "TikTok",
       type: "Likes",
       icon: faHeart,
-      href: getLink("tiktok", "likes"),
+      href: loading ? "#" : getLink("tiktok", "likes"),
       text: "Get likes now",
       iconBgClass: "icon-bg-tiktok",
     },
@@ -53,7 +53,7 @@ export default function Dashboard() {
       platform: "TikTok",
       type: "Followers",
       icon: faUser,
-      href: getLink("tiktok", "followers"),
+      href: loading ? "#" : getLink("tiktok", "followers"),
       text: "Get followers now",
       iconBgClass: "icon-bg-tiktok",
     },
@@ -61,7 +61,7 @@ export default function Dashboard() {
       platform: "TikTok",
       type: "Views",
       icon: faEye,
-      href: getLink("tiktok", "views"),
+      href: loading ? "#" : getLink("tiktok", "views"),
       text: "Get views now",
       iconBgClass: "icon-bg-tiktok",
     },
@@ -69,7 +69,7 @@ export default function Dashboard() {
       platform: "YouTube",
       type: "Likes",
       icon: faThumbsUp,
-      href: getLink("youtube", "likes"),
+      href: loading ? "#" : getLink("youtube", "likes"),
       text: "Get likes now",
       iconBgClass: "icon-bg-youtube",
     },
@@ -77,7 +77,7 @@ export default function Dashboard() {
       platform: "YouTube",
       type: "Subscribers",
       icon: faUser,
-      href: getLink("youtube", "subscribers"),
+      href: loading ? "#" : getLink("youtube", "subscribers"),
       text: "Get subscribers now",
       iconBgClass: "icon-bg-youtube",
     },
@@ -85,7 +85,7 @@ export default function Dashboard() {
       platform: "YouTube",
       type: "Views",
       icon: faEye,
-      href: getLink("youtube", "views"),
+      href: loading ? "#" : getLink("youtube", "views"),
       text: "Get views now",
       iconBgClass: "icon-bg-youtube",
     },
@@ -116,7 +116,7 @@ export default function Dashboard() {
               {services.map((service, index) => (
                 <a
                   key={index}
-                  href={service.href}
+                  href={loading ? "#" : service.href}
                   className="dashboard-service-card"
                 >
                   <div className={`dashboard-service-icon ${service.iconBgClass}`}>

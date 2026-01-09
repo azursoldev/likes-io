@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTh,
@@ -8,8 +9,11 @@ import {
   faQuestionCircle,
   faGear,
   faSignOutAlt,
+  faWallet,
+  faPlus
 } from "@fortawesome/free-solid-svg-icons";
 import { signOut } from "next-auth/react";
+import { useCurrency } from "../contexts/CurrencyContext";
 
 type SidebarProps =
   | "dashboard"
@@ -19,6 +23,23 @@ type SidebarProps =
   | "settings";
 
 export default function UserSidebar({ active = "dashboard" as SidebarProps }) {
+  const { formatPrice } = useCurrency();
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data && typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch wallet balance:", err));
+  }, []);
+
   const handleLogout = async () => {
     try {
       await signOut({ redirect: false });
@@ -35,6 +56,23 @@ export default function UserSidebar({ active = "dashboard" as SidebarProps }) {
           <span className="logo-dot">.io</span>
         </a>
       </div>
+      
+      <div className="dashboard-sidebar-wallet">
+        <div className="sidebar-wallet-card">
+          <div className="sidebar-wallet-header">
+            <FontAwesomeIcon icon={faWallet} />
+            <span>My Wallet</span>
+          </div>
+          <div className="sidebar-wallet-amount">
+            {formatPrice(walletBalance)}
+          </div>
+          {/* <a href="/dashboard/add-funds" className="sidebar-add-funds-btn">
+            <FontAwesomeIcon icon={faPlus} style={{ marginRight: "8px" }} />
+            Add Funds
+          </a> */}
+        </div>
+      </div>
+
       <nav className="dashboard-sidebar-nav">
         <div>
           <a

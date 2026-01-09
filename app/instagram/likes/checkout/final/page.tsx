@@ -296,6 +296,12 @@ function FinalCheckoutContent() {
           throw new Error("Invalid payment data");
         }
         cardSessionId = mfResponse.SessionId;
+      } else if (paymentMethod === "wallet") {
+        if (walletBalance < finalPrice) {
+          setError("Insufficient wallet balance");
+          setProcessing(false);
+          return;
+        }
       }
 
       if (!username) {
@@ -425,6 +431,7 @@ function FinalCheckoutContent() {
                     <h3 className="payment-method-heading">Payment method</h3>
                     
                     {/* Wallet Payment Option */}
+                    {walletBalance > 0 && (
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
@@ -455,6 +462,7 @@ function FinalCheckoutContent() {
                         </div>
                       )}
                     </div>
+                    )}
 
                     {/* Card Payment Option */}
                     <div className="payment-option">

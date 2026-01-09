@@ -136,6 +136,8 @@ export async function GET() {
       headerLogoUrl: getField(settings, 'headerLogoUrl', ''),
       footerLogoUrl: getField(settings, 'footerLogoUrl', ''),
       robotsTxtContent: getField(settings, 'robotsTxtContent', 'User-agent: *\nAllow: /'),
+      customSitemapXml: getField(settings, 'customSitemapXml', ''),
+      sitemapEnabled: getField(settings, 'sitemapEnabled', true),
     });
   } catch (error: any) {
     console.error('Get settings error:', error);
@@ -184,6 +186,8 @@ export async function PUT(request: NextRequest) {
       homeMetaTitle,
       homeMetaDescription,
       robotsTxtContent,
+      customSitemapXml,
+      sitemapEnabled,
       faviconUrl,
       headerLogoUrl,
       footerLogoUrl,
@@ -361,6 +365,8 @@ export async function PUT(request: NextRequest) {
            const safeFavicon = getVal(faviconUrl, settings.faviconUrl);
            const safeHeader = getVal(headerLogoUrl, settings.headerLogoUrl);
            const safeFooter = getVal(footerLogoUrl, settings.footerLogoUrl);
+           const safeCustomSitemapXml = getVal(customSitemapXml, settings.customSitemapXml);
+           const safeSitemapEnabled = getVal(sitemapEnabled, settings.sitemapEnabled);
 
            const result = await prisma.$executeRaw`
              UPDATE "admin_settings"
@@ -368,6 +374,8 @@ export async function PUT(request: NextRequest) {
                "homeMetaTitle" = ${safeTitle},
                "homeMetaDescription" = ${safeDesc},
                "robotsTxtContent" = ${safeRobots},
+               "customSitemapXml" = ${safeCustomSitemapXml},
+               "sitemapEnabled" = ${safeSitemapEnabled},
                "faviconUrl" = ${safeFavicon},
                "headerLogoUrl" = ${safeHeader},
                "footerLogoUrl" = ${safeFooter}

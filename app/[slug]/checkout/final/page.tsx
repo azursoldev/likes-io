@@ -1,7 +1,14 @@
-import { redirect, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { FinalCheckoutContent as InstagramFollowersFinal } from '../../../instagram/followers/checkout/final/page';
-import { FinalCheckoutContent as YouTubeViewsFinal } from '../../../youtube/views/checkout/final/page';
+import InstagramFollowersFinal from '../../../instagram/followers/checkout/final/page';
+import InstagramLikesFinal from '../../../instagram/likes/checkout/final/page';
+import InstagramViewsFinal from '../../../instagram/views/checkout/final/page';
+import TikTokFollowersFinal from '../../../tiktok/followers/checkout/final/page';
+import TikTokLikesFinal from '../../../tiktok/likes/checkout/final/page';
+import TikTokViewsFinal from '../../../tiktok/views/checkout/final/page';
+import YouTubeViewsFinal from '../../../youtube/views/checkout/final/page';
+import YouTubeLikesFinal from '../../../youtube/likes/checkout/final/page';
+import YouTubeSubscribersFinal from '../../../youtube/subscribers/checkout/final/page';
 
 export default async function CheckoutFinalPage({ 
   params, 
@@ -24,25 +31,24 @@ export default async function CheckoutFinalPage({
   const basePath = `/${params.slug}`;
 
   // Mapping logic
-  if (platform === 'instagram' && serviceType === 'followers') {
-    return <InstagramFollowersFinal basePath={basePath} />;
-  }
-  
-  if (platform === 'youtube' && serviceType === 'views') {
-    return <YouTubeViewsFinal basePath={basePath} />;
+  if (platform === 'instagram') {
+    if (serviceType === 'followers') return <InstagramFollowersFinal />;
+    if (serviceType === 'likes') return <InstagramLikesFinal />;
+    if (serviceType === 'views') return <InstagramViewsFinal />;
   }
 
-  // Fallback
-  const queryString = new URLSearchParams();
-  Object.entries(searchParams).forEach(([key, value]) => {
-    if (typeof value === 'string') {
-      queryString.append(key, value);
-    } else if (Array.isArray(value)) {
-      value.forEach(v => queryString.append(key, v));
-    }
-  });
+  if (platform === 'tiktok') {
+    if (serviceType === 'followers') return <TikTokFollowersFinal />;
+    if (serviceType === 'likes') return <TikTokLikesFinal />;
+    if (serviceType === 'views') return <TikTokViewsFinal />;
+  }
   
-  const destination = `/${platform}/${serviceType}/checkout/final?${queryString.toString()}`;
-  
-  redirect(destination);
+  if (platform === 'youtube') {
+    if (serviceType === 'views') return <YouTubeViewsFinal basePath={basePath} searchParams={searchParams} />;
+    if (serviceType === 'likes') return <YouTubeLikesFinal />;
+    if (serviceType === 'subscribers') return <YouTubeSubscribersFinal />;
+  }
+
+  // If no match found, 404
+  return notFound();
 }

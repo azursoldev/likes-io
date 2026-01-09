@@ -1,7 +1,10 @@
-import { Suspense } from 'react';
-import { redirect, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { PostsSelectionContent as YouTubeViewsPostsPage } from '../../../youtube/views/checkout/posts/page';
+import InstagramLikesPosts from '../../../instagram/likes/checkout/posts/page';
+import InstagramViewsPosts from '../../../instagram/views/checkout/posts/page';
+import TikTokLikesPosts from '../../../tiktok/likes/checkout/posts/page';
+import TikTokViewsPosts from '../../../tiktok/views/checkout/posts/page';
+import YouTubeViewsPosts from '../../../youtube/views/checkout/posts/page';
 
 export default async function CheckoutPostsPage({ 
   params, 
@@ -10,7 +13,7 @@ export default async function CheckoutPostsPage({
   params: { slug: string }; 
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const content = await prisma.servicePageContent.findUnique({
+  const content = await prisma.servicePageContent.findFirst({
     where: { slug: params.slug },
     select: { platform: true, serviceType: true }
   });
@@ -23,43 +26,22 @@ export default async function CheckoutPostsPage({
   const serviceType = content.serviceType.toLowerCase();
   const basePath = `/${params.slug}`;
 
-  // Helper to reconstruct query string
-  const queryString = new URLSearchParams();
-  Object.entries(searchParams).forEach(([key, value]) => {
-    if (typeof value === 'string') {
-      queryString.append(key, value);
-    } else if (Array.isArray(value)) {
-      value.forEach(v => queryString.append(key, v));
-    }
-  });
-  const searchString = queryString.toString() ? `?${queryString.toString()}` : '';
+  // Mapping logic
+  if (platform === 'instagram') {
+    if (serviceType === 'likes') return <InstagramLikesPosts />;
+    if (serviceType === 'views') return <InstagramViewsPosts />;
+    // Followers usually skip posts selection
+  }
 
-  // For services that don't need post selection, redirect to final checkout
-  if (platform === 'instagram' && serviceType === 'followers') {
-    redirect(`/${params.slug}/checkout/final${searchString}`);
+  if (platform === 'tiktok') {
+    if (serviceType === 'likes') return <TikTokLikesPosts />;
+    if (serviceType === 'views') return <TikTokViewsPosts />;
   }
   
   if (platform === 'youtube' && serviceType === 'views') {
-    return (
-      <Suspense fallback={<div>Loading...</div>}>
-        <YouTubeViewsPostsPage basePath={basePath} />
-      </Suspense>
-    );
+    return <YouTubeViewsPosts basePath={basePath} />;
   }
 
-  // For other services (like Likes), redirect to their specific checkout posts page
-  // We don't import them statically to avoid build errors if they don't exist yet for some services
-  // But usually we would have a mapping or specific component imports.
-  // Since the original code was redirecting for "Fallback", let's see what it did.
-  
-  // Original fallback was:
-  // const destination = `/${platform}/${serviceType}/checkout/posts?${queryString.toString()}`;
-  // redirect(destination);
-
-  // We will stick to the fallback redirect pattern for everything else, 
-  // which seems to be the intention for other services that might have this page.
-  
-  const destination = `/${platform}/${serviceType}/checkout/posts${searchString}`;
-  
-  redirect(destination);
+  // If no match found (or if service doesn't have posts step), 404
+  return notFound();
 }

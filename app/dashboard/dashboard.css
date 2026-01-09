@@ -257,6 +257,57 @@
   margin: 0;
 }
 
+
+/* Sidebar Wallet */
+.dashboard-sidebar-wallet {
+  padding: 0 16px 16px;
+  margin-bottom: 8px;
+}
+
+.sidebar-wallet-card {
+  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  border-radius: 12px;
+  padding: 24px;
+  color: #fff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.sidebar-wallet-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sidebar-wallet-amount {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 24px;
+  color: #fff;
+}
+
+.sidebar-add-funds-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+  margin-bottom: 0px;
+}
+
+.sidebar-add-funds-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .dashboard-services-grid {

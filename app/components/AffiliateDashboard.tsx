@@ -1,5 +1,5 @@
 "use client";
-import "../admin/dashboard.css";
+import "../dashboard/dashboard.css";
 import Header from "./Header";
 import Footer from "./Footer";
 import UserSidebar from "./UserSidebar";

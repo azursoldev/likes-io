@@ -26,7 +26,7 @@ interface Post {
   views?: number;
 }
 
-export function PostsSelectionContent({ basePath }: { basePath?: string }) {
+function PostsSelectionContent({ basePath }: { basePath?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -198,6 +198,7 @@ export function PostsSelectionContent({ basePath }: { basePath?: string }) {
       const splitQty = Math.floor(parseInt(qty) / count);
 
       const params = new URLSearchParams({
+        username,
         videoLink: finalLinks.join(','),
         qty: String(splitQty),
         price: String(totalBasePrice), // Pass the calculated total price
@@ -542,10 +543,10 @@ export function PostsSelectionContent({ basePath }: { basePath?: string }) {
   );
 }
 
-export default function Page() {
+export default function Page({ basePath }: { basePath?: string } = {}) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <PostsSelectionContent />
+      <PostsSelectionContent basePath={basePath} />
     </Suspense>
   );
 }

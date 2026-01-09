@@ -30,6 +30,8 @@ export default function SettingsDashboard() {
   const [homeMetaTitle, setHomeMetaTitle] = useState("");
   const [homeMetaDescription, setHomeMetaDescription] = useState("");
   const [robotsTxtContent, setRobotsTxtContent] = useState("User-agent: *\nAllow: /");
+  const [customSitemapXml, setCustomSitemapXml] = useState("");
+  const [sitemapEnabled, setSitemapEnabled] = useState(true);
   const [faviconUrl, setFaviconUrl] = useState("");
   const [headerLogoUrl, setHeaderLogoUrl] = useState("");
   const [footerLogoUrl, setFooterLogoUrl] = useState("");
@@ -128,6 +130,8 @@ export default function SettingsDashboard() {
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
         if (data.homeMetaDescription) setHomeMetaDescription(data.homeMetaDescription);
         if (data.robotsTxtContent) setRobotsTxtContent(data.robotsTxtContent);
+        if (data.customSitemapXml) setCustomSitemapXml(data.customSitemapXml);
+        if (data.sitemapEnabled !== undefined) setSitemapEnabled(data.sitemapEnabled);
         if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
         if (data.headerLogoUrl) setHeaderLogoUrl(data.headerLogoUrl);
         if (data.footerLogoUrl) setFooterLogoUrl(data.footerLogoUrl);
@@ -188,6 +192,8 @@ export default function SettingsDashboard() {
           homeMetaTitle,
           homeMetaDescription,
           robotsTxtContent,
+          customSitemapXml,
+          sitemapEnabled,
           faviconUrl,
           headerLogoUrl,
           footerLogoUrl,
@@ -478,6 +484,43 @@ export default function SettingsDashboard() {
                     style={{ fontFamily: 'monospace', resize: 'vertical' }}
                   />
                 </label>
+
+                <div className="settings-toggle-group" style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                  <label className="settings-toggle-label">
+                    <span>Enable Dynamic Sitemap</span>
+                    <span className="settings-toggle-description">
+                      Automatically generate sitemap.xml for all service pages and blog posts.
+                      <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" style={{ marginLeft: '8px', color: '#2563eb' }}>
+                        View Sitemap
+                      </a>
+                    </span>
+                  </label>
+                  <label className="settings-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={sitemapEnabled}
+                      onChange={(e) => setSitemapEnabled(e.target.checked)}
+                    />
+                    <span className="settings-toggle-slider"></span>
+                  </label>
+                </div>
+
+                {sitemapEnabled && (
+                  <label className="settings-label" style={{ marginTop: '15px' }}>
+                    Custom Sitemap URLs
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span className="settings-helper-text">Add custom &lt;url&gt; entries here. They will be appended to the generated sitemap.</span>
+                    </div>
+                    <textarea
+                      className="settings-input"
+                      value={customSitemapXml}
+                      onChange={(e) => setCustomSitemapXml(e.target.value)}
+                      placeholder="<url>&#10;  <loc>https://likes.io/custom-page</loc>&#10;  <lastmod>2023-01-01</lastmod>&#10;  <changefreq>monthly</changefreq>&#10;  <priority>0.8</priority>&#10;</url>"
+                      rows={6}
+                      style={{ fontFamily: 'monospace', resize: 'vertical' }}
+                    />
+                  </label>
+                )}
               </div>
             </div>
 
