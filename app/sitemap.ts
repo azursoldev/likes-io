@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'https://likes.io';
@@ -9,95 +10,61 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let sitemapEnabled = true;
   let customSitemapXml = '';
   try {
-    const settings = await prisma.adminSettings.findFirst({
-      select: { sitemapEnabled: true, customSitemapXml: true },
-    });
+    const result: any = await prisma.$queryRaw`
+      SELECT "sitemapEnabled", "customSitemapXml"
+      FROM "admin_settings"
+      LIMIT 1
+    `;
+    const settings = Array.isArray(result) && result.length > 0 ? result[0] : null;
     if (settings?.sitemapEnabled === false) sitemapEnabled = false;
-    if (settings?.customSitemapXml) customSitemapXml = settings.customSitemapXml;
+    if (typeof settings?.customSitemapXml === 'string') customSitemapXml = settings.customSitemapXml;
   } catch (error) {
     console.error('Error fetching sitemap settings:', error);
   }
 
   if (!sitemapEnabled) return [];
 
-  // 1. Static Routes
-  const staticRoutes = [
-    '',
-    '/about',
-    '/contact',
-    '/blog',
-    '/login',
-    '/signup',
-    '/faq',
-    '/reviews',
-    '/terms',
-    '/privacy',
-  ].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: route === '' ? 1.0 : 0.8,
-  }));
-
-  // 2. Blog Posts
-  let blogRoutes: MetadataRoute.Sitemap = [];
-  try {
-    const posts = await prisma.blogPost.findMany({
-      where: { isPublished: true },
-      select: { slug: true, updatedAt: true },
-    });
-
-    blogRoutes = posts.map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: post.updatedAt,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    }));
-  } catch (error) {
-    console.error('Error generating blog sitemap:', error);
-  }
-
-  // 3. Service Pages
-  let serviceRoutes: MetadataRoute.Sitemap = [];
-  try {
-    const servicePages = await prisma.servicePageContent.findMany({
-      where: { isActive: true },
-      select: { slug: true, platform: true, serviceType: true, updatedAt: true },
-    });
-
-    serviceRoutes = servicePages.map((page) => {
-      const platform = page.platform.toLowerCase();
-      const service = page.serviceType.toLowerCase();
-      const slug = page.slug?.trim();
-      const path = slug ? `/${slug}` : `/${platform}/${service}`;
-      return {
-        url: `${baseUrl}${path}`,
-        lastModified: page.updatedAt,
-        changeFrequency: 'weekly' as const,
-        priority: 0.9,
-      };
-    });
-  } catch (error) {
-    console.error('Error generating service sitemap:', error);
-  }
-
+  // Only use custom routes from Admin Settings -> Custom Sitemap URLs
   let customRoutes: MetadataRoute.Sitemap = [];
   if (customSitemapXml && customSitemapXml.trim()) {
     try {
-      const locMatches = [...customSitemapXml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gi)];
-      const lastmodMatches = [...customSitemapXml.matchAll(/<lastmod>\s*([^<]+?)\s*<\/lastmod>/gi)];
+      const locMatches = [
+        ...customSitemapXml.matchAll(
+          /<loc>\s*(?:<!\[CDATA\[(.*?)\]\]>|([\s\S]*?))\s*<\/loc>/gi
+        ),
+      ];
+      const lastmodMatches = [
+        ...customSitemapXml.matchAll(
+          /<lastmod>\s*(?:<!\[CDATA\[(.*?)\]\]>|([\s\S]*?))\s*<\/lastmod>/gi
+        ),
+      ];
 
-      customRoutes = locMatches
-        .map((m, index) => {
-          const loc = (m[1] || '').trim();
-          if (!loc) return null;
+      const extractedLocs = locMatches
+        .map((m) => ((m[1] || m[2] || '').trim()))
+        .filter(Boolean);
 
-          const url = loc.startsWith('http://') || loc.startsWith('https://')
-            ? loc
-            : `${baseUrl}${loc.startsWith('/') ? '' : '/'}${loc}`;
+      const fallbackUrls = extractedLocs.length
+        ? extractedLocs
+        : customSitemapXml
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line && !line.startsWith('<') && !line.startsWith('#'));
 
-          const lastmodRaw = (lastmodMatches[index]?.[1] || '').trim();
-          const lastModified = lastmodRaw ? new Date(lastmodRaw) : new Date();
+      customRoutes = fallbackUrls
+        .map((loc, index) => {
+          const normalizedLoc = loc.replace(/^<!\[CDATA\[/i, '').replace(/\]\]>$/i, '').trim();
+          if (!normalizedLoc) return null;
+
+          const url = normalizedLoc.startsWith('http://') || normalizedLoc.startsWith('https://')
+            ? normalizedLoc
+            : `${baseUrl}${normalizedLoc.startsWith('/') ? '' : '/'}${normalizedLoc}`;
+
+          const lastmodRaw = ((lastmodMatches[index]?.[1] || lastmodMatches[index]?.[2] || '') as string).trim();
+          const normalizedLastmod = lastmodRaw
+            .replace(/^<!\[CDATA\[/i, '')
+            .replace(/\]\]>$/i, '')
+            .trim();
+          const lastModified = normalizedLastmod ? new Date(normalizedLastmod) : new Date();
 
           return {
             url,
@@ -112,5 +79,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return [...staticRoutes, ...blogRoutes, ...serviceRoutes, ...customRoutes];
+  return customRoutes;
 }
