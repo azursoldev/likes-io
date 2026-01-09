@@ -1,12 +1,12 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import InstagramFollowersCheckout from '../../instagram/followers/checkout/page';
+import { InstagramFollowersCheckout } from '../../instagram/followers/checkout/page';
 import InstagramLikesCheckout from '../../components/checkout/InstagramLikesCheckout';
 import InstagramViewsCheckout from '../../instagram/views/checkout/page';
 import TikTokFollowersCheckout from '../../tiktok/followers/checkout/page';
 import TikTokLikesCheckout from '../../tiktok/likes/checkout/page';
 import TikTokViewsCheckout from '../../tiktok/views/checkout/page';
-import YouTubeViewsCheckout from '../../youtube/views/checkout/page';
+import { YouTubeViewsCheckout } from '../../youtube/views/checkout/page';
 import YouTubeLikesCheckout from '../../youtube/likes/checkout/page';
 import YouTubeSubscribersCheckout from '../../youtube/subscribers/checkout/page';
 import { type PackageTabConfig } from '../../components/PackagesSelector';

@@ -412,10 +412,14 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   );
 }
 
-export default function CheckoutPage({ basePath, packages }: { basePath?: string; packages?: any[] } = {}) {
+export function InstagramFollowersCheckout({ basePath, packages }: { basePath?: string; packages?: any[] }) {
   return (
     <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
       <CheckoutContent basePath={basePath} packages={packages} />
     </Suspense>
   );
+}
+
+export default function CheckoutPage() {
+  return <InstagramFollowersCheckout />;
 }

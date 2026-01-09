@@ -37,7 +37,7 @@ function FinalCheckoutContent() {
   const packageType = searchParams.get("type") || "High-Quality";
   const postLink = searchParams.get("postLink") || "";
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet" | "myfatoorah">("card");
   const [walletBalance, setWalletBalance] = useState(0);
 
   // Fetch wallet balance
@@ -110,7 +110,7 @@ function FinalCheckoutContent() {
   }, [username]);
 
   useEffect(() => {
-    if (paymentMethod === "card" && !mfSession) {
+    if (paymentMethod === "myfatoorah" && !mfSession) {
       fetch("/api/payments/initiate-session", { method: "POST" })
         .then(res => res.json())
         .then(data => {
@@ -129,7 +129,7 @@ function FinalCheckoutContent() {
   }, [paymentMethod, mfSession]);
 
   useEffect(() => {
-    if (paymentMethod === "card" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
       try {
         const config = {
           countryCode: mfSession.countryCode,

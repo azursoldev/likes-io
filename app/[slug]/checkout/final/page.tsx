@@ -44,7 +44,7 @@ export default async function CheckoutFinalPage({
   }
   
   if (platform === 'youtube') {
-    if (serviceType === 'views') return <YouTubeViewsFinal basePath={basePath} searchParams={searchParams} />;
+    if (serviceType === 'views') return <YouTubeViewsFinal />;
     if (serviceType === 'likes') return <YouTubeLikesFinal />;
     if (serviceType === 'subscribers') return <YouTubeSubscribersFinal />;
   }
