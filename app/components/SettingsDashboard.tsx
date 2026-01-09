@@ -229,13 +229,16 @@ export default function SettingsDashboard() {
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Upload failed");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Upload failed");
+      }
 
       const data = await response.json();
       setUrl(data.url);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading file:", error);
-      alert("Failed to upload file");
+      alert(`Failed to upload file: ${error.message}`);
     } finally {
       setUploading(false);
     }

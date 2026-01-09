@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type and size
-    const allowedExt = ['.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif'];
+    const allowedExt = ['.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico'];
     const ext = path.extname(file.name).toLowerCase();
     if (!allowedExt.includes(ext)) {
       return NextResponse.json(
@@ -67,6 +67,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url, publicUrl });
   } catch (error: any) {
     console.error('Upload error:', error);
+    try {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+      const logMsg = `${new Date().toISOString()} - ERROR: ${error.message}\n`;
+      await writeFile(path.join(uploadDir, 'upload-debug.log'), logMsg, { flag: 'a' });
+    } catch (e) {
+      // ignore
+    }
     return NextResponse.json(
       { error: error.message || 'Upload failed' },
       { status: 500 }

@@ -13,6 +13,8 @@ config.autoAddCss = false
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faThumbsUp } from '@fortawesome/free-solid-svg-icons'
 
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   let settings: any;
   try {
