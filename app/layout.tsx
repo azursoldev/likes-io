@@ -6,6 +6,7 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import NextAuthSessionProvider from '@/lib/session-provider';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
+import ExitIntentModal from './components/ExitIntentModal';
 
 import { config } from '@fortawesome/fontawesome-svg-core'
 import '@fortawesome/fontawesome-svg-core/styles.css'
@@ -55,6 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <CurrencyProvider>
               {settings?.googleAnalyticsId && <GoogleAnalytics gaId={settings.googleAnalyticsId} />}
               {children}
+              <ExitIntentModal />
               <ScrollTopButton />
             </CurrencyProvider>
           </SettingsProvider>

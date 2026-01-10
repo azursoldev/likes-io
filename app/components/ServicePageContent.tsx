@@ -38,6 +38,11 @@ export type ServicePageContentData = {
     body?: string;
     buttons?: CTAButton[];
   };
+  customEnabled?: boolean;
+  customMinQuantity?: number;
+  customMaxQuantity?: number;
+  customStep?: number;
+  customRoundToStep?: boolean;
 };
 
 const ServiceContentContext = createContext<ServicePageContentData | null>(null);
@@ -129,6 +134,11 @@ export function ServicePageContentProvider({
       faqs: (initialData.faqs && initialData.faqs.length > 0) ? initialData.faqs : defaultFAQs,
       testimonials: (initialData.testimonials && initialData.testimonials.length > 0) ? initialData.testimonials : defaultTestimonials,
       moreServices: initialData.moreServices || defaultMoreServices,
+      customEnabled: initialData.customEnabled,
+      customMinQuantity: initialData.customMinQuantity,
+      customMaxQuantity: initialData.customMaxQuantity,
+      customStep: initialData.customStep,
+      customRoundToStep: initialData.customRoundToStep,
     };
   });
   const [loading, setLoading] = useState(!initialData);
@@ -151,6 +161,11 @@ export function ServicePageContentProvider({
             testimonials: (initialData.testimonials && initialData.testimonials.length > 0) ? initialData.testimonials : defaultTestimonials,
             moreServices: initialData.moreServices || defaultMoreServices,
             slug: initialData.slug || slug,
+            customEnabled: initialData.customEnabled,
+            customMinQuantity: initialData.customMinQuantity,
+            customMaxQuantity: initialData.customMaxQuantity,
+            customStep: initialData.customStep,
+            customRoundToStep: initialData.customRoundToStep,
         });
         setLoading(false);
         return;
@@ -211,6 +226,11 @@ export function ServicePageContentProvider({
             platform: data.platform || platform,
             serviceType: data.serviceType || serviceType,
             slug: slug || data.slug,
+            customEnabled: data.customEnabled,
+            customMinQuantity: data.customMinQuantity,
+            customMaxQuantity: data.customMaxQuantity,
+            customStep: data.customStep,
+            customRoundToStep: data.customRoundToStep,
           });
         } else {
           // Use defaults if fetch fails
@@ -317,6 +337,11 @@ export function DynamicPackagesSelector() {
       platform={content.platform}
       serviceType={content.serviceType}
       slug={content.slug}
+      customEnabled={content.customEnabled}
+      customMinQuantity={content.customMinQuantity}
+      customMaxQuantity={content.customMaxQuantity}
+      customStep={content.customStep}
+      customRoundToStep={content.customRoundToStep}
     />
   );
 }

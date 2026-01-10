@@ -5,7 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { checkoutAPI } from '@/lib/checkout-api';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
 import { getMyFatoorahAPI } from '@/lib/myfatoorah-api';
-import { Platform, ServiceType } from '@prisma/client';
+import { validateCoupon } from '@/lib/coupon-utils';
+import { emailService } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,6 +69,69 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields' },
         { status: 400 }
       );
+    }
+
+    // Custom Quantity Validation
+    if (platform && serviceType) {
+      const serviceContent = await prisma.servicePageContent.findUnique({
+        where: {
+          platform_serviceType: {
+            platform: platform.toLowerCase(),
+            serviceType: serviceType.toLowerCase(),
+          },
+        },
+      });
+
+      if (serviceContent && serviceContent.customEnabled) {
+        const qty = parseInt(quantity);
+        const min = serviceContent.customMinQuantity;
+        const max = serviceContent.customMaxQuantity;
+        
+        // Helper to check if quantity matches any standard package
+        let isStandardPackage = false;
+        const packages = serviceContent.packages as any[];
+        
+        if (packages && Array.isArray(packages)) {
+          const parsePkgQty = (q: string | number): number => {
+             if (typeof q === 'number') return q;
+             const s = q.toString().replace(/,/g, '').trim();
+             if (s.toLowerCase().includes('k')) return parseFloat(s) * 1000;
+             return parseFloat(s);
+          };
+
+          for (const tab of packages) {
+             if (tab.packages && Array.isArray(tab.packages)) {
+                for (const pkg of tab.packages) {
+                   // Skip "Custom" placeholder packages (usually strings with + or just large numbers)
+                   // But wait, if 10000+ is the custom package, we don't count it as a "standard fixed quantity" to match against.
+                   // The custom package is usually the entry point for custom input.
+                   if (typeof pkg.qty === 'string' && pkg.qty.includes('+')) continue;
+                   
+                   const pkgQty = parsePkgQty(pkg.qty);
+                   if (pkgQty === qty) {
+                      isStandardPackage = true;
+                      break;
+                   }
+                }
+             }
+             if (isStandardPackage) break;
+          }
+        }
+
+        if (!isStandardPackage) {
+           if (min !== null && qty < min) {
+              return NextResponse.json({ error: `Quantity must be at least ${min}` }, { status: 400 });
+           }
+           if (max !== null && qty > max) {
+              return NextResponse.json({ error: `Quantity must be at most ${max}` }, { status: 400 });
+           }
+           if (serviceContent.customRoundToStep && serviceContent.customStep) {
+              if (qty % serviceContent.customStep !== 0) {
+                 return NextResponse.json({ error: `Quantity must be a multiple of ${serviceContent.customStep}` }, { status: 400 });
+              }
+           }
+        }
+      }
     }
 
     // Upsell Calculation
@@ -309,6 +373,12 @@ export async function POST(request: NextRequest) {
             data: { status: 'PROCESSING' }
           })
         ]);
+
+        try {
+          await emailService.sendPaymentSuccess(order.id);
+        } catch (e) {
+          console.error('Email error:', e);
+        }
 
         return NextResponse.json({
           orderId: order.id,

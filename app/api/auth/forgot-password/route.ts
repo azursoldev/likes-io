@@ -24,6 +24,22 @@ export async function POST(req: NextRequest) {
       return genericSuccess;
     }
 
+    // Rate limiting: Max 3 requests per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentRequests = await prisma.passwordResetToken.count({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: oneHourAgo,
+        },
+      },
+    });
+
+    if (recentRequests >= 3) {
+      // Return success to avoid leaking user existence, but don't send email
+      return genericSuccess;
+    }
+
     const rawToken = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
@@ -43,17 +59,7 @@ export async function POST(req: NextRequest) {
     )}`;
 
     try {
-      await emailService.sendEmail({
-        to: email,
-        subject: "Reset your Likes.io password",
-        html: `
-          <h1>Password Reset</h1>
-          <p>You requested to reset your password.</p>
-          <p><a href="${resetUrl}">Click here to reset your password</a></p>
-          <p>This link will expire in 1 hour.</p>
-          <p>If you did not request this, you can ignore this email.</p>
-        `,
-      });
+      await emailService.sendPasswordResetEmail(email, resetUrl);
     } catch (e) {
       console.error("Email send failed:", e);
     }

@@ -10,6 +10,10 @@ type Settings = {
   homeMetaDescription?: string | null;
   googleAnalyticsId?: string | null;
   googleSiteVerification?: string | null;
+  exitIntentEnabled?: boolean | null;
+  exitIntentTitle?: string | null;
+  exitIntentSubtitle?: string | null;
+  exitIntentDiscountCode?: string | null;
   // Add other settings as needed
 };
 

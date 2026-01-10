@@ -192,6 +192,11 @@ export async function PUT(
       moreServicesHighlight,
       moreServicesBody,
       moreServicesButtons,
+      customEnabled,
+      customMinQuantity,
+      customMaxQuantity,
+      customStep,
+      customRoundToStep,
       isActive = true,
     } = body;
 
@@ -225,6 +230,11 @@ export async function PUT(
           moreServicesHighlight: moreServicesHighlight as any,
           moreServicesBody: moreServicesBody as any,
           moreServicesButtons: moreServicesButtons as any,
+          customEnabled: customEnabled as boolean,
+          customMinQuantity: customMinQuantity as any,
+          customMaxQuantity: customMaxQuantity as any,
+          customStep: customStep as any,
+          customRoundToStep: customRoundToStep as boolean,
           isActive,
         } as any,
         create: {
@@ -248,6 +258,11 @@ export async function PUT(
           moreServicesHighlight: moreServicesHighlight as any,
           moreServicesBody: moreServicesBody as any,
           moreServicesButtons: moreServicesButtons as any,
+          customEnabled: customEnabled as boolean,
+          customMinQuantity: customMinQuantity as any,
+          customMaxQuantity: customMaxQuantity as any,
+          customStep: customStep as any,
+          customRoundToStep: customRoundToStep as boolean,
           isActive,
         } as any,
       });
