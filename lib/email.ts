@@ -6,10 +6,83 @@ interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  userId?: string;
+  type?: string;
 }
 
 class EmailService {
   private transporter: nodemailer.Transporter | null = null;
+
+  private async getBrandedHtml(content: string, settings: any): Promise<string> {
+    const year = new Date().getFullYear();
+    const logoUrl = settings?.headerLogoUrl || settings?.footerLogoUrl || '';
+    const logoHtml = logoUrl 
+      ? `<img src="${logoUrl}" alt="Likes.io" style="max-height: 40px; border: 0; outline: none; text-decoration: none;">` 
+      : '<h2 style="color: #333; margin: 0;">Likes.io</h2>';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style>
+  img { max-width: 100%; }
+  body { background-color: #f6f6f6; font-family: sans-serif; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.4; margin: 0; padding: 0; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+  .body { background-color: #f6f6f6; width: 100%; }
+  .container { display: block; margin: 0 auto !important; max-width: 580px; padding: 10px; width: 580px; }
+  .content { box-sizing: border-box; display: block; margin: 0 auto; max-width: 580px; padding: 10px; }
+  .main { background: #ffffff; border-radius: 3px; width: 100%; }
+  .wrapper { box-sizing: border-box; padding: 20px; }
+  .footer { clear: both; margin-top: 10px; text-align: center; width: 100%; }
+  .footer td, .footer p, .footer span, .footer a { color: #999999; font-size: 12px; text-align: center; }
+  h1, h2, h3, h4 { color: #000000; font-family: sans-serif; font-weight: 400; line-height: 1.4; margin: 0; margin-bottom: 30px; }
+  p, ul, ol { font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px; }
+  p li, ul li, ol li { list-style-position: inside; margin-left: 5px; }
+  a { color: #3498db; text-decoration: underline; }
+</style>
+</head>
+<body>
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+    <tr>
+      <td>&nbsp;</td>
+      <td class="container">
+        <div class="content">
+          <!-- Header -->
+          <div style="text-align: center; padding-bottom: 20px;">
+            ${logoHtml}
+          </div>
+          
+          <!-- Content -->
+          <table role="presentation" class="main">
+            <tr>
+              <td class="wrapper">
+                ${content}
+              </td>
+            </tr>
+          </table>
+
+          <!-- Footer -->
+          <div class="footer">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td class="content-block">
+                  <span class="apple-link">© ${year} Likes.io. All rights reserved.</span>
+                  <br>
+                  <span>If you didn’t request this email, please ignore it or contact support.</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </td>
+      <td>&nbsp;</td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+  }
 
   private async getTransporter(): Promise<nodemailer.Transporter> {
     // Always fetch latest settings to ensure we use current config
@@ -56,17 +129,58 @@ class EmailService {
       const settings = await prisma.adminSettings.findFirst();
       const from = settings?.smtpFrom || process.env.SMTP_FROM || settings?.smtpUser || process.env.SMTP_USER;
 
-      await transporter.sendMail({
+      // Apply branding
+      const brandedHtml = await this.getBrandedHtml(options.html, settings);
+
+      const result = await transporter.sendMail({
         from: from,
         to: options.to,
         subject: options.subject,
-        html: options.html,
+        html: brandedHtml,
         text: options.text || options.html.replace(/<[^>]*>/g, ''),
       });
 
       console.log(`Email sent to ${options.to}`);
+
+      // Log success
+      try {
+        await prisma.emailLog.create({
+          data: {
+            userId: options.userId,
+            type: options.type || 'other',
+            status: 'sent',
+            providerMessageId: result.messageId,
+            metadata: {
+              to: options.to,
+              subject: options.subject
+            }
+          }
+        });
+      } catch (logError) {
+        console.error('Failed to log email success:', logError);
+      }
+
     } catch (error: any) {
       console.error('Email send error:', error);
+
+      // Log failure
+      try {
+        await prisma.emailLog.create({
+          data: {
+            userId: options.userId,
+            type: options.type || 'other',
+            status: 'failed',
+            metadata: {
+              to: options.to,
+              subject: options.subject,
+              error: error.message
+            }
+          }
+        });
+      } catch (logError) {
+        console.error('Failed to log email error:', logError);
+      }
+
       throw new Error(`Failed to send email: ${error.message}`);
     }
   }
@@ -123,6 +237,8 @@ class EmailService {
       to: order.user.email,
       subject,
       html,
+      userId: order.userId,
+      type: 'order_confirmation',
     });
   }
 
@@ -168,6 +284,8 @@ class EmailService {
       to: order.user.email,
       subject,
       html,
+      userId: order.userId,
+      type: 'payment_success',
     });
   }
 
@@ -208,6 +326,8 @@ class EmailService {
       to: order.user.email,
       subject,
       html,
+      userId: order.userId,
+      type: 'payment_failure',
     });
   }
 
@@ -253,6 +373,8 @@ class EmailService {
       to: order.user.email,
       subject,
       html,
+      userId: order.userId,
+      type: 'order_completion',
     });
   }
 }
