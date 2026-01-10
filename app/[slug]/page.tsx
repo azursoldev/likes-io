@@ -60,61 +60,9 @@ async function getServiceContent(slug: string): Promise<ServicePageContentData |
     console.error('Error fetching service content from DB:', error);
   }
 
-  // Fallback: If no content in DB (or DB error), try to infer from slug
+  // Fallback: If no content in DB, return null (404)
+  // This prevents auto-generating pages for old/deleted slugs
   if (!content) {
-    const mapping = getServiceMapping(slug);
-    if (mapping) {
-      console.log(`Service content not found in DB for slug "${slug}". Generating dynamic content.`);
-      
-      const platformName = mapping.platform.charAt(0).toUpperCase() + mapping.platform.slice(1);
-      const serviceName = mapping.serviceType.charAt(0).toUpperCase() + mapping.serviceType.slice(1);
-      
-      // Construct minimal default content
-      return {
-        heroTitle: `Buy ${platformName} ${serviceName}`,
-        heroSubtitle: `Boost your ${platformName} presence with high-quality ${serviceName.toLowerCase()}.`,
-        metaTitle: `Buy ${platformName} ${serviceName} | Real & Instant`,
-        metaDescription: `Get the best ${platformName} ${serviceName} instantly. Secure payment and fast delivery.`,
-        heroRating: "4.9/5",
-        heroReviewCount: "1000+ reviews",
-        packages: [
-          {
-            id: "standard",
-            label: "Standard",
-            packages: [
-              { qty: 100, price: "$2.99", perLike: "$0.0299 / unit", offText: "Save 10%" },
-              { qty: 500, price: "$6.99", perLike: "$0.0139 / unit", offText: "Save 20%" },
-              { qty: 1000, price: "$11.99", perLike: "$0.0119 / unit", offText: "Save 30%" }
-            ]
-          }
-        ],
-        benefits: {
-          title: "Why Choose Us?",
-          items: [
-            { title: "Instant Delivery", description: "Starts within minutes" },
-            { title: "High Quality", description: "Real looking profiles" },
-            { title: "24/7 Support", description: "We are always here to help" }
-          ]
-        },
-        howItWorks: {
-          title: "How It Works",
-          steps: [
-            { title: "Select Package", description: `Choose the amount of ${serviceName.toLowerCase()} you need.` },
-            { title: "Enter Details", description: "Provide your username or link. No password required." },
-            { title: "Watch it Grow", description: "Sit back and watch the results." }
-          ]
-        },
-        platform: mapping.platform.toUpperCase(),
-        serviceType: mapping.serviceType.toUpperCase(),
-        slug: slug,
-        moreServices: {
-           buttons: getDefaultMoreServicesButtons(mapping.platform)
-        },
-        // Empty lists for now as DB might be down
-        faqs: [],
-        testimonials: []
-      } as ServicePageContentData;
-    }
     return null;
   }
 
