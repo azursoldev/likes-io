@@ -29,6 +29,11 @@ type PackagesSelectorProps = {
   platform?: string;
   serviceType?: string;
   slug?: string;
+  customEnabled?: boolean;
+  customMinQuantity?: number;
+  customMaxQuantity?: number;
+  customStep?: number;
+  customRoundToStep?: boolean;
 };
 
 const DEFAULT_TABS: PackageTabConfig[] = [
@@ -73,6 +78,11 @@ export default function PackagesSelector({
   platform: propPlatform,
   serviceType: propServiceType,
   slug,
+  customEnabled = false,
+  customMinQuantity,
+  customMaxQuantity,
+  customStep = 1000,
+  customRoundToStep = false,
 }: PackagesSelectorProps) {
   const pathname = usePathname();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -157,6 +167,9 @@ export default function PackagesSelector({
   };
   
   const getInitialCustomQty = (): number => {
+    if (customEnabled && customMinQuantity) {
+      return customMinQuantity;
+    }
     for (const pkg of visiblePackages) {
       if (typeof pkg.qty === "string" && pkg.qty.includes("+")) {
         return parseInitialQty(pkg.qty);
@@ -172,9 +185,13 @@ export default function PackagesSelector({
     // Update custom quantity if switching to a custom package
     const newSelected = visiblePackages[defaultIndex];
     if (newSelected && isCustomQty(newSelected.qty)) {
-      setCustomQty(parseInitialQty(newSelected.qty));
+      if (customEnabled && customMinQuantity) {
+        setCustomQty(customMinQuantity);
+      } else {
+        setCustomQty(parseInitialQty(newSelected.qty));
+      }
     }
-  }, [defaultIndex, visiblePackages]);
+  }, [defaultIndex, visiblePackages, customEnabled, customMinQuantity]);
 
   const selected = visiblePackages[selectedIndex] ?? visiblePackages[defaultIndex];
   const isCustomSelected = typeof selected?.qty === "string" && selected.qty.includes("+");
@@ -186,56 +203,77 @@ export default function PackagesSelector({
       return { price: `${symbol}—`, strike: undefined, save: undefined };
     }
     
-    // Try to extract price from perLike field
-    let pricePerUnit: number | null = null;
-    const perLikeMatch = selected.perLike.match(/\$([\d.]+)/);
-    if (perLikeMatch) {
-      pricePerUnit = parseFloat(perLikeMatch[1]);
-    } else {
-      // If no price in perLike, use the last non-custom package's pricing
-      const nonCustomPackages = visiblePackages.filter(
-        (p) => typeof p.qty !== "string" || !p.qty.includes("+")
-      );
-      if (nonCustomPackages.length > 0) {
-        const lastPackage = nonCustomPackages[nonCustomPackages.length - 1];
-        const lastPerLikeMatch = lastPackage.perLike.match(/\$([\d.]+)/);
-        if (lastPerLikeMatch) {
-          pricePerUnit = parseFloat(lastPerLikeMatch[1]);
-        }
-      }
-    }
-    
-    if (!pricePerUnit) {
+    // 1. Get all fixed packages sorted by quantity
+    const fixedPackages = visiblePackages
+      .filter((p) => !isCustomQty(p.qty))
+      .map((p) => {
+        const qty = typeof p.qty === "number" ? p.qty : parseInitialQty(p.qty);
+        const price = parsePrice(p.price);
+        // If strike is not present, default to 2x price (as per existing logic fallback)
+        const strike = p.strike ? parsePrice(p.strike) : price * 2;
+        return { qty, price, strike };
+      })
+      .sort((a, b) => a.qty - b.qty);
+
+    if (fixedPackages.length === 0) {
       const symbol = getCurrencySymbol();
       return { price: `${symbol}—`, strike: undefined, save: undefined };
     }
-    
-    const totalPrice = customQty * pricePerUnit;
-    const formattedPrice = formatPrice(totalPrice);
-    
-    // Calculate strike price and savings if original package has them
-    let strikePrice: string | undefined;
-    let saveAmount: string | undefined;
-    
-    // Calculate strike price and savings
-    // Use the first package (usually smallest/least discounted) as base for strike price
-    const basePackage = visiblePackages[0];
-    if (basePackage && basePackage.perLike) {
-      const basePerLikeMatch = basePackage.perLike.match(/\$([\d.]+)/);
-      if (basePerLikeMatch) {
-        const basePerUnit = parseFloat(basePerLikeMatch[1]);
-        // Calculate strike as 2x the current price (50% discount) or use package strike if available
-        const strikePerUnit = selected.strike 
-          ? (parsePrice(selected.strike) / (typeof selected.qty === "number" ? selected.qty : 10000))
-          : pricePerUnit * 2; // Default to 2x (50% off)
-        const totalStrike = customQty * strikePerUnit;
-        strikePrice = formatPrice(totalStrike);
-        const save = totalStrike - totalPrice;
-        if (save > 0) {
-          const symbol = getCurrencySymbol();
-          saveAmount = `You Save ${symbol}${save.toFixed(2)}`;
+
+    let calculatedPrice = 0;
+    let calculatedStrike = 0;
+
+    // 2. Calculate based on range
+    if (customQty <= fixedPackages[0].qty) {
+      // Below min: Use rate of min package
+      const minPkg = fixedPackages[0];
+      const ratio = customQty / minPkg.qty;
+      calculatedPrice = minPkg.price * ratio;
+      calculatedStrike = minPkg.strike * ratio;
+    } else if (customQty >= fixedPackages[fixedPackages.length - 1].qty) {
+      // Above max: Use rate of max package (per requirement "based on a per-1k rate from nearest tier")
+      const maxPkg = fixedPackages[fixedPackages.length - 1];
+      const ratio = customQty / maxPkg.qty;
+      calculatedPrice = maxPkg.price * ratio;
+      calculatedStrike = maxPkg.strike * ratio;
+    } else {
+      // In between: Linear interpolation
+      let lower = fixedPackages[0];
+      let upper = fixedPackages[fixedPackages.length - 1];
+      
+      for (let i = 0; i < fixedPackages.length - 1; i++) {
+        if (fixedPackages[i].qty <= customQty && fixedPackages[i+1].qty >= customQty) {
+          lower = fixedPackages[i];
+          upper = fixedPackages[i+1];
+          break;
         }
       }
+      
+      const range = upper.qty - lower.qty;
+      // Avoid division by zero
+      const progress = range === 0 ? 0 : (customQty - lower.qty) / range;
+      
+      calculatedPrice = lower.price + (upper.price - lower.price) * progress;
+      calculatedStrike = lower.strike + (upper.strike - lower.strike) * progress;
+    }
+    
+    // 3. Round to cents (Decimal-safe)
+    const totalPriceCents = Math.round(calculatedPrice * 100);
+    const totalPrice = totalPriceCents / 100;
+    const formattedPrice = formatPrice(totalPrice);
+
+    const totalStrikeCents = Math.round(calculatedStrike * 100);
+    const totalStrike = totalStrikeCents / 100;
+    const strikePrice = formatPrice(totalStrike);
+    
+    // 4. Calculate Savings
+    const saveCents = totalStrikeCents - totalPriceCents;
+    const save = saveCents / 100;
+    
+    let saveAmount: string | undefined;
+    if (save > 0) {
+      const symbol = getCurrencySymbol();
+      saveAmount = `You Save ${symbol}${save.toFixed(2)}`;
     }
     
     return { price: formattedPrice, strike: strikePrice, save: saveAmount };
@@ -243,15 +281,54 @@ export default function PackagesSelector({
 
   const handleCustomIncrement = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCustomQty((prev) => Math.min(prev + 1000, 1000000));
+    const step = customStep || 1000;
+    const max = customMaxQuantity || 1000000;
+    setCustomQty((prev) => Math.min(prev + step, max));
   };
 
   const handleCustomDecrement = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const minQty = selected && isCustomQty(selected.qty)
+    const step = customStep || 1000;
+    const min = customMinQuantity || (selected && isCustomQty(selected.qty)
       ? parseInitialQty(selected.qty)
-      : 10000;
-    setCustomQty((prev) => Math.max(prev - 1000, minQty));
+      : 10000);
+    setCustomQty((prev) => Math.max(prev - step, min));
+  };
+
+  const handleCustomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val === "") {
+      // Handle empty input temporarily if needed, or just let it stay 0
+      // We might need a separate display state if we want to allow empty input
+      setCustomQty(0);
+      return;
+    }
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      setCustomQty(num);
+    }
+  };
+
+  const handleCustomInputBlur = () => {
+    let newVal = customQty;
+    // Handle 0 or empty by resetting to min
+    if (newVal === 0) {
+       newVal = customMinQuantity || (selected && isCustomQty(selected.qty) ? parseInitialQty(selected.qty) : 10000);
+    }
+    
+    const min = customMinQuantity || (selected && isCustomQty(selected.qty) ? parseInitialQty(selected.qty) : 10000);
+    const max = customMaxQuantity || 1000000;
+
+    if (newVal < min) newVal = min;
+    if (newVal > max) newVal = max;
+
+    if (customRoundToStep && customStep) {
+        newVal = Math.round(newVal / customStep) * customStep;
+        if (newVal < min) newVal = min;
+        if (newVal > max) newVal = max;
+    }
+    
+    setCustomQty(newVal);
   };
 
   const displayQty = isCustomSelected ? customQty.toLocaleString() + "+" : String(selected?.qty ?? "");
@@ -341,7 +418,36 @@ export default function PackagesSelector({
                 )}
                 <div className="pkg-val">
                   {i === selectedIndex && typeof p.qty === "string" && p.qty.includes("+")
-                    ? customQty.toLocaleString() + "+"
+                    ? (customEnabled ? (
+                        <div onClick={(e) => e.stopPropagation()} style={{ width: '100%' }}>
+                          <input
+                            type="number"
+                            value={customQty === 0 ? "" : customQty}
+                            onChange={handleCustomInputChange}
+                            onBlur={handleCustomInputBlur}
+                            className="custom-qty-input"
+                            style={{ 
+                                width: '100%', 
+                                textAlign: 'center', 
+                                fontSize: '18px', 
+                                fontWeight: 'bold',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                padding: '4px',
+                                background: '#fff',
+                                color: '#333',
+                                marginBottom: '4px'
+                            }}
+                          />
+                          {(customMinQuantity || customMaxQuantity) && (
+                            <div style={{ fontSize: '11px', color: '#666', fontWeight: 'normal', lineHeight: 1.2 }}>
+                              Min {customMinQuantity?.toLocaleString() ?? "10k"} — Max {customMaxQuantity?.toLocaleString() ?? "1M"}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        customQty.toLocaleString() + "+"
+                      ))
                     : p.qty}
                 </div>
 

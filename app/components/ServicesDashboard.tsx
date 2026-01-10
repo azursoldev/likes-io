@@ -122,6 +122,13 @@ export default function ServicesDashboard() {
   const [moreServicesBody, setMoreServicesBody] = useState("");
   const [moreServicesButtons, setMoreServicesButtons] = useState<Array<{ platform?: string; serviceType?: string; label: string; iconName?: string; href?: string }>>([]);
 
+  // Custom Quantity Settings State
+  const [customEnabled, setCustomEnabled] = useState(false);
+  const [customMinQuantity, setCustomMinQuantity] = useState("");
+  const [customMaxQuantity, setCustomMaxQuantity] = useState("");
+  const [customStep, setCustomStep] = useState("");
+  const [customRoundToStep, setCustomRoundToStep] = useState(false);
+
   const sectionRefs = {
     configuration: useRef<HTMLDivElement>(null),
     meta: useRef<HTMLDivElement>(null),
@@ -184,6 +191,11 @@ export default function ServicesDashboard() {
     setMoreServicesHighlight("");
     setMoreServicesBody("");
     setMoreServicesButtons([]);
+    setCustomEnabled(false);
+    setCustomMinQuantity("");
+    setCustomMaxQuantity("");
+    setCustomStep("");
+    setCustomRoundToStep(false);
     
     const mapping = getServiceMapping(service.name);
     if (!mapping) {
@@ -221,6 +233,11 @@ export default function ServicesDashboard() {
       setLearnMoreText(data.learnMoreText || "");
       setLearnMoreModalContent(data.learnMoreModalContent || "");
       setServiceSlug(data.slug || service.name.toLowerCase().replace(/\s+/g, '-'));
+      setCustomEnabled(data.customEnabled || false);
+      setCustomMinQuantity(data.customMinQuantity !== undefined && data.customMinQuantity !== null ? String(data.customMinQuantity) : "");
+      setCustomMaxQuantity(data.customMaxQuantity !== undefined && data.customMaxQuantity !== null ? String(data.customMaxQuantity) : "");
+      setCustomStep(data.customStep !== undefined && data.customStep !== null ? String(data.customStep) : "");
+      setCustomRoundToStep(data.customRoundToStep || false);
       
       if (data.howItWorks) {
         setHowItWorksTitle(data.howItWorks.title || "");
@@ -677,6 +694,11 @@ export default function ServicesDashboard() {
           moreServicesHighlight,
           moreServicesBody,
           moreServicesButtons,
+          customEnabled,
+          customMinQuantity: customMinQuantity ? parseInt(customMinQuantity) : null,
+          customMaxQuantity: customMaxQuantity ? parseInt(customMaxQuantity) : null,
+          customStep: customStep ? parseInt(customStep) : null,
+          customRoundToStep,
           isActive: true
         })
       });
@@ -1162,6 +1184,75 @@ export default function ServicesDashboard() {
                     />
                     <p className="add-service-helper">This will be used in the URL. Must be unique, lowercase, with no spaces.</p>
                   </div>
+                  
+                  <div className="add-service-form-group" style={{ marginTop: "24px", borderTop: "1px solid #eee", paddingTop: "16px" }}>
+                    <h4 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "16px", color: "#333" }}>Custom Quantity Settings</h4>
+                    
+                    <div className="add-service-form-group">
+                      <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", cursor: "pointer" }}>
+                        <div className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={customEnabled} 
+                            onChange={(e) => setCustomEnabled(e.target.checked)} 
+                          />
+                          <span className="toggle-slider" />
+                        </div>
+                        <span style={{ fontSize: "14px", fontWeight: 500 }}>Enable Custom Quantity Input</span>
+                      </label>
+                    </div>
+
+                    {customEnabled && (
+                      <div className="add-service-two-columns">
+                        <div className="add-service-form-group">
+                          <label htmlFor="custom-min-qty">Min Quantity</label>
+                          <input
+                            type="number"
+                            id="custom-min-qty"
+                            className="add-service-input"
+                            placeholder="e.g. 100"
+                            value={customMinQuantity}
+                            onChange={(e) => setCustomMinQuantity(e.target.value)}
+                          />
+                        </div>
+                        <div className="add-service-form-group">
+                          <label htmlFor="custom-max-qty">Max Quantity</label>
+                          <input
+                            type="number"
+                            id="custom-max-qty"
+                            className="add-service-input"
+                            placeholder="e.g. 10000"
+                            value={customMaxQuantity}
+                            onChange={(e) => setCustomMaxQuantity(e.target.value)}
+                          />
+                        </div>
+                        <div className="add-service-form-group">
+                          <label htmlFor="custom-step">Step (Increment)</label>
+                          <input
+                            type="number"
+                            id="custom-step"
+                            className="add-service-input"
+                            placeholder="e.g. 100"
+                            value={customStep}
+                            onChange={(e) => setCustomStep(e.target.value)}
+                          />
+                        </div>
+                        <div className="add-service-form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "10px" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                            <div className="toggle-switch">
+                              <input 
+                                type="checkbox" 
+                                checked={customRoundToStep} 
+                                onChange={(e) => setCustomRoundToStep(e.target.checked)} 
+                              />
+                              <span className="toggle-slider" />
+                            </div>
+                            <span style={{ fontSize: "14px", fontWeight: 500 }}>Round to nearest step</span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="add-service-section" ref={sectionRefs.meta}>
@@ -1634,6 +1725,75 @@ export default function ServicesDashboard() {
                       onChange={(e) => setServiceSlug(e.target.value)}
                     />
                     <p className="add-service-helper">This will be used in the URL. Must be unique, lowercase, with no spaces.</p>
+                  </div>
+
+                  <div className="add-service-form-group" style={{ marginTop: "24px", borderTop: "1px solid #eee", paddingTop: "16px" }}>
+                    <h4 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "16px", color: "#333" }}>Custom Quantity Settings</h4>
+                    
+                    <div className="add-service-form-group">
+                      <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", cursor: "pointer" }}>
+                        <div className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={customEnabled} 
+                            onChange={(e) => setCustomEnabled(e.target.checked)} 
+                          />
+                          <span className="toggle-slider" />
+                        </div>
+                        <span style={{ fontSize: "14px", fontWeight: 500 }}>Enable Custom Quantity Input</span>
+                      </label>
+                    </div>
+
+                    {customEnabled && (
+                      <div className="add-service-two-columns">
+                        <div className="add-service-form-group">
+                          <label htmlFor="edit-custom-min-qty">Min Quantity</label>
+                          <input
+                            type="number"
+                            id="edit-custom-min-qty"
+                            className="add-service-input"
+                            placeholder="e.g. 100"
+                            value={customMinQuantity}
+                            onChange={(e) => setCustomMinQuantity(e.target.value)}
+                          />
+                        </div>
+                        <div className="add-service-form-group">
+                          <label htmlFor="edit-custom-max-qty">Max Quantity</label>
+                          <input
+                            type="number"
+                            id="edit-custom-max-qty"
+                            className="add-service-input"
+                            placeholder="e.g. 10000"
+                            value={customMaxQuantity}
+                            onChange={(e) => setCustomMaxQuantity(e.target.value)}
+                          />
+                        </div>
+                        <div className="add-service-form-group">
+                          <label htmlFor="edit-custom-step">Step (Increment)</label>
+                          <input
+                            type="number"
+                            id="edit-custom-step"
+                            className="add-service-input"
+                            placeholder="e.g. 100"
+                            value={customStep}
+                            onChange={(e) => setCustomStep(e.target.value)}
+                          />
+                        </div>
+                        <div className="add-service-form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "10px" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                            <div className="toggle-switch">
+                              <input 
+                                type="checkbox" 
+                                checked={customRoundToStep} 
+                                onChange={(e) => setCustomRoundToStep(e.target.checked)} 
+                              />
+                              <span className="toggle-slider" />
+                            </div>
+                            <span style={{ fontSize: "14px", fontWeight: 500 }}>Round to nearest step</span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

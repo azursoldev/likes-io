@@ -425,6 +425,13 @@ model ServicePageContent {
   moreServicesBody      String?
   moreServicesButtons   Json?
 
+  // Custom Quantity Settings
+  customEnabled       Boolean     @default(false)
+  customMinQuantity   Int?
+  customMaxQuantity   Int?
+  customStep          Int?
+  customRoundToStep   Boolean     @default(false)
+
   @@unique([platform, serviceType])
   @@index([platform, serviceType])
   @@map("service_page_content")
