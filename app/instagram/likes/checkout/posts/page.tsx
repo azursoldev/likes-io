@@ -22,6 +22,7 @@ interface Post {
   likes: number;
   comments: number;
   views?: number;
+  isVideo?: boolean;
 }
 
 function PostsSelectionContent() {
@@ -294,28 +295,56 @@ function PostsSelectionContent() {
                               <FontAwesomeIcon icon={faCheck} />
                             </div>
                           )}
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
-                            right: '0',
-                            padding: '4px 8px',
-                            background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                            color: '#fff',
-                            fontSize: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {/* Top Right Video Icon */}
+                          {post.isVideo && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              background: 'rgba(0,0,0,0.6)',
+                              borderRadius: '4px',
+                              width: '24px',
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#fff',
+                              zIndex: 5
+                            }}>
                               <FontAwesomeIcon icon={faPlay} style={{ fontSize: '10px' }} />
-                              <span>{formatCount(post.views || 0)}</span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <FontAwesomeIcon icon={faHeart} style={{ fontSize: '10px' }} />
-                              <span>{formatCount(post.likes || 0)}</span>
+                          )}
+
+                          {/* Center Added Amount Badge (Only when selected) */}
+                          {selectedPosts.includes(post.url) && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              zIndex: 10
+                            }}>
+                              <div style={{
+                                background: '#f97316',
+                                color: 'white',
+                                padding: '4px 10px',
+                                borderRadius: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: '600',
+                                fontSize: '12px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                <FontAwesomeIcon icon={faHeart} style={{ marginRight: '6px' }} />
+                                + {formatCount(Math.floor(parseInt(qty) / selectedPosts.length))}
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       ))}
                     </div>
