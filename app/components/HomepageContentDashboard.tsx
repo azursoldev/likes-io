@@ -190,6 +190,8 @@ export default function HomepageContentDashboard() {
   const [gsQuality, setGsQuality] = useState("premium");
   const [gsFeatures, setGsFeatures] = useState<string[]>([]);
   const [gsExplanation, setGsExplanation] = useState("");
+  const [gsHeading, setGsHeading] = useState("");
+  const [gsExplanationTitle, setGsExplanationTitle] = useState("");
   const [gsLoading, setGsLoading] = useState(false);
   const [gsSaving, setGsSaving] = useState(false);
   const [gsMessage, setGsMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
@@ -212,6 +214,8 @@ export default function HomepageContentDashboard() {
         const data = await res.json();
         setGsFeatures(Array.isArray(data.features) ? data.features : []);
         setGsExplanation(data.explanation || "");
+        setGsHeading(data.heading || "");
+        setGsExplanationTitle(data.explanationTitle || "");
       }
     } catch (error) {
       console.error("Failed to fetch Get Started content", error);
@@ -232,7 +236,9 @@ export default function HomepageContentDashboard() {
           serviceType: gsService,
           quality: gsQuality,
           features: gsFeatures,
-          explanation: gsExplanation
+          explanation: gsExplanation,
+          heading: gsHeading,
+          explanationTitle: gsExplanationTitle
         })
       });
 
@@ -1396,6 +1402,28 @@ export default function HomepageContentDashboard() {
               ) : (
                 <>
                   <div className="homepage-form-grid">
+                    <label className="homepage-label">
+                      Heading
+                      <input
+                        type="text"
+                        className="homepage-input"
+                        value={gsHeading}
+                        onChange={(e) => setGsHeading(e.target.value)}
+                        placeholder="e.g. Premium Likes Features"
+                      />
+                    </label>
+
+                    <label className="homepage-label">
+                      Explanation Title
+                      <input
+                        type="text"
+                        className="homepage-input"
+                        value={gsExplanationTitle}
+                        onChange={(e) => setGsExplanationTitle(e.target.value)}
+                        placeholder="e.g. Why Are Instagram Likes Important?"
+                      />
+                    </label>
+
                     <label className="homepage-label">
                       Explanation Text
                       <textarea

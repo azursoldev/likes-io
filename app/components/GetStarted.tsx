@@ -87,6 +87,8 @@ export default function GetStarted() {
 
   const [dynamicFeatures, setDynamicFeatures] = useState<string[]>([]);
   const [dynamicExplanation, setDynamicExplanation] = useState("");
+  const [dynamicHeading, setDynamicHeading] = useState("");
+  const [dynamicExplanationTitle, setDynamicExplanationTitle] = useState("");
   const [availablePackages, setAvailablePackages] = useState<any[]>([]);
   const [sliderIndex, setSliderIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -199,6 +201,8 @@ export default function GetStarted() {
           const contentData = await contentRes.json();
           setDynamicFeatures(contentData.features || []);
           setDynamicExplanation(contentData.explanation || "");
+          setDynamicHeading(contentData.heading || "");
+          setDynamicExplanationTitle(contentData.explanationTitle || "");
         }
 
         // Fetch Packages
@@ -497,7 +501,9 @@ export default function GetStarted() {
 
           {/* Right features */}
           <div className="gs-right card-lg">
-            <h4 className="gs-right-title">Premium {packType.charAt(0).toUpperCase() + packType.slice(1)} Features</h4>
+            <h4 className="gs-right-title">
+              {dynamicHeading || `${quality === 'hq' ? 'High Quality' : 'Premium'} ${packType.charAt(0).toUpperCase() + packType.slice(1)} Features`}
+            </h4>
             {/* Dynamic Features List */}
             <ul className="gs-features">
               {features.map((feat, i) => (
@@ -519,7 +525,9 @@ export default function GetStarted() {
             </ul>
 
             <div className="gs-divider" />
-            <h4 className="gs-right-sub">Why Are {PLATFORM_LABELS[platform]} {packType.charAt(0).toUpperCase() + packType.slice(1)} Important?</h4>
+            <h4 className="gs-right-sub">
+              {dynamicExplanationTitle || `Why Are ${PLATFORM_LABELS[platform]} ${packType.charAt(0).toUpperCase() + packType.slice(1)} Important?`}
+            </h4>
             <p className="gs-right-text">{explanation}</p>
           </div>
         </div>
