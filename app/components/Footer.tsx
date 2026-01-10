@@ -12,6 +12,21 @@ export default function Footer() {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { getLink, loading } = useNavigation();
 
+  const [systemStatusEnabled, setSystemStatusEnabled] = useState(false);
+  const [systemStatus, setSystemStatus] = useState("Operational");
+  const [systemStatusMessage, setSystemStatusMessage] = useState("All Systems Operational");
+
+  useEffect(() => {
+    fetch("/api/cms/system-status")
+      .then(res => res.json())
+      .then(data => {
+        setSystemStatusEnabled(data.systemStatusEnabled);
+        setSystemStatus(data.systemStatus);
+        setSystemStatusMessage(data.systemStatusMessage);
+      })
+      .catch(err => console.error("Failed to fetch system status:", err));
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -38,6 +53,54 @@ export default function Footer() {
 
   return (
     <footer className="site-footer">
+      {systemStatusEnabled && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          padding: '24px 0 0 0',
+          width: '100%'
+        }}>
+          <div className="system-status-banner" style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            color: '#1f2937',
+            padding: '8px 16px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}>
+            {systemStatus === 'Operational' ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#10B981"/>
+                <path d="M7.75 12L10.58 14.83L16.25 9.17004" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : systemStatus === 'Degraded' ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#F59E0B"/>
+                <path d="M12 8V12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 16H12.01" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : systemStatus === 'Maintenance' ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#3B82F6"/>
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" fill="white"/>
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#EF4444"/>
+                <path d="M15 9L9 15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 9L15 15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+            <span>{systemStatusMessage}</span>
+          </div>
+        </div>
+      )}
       <div className="container">
         {/* Top row nav */}
         <div className="footer-top">

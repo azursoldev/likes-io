@@ -223,7 +223,27 @@ model AdminSettings {
   myFatoorahTestMode     Boolean  @default(true)
   myFatoorahWebhookSecret String?
 
+  // System Status
+  systemStatus           String?  @default("Operational")
+  systemStatusMessage    String?  @default("All Systems Operational")
+  systemStatusEnabled    Boolean  @default(true)
+
   @@map("admin_settings")
+}
+
+model EmailLog {
+  id                String   @id @default(cuid())
+  userId            String?
+  type              String   // e.g., "order_confirmation", "password_reset"
+  status            String   // "sent" or "failed"
+  providerMessageId String?
+  metadata          Json?    // Any extra data
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@map("email_logs")
 }
 
 model HomepageContent {

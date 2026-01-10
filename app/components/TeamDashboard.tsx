@@ -2,6 +2,7 @@
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
+import AvatarUpload from "./AvatarUpload";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -387,12 +388,10 @@ export default function TeamDashboard() {
               </div>
 
               <div className="add-service-form-group">
-                <label>Avatar URL</label>
-                <input
-                  className="add-service-input"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="https://..."
+                <label>Avatar Image</label>
+                <AvatarUpload 
+                    currentAvatarUrl={avatarUrl} 
+                    onAvatarChange={setAvatarUrl} 
                 />
               </div>
 
