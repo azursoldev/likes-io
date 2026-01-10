@@ -540,10 +540,12 @@ export default function HomepageContentDashboard() {
   
   const handleUpdateInfluenceSubpoint = (stepIndex: number, subpointIndex: number, field: keyof InfluenceSubpoint, value: string) => {
       const newSteps = [...influenceSteps];
-      if (newSteps[stepIndex].subpoints) {
-          const newSubpoints = [...newSteps[stepIndex].subpoints!];
+      const step = { ...newSteps[stepIndex] };
+      if (step.subpoints) {
+          const newSubpoints = [...step.subpoints];
           newSubpoints[subpointIndex] = { ...newSubpoints[subpointIndex], [field]: value };
-          newSteps[stepIndex].subpoints = newSubpoints;
+          step.subpoints = newSubpoints;
+          newSteps[stepIndex] = step;
           setInfluenceSteps(newSteps);
       }
   };
@@ -609,13 +611,50 @@ export default function HomepageContentDashboard() {
               </div>
               
               {error && (
-                <div style={{ padding: '1rem', marginBottom: '1rem', backgroundColor: '#fee', color: '#c33', borderRadius: '4px' }}>
-                  {error}
+                <div style={{ 
+                  position: 'fixed',
+                  bottom: '20px',
+                  right: '20px',
+                  zIndex: 1000,
+                  padding: '1rem', 
+                  backgroundColor: '#fee', 
+                  color: '#c33', 
+                  borderRadius: '4px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <span>{error}</span>
+                  <button 
+                    onClick={() => setError(null)} 
+                    style={{
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer',
+                      fontSize: '1.2rem',
+                      lineHeight: 1,
+                      color: '#c33'
+                    }}
+                  >
+                    ×
+                  </button>
                 </div>
               )}
               
               {success && (
-                <div style={{ padding: '1rem', marginBottom: '1rem', backgroundColor: '#efe', color: '#3c3', borderRadius: '4px' }}>
+                <div style={{ 
+                  position: 'fixed',
+                  bottom: '20px',
+                  right: '20px',
+                  zIndex: 1000,
+                  padding: '1rem', 
+                  backgroundColor: '#efe', 
+                  color: '#065f46', 
+                  borderRadius: '4px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  fontWeight: 500
+                }}>
                   Homepage content saved successfully!
                 </div>
               )}
@@ -1050,7 +1089,29 @@ export default function HomepageContentDashboard() {
             </div>
           {/* Influence Section */}
             <div className="homepage-section-card">
-              <h2 className="section-title">Influence Section</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 className="section-title">Influence Section</h2>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || loading}
+                  className="homepage-save-btn"
+                  style={{
+                    padding: '0.5rem 1.5rem',
+                    backgroundColor: '#4f46e5',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: saving || loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    opacity: saving || loading ? 0.6 : 1,
+                  }}
+                >
+                  <FontAwesomeIcon icon={faSave} />
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
               <div className="homepage-form-grid">
                 <label className="homepage-label">
                   Title
@@ -1161,7 +1222,29 @@ export default function HomepageContentDashboard() {
 
             {/* Quick Start Section */}
             <div className="homepage-section-card">
-              <h2 className="section-title">Quick Start Section</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 className="section-title">Quick Start Section</h2>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || loading}
+                  className="homepage-save-btn"
+                  style={{
+                    padding: '0.5rem 1.5rem',
+                    backgroundColor: '#4f46e5',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: saving || loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    opacity: saving || loading ? 0.6 : 1,
+                  }}
+                >
+                  <FontAwesomeIcon icon={faSave} />
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
               <div className="homepage-form-grid">
                 <label className="homepage-label">
                   Title

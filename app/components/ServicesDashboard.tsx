@@ -156,6 +156,100 @@ export default function ServicesDashboard() {
   };
 
   const handleAddServiceClick = () => {
+    // Reset and populate with defaults for new service
+    setHeroTitle("");
+    setMetaTitle("");
+    setMetaDescription("");
+    setHeroSubtitle("");
+    setHeroRating("4.9/5");
+    setHeroReviewCount("1,250+ reviews");
+    setAssuranceCardText("Join over a million satisfied customers, including artists, companies, and top influencers. Our services are 100% discreet, secure, and delivered naturally to ensure your account is always safe.");
+    setLearnMoreText("");
+    setLearnMoreModalContent("");
+    setHowItWorksTitle("How It Works");
+    setHowItWorksSubtitle("Simple steps to get started.");
+    
+    setSteps([
+      { id: 1, title: "Select Package", description: "Choose the package that fits your needs.", icon: "CheckCircle" },
+      { id: 2, title: "Enter Details", description: "Provide your username or link. No password required.", icon: "User" },
+      { id: 3, title: "See Results", description: "Watch your engagement grow instantly.", icon: "Star" }
+    ]);
+    
+    setBenefitsTitle("The Likes.io Advantage");
+    setBenefitsSubtitle("We combine premium quality with industry-leading features to deliver growth you can trust.");
+    setBenefitsItems([
+      { id: 1, title: "Instant Delivery", desc: "Your order begins the moment you check out, with tangible results in minutes.", icon: "/fast-delivery.svg" },
+      { id: 2, title: "Premium Quality", desc: "Enhance your social proof with engagement from high-quality, real-looking profiles.", icon: "/premium-quality.svg" },
+      { id: 3, title: "100% Safe & Secure", desc: "Your account's safety is our priority. We never ask for your password.", icon: "/shield.svg" },
+      { id: 4, title: "24/7 Customer Support", desc: "Our dedicated global support team is always available to help you.", icon: "/24-hour-service.svg" }
+    ]);
+
+    // Default High-Quality Packages
+    setHighQualityPriceOptions([
+      { id: 1, name: "5% OFF", item: "50", price1: "2.99", price2: "", disc: "", serviceId: "" },
+      { id: 2, name: "8% OFF", item: "100", price1: "8.99", price2: "", disc: "", serviceId: "" },
+      { id: 3, name: "12% OFF", item: "250", price1: "22.49", price2: "", disc: "", serviceId: "" },
+      { id: 4, name: "10% OFF", item: "500", price1: "17.99", price2: "27.99", disc: "You Save $10.00", serviceId: "" },
+      { id: 5, name: "25% OFF", item: "1K", price1: "19.99", price2: "", disc: "", serviceId: "" }
+    ]);
+
+    // Default Premium Packages
+    setPremiumPriceOptions([
+      { id: 101, name: "5% OFF", item: "50", price1: "3.49", price2: "", disc: "", serviceId: "" },
+      { id: 102, name: "8% OFF", item: "100", price1: "9.99", price2: "", disc: "", serviceId: "" },
+      { id: 103, name: "12% OFF", item: "250", price1: "29.99", price2: "", disc: "", serviceId: "" },
+      { id: 104, name: "10% OFF", item: "500", price1: "24.99", price2: "34.99", disc: "You Save $10.00", serviceId: "" },
+      { id: 105, name: "25% OFF", item: "1K", price1: "29.99", price2: "", disc: "", serviceId: "" }
+    ]);
+
+    setHighQualityFeatures([
+      { id: 1, name: "Real & High Quality" },
+      { id: 2, name: "Fast Delivery" },
+      { id: 3, name: "Guaranteed" },
+      { id: 4, name: "No Password Needed" },
+      { id: 5, name: "24/7 Support" }
+    ]);
+
+    setPremiumFeatures([
+      { id: 101, name: "Premium Real Users" },
+      { id: 102, name: "Instant Delivery" },
+      { id: 103, name: "Lifetime Guarantee" },
+      { id: 104, name: "No Password Needed" },
+      { id: 105, name: "Priority Support" }
+    ]);
+    
+    // Sync to Quality Compare
+    setQualityCompareColumns([
+      {
+        id: 0,
+        title: "High-Quality",
+        subtitle: "Great for giving your posts a quick and affordable boost.",
+        bullets: ["Real & High Quality", "Fast Delivery", "Guaranteed", "No Password Needed", "24/7 Support"],
+        highlight: false,
+        badge: ""
+      },
+      {
+        id: 1,
+        title: "Premium",
+        subtitle: "Our best offering for maximum impact and organic growth.",
+        bullets: ["Premium Real Users", "Instant Delivery", "Lifetime Guarantee", "No Password Needed", "Priority Support"],
+        highlight: true,
+        badge: "RECOMMENDED"
+      }
+    ]);
+
+    setFaqItems([]);
+    setMoreServicesTitle("More Growth Services from Likes.io");
+    setMoreServicesHighlight("Services");
+    setMoreServicesBody("Boost your presence with our other premium services.");
+    setMoreServicesButtons([]);
+    
+    setCustomEnabled(false);
+    setCustomMinQuantity("");
+    setCustomMaxQuantity("");
+    setCustomStep("");
+    setCustomRoundToStep(false);
+
     setShowAddServiceModal(true);
   };
 
