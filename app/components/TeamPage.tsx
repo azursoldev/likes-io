@@ -14,8 +14,67 @@ type TeamMember = {
   avatarUrl?: string | null;
 };
 
+const TeamMemberCard = ({ member }: { member: TeamMember }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxLength = 120; // Number of characters to show initially
+  const shouldTruncate = member.description.length > maxLength;
+
+  return (
+    <div className="team-card">
+      <div className="team-avatar" style={{ borderRadius: '50%', overflow: 'hidden', width: '120px', height: '120px', margin: '0 auto 1.5rem' }}>
+        {member.avatarUrl ? (
+          <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" style={{ borderRadius: '50%' }} />
+        ) : (
+          <div className="team-avatar-placeholder" style={{ borderRadius: '50%' }}></div>
+        )}
+      </div>
+      <h3 className="team-name">{member.name}</h3>
+      <p className="team-role">{member.role}</p>
+      <div className="team-social">
+        {member.twitterUrl && (
+          <a href={member.twitterUrl} target="_blank" rel="noopener noreferrer" className="team-social-link" aria-label={`${member.name} on X (Twitter)`}>
+            <FontAwesomeIcon icon={faXTwitter} />
+          </a>
+        )}
+        {member.linkedinUrl && (
+          <a href={member.linkedinUrl} target="_blank" rel="noopener noreferrer" className="team-social-link" aria-label={`${member.name} on LinkedIn`}>
+            <FontAwesomeIcon icon={faLinkedin} />
+          </a>
+        )}
+      </div>
+      <p className="team-description">
+        {isExpanded ? member.description : (shouldTruncate ? `${member.description.slice(0, maxLength)}...` : member.description)}
+      </p>
+      {shouldTruncate && !isExpanded && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            setIsExpanded(true);
+          }}
+          style={{
+            color: 'rgb(249, 115, 20)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            marginTop: '0.5rem',
+            fontWeight: 600,
+            fontSize: '0.9rem'
+          }}
+        >
+          Read More
+        </button>
+      )}
+      {/* <a href="#" className="team-profile-btn">
+        View Profile & Posts <FontAwesomeIcon icon={faAngleRight} />
+      </a> */}
+    </div>
+  );
+};
+
 export default function TeamPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,33 +123,7 @@ export default function TeamPage() {
         <div className="team-grid-container">
         <div className="team-grid">
           {teamMembers.map((member) => (
-            <div key={member.id} className="team-card">
-              <div className="team-avatar">
-                {member.avatarUrl ? (
-                  <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="team-avatar-placeholder"></div>
-                )}
-              </div>
-              <h3 className="team-name">{member.name}</h3>
-              <p className="team-role">{member.role}</p>
-              <div className="team-social">
-                {member.twitterUrl && (
-                  <a href={member.twitterUrl} target="_blank" rel="noopener noreferrer" className="team-social-link" aria-label={`${member.name} on X (Twitter)`}>
-                    <FontAwesomeIcon icon={faXTwitter} />
-                  </a>
-                )}
-                {member.linkedinUrl && (
-                  <a href={member.linkedinUrl} target="_blank" rel="noopener noreferrer" className="team-social-link" aria-label={`${member.name} on LinkedIn`}>
-                    <FontAwesomeIcon icon={faLinkedin} />
-                  </a>
-                )}
-              </div>
-              <p className="team-description">{member.description}</p>
-              <a href="#" className="team-profile-btn">
-                View Profile & Posts <FontAwesomeIcon icon={faAngleRight} />
-              </a>
-            </div>
+            <TeamMemberCard key={member.id} member={member} />
           ))}
         </div>
         </div>
