@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { emailService } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +30,13 @@ export async function POST(request: NextRequest) {
         role: "USER",
       },
     });
+
+    try {
+      await emailService.sendWelcomeEmail(email);
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+      // Don't fail the request if email fails, but log it
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

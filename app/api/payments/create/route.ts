@@ -5,7 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { checkoutAPI } from '@/lib/checkout-api';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
 import { getMyFatoorahAPI } from '@/lib/myfatoorah-api';
-import { Platform, ServiceType } from '@prisma/client';
+import { validateCoupon } from '@/lib/coupon-utils';
+import { emailService } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -309,6 +310,12 @@ export async function POST(request: NextRequest) {
             data: { status: 'PROCESSING' }
           })
         ]);
+
+        try {
+          await emailService.sendPaymentSuccess(order.id);
+        } catch (e) {
+          console.error('Email error:', e);
+        }
 
         return NextResponse.json({
           orderId: order.id,

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
 import { japAPI } from '@/lib/jap-api';
 import { recordCouponRedemption } from '@/lib/coupon-utils';
+import { emailService } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,6 +119,13 @@ export async function POST(request: NextRequest) {
           console.error('Failed to create JAP order after Cryptomus payment:', error);
           // Order will remain in processing state, can be retried manually
         }
+      }
+
+      // Send email
+      try {
+        await emailService.sendPaymentSuccess(payment.orderId);
+      } catch (e) {
+        console.error('Email error:', e);
       }
     } else if (payment_status === 'fail' || payment_status === 'cancel' || payment_status === 'system_fail') {
       paymentStatus = 'FAILED';
