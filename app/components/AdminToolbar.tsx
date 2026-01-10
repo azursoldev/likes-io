@@ -31,10 +31,8 @@ export default function AdminToolbar({ title }: AdminToolbarProps) {
 
   const handleLogout = async () => {
     try {
-      await signOut({ 
-        callbackUrl: "/",
-        redirect: true 
-      });
+      await signOut({ redirect: false });
+      window.location.href = window.location.origin + "/";
     } catch (error) {
       console.error("Logout error:", error);
     }

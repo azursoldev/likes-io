@@ -23,6 +23,7 @@ type UiPost = {
   date: string;
   readTime: string;
   sections?: Array<{ id: string; title: string }>;
+  image?: string;
 };
 
 export default function BlogPostPage({ slug }: BlogPostPageProps) {
@@ -59,6 +60,7 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
           }),
           readTime: "5 min read",
           sections: [],
+          image: p.coverImage || "",
         };
 
         setPost(mapped);
@@ -189,6 +191,12 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
                   Share
                 </button>
               </div>
+
+              {post.image && (
+                <div className="blog-post-featured-image" style={{ marginTop: '30px', borderRadius: '12px', overflow: 'hidden' }}>
+                  <img src={post.image} alt={post.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
+                </div>
+              )}
             </header>
 
             {/* Content */}

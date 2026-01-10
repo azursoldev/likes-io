@@ -17,15 +17,18 @@ import {
   faShieldHalved,
   faTag,
   faCoins,
-  faEye
+  faEye,
+  faWallet
 } from "@fortawesome/free-solid-svg-icons";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
+import { useGoogleAnalytics } from "../../../../hooks/useGoogleAnalytics";
 import Link from "next/link";
 
 function FinalCheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
   
   const username = searchParams.get("username") || "";
@@ -34,7 +37,24 @@ function FinalCheckoutContent() {
   const packageType = searchParams.get("type") || "High-Quality";
   const postLink = searchParams.get("postLink") || "";
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet" | "myfatoorah">("card");
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  // Fetch wallet balance
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data && typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch wallet balance:", err));
+  }, []);
+
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -42,6 +62,14 @@ function FinalCheckoutContent() {
   const [cvc, setCvc] = useState("");
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    type: "PERCENT" | "FIXED";
+    value: number;
+  } | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
@@ -49,9 +77,40 @@ function FinalCheckoutContent() {
   // MyFatoorah State
   const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
   const [isMfLoaded, setIsMfLoaded] = useState(false);
+  const [channelInfo, setChannelInfo] = useState<{ name: string; avatar: string } | null>(null);
+  const { trackBeginCheckout } = useGoogleAnalytics();
 
   useEffect(() => {
-    if (paymentMethod === "card" && !mfSession) {
+    if (priceValue > 0) {
+      trackBeginCheckout([
+        {
+          item_id: 'YOUTUBE_SUBSCRIBERS',
+          item_name: 'YouTube Subscribers',
+          price: priceValue,
+          quantity: parseInt(qty) || 0,
+        }
+      ], priceValue, 'USD');
+    }
+  }, [priceValue, qty, trackBeginCheckout]);
+
+  useEffect(() => {
+    if (username) {
+      fetch(`/api/social/YOUTUBE/profile?username=${username}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.profile) {
+            setChannelInfo({
+              name: data.profile.fullName || data.profile.username,
+              avatar: data.profile.profilePicture || data.profile.profilePicUrl || data.profile.avatar
+            });
+          }
+        })
+        .catch(err => console.error("Failed to fetch profile:", err));
+    }
+  }, [username]);
+
+  useEffect(() => {
+    if (paymentMethod === "myfatoorah" && !mfSession) {
       fetch("/api/payments/initiate-session", { method: "POST" })
         .then(res => res.json())
         .then(data => {
@@ -70,7 +129,7 @@ function FinalCheckoutContent() {
   }, [paymentMethod, mfSession]);
 
   useEffect(() => {
-    if (paymentMethod === "card" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
       try {
         const config = {
           countryCode: mfSession.countryCode,
@@ -112,11 +171,59 @@ function FinalCheckoutContent() {
     }
   }, [paymentMethod, mfSession, isMfLoaded]);
 
-  const offers = [
-    { id: "offer1", text: "50 likes x 10 videos", price: 5.99, icon: faThumbsUp },
-    { id: "offer2", text: "100 likes x 10 videos", price: 11.24, icon: faThumbsUp },
-    { id: "offer3", text: "1K views", price: 11.24, icon: faLink }
-  ];
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; icon: any}>>([]);
+
+  useEffect(() => {
+    fetch('/api/upsells?platform=YOUTUBE&serviceType=SUBSCRIBERS')
+      .then(res => res.json())
+      .then(data => {
+        if (data.upsells && Array.isArray(data.upsells) && data.upsells.length > 0) {
+          setOffers(data.upsells.map((u: any) => {
+             let p = u.basePrice;
+             if (u.discountType === 'PERCENT') {
+               p -= (p * u.discountValue / 100);
+             } else {
+               p -= u.discountValue;
+             }
+             return {
+               id: u.id,
+               text: u.title,
+               price: Math.max(0, p),
+               originalPrice: u.basePrice,
+               icon: u.badgeIcon === 'user-plus' ? faUserPlus : faThumbsUp
+             };
+          }));
+        } else {
+          setOffers([]);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch upsells:", err);
+        setOffers([]);
+      });
+  }, []);
+
+  useEffect(() => {
+    const offersParam = searchParams.get("offers") || "";
+    const ids = offersParam ? offersParam.split(",").filter(Boolean) : [];
+    const selected = offers.filter(o => ids.includes(o.id));
+    const currentIds = addedOffers.map(o => o.id).join(",");
+    const nextIds = selected.map(o => o.id).join(",");
+    if (currentIds !== nextIds) {
+      setAddedOffers(selected);
+    }
+  }, [searchParams, offers]);
+
+  useEffect(() => {
+    const current = searchParams.get("offers") || "";
+    const next = addedOffers.map(o => o.id).join(",");
+    if (current !== next) {
+      const params = new URLSearchParams(searchParams.toString());
+      if (next) params.set("offers", next);
+      else params.delete("offers");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [addedOffers]);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
     if (!addedOffers.find(o => o.id === offer.id)) {
@@ -130,7 +237,62 @@ function FinalCheckoutContent() {
 
   const offersTotal = addedOffers.reduce((sum, offer) => sum + offer.price, 0);
   const totalPrice = priceValue + offersTotal;
+
+  // Discount calculation
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "PERCENT") {
+      discountAmount = (totalPrice * appliedCoupon.value) / 100;
+    } else {
+      discountAmount = appliedCoupon.value;
+    }
+  }
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
+
   const currencyCode = currency;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    setCouponSuccess("");
+    
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode,
+          orderAmount: totalPrice,
+          serviceType: "YOUTUBE_SUBSCRIBERS",
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.valid) {
+        setAppliedCoupon(data.coupon);
+        setCouponSuccess(data.message);
+        setCouponError("");
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(data.message);
+        setCouponSuccess("");
+      }
+    } catch (error) {
+      setCouponError("Failed to validate coupon");
+      setCouponSuccess("");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponSuccess("");
+    setCouponError("");
+  };
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +302,14 @@ function FinalCheckoutContent() {
     try {
       let cardSessionId: string | undefined;
 
+      // Validate required fields
       if (paymentMethod === "card") {
+        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
+          setError("Please fill in all card details");
+          setProcessing(false);
+          return;
+        }
+      } else if (paymentMethod === "myfatoorah") {
         if (!mfSession || !(window as any).myFatoorah) {
            throw new Error("Payment form not loaded");
         }
@@ -149,6 +318,12 @@ function FinalCheckoutContent() {
           throw new Error("Invalid payment data");
         }
         cardSessionId = mfResponse.SessionId;
+      } else if (paymentMethod === "wallet") {
+        if (walletBalance < finalPrice) {
+          setError("Insufficient wallet balance");
+          setProcessing(false);
+          return;
+        }
       }
 
       const platformUpper = "YOUTUBE";
@@ -163,12 +338,13 @@ function FinalCheckoutContent() {
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 100,
-          price: totalPrice,
+          price: finalPrice,
           link: postLink || username,
-          paymentMethod: paymentMethod === "card" ? "myfatoorah" : paymentMethod,
+          paymentMethod: paymentMethod,
           currency: currencyCode,
           email: email,
-          sessionId: cardSessionId
+          sessionId: cardSessionId,
+          couponCode: appliedCoupon?.code,
         }),
       });
 
@@ -239,6 +415,40 @@ function FinalCheckoutContent() {
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     
+                    {/* Wallet Payment Option */}
+                    {walletBalance > 0 && (
+                      <div className="payment-option">
+                        <label className="payment-option-label">
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="wallet"
+                            checked={paymentMethod === "wallet"}
+                            onChange={() => setPaymentMethod("wallet")}
+                            className="payment-radio"
+                          />
+                          <FontAwesomeIcon icon={faWallet} className="payment-option-icon" />
+                          <span>Wallet (Balance: {formatPrice(walletBalance)})</span>
+                        </label>
+                        
+                        {paymentMethod === "wallet" && (
+                          <div className="crypto-form">
+                            <div className="crypto-message-box">
+                              {walletBalance >= finalPrice ? (
+                                <p style={{ color: '#16a34a' }}>
+                                  Use your wallet balance to pay for this order instantly.
+                                </p>
+                              ) : (
+                                <p style={{ color: '#dc2626' }}>
+                                  Insufficient balance. Please add funds to your wallet or choose another payment method.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
@@ -276,6 +486,7 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
+                    {/* Crypto Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
@@ -298,6 +509,32 @@ function FinalCheckoutContent() {
                         </div>
                       )}
                     </div>
+
+                    {/* MyFatoorah Payment Option */}
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="myfatoorah"
+                          checked={paymentMethod === "myfatoorah"}
+                          onChange={() => setPaymentMethod("myfatoorah")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
+                        <span>MyFatoorah (KNET, Visa/Master)</span>
+                      </label>
+                      
+                      {paymentMethod === "myfatoorah" && (
+                        <div className="crypto-form">
+                          {/* MyFatoorah Embedded Container */}
+                          <div style={{ width: "100%", minHeight: "150px" }}>
+                            {!isMfLoaded && <p>Loading payment form...</p>}
+                            <div id="mf-card-element" style={{ width: "100%" }}></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {error && (
@@ -313,7 +550,7 @@ function FinalCheckoutContent() {
                     ) : (
                       <>
                         <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                        Pay {formatPrice(totalPrice)}
+                        Pay {formatPrice(finalPrice)}
                       </>
                     )}
                   </button>
@@ -341,14 +578,37 @@ function FinalCheckoutContent() {
             <div className="final-checkout-right">
               <div className="checkout-card">
                 <div className="account-info-item">
-                  <div className="account-info-left">
-                    <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
-                    <span className="account-info-url">{postLink || `@${username || "username"}`}</span>
+                  <div className="account-info-left" style={{ alignItems: "center" }}>
+                    {channelInfo ? (
+                      <>
+                        <img 
+                          src={channelInfo.avatar} 
+                          alt={channelInfo.name} 
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/youtube-7.png";
+                            target.style.objectFit = "contain";
+                            target.style.padding = "4px";
+                          }}
+                          style={{ borderRadius: "50%", width: "40px", height: "40px", objectFit: "cover", marginRight: "10px" }} 
+                        />
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                           <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{channelInfo.name}</span>
+                           <span className="account-info-url" style={{ fontSize: "12px", color: "#666" }}>@{username}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
+                        <span className="account-info-url">{postLink || `@${username || "username"}`}</span>
+                      </>
+                    )}
                   </div>
                   <button 
                     type="button" 
                     className="change-button"
-                    onClick={() => router.push(`/youtube/subscribers/checkout?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`)}
+                    onClick={() => router.push(`/youtube/subscribers/checkout?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}${addedOffers.length ? `&offers=${encodeURIComponent(addedOffers.map(o => o.id).join(","))}` : ""}`)}
                   >
                     Change
                   </button>
@@ -363,7 +623,7 @@ function FinalCheckoutContent() {
                     <FontAwesomeIcon icon={faUserPlus} className="order-item-icon" />
                     <div className="order-item-details">
                       <span className="order-item-text">{qty} YouTube Subscribers</span>
-                      <span className="order-item-subtext">Delivered to your channel.</span>
+                      <span className="order-item-subtext" style={{ marginTop: "4px", display: "block" }}>Delivered to your channel.</span>
                     </div>
                   </div>
                   <span className="order-item-price">{formatPrice(priceValue)}</span>
@@ -391,6 +651,18 @@ function FinalCheckoutContent() {
                   </div>
                 ))}
 
+                {appliedCoupon && (
+                  <div className="order-item discount-item" style={{ color: "#22c55e" }}>
+                    <div className="order-item-left">
+                      <FontAwesomeIcon icon={faTag} className="order-item-icon" />
+                      <div className="order-item-details">
+                        <span className="order-item-text">Discount ({appliedCoupon.code})</span>
+                      </div>
+                    </div>
+                    <span className="order-item-price">-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
+
                 <div className="coupon-section">
                   <label className="coupon-toggle">
                     <span>I have a coupon code</span>
@@ -405,15 +677,44 @@ function FinalCheckoutContent() {
                     </div>
                   </label>
                   {hasCoupon && (
-                    <div className="coupon-input-wrapper">
-                      <input
-                        type="text"
-                        className="coupon-input"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Enter coupon"
-                      />
-                      <button type="button" className="coupon-apply-btn">Apply</button>
+                    <div className="coupon-input-wrapper" style={{ flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                        <input
+                          type="text"
+                          className="coupon-input"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          placeholder="Enter coupon"
+                          disabled={isValidatingCoupon || !!appliedCoupon}
+                          style={{ flex: 1 }}
+                        />
+                        {appliedCoupon ? (
+                          <button 
+                            type="button" 
+                            className="coupon-apply-btn"
+                            onClick={() => {
+                              setAppliedCoupon(null);
+                              setCouponCode("");
+                              setCouponSuccess("");
+                              setCouponError("");
+                            }}
+                            style={{ background: "#ef4444" }}
+                          >
+                            Remove
+                          </button>
+                        ) : (
+                          <button 
+                            type="button" 
+                            className="coupon-apply-btn"
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode}
+                          >
+                            {isValidatingCoupon ? "..." : "Apply"}
+                          </button>
+                        )}
+                      </div>
+                      {couponError && <p style={{color: '#ef4444', fontSize: '12px', margin: 0}}>{couponError}</p>}
+                      {couponSuccess && <p style={{color: '#22c55e', fontSize: '12px', margin: 0}}>{couponSuccess}</p>}
                     </div>
                   )}
                 </div>
@@ -422,71 +723,42 @@ function FinalCheckoutContent() {
                   <span className="total-label">Total to pay</span>
                   <div className="total-price-wrapper">
                     <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(totalPrice)}</span>
+                    <span className="total-price">{formatPrice(finalPrice)}</span>
                   </div>
                 </div>
               </div>
 
-              <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
-              
-              <div className="checkout-card exclusive-offers">
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer1") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faThumbsUp} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">50 likes x 10 videos</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(5.99)}</span>
-                      <span className="offer-price-old">{formatPrice(7.99)}</span>
-                    </div>
+              {offers.length > 0 && (
+                <>
+                  <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
+                  <div className="checkout-card exclusive-offers">
+                    {offers.slice(0, 3).map((offer, idx) => {
+                      const colorClass = idx === 2 ? "offer-pink" : "offer-green";
+                      const isAdded = !!addedOffers.find(o => o.id === offer.id);
+                      return (
+                        <div key={offer.id} className={`offer-item ${colorClass} ${isAdded ? "offer-added" : ""}`}>
+                          <div className="offer-badge">25%</div>
+                          <FontAwesomeIcon icon={offer.icon} className="offer-icon" />
+                          <div className="offer-details">
+                            <span className="offer-text">{offer.text}</span>
+                            <div className="offer-price">
+                              <span className="offer-price-new">For only {formatPrice(offer.price)}</span>
+                              <span className="offer-price-old">{formatPrice(offer.originalPrice)}</span>
+                            </div>
+                          </div>
+                          <button 
+                            className="offer-add-btn"
+                            onClick={() => handleAddOffer(offer)}
+                            disabled={isAdded}
+                          >
+                            {isAdded ? "Added" : "+ Add"}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[0])}
-                    disabled={!!addedOffers.find(o => o.id === "offer1")}
-                  >
-                    {addedOffers.find(o => o.id === "offer1") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer2") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faThumbsUp} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">100 likes x 10 videos</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[1])}
-                    disabled={!!addedOffers.find(o => o.id === "offer2")}
-                  >
-                    {addedOffers.find(o => o.id === "offer2") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-pink ${addedOffers.find(o => o.id === "offer3") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faLink} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">1K views</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[2])}
-                    disabled={!!addedOffers.find(o => o.id === "offer3")}
-                  >
-                    {addedOffers.find(o => o.id === "offer3") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
 
               <div className="checkout-card security-guarantees">
                 <div className="guarantee-item">

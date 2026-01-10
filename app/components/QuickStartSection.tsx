@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useNavigation } from "@/app/hooks/useNavigation";
 
 export default function QuickStartSection() {
-  const { getLink } = useNavigation();
+  const { getLink, loading: navLoading } = useNavigation();
   const [loading, setLoading] = useState(true);
   const [quickStartContent, setQuickStartContent] = useState({
     title: "Get Started Now",
@@ -61,7 +61,7 @@ export default function QuickStartSection() {
     fetchContent();
   }, []);
 
-  if (loading) {
+  if (loading || navLoading) {
     return (
       <section className="quickstart">
         <div className="container">

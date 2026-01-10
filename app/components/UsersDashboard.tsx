@@ -64,7 +64,13 @@ export default function UsersDashboard() {
         params.append("search", search);
       }
       
-      const response = await fetch(`/api/admin/users?${params.toString()}`);
+      const response = await fetch(`/api/admin/users?${params.toString()}`, {
+        cache: 'no-store',
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
       
       if (!response.ok) {
         // Try to get error message from response
@@ -173,11 +179,44 @@ export default function UsersDashboard() {
     }
   };
 
-  const handleAddFunds = () => {
-    // Here you would typically add funds to the user's wallet
-    console.log("Adding funds:", fundsAmount, "to user:", selectedUser?.name);
-    setShowAddFundsModal(false);
-    setSelectedUser(null);
+  const handleAddFunds = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setActionLoading(true);
+      setActionError(null);
+
+      const response = await fetch(`/api/admin/users/${selectedUser.id}/funds`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: fundsAmount,
+          type: 'CREDIT',
+          note: 'Admin added funds'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to add funds (${response.status})`);
+      }
+
+      // Success - refresh the list and close modal
+      setShowAddFundsModal(false);
+      setSelectedUser(null);
+      setActionError(null);
+      await fetchUsers(currentPage, searchQuery);
+      
+      // Optional: Show success toast/alert
+      // alert("Funds added successfully");
+    } catch (err: any) {
+      setActionError(err.message || "Failed to add funds");
+      console.error("Error adding funds:", err);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleCancel = () => {

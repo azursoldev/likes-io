@@ -23,12 +23,16 @@ export async function GET(request: NextRequest) {
     const platform = searchParams.get('platform')?.toUpperCase() as Platform | null;
     const status = searchParams.get('status');
     const isAdmin = session.user.role === 'ADMIN';
+    const sessionUserId = session.user.id;
 
     const where: any = {};
     
     // Non-admin users can only see their own orders
     if (!isAdmin) {
-      where.userId = session.user.id;
+      if (!sessionUserId) {
+        return NextResponse.json({ orders: [] });
+      }
+      where.userId = sessionUserId;
     }
 
     if (platform) {

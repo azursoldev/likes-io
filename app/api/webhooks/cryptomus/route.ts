@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
 import { japAPI } from '@/lib/jap-api';
+import { recordCouponRedemption } from '@/lib/coupon-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,6 +92,10 @@ export async function POST(request: NextRequest) {
           status: orderStatus,
         },
       });
+
+      // Record Coupon Redemption using data stored on payment at creation time
+      const existingWebhookData = payment.webhookData as any || {};
+      await recordCouponRedemption(payment.orderId, existingWebhookData, order.userId);
 
       // Create JAP order if service has japServiceId
       if (order.serviceId && order.link && order.service?.japServiceId) {

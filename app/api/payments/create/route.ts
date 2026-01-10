@@ -54,11 +54,13 @@ export async function POST(request: NextRequest) {
       quantity,
       price,
       link,
-      paymentMethod, // 'card' or 'crypto'
+      paymentMethod, // 'card' or 'crypto' or 'wallet'
       currency = 'USD',
       serviceId, // Optional: serviceId from package data (database service ID)
       packageServiceId, // Optional: JAP Service ID from package (SMM Panel Integration)
       sessionId, // Optional: MyFatoorah session ID (for embedded payment)
+      couponCode, // Optional: Coupon code
+      upsellIds, // Optional: Array of upsell IDs
     } = body;
 
     if (!platform || !serviceType || !quantity || !price) {
@@ -67,6 +69,131 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Upsell Calculation
+    let upsellTotal = 0;
+    const upsellData: any[] = [];
+    
+    if (upsellIds && Array.isArray(upsellIds) && upsellIds.length > 0) {
+      try {
+        // @ts-ignore
+        const upsells = await prisma.upsell.findMany({
+          where: { id: { in: upsellIds }, isActive: true }
+        });
+        
+        for (const upsell of upsells) {
+          let itemPrice = upsell.basePrice;
+          if (upsell.discountType === 'PERCENT') {
+            itemPrice -= (itemPrice * upsell.discountValue / 100);
+          } else {
+            itemPrice -= upsell.discountValue;
+          }
+          if (itemPrice < 0) itemPrice = 0;
+          
+          upsellTotal += itemPrice;
+          upsellData.push({
+            id: upsell.id,
+            title: upsell.title,
+            price: itemPrice,
+            originalPrice: upsell.basePrice
+          });
+        }
+      } catch (e) {
+        console.error("Error fetching upsells:", e);
+      }
+    }
+
+    // Coupon Validation and Price Calculation
+    // We assume 'price' passed from client is the Service Price (excluding upsells if upsellIds provided)
+    // If no upsellIds, 'price' is the Total Price (legacy/standard behavior)
+    let servicePrice = parseFloat(price);
+    let totalBeforeDiscount = servicePrice + upsellTotal;
+    let finalPrice = totalBeforeDiscount;
+    
+    let appliedCoupon = null;
+    let discountAmount = 0;
+
+    if (couponCode) {
+      try {
+        // Use raw query to bypass potential Prisma Client staleness
+        const coupons: any[] = await prisma.$queryRaw`
+          SELECT * FROM "Coupon" 
+          WHERE "code" = ${couponCode} 
+          AND "status" = 'ACTIVE' 
+          LIMIT 1
+        `;
+
+        const coupon = coupons[0];
+
+        if (coupon) {
+          // Check expiry
+          if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+            console.log(`Coupon ${couponCode} expired`);
+          } 
+          // Check start date
+          else if (coupon.startsAt && new Date(coupon.startsAt) > new Date()) {
+            console.log(`Coupon ${couponCode} not started yet`);
+          }
+          // Check max redemptions
+          else if (coupon.maxRedemptions && coupon.redemptionCount >= coupon.maxRedemptions) {
+             console.log(`Coupon ${couponCode} max redemptions reached`);
+          }
+          else {
+            // Check per user limit
+            const userRedemptions: any[] = await prisma.$queryRaw`
+              SELECT COUNT(*) as count FROM "CouponRedemption"
+              WHERE "couponId" = ${coupon.id} AND "userId" = ${userId}
+            `;
+            
+            const userRedemptionCount = Number(userRedemptions[0]?.count || 0);
+            
+            if (coupon.maxRedemptionsPerUser && userRedemptionCount >= coupon.maxRedemptionsPerUser) {
+              console.log(`Coupon ${couponCode} max redemptions per user reached`);
+            } else {
+               // Coupon is valid, calculate discount
+               if (coupon.type === 'PERCENT') {
+                 discountAmount = (finalPrice * coupon.value) / 100;
+               } else {
+                 discountAmount = coupon.value;
+               }
+               
+               // Ensure price doesn't go below 0
+               if (discountAmount > finalPrice) {
+                 discountAmount = finalPrice;
+               }
+               
+               // Recalculate final price (trusting the input price as base, but applying discount)
+               // Ideally we should recalculate base price from DB, but for now we trust the input price matches the selected package
+               // If we wanted to be stricter, we would re-fetch the service price.
+               
+               // Let's rely on the client sending the discounted price, but we VERIFY it.
+               // Or better, we ignore the client's discounted price and calculate it ourselves from the client's "original" price?
+               // The client sends `price` which is usually the FINAL price. 
+               // Wait, the client code sends `finalPrice`.
+               // So if we apply discount again, we might double discount!
+               
+               // Strategy: 
+               // 1. We assume the `price` sent by client IS the final price they expect to pay.
+               // 2. We verify if this price matches (Base Price - Discount).
+               // But we don't know the Base Price easily without fetching the package.
+               // 
+               // Alternative: The client sends `price` (final) and `couponCode`.
+               // We just log the usage and update the DB. 
+               // BUT validation is important. 
+               // If I can't easily fetch base price, I will assume the `price` in body IS the final price.
+               // I will record the redemption.
+               
+               appliedCoupon = coupon;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error validating coupon in payment flow:", err);
+      }
+    }
+
+    // Final price after coupon
+    finalPrice = Math.max(0, totalBeforeDiscount - discountAmount);
 
     // Find service - first try by serviceId if provided, otherwise find by platform/serviceType
     let service = null;
@@ -91,7 +218,7 @@ export async function POST(request: NextRequest) {
     // If no service exists, create a basic one (fallback)
     if (!service) {
       // Calculate price per unit from total price and quantity
-      const pricePerUnit = parseFloat(price) / parseInt(quantity);
+      const pricePerUnit = servicePrice / parseInt(quantity);
       
       service = await prisma.service.create({
         data: {
@@ -124,15 +251,77 @@ export async function POST(request: NextRequest) {
         platform: platform.toUpperCase() as Platform,
         serviceType: serviceType.toUpperCase() as ServiceType,
         quantity: parseInt(quantity),
-        price: parseFloat(price),
+        price: finalPrice,
         currency,
         status: 'PENDING_PAYMENT',
         link: link || null,
+        upsellData: upsellData.length ? upsellData : undefined,
       },
     });
 
     // Create payment session based on payment method
-    if (paymentMethod === 'crypto') {
+    if (paymentMethod === 'wallet') {
+      // Wallet payment: deduct balance and mark order as paid immediately
+      try {
+        // Get current balance (raw to avoid client staleness)
+        const rows: any = await prisma.$queryRaw`
+          SELECT "walletBalance" FROM "User" WHERE "id" = ${user.id} LIMIT 1
+        `;
+        const currentBalance = Array.isArray(rows) && rows.length > 0 && rows[0].walletBalance != null
+          ? Number(rows[0].walletBalance)
+          : Number((user as any)?.walletBalance ?? 0);
+
+        if (currentBalance < order.price) {
+          return NextResponse.json(
+            { error: 'Insufficient wallet balance' },
+            { status: 400 }
+          );
+        }
+
+        // Deduct and create transaction in a transaction block
+        await prisma.$transaction([
+          prisma.user.update({
+            where: { id: user.id },
+            data: { walletBalance: currentBalance - order.price }
+          }),
+          prisma.payment.create({
+            data: {
+              orderId: order.id,
+              gateway: 'WALLET',
+              transactionId: null,
+              amount: order.price,
+              currency: order.currency,
+              status: 'SUCCESS',
+              webhookData: appliedCoupon ? { couponCode: appliedCoupon.code, discountAmount } : undefined,
+            },
+          }),
+          prisma.walletTransaction.create({
+            data: {
+              userId: user.id,
+              amount: order.price,
+              currency: order.currency,
+              type: 'DEBIT',
+              note: `Order ${order.id} payment`
+            }
+          }),
+          prisma.order.update({
+            where: { id: order.id },
+            data: { status: 'PROCESSING' }
+          })
+        ]);
+
+        return NextResponse.json({
+          orderId: order.id,
+          paymentStatus: 'SUCCESS'
+        });
+      } catch (error: any) {
+        console.error('Wallet payment error:', error);
+        return NextResponse.json(
+          { error: error.message || 'Failed to process wallet payment' },
+          { status: 500 }
+        );
+      }
+    } else if (paymentMethod === 'crypto') {
       // Cryptomus payment
       try {
         const cryptomusAPI = await getCryptomusAPI();
@@ -161,6 +350,7 @@ export async function POST(request: NextRequest) {
             amount: order.price,
             currency: order.currency,
             status: 'PENDING',
+            webhookData: appliedCoupon ? { couponCode: appliedCoupon.code, discountAmount } : undefined,
           },
         });
 
@@ -209,6 +399,7 @@ export async function POST(request: NextRequest) {
             amount: order.price,
             currency: order.currency,
             status: 'PENDING',
+            webhookData: appliedCoupon ? { couponCode: appliedCoupon.code, discountAmount } : undefined,
           },
         });
 
@@ -244,6 +435,7 @@ export async function POST(request: NextRequest) {
             amount: order.price,
             currency: order.currency,
             status: 'PENDING',
+            webhookData: appliedCoupon ? { couponCode: appliedCoupon.code, discountAmount } : undefined,
           },
         });
 

@@ -1,7 +1,14 @@
-import { redirect, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { CheckoutContent as InstagramFollowersCheckout } from '../../instagram/followers/checkout/page';
-import { CheckoutContent as YouTubeViewsCheckout } from '../../youtube/views/checkout/page';
+import { InstagramFollowersCheckout } from '../../instagram/followers/checkout/page';
+import InstagramLikesCheckout from '../../components/checkout/InstagramLikesCheckout';
+import InstagramViewsCheckout from '../../instagram/views/checkout/page';
+import TikTokFollowersCheckout from '../../tiktok/followers/checkout/page';
+import TikTokLikesCheckout from '../../tiktok/likes/checkout/page';
+import TikTokViewsCheckout from '../../tiktok/views/checkout/page';
+import { YouTubeViewsCheckout } from '../../youtube/views/checkout/page';
+import YouTubeLikesCheckout from '../../youtube/likes/checkout/page';
+import YouTubeSubscribersCheckout from '../../youtube/subscribers/checkout/page';
 import { type PackageTabConfig } from '../../components/PackagesSelector';
 
 export default async function CheckoutPage({ 
@@ -25,25 +32,25 @@ export default async function CheckoutPage({
   const basePath = `/${params.slug}`;
   const packages = content.packages as unknown as PackageTabConfig[] | undefined;
 
-  if (platform === 'instagram' && serviceType === 'followers') {
-    return <InstagramFollowersCheckout basePath={basePath} packages={packages} />;
-  }
-  
-  if (platform === 'youtube' && serviceType === 'views') {
-    return <YouTubeViewsCheckout basePath={basePath} packages={packages} />;
+  // Mapping logic
+  if (platform === 'instagram') {
+    if (serviceType === 'followers') return <InstagramFollowersCheckout basePath={basePath} packages={packages} />;
+    if (serviceType === 'likes') return <InstagramLikesCheckout />;
+    if (serviceType === 'views') return <InstagramViewsCheckout />;
   }
 
-  // Fallback for other services
-  const queryString = new URLSearchParams();
-  Object.entries(searchParams).forEach(([key, value]) => {
-    if (typeof value === 'string') {
-      queryString.append(key, value);
-    } else if (Array.isArray(value)) {
-      value.forEach(v => queryString.append(key, v));
-    }
-  });
+  if (platform === 'tiktok') {
+    if (serviceType === 'followers') return <TikTokFollowersCheckout />;
+    if (serviceType === 'likes') return <TikTokLikesCheckout />;
+    if (serviceType === 'views') return <TikTokViewsCheckout />;
+  }
   
-  const destination = `/${platform}/${serviceType}/checkout?${queryString.toString()}`;
-  
-  redirect(destination);
+  if (platform === 'youtube') {
+    if (serviceType === 'views') return <YouTubeViewsCheckout basePath={basePath} packages={packages} />;
+    if (serviceType === 'likes') return <YouTubeLikesCheckout />;
+    if (serviceType === 'subscribers') return <YouTubeSubscribersCheckout />;
+  }
+
+  // If no match found, 404
+  return notFound();
 }

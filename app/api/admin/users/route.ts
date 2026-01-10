@@ -88,15 +88,8 @@ export async function GET(request: NextRequest) {
       // Calculate order count
       const ordersCount = user.orders.length;
       
-      // Calculate wallet balance from completed orders
-      // Note: This is a simplified calculation. You may want to add a proper wallet/balance field to the User model
-      const completedOrders = user.orders.filter(
-        (order) => order.status === 'COMPLETED'
-      );
-      const walletBalance = completedOrders.reduce(
-        (sum, order) => sum + order.price,
-        0
-      );
+      // Use the actual wallet balance from the database
+      const walletBalance = user.walletBalance || 0;
 
       return {
         id: user.id,

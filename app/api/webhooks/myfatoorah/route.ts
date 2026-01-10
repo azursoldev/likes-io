@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { japAPI } from '@/lib/jap-api';
 import { getMyFatoorahAPI } from '@/lib/myfatoorah-api';
 import { emailService } from '@/lib/email';
+import { recordCouponRedemption } from '@/lib/coupon-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,19 +75,24 @@ export async function POST(request: NextRequest) {
     // Determine new status
     const newStatus = isSuccess ? 'SUCCESS' : 'FAILED';
     
+    const existingWebhookData = payment.webhookData as any || {};
+
     // Only update if status changed
     if (payment.status !== newStatus) {
         await prisma.payment.update({
             where: { id: payment.id },
             data: {
                 status: newStatus,
-                webhookData: event as any,
+                webhookData: { ...(event as any), couponCode: existingWebhookData.couponCode, discountAmount: existingWebhookData.discountAmount },
             },
         });
 
         // If payment successful, process order
         if (newStatus === 'SUCCESS') {
             const order = payment.order;
+            
+            // Record Coupon Redemption
+            await recordCouponRedemption(payment.orderId, existingWebhookData, order.userId);
             
              if (order && order.serviceId && order.link) {
                 try {

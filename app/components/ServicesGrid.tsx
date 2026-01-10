@@ -42,7 +42,7 @@ const services: Service[] = [
 ];
 
 export default function ServicesGrid() {
-  const { getLink } = useNavigation();
+  const { getLink, loading } = useNavigation();
 
   return (
     <section id="services" className="services">
@@ -54,8 +54,8 @@ export default function ServicesGrid() {
             <h3>{s.title}</h3>
             <p>{s.description}</p>
             <div className="card-actions">
-              <a href={getLink(s.platform, s.serviceType)} className="btn primary">Get Started</a>
-              <a href={getLink(s.platform, s.serviceType)} className="btn">Learn More</a>
+              <a href={loading ? "#" : getLink(s.platform, s.serviceType)} className="btn primary">Get Started</a>
+              <a href={loading ? "#" : getLink(s.platform, s.serviceType)} className="btn">Learn More</a>
             </div>
           </article>
         ))}

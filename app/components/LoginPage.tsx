@@ -212,37 +212,36 @@ export default function LoginPage({ dbSiteKey }: { dbSiteKey?: string | null }) 
                 {loading ? "Signing in..." : "Sign in"}
               </button>
 
-              <div className="login-divider">
-                <span>Or continue with</span>
-              </div>
-
-              <div className="login-social">
-                {availableProviders?.google && (
-                <button
-                  type="button"
-                  className="login-social-btn"
-                  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-                  aria-label="Sign in with Google"
-                >
-                  <FontAwesomeIcon icon={faGoogle} />
-                </button>
-                )}
-                {availableProviders?.facebook && (
-                <button
-                  type="button"
-                  className="login-social-btn"
-                  onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}
-                  aria-label="Sign in with Facebook"
-                >
-                  <FontAwesomeIcon icon={faFacebook} />
-                </button>
-                )}
-                {!availableProviders?.google && !availableProviders?.facebook && (
-                  <div className="text-center text-xs text-gray-500 w-full">
-                    Social login not configured
+              {availableProviders && (availableProviders.google || availableProviders.facebook) && (
+                <>
+                  <div className="login-divider">
+                    <span>Or continue with</span>
                   </div>
-                )}
-              </div>
+
+                  <div className="login-social">
+                    {availableProviders.google && (
+                    <button
+                      type="button"
+                      className="login-social-btn"
+                      onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                      aria-label="Sign in with Google"
+                    >
+                      <FontAwesomeIcon icon={faGoogle} />
+                    </button>
+                    )}
+                    {availableProviders.facebook && (
+                    <button
+                      type="button"
+                      className="login-social-btn"
+                      onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}
+                      aria-label="Sign in with Facebook"
+                    >
+                      <FontAwesomeIcon icon={faFacebook} />
+                    </button>
+                    )}
+                  </div>
+                </>
+              )}
 
               <a href="/admin/login" className="login-admin-link">Are you an administrator?</a>
             </form>

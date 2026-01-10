@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth-options";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import LoginPage from "../components/LoginPage";
@@ -10,7 +13,21 @@ export const metadata: Metadata = {
   description: "Sign in to your Likes.io account to access your dashboard, manage orders, and boost your social media presence.",
 };
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const session = await getServerSession(authOptions);
+
+  if (session) {
+    const callbackUrl = searchParams?.callbackUrl;
+    if (typeof callbackUrl === "string" && callbackUrl) {
+      redirect(callbackUrl);
+    }
+    redirect("/dashboard");
+  }
+
   let dbSiteKey = null;
   try {
     const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`;
@@ -30,4 +47,3 @@ export default async function Page() {
     </div>
   );
 }
-

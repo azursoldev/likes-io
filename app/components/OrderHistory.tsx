@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import "../admin/dashboard.css";
+import "../dashboard/dashboard.css";
 import Header from "./Header";
 import Footer from "./Footer";
 import UserSidebar from "./UserSidebar";
@@ -74,7 +74,22 @@ export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) 
               </div>
             </div>
 
-            {/* Orders Table */}
+            {/* Empty State */}
+            {totalOrders === 0 ? (
+              <div className="order-empty-state">
+                <div className="order-empty-card">
+                  <div className="order-empty-icon">
+                    <FontAwesomeIcon icon={faHeart} />
+                  </div>
+                  <h2>No orders yet</h2>
+                  <p className="order-empty-desc">
+                    Your order history is empty. Start by placing your first order.
+                  </p>
+                  <a href="/dashboard" className="order-empty-cta">Browse Services</a>
+                </div>
+              </div>
+            ) : (
+            /* Orders Table */
             <div className="order-history-table-wrapper">
               <table className="order-history-table">
                 <thead>
@@ -148,6 +163,7 @@ export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) 
                 </div>
               </div>
             </div>
+            )}
           </div>
         </main>
       </div>

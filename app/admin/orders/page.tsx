@@ -3,6 +3,8 @@ import OrdersDashboard, { OrderRow } from "../../components/OrdersDashboard";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Orders | Likes.io",
   description: "Monitor and manage all customer orders.",
@@ -13,6 +15,7 @@ export default async function Page({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
+  try {
   const page = Number(searchParams.page) || 1;
   const status = typeof searchParams.status === "string" && searchParams.status !== "All" ? searchParams.status : undefined;
   const pageSize = 10;
@@ -78,4 +81,16 @@ export default async function Page({
       currentStatus={status || "All"}
     />
   );
+  } catch (error) {
+    console.error("Error loading orders data:", error);
+    return (
+      <OrdersDashboard 
+        initialOrders={[]} 
+        currentPage={1} 
+        totalPages={1} 
+        totalOrders={0}
+        currentStatus={"All"}
+      />
+    );
+  }
 }

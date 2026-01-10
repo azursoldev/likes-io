@@ -15,8 +15,12 @@ import {
   faLink,
   faShieldHalved,
   faTag,
-  faCoins
+  faCoins,
+  faWallet
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  faBitcoin
+} from "@fortawesome/free-brands-svg-icons";
 import { useSearchParams } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
@@ -46,7 +50,8 @@ function FinalCheckoutContent() {
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "pay_later">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "wallet">("card");
+  const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -55,8 +60,39 @@ function FinalCheckoutContent() {
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [userProfile, setUserProfile] = useState<{ profilePicture?: string, username?: string } | null>(null);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!username) return;
+      try {
+        const response = await fetch(`/api/social/instagram/profile?username=${username}`);
+        if (response.ok) {
+          const data = await response.json();
+          const profile = data.profile || data;
+          
+          if (profile.profilePicture) {
+            setUserProfile({
+              profilePicture: profile.profilePicture,
+              username: profile.username
+            });
+            setImageError(false);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [username]);
 
   // MyFatoorah State
   const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
@@ -123,12 +159,48 @@ function FinalCheckoutContent() {
       }
     }
   }, [paymentMethod, mfSession, isMfLoaded]);
+  
+  // Fetch wallet balance
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data && typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch wallet balance:", err));
+  }, []);
 
-  const offers = [
-    { id: "offer1", text: "50 likes x 10 posts", price: 5.99, icon: faHeart },
-    { id: "offer2", text: "100 likes x 10 posts", price: 11.24, icon: faHeart },
-    { id: "offer3", text: "1K followers", price: 11.24, icon: faLink }
-  ];
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; icon: any}>>([]);
+  
+  useEffect(() => {
+    fetch('/api/upsells?platform=INSTAGRAM&serviceType=LIKES')
+      .then(res => res.json())
+      .then(data => {
+        if (data.upsells) {
+          setOffers(data.upsells.map((u: any) => {
+            let p = u.basePrice;
+            if (u.discountType === 'PERCENT') {
+              p -= (p * u.discountValue / 100);
+            } else {
+              p -= u.discountValue;
+            }
+            return {
+              id: u.id,
+              text: u.title,
+              price: Math.max(0, p),
+              originalPrice: u.basePrice,
+              icon: faHeart
+            };
+          }));
+        }
+      })
+      .catch(err => console.error("Failed to fetch upsells:", err));
+  }, []);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
     if (!addedOffers.find(o => o.id === offer.id)) {
@@ -142,18 +214,65 @@ function FinalCheckoutContent() {
 
   const offersTotal = addedOffers.reduce((sum, offer) => sum + offer.price, 0);
   const totalPrice = basePrice + offersTotal;
+
+  // Discount calculation
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "PERCENT") {
+      discountAmount = (totalPrice * appliedCoupon.value) / 100;
+    } else {
+      discountAmount = appliedCoupon.value;
+    }
+  }
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
+
   const currencyCode = currency;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    setCouponSuccess("");
+    
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode,
+          orderAmount: totalPrice,
+          serviceType: `${platform}_${service}`,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.valid) {
+        setAppliedCoupon(data.coupon);
+        setCouponSuccess(data.message);
+        setCouponError("");
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(data.message);
+        setCouponSuccess("");
+      }
+    } catch (error) {
+      setCouponError("Failed to validate coupon");
+      setCouponSuccess("");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setProcessing(true);
     setError("");
 
-    if (paymentMethod === 'pay_later') {
-      alert(`Test Checkout Successful!\n\nPlatform: ${platform}\nService: ${service}\nQuantity: ${qty}\nTotal Price: ${formatPrice(totalPrice)}\nPosts: ${postCount}`);
-      setProcessing(false);
-      return;
+    if (paymentMethod === 'card') {
+      // Logic for card payment is handled below
     }
+
 
     try {
       // Check if user is logged in (we'll check this via the API response)
@@ -177,6 +296,12 @@ function FinalCheckoutContent() {
           throw new Error("Invalid payment data");
         }
         cardSessionId = mfResponse.SessionId;
+      } else if (paymentMethod === "wallet") {
+        if (walletBalance < finalPrice) {
+          setError("Insufficient wallet balance");
+          setProcessing(false);
+          return;
+        }
       }
 
       if (!username) {
@@ -205,7 +330,9 @@ function FinalCheckoutContent() {
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 50,
-          price: totalPrice,
+          price: basePrice,
+          upsellIds: addedOffers.map(o => o.id),
+          couponCode: appliedCoupon?.code,
           link: postLink || null,
           paymentMethod: paymentMethod, // 'card' or 'crypto' or 'myfatoorah'
           currency: currencyCode,
@@ -294,7 +421,7 @@ function FinalCheckoutContent() {
           </div>
 
           <div className="final-checkout-layout">
-            {/* Left Column - Payment Form */}
+            {/* Left Column - Payment Form */} 
             <div className="final-checkout-left">
               <div className="checkout-card">
                 <h2 className="final-checkout-title">Review & Pay</h2>
@@ -303,6 +430,40 @@ function FinalCheckoutContent() {
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     
+                    {/* Wallet Payment Option */}
+                    {walletBalance > 0 && (
+                    <div className="payment-option">
+                      <label className="payment-option-label">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="wallet"
+                          checked={paymentMethod === "wallet"}
+                          onChange={() => setPaymentMethod("wallet")}
+                          className="payment-radio"
+                        />
+                        <FontAwesomeIcon icon={faWallet} className="payment-option-icon" />
+                        <span>Wallet (Balance: {formatPrice(walletBalance)})</span>
+                      </label>
+                      
+                      {paymentMethod === "wallet" && (
+                        <div className="crypto-form">
+                          <div className="crypto-message-box">
+                            {walletBalance >= finalPrice ? (
+                               <p style={{ color: '#16a34a' }}>
+                                 Use your wallet balance to pay for this order instantly.
+                               </p>
+                            ) : (
+                               <p style={{ color: '#dc2626' }}>
+                                 Insufficient balance. Please add funds to your wallet or choose another payment method.
+                               </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    )}
+
                     {/* Card Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
@@ -407,6 +568,8 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
+
+
                     {/* Crypto Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
@@ -418,7 +581,7 @@ function FinalCheckoutContent() {
                           onChange={() => setPaymentMethod("crypto")}
                           className="payment-radio"
                         />
-                        <FontAwesomeIcon icon={faCoins} className="payment-option-icon" />
+                        <FontAwesomeIcon icon={faBitcoin} className="payment-option-icon" />
                         <span>Pay with Crypto</span>
                       </label>
                       
@@ -457,29 +620,7 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
-                    {/* Pay Later (Test) Option */}
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="pay_later"
-                          checked={paymentMethod === "pay_later"}
-                          onChange={() => setPaymentMethod("pay_later")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faShieldHalved} className="payment-option-icon" />
-                        <span>Pay Later (Test)</span>
-                      </label>
-                      
-                      {paymentMethod === "pay_later" && (
-                        <div className="crypto-form">
-                          <div className="crypto-message-box">
-                            <p>This is a test payment method. No actual charge will be made.</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+
                   </div>
 
                   {error && (
@@ -532,10 +673,35 @@ function FinalCheckoutContent() {
               <div className="checkout-card">
                 <div className="account-info-item">
                   <div className="account-info-left">
-                    <img src={getPlatformIcon()} alt={getPlatformName()} width={20} height={20} />
-                    <span className="account-info-url">
-                      {postCount > 1 ? `${postCount} posts selected` : (postLink || `@${username || "username"}`)}
-                    </span>
+                    <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '50%', 
+                        overflow: 'hidden', 
+                        border: '1px solid #eee',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '12px',
+                        flexShrink: 0
+                      }}>
+                        {userProfile?.profilePicture && !imageError ? (
+                           <img 
+                             src={`/api/image-proxy?url=${encodeURIComponent(userProfile.profilePicture)}`}
+                             alt={username} 
+                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                             onError={() => setImageError(true)}
+                           />
+                         ) : (
+                           <img src={getPlatformIcon()} alt={getPlatformName()} width={20} height={20} />
+                         )}
+                    </div>
+                    <div className="account-info-details" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <span className="account-info-username" style={{ fontWeight: '600', fontSize: '14px', lineHeight: '1.2' }}>@{username || "username"}</span>
+                      <span className="account-info-posts" style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                        {postCount > 1 ? `${postCount} posts selected` : '1 post selected'}
+                      </span>
+                    </div>
                   </div>
                   <button type="button" className="change-button">Change</button>
                 </div>
@@ -548,7 +714,7 @@ function FinalCheckoutContent() {
                 <div className="order-item">
                   <div className="order-item-left">
                     <FontAwesomeIcon icon={getMetricIcon()} className="order-item-icon" />
-                    <div className="order-item-details">
+                    <div className="order-item-details" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <span className="order-item-text">{qty} {getPlatformName()} {getMetricLabel()}</span>
                       <span className="order-item-subtext">
                         {likesPerPost} likes / {postCount} post{postCount > 1 ? 's' : ''}
@@ -580,6 +746,18 @@ function FinalCheckoutContent() {
                   </div>
                 ))}
 
+                {appliedCoupon && (
+                  <div className="order-item discount-item" style={{ color: "#22c55e" }}>
+                    <div className="order-item-left">
+                      <FontAwesomeIcon icon={faTag} className="order-item-icon" />
+                      <div className="order-item-details">
+                        <span className="order-item-text">Discount ({appliedCoupon.code})</span>
+                      </div>
+                    </div>
+                    <span className="order-item-price">-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
+
                 <div className="coupon-section">
                   <label className="coupon-toggle">
                     <span>I have a coupon code</span>
@@ -601,9 +779,43 @@ function FinalCheckoutContent() {
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
                         placeholder="Enter coupon"
+                        disabled={isValidatingCoupon || !!appliedCoupon}
                       />
-                      <button type="button" className="coupon-apply-btn">Apply</button>
+                      {appliedCoupon ? (
+                         <button 
+                           type="button" 
+                           className="coupon-apply-btn remove-btn"
+                           onClick={() => {
+                             setAppliedCoupon(null);
+                             setCouponCode("");
+                             setCouponSuccess("");
+                             setCouponError("");
+                           }}
+                           style={{ background: "#ef4444", color: "white", border: "none" }}
+                         >
+                           Remove
+                         </button>
+                      ) : (
+                        <button 
+                          type="button" 
+                          className="coupon-apply-btn"
+                          onClick={handleApplyCoupon}
+                          disabled={isValidatingCoupon || !couponCode}
+                        >
+                          {isValidatingCoupon ? "..." : "Apply"}
+                        </button>
+                      )}
                     </div>
+                  )}
+                  {couponError && (
+                    <p className="coupon-message error" style={{ color: "#ef4444", fontSize: "12px", marginTop: "4px" }}>
+                      {couponError}
+                    </p>
+                  )}
+                  {couponSuccess && (
+                    <p className="coupon-message success" style={{ color: "#22c55e", fontSize: "12px", marginTop: "4px" }}>
+                      {couponSuccess}
+                    </p>
                   )}
                 </div>
 
@@ -611,72 +823,41 @@ function FinalCheckoutContent() {
                   <span className="total-label">Total to pay</span>
                   <div className="total-price-wrapper">
                     <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(totalPrice)}</span>
+                    <span className="total-price">{formatPrice(finalPrice)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Exclusive Offers */}
-              <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
-              
-              <div className="checkout-card exclusive-offers">
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer1") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faHeart} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">50 likes x 10 posts</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(5.99)}</span>
-                      <span className="offer-price-old">{formatPrice(7.99)}</span>
-                    </div>
+              {offers.length > 0 && (
+                <>
+                  <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
+                  <div className="checkout-card exclusive-offers">
+                    {offers.slice(0, 3).map((offer, index) => (
+                      <div
+                        key={offer.id}
+                        className={`offer-item ${index === 2 ? "offer-pink" : "offer-green"} ${addedOffers.find(o => o.id === offer.id) ? "offer-added" : ""}`}
+                      >
+                        <div className="offer-badge">25%</div>
+                        <FontAwesomeIcon icon={offer.icon} className="offer-icon" />
+                        <div className="offer-details">
+                          <span className="offer-text">{offer.text}</span>
+                          <div className="offer-price">
+                            <span className="offer-price-new">For only {formatPrice(offer.price)}</span>
+                            <span className="offer-price-old">{formatPrice(offer.originalPrice)}</span>
+                          </div>
+                        </div>
+                        <button 
+                          className="offer-add-btn"
+                          onClick={() => handleAddOffer(offer)}
+                          disabled={!!addedOffers.find(o => o.id === offer.id)}
+                        >
+                          {addedOffers.find(o => o.id === offer.id) ? "Added" : "+ Add"}
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[0])}
-                    disabled={!!addedOffers.find(o => o.id === "offer1")}
-                  >
-                    {addedOffers.find(o => o.id === "offer1") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer2") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faHeart} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">100 likes x 10 posts</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[1])}
-                    disabled={!!addedOffers.find(o => o.id === "offer2")}
-                  >
-                    {addedOffers.find(o => o.id === "offer2") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-pink ${addedOffers.find(o => o.id === "offer3") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faLink} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">1K followers</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[2])}
-                    disabled={!!addedOffers.find(o => o.id === "offer3")}
-                  >
-                    {addedOffers.find(o => o.id === "offer3") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
 
               {/* Security Guarantees */}
               <div className="checkout-card security-guarantees">

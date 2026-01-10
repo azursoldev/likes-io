@@ -18,7 +18,7 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const currencyRef = useRef<HTMLDivElement>(null);
-  const { getLink } = useNavigation();
+  const { getLink, loading } = useNavigation();
 
   const currencies = ["USD", "EUR"] as const;
 
@@ -72,9 +72,9 @@ export default function Header() {
               </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
-                  <a href={getLink("instagram", "likes")}>Buy Instagram Likes</a>
-                  <a href={getLink("instagram", "followers")}>Buy Instagram Followers</a>
-                  <a href={getLink("instagram", "views")}>Buy Instagram Views</a>
+                  <a href={loading ? "#" : getLink("instagram", "likes")}>Buy Instagram Likes</a>
+                  <a href={loading ? "#" : getLink("instagram", "followers")}>Buy Instagram Followers</a>
+                  <a href={loading ? "#" : getLink("instagram", "views")}>Buy Instagram Views</a>
                 </div>
               </div>
             </div>
@@ -86,9 +86,9 @@ export default function Header() {
               </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
-                  <a href={getLink("tiktok", "likes")}>Buy TikTok Likes</a>
-                  <a href={getLink("tiktok", "followers")}>Buy TikTok Followers</a>
-                  <a href={getLink("tiktok", "views")}>Buy TikTok Views</a>
+                  <a href={loading ? "#" : getLink("tiktok", "likes")}>Buy TikTok Likes</a>
+                  <a href={loading ? "#" : getLink("tiktok", "followers")}>Buy TikTok Followers</a>
+                  <a href={loading ? "#" : getLink("tiktok", "views")}>Buy TikTok Views</a>
                 </div>
               </div>
             </div>
@@ -100,9 +100,9 @@ export default function Header() {
               </a>
               <div className="nav-dropdown-wrap">
                 <div className="nav-dropdown">
-                  <a href={getLink("youtube", "likes")}>Buy YouTube Likes</a>
-                  <a href={getLink("youtube", "views")}>Buy YouTube Views</a>
-                  <a href={getLink("youtube", "subscribers")}>Buy YouTube Subscribers</a>
+                  <a href={loading ? "#" : getLink("youtube", "likes")}>Buy YouTube Likes</a>
+                  <a href={loading ? "#" : getLink("youtube", "views")}>Buy YouTube Views</a>
+                  <a href={loading ? "#" : getLink("youtube", "subscribers")}>Buy YouTube Subscribers</a>
                 </div>
               </div>
             </div>
@@ -145,7 +145,13 @@ export default function Header() {
                 <button
                   type="button"
                   className="signup"
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={async () => {
+                    try {
+                      await signOut({ redirect: false });
+                    } finally {
+                      window.location.href = window.location.origin + "/login";
+                    }
+                  }}
                 >
                   Logout
                 </button>
@@ -201,9 +207,9 @@ export default function Header() {
               <FontAwesomeIcon icon={mobileExpanded === 'instagram' ? faAngleUp : faAngleDown} className="nav-chevron" />
             </button>
             <div className={`mobile-dropdown ${mobileExpanded === 'instagram' ? 'open' : ''}`}>
-               <a href={getLink("instagram", "likes")} className="mobile-dropdown-link">Buy Instagram Likes</a>
-               <a href={getLink("instagram", "followers")} className="mobile-dropdown-link">Buy Instagram Followers</a>
-               <a href={getLink("instagram", "views")} className="mobile-dropdown-link">Buy Instagram Views</a>
+               <a href={loading ? "#" : getLink("instagram", "likes")} className="mobile-dropdown-link">Buy Instagram Likes</a>
+               <a href={loading ? "#" : getLink("instagram", "followers")} className="mobile-dropdown-link">Buy Instagram Followers</a>
+               <a href={loading ? "#" : getLink("instagram", "views")} className="mobile-dropdown-link">Buy Instagram Views</a>
             </div>
           </div>
           <div className="mobile-nav-item">
@@ -212,9 +218,9 @@ export default function Header() {
               <FontAwesomeIcon icon={mobileExpanded === 'tiktok' ? faAngleUp : faAngleDown} className="nav-chevron" />
             </button>
             <div className={`mobile-dropdown ${mobileExpanded === 'tiktok' ? 'open' : ''}`}>
-               <a href={getLink("tiktok", "likes")} className="mobile-dropdown-link">Buy TikTok Likes</a>
-               <a href={getLink("tiktok", "followers")} className="mobile-dropdown-link">Buy TikTok Followers</a>
-               <a href={getLink("tiktok", "views")} className="mobile-dropdown-link">Buy TikTok Views</a>
+               <a href={loading ? "#" : getLink("tiktok", "likes")} className="mobile-dropdown-link">Buy TikTok Likes</a>
+               <a href={loading ? "#" : getLink("tiktok", "followers")} className="mobile-dropdown-link">Buy TikTok Followers</a>
+               <a href={loading ? "#" : getLink("tiktok", "views")} className="mobile-dropdown-link">Buy TikTok Views</a>
             </div>
           </div>
           <div className="mobile-nav-item">
@@ -223,9 +229,9 @@ export default function Header() {
               <FontAwesomeIcon icon={mobileExpanded === 'youtube' ? faAngleUp : faAngleDown} className="nav-chevron" />
             </button>
             <div className={`mobile-dropdown ${mobileExpanded === 'youtube' ? 'open' : ''}`}>
-               <a href={getLink("youtube", "likes")} className="mobile-dropdown-link">Buy YouTube Likes</a>
-               <a href={getLink("youtube", "views")} className="mobile-dropdown-link">Buy YouTube Views</a>
-               <a href={getLink("youtube", "subscribers")} className="mobile-dropdown-link">Buy YouTube Subscribers</a>
+               <a href={loading ? "#" : getLink("youtube", "likes")} className="mobile-dropdown-link">Buy YouTube Likes</a>
+               <a href={loading ? "#" : getLink("youtube", "views")} className="mobile-dropdown-link">Buy YouTube Views</a>
+               <a href={loading ? "#" : getLink("youtube", "subscribers")} className="mobile-dropdown-link">Buy YouTube Subscribers</a>
             </div>
           </div>
           <div className="mobile-nav-item">
@@ -272,7 +278,18 @@ export default function Header() {
               {status === "authenticated" ? (
                 <>
                   <a className="mobile-btn-secondary" href="/dashboard">My account</a>
-                  <button className="mobile-btn-primary" onClick={() => signOut({ callbackUrl: "/login" })}>Logout</button>
+                  <button
+                    className="mobile-btn-primary"
+                    onClick={async () => {
+                      try {
+                        await signOut({ redirect: false });
+                      } finally {
+                        window.location.href = window.location.origin + "/login";
+                      }
+                    }}
+                  >
+                    Logout
+                  </button>
                 </>
               ) : (
                 <>

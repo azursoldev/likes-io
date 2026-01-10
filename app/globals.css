@@ -3596,7 +3596,7 @@ h3.affiliate-benefit-title {
   .service-hero .hero-grid { grid-template-columns: 1fr; }
   .service-hero .hero-left { display: flex; flex-direction: column; align-items: center; }
   .service-hero .hero-title { text-align: center; }
-  .service-hero .reviews-pill {margin-left: auto;margin-right: auto;border: 0;background: transparent;box-shadow: unset;margin-bottom: 0;gap: 0px;}
+  .service-hero .reviews-pill {margin-left: auto;margin-right: auto;border: 0;background: transparent;box-shadow: unset;margin-bottom: 0;gap: 0px; display:none;}
   
   
   .service-hero {
@@ -63301,8 +63301,10 @@ section.learn-more-section .container {
 .coupon-apply-btn { padding: 10px 20px; background: #374151; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .coupon-apply-btn:hover { background: #4b5563; }
 
-.offer-added { opacity: 0.7; }
-.offer-add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.offer-item.offer-added { opacity: 1; }
+.offer-item.offer-added .offer-add-btn { background: #9ca3af; color: #fff; cursor: default; }
+.offer-add-btn:disabled { background: #9ca3af; color: #fff; opacity: 1; cursor: default; }
+.offer-item { box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .remove-offer-btn:hover { color: #dc2626; }
 
 .final-checkout-title { font-size: 26px; font-weight: 700; color: rgb(17, 24, 39); line-height: 32px; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import Header from "../../../../components/Header";
 import Footer from "../../../../components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -16,15 +16,17 @@ import {
   faShieldHalved,
   faTag,
   faCoins,
+  faWallet,
   faUserPlus
 } from "@fortawesome/free-solid-svg-icons";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 import Link from "next/link";
 
 function FinalCheckoutContent() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
   const { formatPrice, getCurrencySymbol, currency } = useCurrency();
   
   const username = searchParams.get("username") || "";
@@ -32,6 +34,7 @@ function FinalCheckoutContent() {
   const priceValue = parseFloat(searchParams.get("price") || "9.99");
   const packageType = searchParams.get("type") || "High-Quality";
   const postLink = searchParams.get("postLink") || "";
+  const packageServiceId = searchParams.get("serviceId") || "";
 
   // Get platform and service from pathname
   const pathParts = pathname?.split("/") || [];
@@ -42,7 +45,8 @@ function FinalCheckoutContent() {
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet">("card");
+  const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -50,13 +54,58 @@ function FinalCheckoutContent() {
   const [cvc, setCvc] = useState("");
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    type: "PERCENT" | "FIXED";
+    value: number;
+  } | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
 
-  const offers = [
-    { id: "offer1", text: "50 likes x 10 posts", price: 5.99, icon: faHeart },
-    { id: "offer2", text: "100 likes x 10 posts", price: 11.24, icon: faHeart },
-    { id: "offer3", text: "1K followers", price: 11.24, icon: faLink }
-  ];
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+
+  // Fetch wallet balance
+  useEffect(() => {
+    fetch("/api/wallet/balance")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data && typeof data.balance === "number") {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch wallet balance:", err));
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/upsells?platform=TIKTOK&serviceType=VIEWS')
+      .then(res => res.json())
+      .then(data => {
+        if (data.upsells) {
+          setOffers(data.upsells.map((u: any) => {
+            let p = u.basePrice;
+            if (u.discountType === 'PERCENT') {
+              p -= (p * u.discountValue / 100);
+            } else {
+              p -= u.discountValue;
+            }
+            return {
+              id: u.id,
+              text: u.title,
+              price: Math.max(0, p),
+              icon: faEye
+            };
+          }));
+        }
+      })
+      .catch(err => console.error("Failed to fetch upsells:", err));
+  }, []);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
     if (!addedOffers.find(o => o.id === offer.id)) {
@@ -70,11 +119,116 @@ function FinalCheckoutContent() {
 
   const offersTotal = addedOffers.reduce((sum, offer) => sum + offer.price, 0);
   const totalPrice = priceValue + offersTotal;
+
+  // Discount calculation
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "PERCENT") {
+      discountAmount = (totalPrice * appliedCoupon.value) / 100;
+    } else {
+      discountAmount = appliedCoupon.value;
+    }
+  }
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
+
   const currencyCode = currency;
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setCouponError("");
+    setCouponSuccess("");
+    
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode,
+          orderAmount: totalPrice,
+          serviceType: `${platform}_${service}`,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.valid) {
+        setAppliedCoupon(data.coupon);
+        setCouponSuccess(data.message);
+        setCouponError("");
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(data.message);
+        setCouponSuccess("");
+      }
+    } catch (error) {
+      setCouponError("Failed to validate coupon");
+      setCouponSuccess("");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Processing payment...");
+    setProcessing(true);
+    setError("");
+
+    try {
+      // Validate required fields
+      if (paymentMethod === "card") {
+        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
+          setError("Please fill in all card details");
+          setProcessing(false);
+          return;
+        }
+      }
+
+      const platformUpper = "TIKTOK";
+      const serviceType = "VIEWS";
+
+      // Create order and payment in one call
+      const paymentResponse = await fetch("/api/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          platform: platformUpper,
+          serviceType,
+          quantity: parseInt(qty) || 1000,
+          price: priceValue,
+          link: postLink || null,
+          paymentMethod: paymentMethod, // 'card' or 'crypto'
+          currency: currencyCode,
+          packageServiceId: packageServiceId || undefined,
+          couponCode: appliedCoupon?.code,
+          email: email
+          ,upsellIds: addedOffers.map(o => o.id)
+        }),
+      });
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        if (paymentResponse.status === 401) {
+          throw new Error("Please log in to complete your purchase");
+        }
+        throw new Error(errorData.error || "Failed to process payment");
+      }
+
+      const { checkoutUrl, paymentStatus, orderId } = await paymentResponse.json();
+      
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else if (paymentStatus === "Paid" || paymentStatus === "Success") {
+        window.location.href = `/checkout/success?orderId=${orderId}`;
+      } else {
+        window.location.href = `/checkout/success?orderId=${orderId}`;
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      setError(err.message || "Failed to process payment. Please try again.");
+      setProcessing(false);
+    }
   };
 
   return (
@@ -244,10 +398,29 @@ function FinalCheckoutContent() {
                       )}
                     </div>
                   </div>
+                  
+                  {error && (
+                    <div style={{ 
+                      padding: "12px", 
+                      background: "#fef2f2", 
+                      border: "1px solid #fecaca", 
+                      borderRadius: "6px", 
+                      color: "#dc2626",
+                      marginBottom: "16px",
+                      fontSize: "14px"
+                    }}>
+                      {error}
+                    </div>
+                  )}
 
-                  <button type="submit" className="pay-button">
+                  <button 
+                    type="submit" 
+                    className="pay-button"
+                    disabled={processing}
+                    style={{ opacity: processing ? 0.6 : 1, cursor: processing ? "not-allowed" : "pointer" }}
+                  >
                     <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                    Pay {formatPrice(totalPrice)}
+                    {processing ? "Processing..." : `Pay ${formatPrice(finalPrice)}`}
                   </button>
 
                   <div className="payment-guarantees">
@@ -317,6 +490,18 @@ function FinalCheckoutContent() {
                   </div>
                 ))}
 
+                {appliedCoupon && (
+                  <div className="order-item discount-item" style={{ color: "#22c55e" }}>
+                    <div className="order-item-left">
+                      <FontAwesomeIcon icon={faTag} className="order-item-icon" />
+                      <div className="order-item-details">
+                        <span className="order-item-text">Discount ({appliedCoupon.code})</span>
+                      </div>
+                    </div>
+                    <span className="order-item-price">-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
+
                 <div className="coupon-section">
                   <label className="coupon-toggle">
                     <span>I have a coupon code</span>
@@ -331,15 +516,44 @@ function FinalCheckoutContent() {
                     </div>
                   </label>
                   {hasCoupon && (
-                    <div className="coupon-input-wrapper">
-                      <input
-                        type="text"
-                        className="coupon-input"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Enter coupon"
-                      />
-                      <button type="button" className="coupon-apply-btn">Apply</button>
+                    <div className="coupon-input-wrapper" style={{ flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                        <input
+                          type="text"
+                          className="coupon-input"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          placeholder="Enter coupon"
+                          disabled={isValidatingCoupon || !!appliedCoupon}
+                          style={{ flex: 1 }}
+                        />
+                        {appliedCoupon ? (
+                          <button 
+                            type="button" 
+                            className="coupon-apply-btn"
+                            onClick={() => {
+                              setAppliedCoupon(null);
+                              setCouponCode("");
+                              setCouponSuccess("");
+                              setCouponError("");
+                            }}
+                            style={{ background: "#ef4444" }}
+                          >
+                            Remove
+                          </button>
+                        ) : (
+                          <button 
+                            type="button" 
+                            className="coupon-apply-btn"
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode}
+                          >
+                            {isValidatingCoupon ? "..." : "Apply"}
+                          </button>
+                        )}
+                      </div>
+                      {couponError && <p style={{color: '#ef4444', fontSize: '12px', margin: 0}}>{couponError}</p>}
+                      {couponSuccess && <p style={{color: '#22c55e', fontSize: '12px', margin: 0}}>{couponSuccess}</p>}
                     </div>
                   )}
                 </div>
@@ -348,7 +562,7 @@ function FinalCheckoutContent() {
                   <span className="total-label">Total to pay</span>
                   <div className="total-price-wrapper">
                     <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(totalPrice)}</span>
+                    <span className="total-price">{formatPrice(finalPrice)}</span>
                   </div>
                 </div>
               </div>

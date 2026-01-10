@@ -31,7 +31,7 @@ type PackageTab = {
   packages: PackageOption[];
 };
 
-export function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: string; packages?: any[] }) {
+function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: string; packages?: any[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
@@ -412,10 +412,14 @@ export function CheckoutContent({ basePath, packages: initialPackages }: { baseP
   );
 }
 
-export default function CheckoutPage() {
+export function InstagramFollowersCheckout({ basePath, packages }: { basePath?: string; packages?: any[] }) {
   return (
     <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
-      <CheckoutContent />
+      <CheckoutContent basePath={basePath} packages={packages} />
     </Suspense>
   );
+}
+
+export default function CheckoutPage() {
+  return <InstagramFollowersCheckout />;
 }

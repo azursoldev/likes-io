@@ -22,6 +22,7 @@ interface Post {
   likes: number;
   comments: number;
   views?: number;
+  isVideo?: boolean;
 }
 
 function PostsSelectionContent() {
@@ -132,7 +133,11 @@ function PostsSelectionContent() {
     }
   };
 
-  const handlePostSelect = (url: string) => {
+  const handlePostSelect = (url: string, isVideo?: boolean) => {
+    if (!isVideo) {
+      return; // Prevent selecting non-video posts
+    }
+
     if (selectedPosts.includes(url)) {
       setSelectedPosts(prev => prev.filter(p => p !== url));
     } else {
@@ -246,23 +251,28 @@ function PostsSelectionContent() {
                   <>
                     <div className="posts-grid" style={{ 
                       display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
+                      gridTemplateColumns: 'repeat(5, 1fr)', 
                       gap: '10px',
                       marginBottom: '20px'
                     }}>
-                      {posts.map((post) => (
+                      {posts.map((post) => {
+                        const isVideo = post.isVideo;
+                        const isSelected = selectedPosts.includes(post.url);
+                        
+                        return (
                         <div 
                           key={post.id} 
                           className={`post-item`}
-                          onClick={() => handlePostSelect(post.url)}
+                          onClick={() => handlePostSelect(post.url, isVideo)}
                           style={{
-                            cursor: 'pointer',
-                            border: selectedPosts.includes(post.url) ? '3px solid #f97316' : '1px solid #eee',
+                            cursor: isVideo ? 'pointer' : 'not-allowed',
+                            border: isSelected ? '3px solid #f97316' : '1px solid #eee',
                             borderRadius: '8px',
                             overflow: 'hidden',
                             aspectRatio: '1/1',
                             position: 'relative',
-                            backgroundColor: '#000'
+                            backgroundColor: '#000',
+                            opacity: isVideo ? 1 : 0.7
                           }}
                         >
                           <img 
@@ -272,28 +282,62 @@ function PostsSelectionContent() {
                                 width: '100%', 
                                 height: '100%', 
                                 objectFit: 'cover',
-                                opacity: selectedPosts.includes(post.url) ? 0.8 : 1
+                                opacity: isSelected ? 0.8 : 1,
+                                filter: isVideo ? 'none' : 'grayscale(100%)'
                             }}
                           />
-                          {selectedPosts.includes(post.url) && (
+                          
+                          {/* Selected Overlay */}
+                          {isSelected && (
                             <div style={{
                               position: 'absolute',
-                              top: '5px',
-                              right: '5px',
-                              background: '#f97316',
-                              color: 'white',
-                              borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
+                              top: '0',
+                              left: '0',
+                              right: '0',
+                              bottom: '0',
+                              background: 'rgba(249, 115, 22, 0.2)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '12px',
                               zIndex: 10
                             }}>
-                              <FontAwesomeIcon icon={faCheck} />
+                              <div style={{
+                                  background: '#f97316',
+                                  color: 'white',
+                                  padding: '6px 12px',
+                                  borderRadius: '20px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  fontWeight: 'bold',
+                                  fontSize: '14px',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                              }}>
+                                  <FontAwesomeIcon icon={faEye} style={{ marginRight: '6px' }} />
+                                  + {formatCount(Math.floor(parseInt(qty) / selectedPosts.length))}
+                              </div>
                             </div>
                           )}
+
+                          {/* Video Only Label */}
+                          {!isVideo && (
+                             <div style={{
+                               position: 'absolute',
+                               top: '50%',
+                               left: '50%',
+                               transform: 'translate(-50%, -50%)',
+                               background: 'rgba(0,0,0,0.6)',
+                               color: 'white',
+                               padding: '4px 8px',
+                               borderRadius: '4px',
+                               fontSize: '12px',
+                               fontWeight: '500',
+                               whiteSpace: 'nowrap',
+                               zIndex: 5
+                             }}>
+                               Video only
+                             </div>
+                          )}
+
                           <div style={{
                             position: 'absolute',
                             bottom: '0',
@@ -310,7 +354,7 @@ function PostsSelectionContent() {
                             <span><FontAwesomeIcon icon={faCheck} style={{ marginRight: '4px' }} />{formatCount(post.likes || 0)}</span>
                           </div>
                         </div>
-                      ))}
+                      )})}
                     </div>
                     
                     {nextCursor && (

@@ -29,10 +29,17 @@ export default function SettingsDashboard() {
   // SEO & Branding
   const [homeMetaTitle, setHomeMetaTitle] = useState("");
   const [homeMetaDescription, setHomeMetaDescription] = useState("");
+  const [robotsTxtContent, setRobotsTxtContent] = useState("User-agent: *\nAllow: /");
+  const [customSitemapXml, setCustomSitemapXml] = useState("");
+  const [sitemapEnabled, setSitemapEnabled] = useState(true);
   const [faviconUrl, setFaviconUrl] = useState("");
   const [headerLogoUrl, setHeaderLogoUrl] = useState("");
   const [footerLogoUrl, setFooterLogoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  
+  // Analytics & Integrations
+  const [googleAnalyticsId, setGoogleAnalyticsId] = useState("");
+  const [googleSiteVerification, setGoogleSiteVerification] = useState("");
   
   // RapidAPI
   const [rapidApiKey, setRapidApiKey] = useState("••••••••");
@@ -122,6 +129,9 @@ export default function SettingsDashboard() {
         // SEO & Branding
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
         if (data.homeMetaDescription) setHomeMetaDescription(data.homeMetaDescription);
+        if (data.robotsTxtContent) setRobotsTxtContent(data.robotsTxtContent);
+        if (data.customSitemapXml) setCustomSitemapXml(data.customSitemapXml);
+        if (data.sitemapEnabled !== undefined) setSitemapEnabled(data.sitemapEnabled);
         if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
         if (data.headerLogoUrl) setHeaderLogoUrl(data.headerLogoUrl);
         if (data.footerLogoUrl) setFooterLogoUrl(data.footerLogoUrl);
@@ -181,6 +191,9 @@ export default function SettingsDashboard() {
           // SEO & Branding
           homeMetaTitle,
           homeMetaDescription,
+          robotsTxtContent,
+          customSitemapXml,
+          sitemapEnabled,
           faviconUrl,
           headerLogoUrl,
           footerLogoUrl,
@@ -216,13 +229,16 @@ export default function SettingsDashboard() {
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Upload failed");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Upload failed");
+      }
 
       const data = await response.json();
       setUrl(data.url);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading file:", error);
-      alert("Failed to upload file");
+      alert(`Failed to upload file: ${error.message}`);
     } finally {
       setUploading(false);
     }
@@ -420,6 +436,94 @@ export default function SettingsDashboard() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Analytics & Integrations */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Analytics & Integrations</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Google Analytics (GA4) Measurement ID
+                  <span className="settings-helper-text">Format: G-XXXXXXXXXX. This will inject the GA4 script site-wide.</span>
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={googleAnalyticsId}
+                    onChange={(e) => setGoogleAnalyticsId(e.target.value)}
+                    placeholder="G-XXXXXXXXXX"
+                  />
+                </label>
+
+                <label className="settings-label">
+                  Google Search Console Verification Code
+                  <span className="settings-helper-text">Enter the content of the google-site-verification meta tag.</span>
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={googleSiteVerification}
+                    onChange={(e) => setGoogleSiteVerification(e.target.value)}
+                    placeholder="Enter verification code"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Technical SEO */}
+            <div className="settings-card">
+              <h2 className="settings-card-title">Technical SEO</h2>
+              <div className="settings-form-group">
+                <label className="settings-label">
+                  Robots.txt Content
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span className="settings-helper-text">Configure robots.txt rules. One rule per line.</span>
+                  </div>
+                  <textarea
+                    className="settings-input"
+                    value={robotsTxtContent}
+                    onChange={(e) => setRobotsTxtContent(e.target.value)}
+                    placeholder="User-agent: *&#10;Allow: /"
+                    rows={8}
+                    style={{ fontFamily: 'monospace', resize: 'vertical' }}
+                  />
+                </label>
+
+                <div className="settings-toggle-group" style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                  <label className="settings-toggle-label">
+                    <span>Enable Dynamic Sitemap</span>
+                    <span className="settings-toggle-description">
+                      Automatically generate sitemap.xml for all service pages and blog posts.
+                      <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" style={{ marginLeft: '8px', color: '#2563eb' }}>
+                        View Sitemap
+                      </a>
+                    </span>
+                  </label>
+                  <label className="settings-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={sitemapEnabled}
+                      onChange={(e) => setSitemapEnabled(e.target.checked)}
+                    />
+                    <span className="settings-toggle-slider"></span>
+                  </label>
+                </div>
+
+                {sitemapEnabled && (
+                  <label className="settings-label" style={{ marginTop: '15px' }}>
+                    Custom Sitemap URLs
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span className="settings-helper-text">Add custom &lt;url&gt; entries here. They will be appended to the generated sitemap.</span>
+                    </div>
+                    <textarea
+                      className="settings-input"
+                      value={customSitemapXml}
+                      onChange={(e) => setCustomSitemapXml(e.target.value)}
+                      placeholder="<url>&#10;  <loc>https://likes.io/custom-page</loc>&#10;  <lastmod>2023-01-01</lastmod>&#10;  <changefreq>monthly</changefreq>&#10;  <priority>0.8</priority>&#10;</url>"
+                      rows={6}
+                      style={{ fontFamily: 'monospace', resize: 'vertical' }}
+                    />
+                  </label>
+                )}
               </div>
             </div>
 

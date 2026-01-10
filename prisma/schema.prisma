@@ -14,6 +14,8 @@ model User {
   name      String?
   role      UserRole   @default(USER)
   isBlocked Boolean    @default(false)
+  walletBalance Float  @default(0)
+  walletTransactions WalletTransaction[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   avatarUrl String?
@@ -39,6 +41,7 @@ model Order {
   link        String?
   japOrderId  String?
   japStatus   String?
+  upsellData  Json?       // Stores [{ upsellId, price, title }]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   service     Service     @relation(fields: [serviceId], references: [id])
@@ -90,6 +93,46 @@ model Payment {
   @@index([status])
   @@index([gateway])
   @@index([createdAt])
+}
+
+model Upsell {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  
+  // Mapping
+  serviceId     String?  // Optional: maps to a Service
+  packageId     String?  // Optional: if using package ID
+  
+  // Pricing
+  basePrice     Float
+  discountType  DiscountType @default(PERCENT)
+  discountValue Float
+  
+  // Display
+  badgeText     String?
+  badgeColor    String? @default("red")
+  badgeIcon     String? // "thumbs-up", "user-plus", etc.
+  
+  // Targeting rules
+  platform      Platform?
+  serviceType   ServiceType?
+  minSubtotal   Float?
+  
+  // State
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([platform, serviceType])
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
 }
 
 model SocialProfile {
@@ -160,12 +203,19 @@ model AdminSettings {
   headerLogoUrl          String?
   homeMetaDescription    String?
   homeMetaTitle          String?
+  robotsTxtContent       String?  @default("User-agent: *\nAllow: /")
+  customSitemapXml       String?  @db.Text
+  sitemapEnabled         Boolean  @default(true)
   recaptchaSecretKey     String?
   recaptchaSiteKey       String?
   googleClientId         String?
   googleClientSecret     String?
   facebookClientId       String?
   facebookClientSecret   String?
+
+  // Google Analytics & Search Console
+  googleAnalyticsId      String?
+  googleSiteVerification String?
 
   // MyFatoorah Settings
   myFatoorahToken        String?
@@ -437,6 +487,9 @@ model BlogPost {
   excerpt     String?
   coverImage  String?
   authorId    String
+  category    String?
+  metaTitle       String?
+  metaDescription String?
   isPublished Boolean   @default(false)
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -508,6 +561,53 @@ model IconAsset {
   @@map("icon_assets")
 }
 
+model Coupon {
+  id                    String   @id @default(cuid())
+  code                  String   @unique
+  type                  CouponType
+  value                 Float
+  currency              String?  @default("USD")
+  status                CouponStatus @default(ACTIVE)
+  startsAt              DateTime?
+  expiresAt             DateTime?
+  maxRedemptions        Int?
+  maxRedemptionsPerUser Int?
+  minOrderAmount        Float?
+  applicableServices    Json?    // Array of service IDs or types
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  redemptions           CouponRedemption[]
+
+  @@index([code])
+  @@index([status])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  couponId  String
+  userId    String?
+  orderId   String?
+  redeemedAt DateTime @default(now())
+  
+  coupon    Coupon   @relation(fields: [couponId], references: [id])
+
+  @@index([couponId])
+  @@index([userId])
+  @@map("coupon_redemptions")
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+enum CouponStatus {
+  ACTIVE
+  DISABLED
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -541,6 +641,7 @@ enum PaymentGateway {
   BIGPAYME
   CRYPTOMUS
   MYFATOORAH
+  WALLET
 }
 
 enum PaymentStatus {
@@ -548,4 +649,22 @@ enum PaymentStatus {
   SUCCESS
   FAILED
   REFUNDED
+}
+
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  currency  String   @default("USD")
+  type      WalletTxnType
+  note      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+enum WalletTxnType {
+  CREDIT
+  DEBIT
 }

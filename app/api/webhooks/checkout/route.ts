@@ -3,6 +3,7 @@ import { checkoutAPI } from '@/lib/checkout-api';
 import { prisma } from '@/lib/prisma';
 import { japAPI } from '@/lib/jap-api';
 import { emailService } from '@/lib/email';
+import { recordCouponRedemption } from '@/lib/coupon-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,18 +33,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
+    const existingWebhookData = payment.webhookData as any || {};
+
     // Update payment status
     await prisma.payment.update({
       where: { id: payment.id },
       data: {
         status: result.status === 'success' ? 'SUCCESS' : 'FAILED',
-        webhookData: event as any,
+        webhookData: { ...(event as any), couponCode: existingWebhookData.couponCode, discountAmount: existingWebhookData.discountAmount },
       },
     });
 
     // If payment successful, create JAP order and update order status
     if (result.status === 'success') {
       const order = payment.order;
+
+      // Record Coupon Redemption
+      await recordCouponRedemption(payment.orderId, existingWebhookData, order.userId);
       
       if (order && order.serviceId && order.link) {
         try {
