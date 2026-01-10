@@ -65,16 +65,6 @@ export default function TestimonialsDashboard() {
     displayOrder: 0,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const seedData = [
-    { handle: "@john_doe_official", role: "Influencer", text: "This is an amazing product, I love it and would highly recommend it to everyone...", rating: 5, isApproved: true },
-    { handle: "Jane Smith", role: "Customer", text: "Great service and very helpful customer support. The team really cares about their customers...", rating: 5, isApproved: true },
-    { handle: "@tiktok_creator", role: "Creator", text: "Highly recommend this company for anyone looking to boost their social media presence...", rating: 4.5, isApproved: true },
-    { handle: "Mike Johnson", role: "Entrepreneur", text: "Excellent results! My engagement has increased significantly since using this service...", rating: 5, isApproved: true },
-    { handle: "@instagram_user", role: "Influencer", text: "Fast delivery and great quality. Will definitely use again in the future...", rating: 5, isApproved: true },
-    { handle: "Sarah Williams", role: "Customer", text: "Good service overall, though there were some minor delays. Still satisfied with the results...", rating: 4, isApproved: false },
-    { handle: "@youtube_creator", role: "Youtuber", text: "Outstanding support and quick turnaround time. Very professional team...", rating: 5, isApproved: true },
-    { handle: "David Brown", role: "Business Owner", text: "The best investment I've made for my social media growth. Results speak for themselves...", rating: 5, isApproved: true },
-  ];
   const fetchTestimonials = async () => {
     setLoading(true);
     setError(null);
@@ -83,29 +73,7 @@ export default function TestimonialsDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch testimonials");
       const list: DbTestimonial[] = data.testimonials || [];
-      if (list.length === 0) {
-        for (let i = 0; i < seedData.length; i++) {
-          const s = seedData[i];
-          await fetch("/api/cms/testimonials", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              handle: s.handle,
-              role: s.role,
-              text: s.text,
-              rating: s.rating,
-              isApproved: s.isApproved,
-              isFeatured: false,
-              displayOrder: i,
-            }),
-          });
-        }
-        const res2 = await fetch("/api/cms/testimonials");
-        const data2 = await res2.json();
-        setTestimonials(data2.testimonials || []);
-      } else {
-        setTestimonials(list);
-      }
+      setTestimonials(list);
     } catch (e: any) {
       setError(e.message || "Failed to fetch testimonials");
     } finally {
