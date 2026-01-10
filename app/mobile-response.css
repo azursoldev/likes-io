@@ -432,6 +432,14 @@ html.dark .mobile-dropdown {
   }
 
   /* Platforms Section Mobile Response */
+  .platforms-title {
+    font-weight: 700 !important;
+  }
+
+  .platforms-subtitle {
+    font-weight: 500 !important;
+  }
+
   .platforms-title,
   .platforms-subtitle {
     text-align: center;
@@ -447,12 +455,26 @@ html.dark .mobile-dropdown {
   }
 
   /* Get Started Section Mobile Response */
+  .getstarted .font-heading {
+    font-weight: 700 !important;
+  }
+
   .getstarted .container {
     margin-left: 1rem;
     margin-right: 1rem;
     width: auto;
     padding: 1.25rem;
   }
+
+  .gs-right-sub{
+    font-weight: 600 !important;
+  }
+
+  .gs-right-title{
+    font-weight: 600 !important;
+  }
+
+  
 
   .gs-header {
     flex-direction: column;
@@ -474,10 +496,75 @@ html.dark .mobile-dropdown {
     display: none !important;
   }
 
+  .influence-title {
+    font-weight: 700 !important;
+  }
+
   /* FAQ Section Mobile Response */
   .faq-pagination {
     display: none !important;
   }
+
+  .faq-title{
+    font-weight: 700 !important;
+  }
+
+  .faq-sub{
+    font-weight: 500 !important;
+  }
+
+  .qs-title{
+    font-weight: 700 !important;
+  }
+
+  .qs-desc{
+    font-weight: 500 !important;
+  }
+
+  .qs-label{
+    font-weight: 500 !important;
+  }
+
+  .blog-title{
+    font-weight: 700 !important;
+  }
+
+  .blog-subtitle{
+    font-weight: 500 !important;
+  }
+
+  .contact-title{
+    font-weight: 700 !important;
+  }
+
+  .contact-discription{
+    font-weight: 500 !important;
+  }
+
+  .terms-title{
+    font-weight: 700 !important;
+  }
+
+  .terms-subtitle{
+    font-weight: 500 !important;
+  }
+
+  .privacy-title{
+    font-weight: 700 !important;
+  }
+
+  .privacy-subtitle{
+    font-weight: 500 !important;
+  }
+
+  .reviews-title{
+    font-weight: 700 !important;
+  }
+
+  .reviews-sub{
+    font-weight: 500 !important;
+  }
+  
 
   /* Footer Top Mobile Response */
   .footer-top {
@@ -713,23 +800,36 @@ html.dark .mobile-dropdown {
     width: 100% !important;
     box-sizing: border-box !important;
   }
+
+  /* Price Adjustment Mobile Response */
+  .price-main {
+    font-size: 32px !important;
+  }
+  
+  .price-strike {
+    font-size: 14px !important;
+  }
+  
+  .price-save {
+    font-size: 13px !important;
+    padding: 4px 8px !important;
+  }
 }
 
 @media (max-width: 480px) {
   .hero-title {
-    font-size: 2rem;
+    font-size: 31px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
   }
   
   .hero-sub {
-    font-size: 1rem;
+    font-size: 15px;
+    font-weight: 500;
   }
   
   .hero-section .btn {
     width: 100%;
-  }
-
-  .pkg-tabs-inner{
-    flex: none;
   }
 }
 
