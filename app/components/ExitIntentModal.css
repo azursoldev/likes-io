@@ -4,128 +4,162 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
   animation: fadeIn 0.3s ease;
 
-  /* CSS Variables for theming */
-  --modal-bg: white;
-  --modal-text-title: #111;
-  --modal-text-body: #555;
-  --modal-box-bg: #f3f4f6;
-  --modal-box-border: #d1d5db;
-  --modal-code-color: #4f46e5;
-  --modal-close-color: #666;
-  --modal-close-hover: #000;
+  /* CSS Variables for theming - Matching Likes.io Brand */
+  --modal-bg: #ffffff;
+  --modal-text-title: #000000;
+  --modal-text-body: #1f2937;
+  --modal-box-bg: #fff7ed; /* Light orange tint */
+  --modal-box-border: #f97316; /* Orange-500 */
+  --modal-code-color: #ea580c; /* Orange-600 */
+  --modal-close-color: #9ca3af;
+  --modal-close-hover: #1f2937;
+  --modal-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Media Query Support */
+/* 
+   User requested black text and consistent design. 
+   Enforcing light mode style for the modal to ensure text is always black and readable.
+   (Disabling dark mode color inversions for this component)
+*/
+/* 
 @media (prefers-color-scheme: dark) {
   .exit-intent-overlay {
     --modal-bg: #1f2937;
     --modal-text-title: #f9fafb;
     --modal-text-body: #d1d5db;
-    --modal-box-bg: #374151;
-    --modal-box-border: #4b5563;
-    --modal-code-color: #818cf8;
+    --modal-box-bg: rgba(249, 115, 22, 0.1);
+    --modal-box-border: #f97316;
+    --modal-code-color: #fb923c;
     --modal-close-color: #9ca3af;
     --modal-close-hover: #f3f4f6;
   }
 }
 
-/* Class-based Dark Mode Support (overrides media query if present) */
 :global(.dark) .exit-intent-overlay {
   --modal-bg: #1f2937;
   --modal-text-title: #f9fafb;
   --modal-text-body: #d1d5db;
-  --modal-box-bg: #374151;
-  --modal-box-border: #4b5563;
-  --modal-code-color: #818cf8;
+  --modal-box-bg: rgba(249, 115, 22, 0.1);
+  --modal-box-border: #f97316;
+  --modal-code-color: #fb923c;
   --modal-close-color: #9ca3af;
   --modal-close-hover: #f3f4f6;
-}
+} 
+*/
 
 .exit-intent-modal {
   background: var(--modal-bg);
-  padding: 40px;
-  border-radius: 16px;
-  max-width: 500px;
+  padding: 48px 40px;
+  border-radius: 24px;
+  max-width: 480px;
   width: 90%;
   position: relative;
   text-align: center;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: slideUp 0.3s ease;
+  box-shadow: var(--modal-shadow);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
 .exit-intent-modal .close-btn {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
+  top: 20px;
+  right: 20px;
+  background: transparent;
   border: none;
   font-size: 20px;
   color: var(--modal-close-color);
   cursor: pointer;
-  padding: 5px;
-  transition: color 0.2s;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .exit-intent-modal .close-btn:hover {
   color: var(--modal-close-hover);
+  background-color: rgba(0,0,0,0.05);
 }
 
 .exit-intent-modal h2 {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 800;
-  margin-bottom: 12px;
+  margin: 0 0 16px 0;
   color: var(--modal-text-title);
-  line-height: 1.2;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .exit-intent-modal p {
   font-size: 16px;
   color: var(--modal-text-body);
-  margin-bottom: 24px;
-  line-height: 1.5;
+  margin-bottom: 32px;
+  line-height: 1.6;
 }
 
 .discount-box {
   background: var(--modal-box-bg);
   border: 2px dashed var(--modal-box-border);
-  padding: 16px;
-  border-radius: 12px;
+  padding: 20px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
 }
 
 .discount-box:hover {
-  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.1);
+}
+
+.discount-box:active {
+  transform: translateY(0);
 }
 
 .discount-box .code {
-  font-family: monospace;
-  font-size: 24px;
-  font-weight: 700;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 28px;
+  font-weight: 800;
   color: var(--modal-code-color);
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .discount-box svg {
-  color: #6b7280;
+  color: var(--modal-code-color);
+  opacity: 0.7;
 }
 
 .small-text {
-  font-size: 12px !important;
-  color: #9ca3af !important;
+  font-size: 13px !important;
+  color: var(--modal-close-color) !important;
   margin-bottom: 0 !important;
+  font-weight: 500;
+}
+
+/* Copied state animation */
+.discount-box.copied {
+  background-color: #d1fae5; /* Green-100 */
+  border-color: #10b981; /* Green-500 */
+}
+
+.discount-box.copied .code {
+  color: #059669; /* Green-600 */
 }
 
 @keyframes fadeIn {
@@ -134,6 +168,6 @@
 }
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translateY(20px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }

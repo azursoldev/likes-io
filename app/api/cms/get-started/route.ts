@@ -43,7 +43,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       features: typeof content.features === 'string' ? JSON.parse(content.features) : content.features,
-      explanation: content.explanation,
+    explanation: content.explanation,
+      heading: content.heading,
+      explanationTitle: content.explanationTitle,
       pricing: content.pricing ? (typeof content.pricing === 'string' ? JSON.parse(content.pricing) : content.pricing) : null,
     });
   } catch (error: any) {
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { platform, serviceType, quality, features, explanation, pricing } = body;
+    const { platform, serviceType, quality, features, explanation, pricing, heading, explanationTitle } = body;
 
     if (!platform || !serviceType || !quality) {
       return NextResponse.json(
@@ -84,6 +86,8 @@ export async function POST(request: NextRequest) {
       quality: quality.toLowerCase(),
       features: features || [],
       explanation: explanation || '',
+      heading: heading || null,
+      explanationTitle: explanationTitle || null,
       pricing: pricing || Prisma.DbNull,
       isActive: true,
     };
