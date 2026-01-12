@@ -135,6 +135,8 @@ export default function SettingsDashboard() {
         if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
         if (data.headerLogoUrl) setHeaderLogoUrl(data.headerLogoUrl);
         if (data.footerLogoUrl) setFooterLogoUrl(data.footerLogoUrl);
+        if (data.googleAnalyticsId) setGoogleAnalyticsId(data.googleAnalyticsId);
+        if (data.googleSiteVerification) setGoogleSiteVerification(data.googleSiteVerification);
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -197,6 +199,8 @@ export default function SettingsDashboard() {
           faviconUrl,
           headerLogoUrl,
           footerLogoUrl,
+          googleAnalyticsId,
+          googleSiteVerification,
         }),
       });
 

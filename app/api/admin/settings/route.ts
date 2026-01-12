@@ -138,6 +138,8 @@ export async function GET() {
       robotsTxtContent: getField(settings, 'robotsTxtContent', 'User-agent: *\nAllow: /'),
       customSitemapXml: getField(settings, 'customSitemapXml', ''),
       sitemapEnabled: getField(settings, 'sitemapEnabled', true),
+      googleAnalyticsId: getField(settings, 'googleAnalyticsId', ''),
+      googleSiteVerification: getField(settings, 'googleSiteVerification', ''),
     });
   } catch (error: any) {
     console.error('Get settings error:', error);
