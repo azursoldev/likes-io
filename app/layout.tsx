@@ -43,12 +43,46 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     console.error('Error fetching settings for layout:', error);
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'https://likes.io';
+  const orgId = `${baseUrl}/#organization`;
+  const websiteId = `${baseUrl}/#website`;
+  const logoUrl = (settings?.headerLogoUrl as string) || `${baseUrl}/logo.png`;
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": orgId,
+    "name": "Likes.io",
+    "url": baseUrl,
+    "logo": logoUrl,
+    "sameAs": [
+      "https://www.instagram.com/likes.io",
+      "https://www.tiktok.com/@likes.io",
+      "https://www.youtube.com/@likesio"
+    ]
+  };
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": websiteId,
+    "url": baseUrl,
+    "name": "Likes.io",
+    "publisher": { "@id": orgId }
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         {settings?.googleSiteVerification && (
           <meta name="google-site-verification" content={settings.googleSiteVerification} />
         )}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
       </head>
       <body suppressHydrationWarning>
         <NextAuthSessionProvider>

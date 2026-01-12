@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { Platform, ServiceType } from '@prisma/client';
 import { checkoutAPI } from '@/lib/checkout-api';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
 import { getMyFatoorahAPI } from '@/lib/myfatoorah-api';
-import { validateCoupon } from '@/lib/coupon-utils';
 import { emailService } from '@/lib/email';
 
 export async function POST(request: NextRequest) {

@@ -141,9 +141,75 @@ export default async function Page({ params }: { params: { slug: string } }) {
   const learnMoreText = content.learnMoreText;
   const learnMoreModalContent = content.learnMoreModalContent;
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'https://likes.io';
+  const pageUrl = `${baseUrl}/${content.slug}`;
+
+  const serviceSchemaDefaults: Record<string, { name: string; serviceType: string }> = {
+    'buy-instagram-followers': {
+      name: 'Instagram Audience Growth Support',
+      serviceType: 'Instagram profile growth support'
+    },
+    'buy-instagram-likes': {
+      name: 'Instagram Engagement Support',
+      serviceType: 'Instagram post engagement support'
+    },
+    'buy-instagram-views': {
+      name: 'Instagram Video Views Support',
+      serviceType: 'Instagram video visibility support'
+    },
+    'buy-tiktok-followers': {
+      name: 'TikTok Audience Growth Support',
+      serviceType: 'TikTok profile growth support'
+    },
+    'buy-tiktok-likes': {
+      name: 'TikTok Engagement Support',
+      serviceType: 'TikTok post engagement support'
+    },
+    'buy-tiktok-views': {
+      name: 'TikTok Video Views Support',
+      serviceType: 'TikTok video visibility support'
+    },
+    'buy-youtube-subscribers': {
+      name: 'YouTube Channel Growth Support',
+      serviceType: 'YouTube subscriber growth support'
+    },
+    'buy-youtube-views': {
+      name: 'YouTube Video Views Support',
+      serviceType: 'YouTube video visibility support'
+    },
+    'buy-youtube-likes': {
+      name: 'YouTube Engagement Support',
+      serviceType: 'YouTube engagement support'
+    }
+  };
+
+  const slugKey = content.slug || params.slug;
+  const mapped = serviceSchemaDefaults[slugKey] || null;
+
+  const serviceJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${pageUrl}/#service`,
+    "name": mapped?.name || content.heroTitle || serviceName,
+    "serviceType": mapped?.serviceType || `${platformName} engagement support`,
+    "url": pageUrl,
+    "provider": { "@id": `${baseUrl}/#organization` },
+    "areaServed": "Worldwide",
+    "termsOfService": `${baseUrl}/terms`,
+    "serviceOutput": "Improved content visibility signals and engagement support",
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "Creators, brands, and marketers"
+    }
+  };
+
   return (
     <>
       <Header />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
+      />
       <ServicePageContentProvider
         slug={params.slug}
         initialData={content}

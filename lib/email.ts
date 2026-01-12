@@ -313,12 +313,14 @@ class EmailService {
     }
 
     // Mask payment method if possible, otherwise generic
-    const paymentMethod = order.payment?.[0]?.gateway || 'Payment Gateway';
+    const paymentMethod = order.payment && Array.isArray(order.payment) && order.payment.length > 0
+      ? order.payment[0].gateway
+      : 'Payment Gateway';
     const maskedPaymentMethod = paymentMethod.replace(/_/g, ' '); // Simple formatting
     
     // Mask target link/username for privacy
-    const target = order.link;
-    const maskedTarget = target.length > 20 ? target.substring(0, 15) + '...' : target;
+    const target = order.link || '';
+    const maskedTarget = target && target.length > 20 ? target.substring(0, 15) + '...' : target;
 
     const subject = `Order Confirmed — ${order.id} (Likes.io)`;
     const dashboardUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard/orders`;
