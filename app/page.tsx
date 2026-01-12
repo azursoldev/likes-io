@@ -18,7 +18,7 @@ export default function HomePage() {
         <InfluenceSection />
         <AdvantageSection />
         <FeaturedOn />
-        <ReviewsSection />
+        {/* <ReviewsSection /> */}
         <QuickStartSection />
       </main>
       <Footer />
