@@ -16,27 +16,6 @@ type ReviewsSectionProps = {
   reviews?: ReviewItem[];
 };
 
-const DEFAULT_REVIEWS: ReviewItem[] = [
-  {
-    handle: "@sarahL",
-    role: "Verified Buyer",
-    text:
-      "Likes.io changed the game for my channel. The growth felt natural and the engagement was top-notch. I saw results within the first 24 hours!",
-  },
-  {
-    handle: "@MikeP_Fitness",
-    role: "Verified Buyer",
-    text:
-      "As a business, establishing social proof is key. The immediate trust we got from buying followers helped us increase conversions by 30%. Incredibly simple and effective.",
-  },
-  {
-    handle: "@JessT_Art",
-    role: "Verified Buyer",
-    text:
-      "I was skeptical at first, but the quality of the likes is undeniable. It helped my art reach a much wider audience than I could have managed on my own. Highly recommended!",
-  },
-];
-
 export default function ReviewsSection({
   title = "Loved by Creators Worldwide",
   subtitle = "Real reviews from creators and brands who've seen incredible growth with our service.",
@@ -45,8 +24,8 @@ export default function ReviewsSection({
   const context = useServiceContent();
   const [index, setIndex] = useState(0);
 
-  // Priority: props > context > default
-  const reviews = propReviews || (context?.testimonials && context.testimonials.length > 0 ? context.testimonials : DEFAULT_REVIEWS);
+  // Priority: props > context > empty
+  const reviews = propReviews || (context?.testimonials && context.testimonials.length > 0 ? context.testimonials : []);
 
   const total = reviews.length;
   const [isMobile, setIsMobile] = useState(false);
@@ -59,6 +38,10 @@ export default function ReviewsSection({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  if (reviews.length === 0) {
+    return null;
+  }
 
   const VISIBLE = isMobile ? 1 : 3; // show one card on mobile, three on desktop
   const STEP_W = CARD_W + GAP; // pixels to move per step

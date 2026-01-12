@@ -19,8 +19,6 @@ type FeaturedBrand = {
   isActive: boolean;
 };
 
-const DEFAULT_BRANDS = ["Forbes", "Business Insider", "Entrepreneur", "WIRED"];
-
 export default function FeaturedOn() {
   const pathname = usePathname();
   const [brands, setBrands] = useState<FeaturedBrand[]>([]);
@@ -50,21 +48,11 @@ export default function FeaturedOn() {
 
   // Filter brands based on current page path
   const getDisplayBrands = (): FeaturedBrand[] => {
-    // ... (logic remains same)
     if (brands.length === 0) {
-      return DEFAULT_BRANDS.map((name, index) => ({ 
-        id: index,
-        brandName: name, 
-        logoUrl: null, 
-        altText: name,
-        pageLinks: [],
-        displayOrder: index,
-        isActive: true
-      }));
+      return [];
     }
 
     return brands.filter(brand => {
-      // ... (logic remains same)
       // If no page links, show on all pages (backward compatibility)
       if (!brand.pageLinks || brand.pageLinks.length === 0) {
         return true;
@@ -97,19 +85,22 @@ export default function FeaturedOn() {
     );
   }
 
+  if (displayBrands.length === 0) {
+    return null;
+  }
+
   return (
     <section className="featured-on">
       <div className="container">
         <p className="featured-label">AS FEATURED ON</p>
         <div className="featured-brands">
           {displayBrands.map((brand, index) => {
-            const brandName = typeof brand === "string" ? brand : brand.brandName;
-            const logoUrl = typeof brand === "object" && brand.logoUrl ? brand.logoUrl : null;
-            const altText = typeof brand === "object" && brand.altText ? brand.altText : brandName;
+            const brandName = brand.brandName;
+            const logoUrl = brand.logoUrl;
+            const altText = brand.altText || brandName;
             
             // Get the first matching page link for the current path
             const getPageLink = () => {
-              if (typeof brand === "string") return null;
               if (!brand.pageLinks || brand.pageLinks.length === 0) return null;
               
               // Find link for current path or "all"
@@ -130,9 +121,7 @@ export default function FeaturedOn() {
 
             if (brandLink && brandLink !== "#") {
               // Find if nofollow is set for this link
-              const pageLink = typeof brand === "object" && brand.pageLinks 
-                ? brand.pageLinks.find(pl => pl.pagePath === pathname || pl.pagePath === "all")
-                : null;
+              const pageLink = brand.pageLinks.find(pl => pl.pagePath === pathname || pl.pagePath === "all");
               
               return (
                 <a

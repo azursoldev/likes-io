@@ -7,17 +7,10 @@ export default function QuickStartSection() {
   const { getLink, loading: navLoading } = useNavigation();
   const [loading, setLoading] = useState(true);
   const [quickStartContent, setQuickStartContent] = useState({
-    title: "Get Started Now",
-    description1: "And importantly, Likes.io’s real followers, likes, views, and comments are available at very reasonable prices that are never higher than those charged by other reputable providers.",
-    description2: "Honest, trustworthy, responsible, and powerful TikTok and Instagram growth is what we’ve specialized in for more than a dozen years. We invite you to join our family of satisfied customers today!",
-    buttons: [
-      { id: 1, label: "BUY INSTAGRAM FOLLOWERS", link: "instagram/followers", gradientClass: "grad-orange", icon: "instagram" },
-      { id: 2, label: "BUY INSTAGRAM LIKES", link: "instagram/likes", gradientClass: "grad-red", icon: "instagram" },
-      { id: 3, label: "BUY INSTAGRAM VIEWS", link: "instagram/views", gradientClass: "grad-pink", icon: "instagram" },
-      { id: 4, label: "BUY TIKTOK LIKES", link: "tiktok/likes", gradientClass: "grad-purple", icon: "tiktok" },
-      { id: 5, label: "BUY TIKTOK VIEWS", link: "tiktok/views", gradientClass: "grad-violet", icon: "tiktok" },
-      { id: 6, label: "BUY TIKTOK FOLLOWERS", link: "tiktok/followers", gradientClass: "grad-magenta", icon: "tiktok" }
-    ]
+    title: "",
+    description1: "",
+    description2: "",
+    buttons: [] as any[]
   });
 
   const getIconPath = (icon: string) => {
@@ -37,17 +30,10 @@ export default function QuickStartSection() {
           const data = await response.json();
           if (data.content) {
             setQuickStartContent({
-              title: data.content.quickStartTitle || "Get Started Now",
-              description1: data.content.quickStartDescription1 || "And importantly, Likes.io’s real followers, likes, views, and comments are available at very reasonable prices that are never higher than those charged by other reputable providers.",
-              description2: data.content.quickStartDescription2 || "Honest, trustworthy, responsible, and powerful TikTok and Instagram growth is what we’ve specialized in for more than a dozen years. We invite you to join our family of satisfied customers today!",
-              buttons: data.content.quickStartButtons || [
-                { id: 1, label: "BUY INSTAGRAM FOLLOWERS", link: "instagram/followers", gradientClass: "grad-orange", icon: "instagram" },
-                { id: 2, label: "BUY INSTAGRAM LIKES", link: "instagram/likes", gradientClass: "grad-red", icon: "instagram" },
-                { id: 3, label: "BUY INSTAGRAM VIEWS", link: "instagram/views", gradientClass: "grad-pink", icon: "instagram" },
-                { id: 4, label: "BUY TIKTOK LIKES", link: "tiktok/likes", gradientClass: "grad-purple", icon: "tiktok" },
-                { id: 5, label: "BUY TIKTOK VIEWS", link: "tiktok/views", gradientClass: "grad-violet", icon: "tiktok" },
-                { id: 6, label: "BUY TIKTOK FOLLOWERS", link: "tiktok/followers", gradientClass: "grad-magenta", icon: "tiktok" }
-              ]
+              title: data.content.quickStartTitle || "",
+              description1: data.content.quickStartDescription1 || "",
+              description2: data.content.quickStartDescription2 || "",
+              buttons: data.content.quickStartButtons || []
             });
           }
         }
@@ -85,6 +71,10 @@ export default function QuickStartSection() {
         </div>
       </section>
     );
+  }
+
+  if (!quickStartContent.title && quickStartContent.buttons.length === 0) {
+    return null;
   }
 
   return (

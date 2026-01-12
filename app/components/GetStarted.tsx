@@ -48,41 +48,15 @@ export default function GetStarted() {
   };
 
   const FEATURES_BY_PLATFORM: Record<Platform, string[]> = {
-    instagram: [
-      "REAL likes from ACTIVE users",
-      "Maximum chance to reach the Explore Page",
-      "Helps attract organic engagement",
-      "Guaranteed Instant Delivery",
-      "Option to split likes on multiple pictures",
-      "No password required",
-      "Priority 24/7 support",
-    ],
-    tiktok: [
-      "Likes from ACTIVE users",
-      "Higher chance to go viral",
-      "Helps trigger the For You algorithm",
-      "Guaranteed Instant Delivery",
-      "No password required",
-      "Safe & Secure",
-      "Priority 24/7 support",
-    ],
-    youtube: [
-      "Likes from active users",
-      "Helps increase video ranking",
-      "Increases chance of being recommended",
-      "100% Safe & Secure",
-      "No password required",
-      "Priority 24/7 support",
-    ],
+    instagram: [],
+    tiktok: [],
+    youtube: [],
   };
 
   const EXPLAIN_BY_PLATFORM: Record<Platform, string> = {
-    instagram:
-      "Likes boost posts and credibility, increasing the chance to reach the Explore Page and attract organic engagement.",
-    tiktok:
-      "Likes are fuel for the 'For You' Page algorithm. Rapid likes can push videos to trending, leading to massive exposure and viral growth.",
-    youtube:
-      "A strong like-to-dislike ratio is a positive signal to viewers and algorithm alike, helping your content rank and appear in 'Suggested Videos'.",
+    instagram: "",
+    tiktok: "",
+    youtube: "",
   };
 
   const [dynamicFeatures, setDynamicFeatures] = useState<string[]>([]);
@@ -279,8 +253,8 @@ export default function GetStarted() {
   }, [selectedPackage]);
 
   // Use dynamic features if available, else fallback to hardcoded
-  const features = dynamicFeatures.length > 0 ? dynamicFeatures : (FEATURES_BY_PLATFORM[platform] || []);
-  const explanation = dynamicExplanation || (EXPLAIN_BY_PLATFORM[platform] || "");
+  const features = dynamicFeatures;
+  const explanation = dynamicExplanation;
 
 
   const PillIcon = ({ name }: { name: Platform }) => {

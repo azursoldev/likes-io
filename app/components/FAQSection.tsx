@@ -11,42 +11,6 @@ type FAQSectionProps = {
   category?: string; // Optional: fetch FAQs by category (e.g., "homepage")
 };
 
-const DEFAULT_FAQS: FAQItem[] = [
-  {
-    q: "Is it safe to buy Instagram likes for my account?",
-    a: "Yes. We use safe delivery methods and quality profiles that comply with platform guidelines to minimize risk and maintain account health.",
-  },
-  {
-    q: "How quickly will I get the likes after my purchase?",
-    a: "Most orders begin within minutes of purchase and complete based on your selected package size and pacing preferences.",
-  },
-  {
-    q: "Will buying likes help my post get on the Instagram Explore Page?",
-    a: "Buying likes can improve engagement signals that influence reach. High-quality content and consistent activity are also important to appear on Explore.",
-  },
-  {
-    q: "Can I split the likes I buy across multiple Instagram posts?",
-    a: "Yes, you can distribute likes across multiple posts depending on your package. During checkout you can specify the posts to boost.",
-  },
-  {
-    q: "Does buying likes for an Instagram Reel also add views?",
-    a: "Likes and views are separate metrics. You can purchase likes for Reels; if you also want views, consider a combined package for best results.",
-  },
-  {
-    q: "What is the difference between High-Quality and Premium likes?",
-    a: "Premium offers the highest authenticity and retention, ideal for brands seeking top-tier credibility. High-Quality is a cost-effective option with great results.",
-  },
-  {
-    q: "Do I need to provide my password?",
-    a: "Never. We will never ask for your password. We only need your username and the post link(s) to deliver engagement.",
-  },
-  { q: "Can I cancel or change my order after purchase?", a: "Contact support immediately. If delivery hasn't started, we can adjust or cancel." },
-  { q: "Are likes permanent?", a: "Minor fluctuations can occur. Premium packages include better retention and stability." },
-  { q: "Which payment methods do you accept?", a: "We accept major cards and secure payment options shown at checkout." },
-  { q: "Do you offer refunds?", a: "Refunds are handled per our policy. If we fail to deliver as promised, we will make it right." },
-  { q: "Can I buy likes for private accounts?", a: "Delivery requires the post to be publicly viewable. Make your account public during delivery." },
-];
-
 export default function FAQSection({
   faqs: propFaqs,
   title = "Frequently Asked Questions",
@@ -54,7 +18,7 @@ export default function FAQSection({
   pageSize = 7,
   category,
 }: FAQSectionProps) {
-  const [faqs, setFaqs] = useState<FAQItem[]>(propFaqs || DEFAULT_FAQS);
+  const [faqs, setFaqs] = useState<FAQItem[]>(propFaqs || []);
   const [loading, setLoading] = useState(!propFaqs);
 
   // Fetch FAQs from API if category is provided or if no faqs prop is provided
@@ -84,7 +48,6 @@ export default function FAQSection({
         }
       } catch (error) {
         console.error("Error fetching FAQs:", error);
-        // Keep default FAQs on error
       } finally {
         setLoading(false);
       }
@@ -126,6 +89,10 @@ export default function FAQSection({
         </div>
       </section>
     );
+  }
+
+  if (faqs.length === 0) {
+    return null;
   }
 
   return (

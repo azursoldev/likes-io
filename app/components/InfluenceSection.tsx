@@ -22,31 +22,10 @@ export default function InfluenceSection() {
     image: string;
     steps: InfluenceStep[];
   }>({
-    title: "Build Your Empire of Influence",
-    subtitle: "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche.",
-    image: "/businesswoman-receiving-best-award.png",
-    steps: [
-      {
-        id: 1,
-        title: "Build Instant Credibility & Trust",
-        description: "A high follower count is the ultimate social proof. It tells new visitors your account is worth following, making them more likely to click \"Follow\" without hesitation.",
-        subpoints: [
-          { title: "Attract Organic Growth", text: "People naturally gravitate towards popular accounts. A strong follower base acts like a magnet for organic growth." },
-          { title: "Increase Brand Trust", text: "For businesses, a large following establishes credibility and makes your brand appear more reputable to potential customers and partners." },
-          { title: "Unlock Platform Features", text: "Reaching follower milestones on Instagram can unlock powerful features for driving traffic and engagement." }
-        ]
-      },
-      {
-        id: 2,
-        title: "Amplify Your Reach & Influence",
-        description: "A well-grown profile signals trust and authority, increasing audience confidence and brand appeal."
-      },
-      {
-        id: 3,
-        title: "Kickstart Your Growth",
-        description: "Higher social proof improves reach and engagement, unlocking new growth loops over time."
-      }
-    ]
+    title: "",
+    subtitle: "",
+    image: "",
+    steps: []
   });
 
   useEffect(() => {
@@ -57,10 +36,10 @@ export default function InfluenceSection() {
           const data = await response.json();
           if (data.content) {
             setInfluenceContent({
-              title: data.content.influenceTitle || "Build Your Empire of Influence",
-              subtitle: data.content.influenceSubtitle || "A high follower count is your digital passport to credibility. It opens doors to brand deals, organic growth, and authority in your niche.",
-              image: data.content.influenceImage || "/businesswoman-receiving-best-award.png",
-              steps: data.content.influenceSteps || influenceContent.steps
+              title: data.content.influenceTitle || "",
+              subtitle: data.content.influenceSubtitle || "",
+              image: data.content.influenceImage || "",
+              steps: data.content.influenceSteps || []
             });
           }
         }
@@ -88,6 +67,10 @@ export default function InfluenceSection() {
         </div>
       </section>
     );
+  }
+
+  if (!influenceContent.title && influenceContent.steps.length === 0) {
+    return null;
   }
 
   return (

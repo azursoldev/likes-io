@@ -12,45 +12,15 @@ type PlatformCard = {
   serviceType: string;
 };
 
-const PLATFORMS: PlatformCard[] = [
-  {
-    key: "instagram",
-    name: "Instagram",
-    desc:
-      "Boost your posts, gain credibility, and reach the Explore Page with our premium Instagram services.",
-    tags: ["Likes", "Followers", "Views"],
-    cta: "View Instagram Services",
-    serviceType: "likes",
-  },
-  {
-    key: "tiktok",
-    name: "TikTok",
-    desc:
-      "Give your videos the viral push they need to land on the FYP and capture millions of views.",
-    tags: ["Likes", "Followers", "Views"],
-    cta: "View TikTok Services",
-    serviceType: "likes",
-  },
-  {
-    key: "youtube",
-    name: "YouTube",
-    desc:
-      "Increase your video rankings, watch time, and channel authority to stand out on the world's largest video platform.",
-    tags: ["Views", "Subscribers", "Likes"],
-    cta: "View YouTube Services",
-    serviceType: "views",
-  },
-];
-
 export default function PlatformSection() {
   const { getLink, loading: navLoading } = useNavigation();
   const [loading, setLoading] = React.useState(true);
 
-  const [platformContent, setPlatformContent] = React.useState({
-    title: "Choose Your Platform to Start Growing",
-    subtitle: "We offer specialized services for the world's leading social media platforms. Select yours to see our packages.",
-    cards: PLATFORMS
-  });
+  const [platformContent, setPlatformContent] = React.useState<{
+    title: string;
+    subtitle: string;
+    cards: PlatformCard[];
+  } | null>(null);
 
   React.useEffect(() => {
     const fetchContent = async () => {
@@ -60,9 +30,9 @@ export default function PlatformSection() {
           const data = await response.json();
           if (data.content) {
             setPlatformContent({
-              title: data.content.platformTitle || "Choose Your Platform to Start Growing",
-              subtitle: data.content.platformSubtitle || "We offer specialized services for the world's leading social media platforms. Select yours to see our packages.",
-              cards: data.content.platformCards || PLATFORMS
+              title: data.content.platformTitle || "",
+              subtitle: data.content.platformSubtitle || "",
+              cards: data.content.platformCards || []
             });
           }
         }
@@ -112,6 +82,8 @@ export default function PlatformSection() {
       </section>
     );
   }
+
+  if (!platformContent) return null;
 
   const Icon = ({ name }: { name: string }) => {
     switch (name) {

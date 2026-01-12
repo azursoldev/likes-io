@@ -4,25 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 
 // Default values matching current UI
-const DEFAULT_TITLE = `Real Social Media
-Growth, <span class="accent">Delivered</span>
-<span class="accent"> Instantly!</span>`;
-const DEFAULT_SUBTITLE = "Get real, high-quality likes, followers, and views to boost your social presence, reach the Explore Page, and grow your brand organically.";
-const DEFAULT_RATING = "5.0";
-const DEFAULT_REVIEW_COUNT = "1,442+ Reviews";
-const DEFAULT_BUTTONS = [
-  { text: "View Packages", link: "#services-overview" },
-  { text: "Free Likes Trial", link: "#free-trial" },
-];
-
-const DEFAULT_PROFILE = {
-  handle: "@yourprofile",
-  role: "Lifestyle Creator",
-  likes: "1,258",
-  followers: "15.2k",
-  engagement: "3.4%",
-  image: ""
-};
+// Dynamic content only - defaults removed
 
 const HeroSkeleton = () => (
   <section className="hero-section">
@@ -78,14 +60,7 @@ const HeroSkeleton = () => (
 );
 
 export default function Hero() {
-  const [heroContent, setHeroContent] = useState({
-    title: DEFAULT_TITLE,
-    subtitle: DEFAULT_SUBTITLE,
-    rating: DEFAULT_RATING,
-    reviewCount: DEFAULT_REVIEW_COUNT,
-    buttons: DEFAULT_BUTTONS,
-    profile: DEFAULT_PROFILE,
-  });
+  const [heroContent, setHeroContent] = useState<any>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
   // Fetch homepage content
   useEffect(() => {
@@ -98,7 +73,7 @@ export default function Hero() {
           const data = await response.json();
           if (data.content) {
             // Parse title - handle HTML and line breaks
-            let title = data.content.heroTitle || DEFAULT_TITLE;
+            let title = data.content.heroTitle || "";
             // Convert \n to <br /> if not already HTML
             if (title.includes('\n') && !title.includes('<br')) {
               title = title.split('\n').map((line: string, i: number, arr: string[]) => 
@@ -107,34 +82,33 @@ export default function Hero() {
             }
             
             // Parse buttons
-            let buttons = DEFAULT_BUTTONS;
+            let buttons: any[] = [];
             if (data.content.heroCtaButtons && Array.isArray(data.content.heroCtaButtons)) {
               buttons = data.content.heroCtaButtons.map((btn: any) => ({
-                text: btn.text || btn.label || DEFAULT_BUTTONS[0].text,
-                link: btn.link || btn.href || DEFAULT_BUTTONS[0].link,
+                text: btn.text || btn.label || "",
+                link: btn.link || btn.href || "#",
               }));
             }
             
             setHeroContent({
               title,
-              subtitle: data.content.heroSubtitle || DEFAULT_SUBTITLE,
-              rating: data.content.heroRating || DEFAULT_RATING,
-              reviewCount: data.content.heroReviewCount || DEFAULT_REVIEW_COUNT,
+              subtitle: data.content.heroSubtitle || "",
+              rating: data.content.heroRating || "",
+              reviewCount: data.content.heroReviewCount || "",
               buttons,
               profile: {
-                handle: data.content.heroProfileHandle || DEFAULT_PROFILE.handle,
-                role: data.content.heroProfileRole || DEFAULT_PROFILE.role,
-                likes: data.content.heroProfileLikes || DEFAULT_PROFILE.likes,
-                followers: data.content.heroProfileFollowers || DEFAULT_PROFILE.followers,
-                engagement: data.content.heroProfileEngagement || DEFAULT_PROFILE.engagement,
-                image: data.content.heroProfileImage || DEFAULT_PROFILE.image,
+                handle: data.content.heroProfileHandle || "",
+                role: data.content.heroProfileRole || "",
+                likes: data.content.heroProfileLikes || "",
+                followers: data.content.heroProfileFollowers || "",
+                engagement: data.content.heroProfileEngagement || "",
+                image: data.content.heroProfileImage || "",
               }
             });
           }
         }
       } catch (error) {
         console.error('Error fetching hero content:', error);
-        // Use defaults on error
       } finally {
         setContentLoaded(true);
       }
@@ -144,11 +118,7 @@ export default function Hero() {
   }, []);
 
   // Social update rotation every 3 seconds
-  const [updates, setUpdates] = useState([
-    { handle: "@fitfoodie", item: "5,000 Followers", time: "1m ago", platform: "Instagram" },
-    { handle: "@yourbrand", item: "8.3k Views", time: "1h ago", platform: "Instagram" },
-    { handle: "@davidArt", item: "1,000 Likes", time: "3m ago", platform: "Instagram" },
-  ]);
+  const [updates, setUpdates] = useState<any[]>([]);
   const [uIndex, setUIndex] = useState(0);
 
   useEffect(() => {
@@ -218,6 +188,10 @@ export default function Hero() {
 
   if (!contentLoaded) {
     return <HeroSkeleton />;
+  }
+
+  if (!heroContent) {
+    return null;
   }
 
   return (
