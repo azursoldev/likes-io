@@ -6,6 +6,29 @@ import { faStar } from "@fortawesome/free-solid-svg-icons";
 // Default values matching current UI
 // Dynamic content only - defaults removed
 
+type HeroButton = {
+  text: string;
+  link: string;
+};
+
+type HeroProfile = {
+  handle: string;
+  role: string;
+  likes: string;
+  followers: string;
+  engagement: string;
+  image: string;
+};
+
+type HeroContent = {
+  title: string;
+  subtitle: string;
+  rating: string;
+  reviewCount: string;
+  buttons: HeroButton[];
+  profile: HeroProfile;
+};
+
 const HeroSkeleton = () => (
   <section className="hero-section">
     <div className="container hero-grid">
@@ -60,7 +83,7 @@ const HeroSkeleton = () => (
 );
 
 export default function Hero() {
-  const [heroContent, setHeroContent] = useState<any>(null);
+  const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
   // Fetch homepage content
   useEffect(() => {
