@@ -1,3 +1,17 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { 
+  faRocket, 
+  faAward, 
+  faShieldHalved, 
+  faHeadset, 
+  faStar, 
+  faCheckCircle,
+  IconDefinition
+} from "@fortawesome/free-solid-svg-icons";
+
 interface BenefitItem {
   icon: string;
   title: string;
@@ -10,45 +24,85 @@ interface AdvantageSectionProps {
   items?: BenefitItem[];
 }
 
-export default function AdvantageSection({ title, subtitle, items }: AdvantageSectionProps) {
-  const defaultItems = [
-    {
-      icon: "/fast-delivery.svg",
-      title: "Instant Delivery",
-      desc: "Your order begins the moment you check out, with tangible results in minutes.",
-    },
-    {
-      icon: "/premium-quality.svg",
-      title: "Premium Quality",
-      desc: "Enhance your social proof with engagement from high-quality, real-looking profiles.",
-    },
-    {
-      icon: "/shield.svg",
-      title: "100% Safe & Secure",
-      desc: "Your account's safety is our priority. We never ask for your password.",
-    },
-    {
-      icon: "/24-hour-service.svg",
-      title: "24/7 Customer Support",
-      desc: "Our dedicated global support team is always available to help you.",
-    },
-  ];
+const ICON_MAPPING: Record<string, IconDefinition> = {
+  RocketLaunchIcon: faRocket,
+  AwardIcon: faAward,
+  ShieldCheckIcon: faShieldHalved,
+  HeadsetIcon: faHeadset,
+  StarIcon: faStar,
+  CheckCircleIcon: faCheckCircle,
+};
 
-  const displayItems = items && items.length > 0 ? items : defaultItems;
-  const displayTitle = title || "The Likes.io Advantage";
-  const displaySubtitle = subtitle || "We combine premium quality with industry-leading features to deliver growth you can trust.";
+export default function AdvantageSection({ title, subtitle, items }: AdvantageSectionProps) {
+  const [content, setContent] = useState<{
+    title: string;
+    subtitle: string;
+    items: BenefitItem[];
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await fetch(`/api/cms/homepage?t=${Date.now()}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.content) {
+            const benefits = data.content.benefits || [];
+            const mappedItems = benefits.map((b: any) => ({
+              icon: b.icon,
+              title: b.title,
+              desc: b.description || b.desc,
+            }));
+
+            setContent({
+              title: data.content.whyChooseTitle,
+              subtitle: data.content.whyChooseSubtitle,
+              items: mappedItems.length > 0 ? mappedItems : null,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch homepage content:", error);
+      }
+    };
+
+    fetchContent();
+  }, []);
+
+  const displayItems = content?.items || items || [];
+  const displayTitle = content?.title || title || "";
+  const displaySubtitle = content?.subtitle || subtitle || "";
+
+  if (!displayTitle && displayItems.length === 0) return null;
+
+  const renderIcon = (iconStr: string) => {
+    // Check if it's a mapped FontAwesome icon
+    if (ICON_MAPPING[iconStr]) {
+      return (
+        <FontAwesomeIcon 
+          icon={ICON_MAPPING[iconStr]} 
+          style={{ width: '28px', height: '28px', color: '#f97316' }} 
+        />
+      );
+    }
+    
+    // Fallback to image if it's a path or not in mapping
+    // If it's a heroicon name but not in our mapping, we might want a default or try to match?
+    // For now, assume paths start with / or are filenames
+    return <img src={iconStr} alt="" style={{ width: '28px', height: '28px' }} />;
+  };
 
   return (
     <section className="advantage">
       <div className="container">
-        <h2 className="adv-title">{displayTitle}</h2>
+        <h2 className="adv-title" dangerouslySetInnerHTML={{ __html: displayTitle }} />
         <p className="adv-sub">{displaySubtitle}</p>
 
         <div className="adv-grid">
           {displayItems.map((it, idx) => (
             <div className="adv-card" key={idx}>
               <div className="adv-icon">
-                <img src={it.icon} alt="" />
+                {renderIcon(it.icon)}
               </div>
               <div className="adv-card-title">{it.title}</div>
               <div className="adv-card-desc">{it.desc}</div>

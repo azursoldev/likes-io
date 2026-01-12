@@ -592,24 +592,12 @@ export default function HomepageContentDashboard() {
 
             {/* Hero Section */}
             <div className="homepage-section-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div className="homepage-section-header">
                 <h2 className="section-title">Hero Section</h2>
                 <button
                   onClick={handleSave}
                   disabled={saving || loading}
                   className="homepage-save-btn"
-                  style={{
-                    padding: '0.5rem 1.5rem',
-                    backgroundColor: '#4f46e5',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: saving || loading ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    opacity: saving || loading ? 0.6 : 1,
-                  }}
                 >
                   <FontAwesomeIcon icon={faSave} />
                   {saving ? 'Saving...' : 'Save Changes'}
@@ -875,7 +863,17 @@ export default function HomepageContentDashboard() {
 
             {/* Platform Section */}
             <div className="homepage-section-card">
-              <h2 className="section-title">Platform Section</h2>
+              <div className="homepage-section-header">
+                <h2 className="section-title">Platform Section</h2>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || loading}
+                  className="homepage-save-btn"
+                >
+                  <FontAwesomeIcon icon={faSave} />
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
               <div className="homepage-form-grid">
                 <label className="homepage-label">
                   Title
@@ -1016,7 +1014,17 @@ export default function HomepageContentDashboard() {
 
             {/* Why Choose Us Section */}
             <div className="homepage-section-card">
-              <h2 className="section-title">Why Choose Us Section</h2>
+              <div className="homepage-section-header">
+                <h2 className="section-title">Why Choose Us Section</h2>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || loading}
+                  className="homepage-save-btn"
+                >
+                  <FontAwesomeIcon icon={faSave} />
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
               <div className="homepage-form-grid">
                 <label className="homepage-label">
                   Title
@@ -1095,24 +1103,12 @@ export default function HomepageContentDashboard() {
             </div>
           {/* Influence Section */}
             <div className="homepage-section-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div className="homepage-section-header">
                 <h2 className="section-title">Influence Section</h2>
                 <button
                   onClick={handleSave}
                   disabled={saving || loading}
                   className="homepage-save-btn"
-                  style={{
-                    padding: '0.5rem 1.5rem',
-                    backgroundColor: '#4f46e5',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: saving || loading ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    opacity: saving || loading ? 0.6 : 1,
-                  }}
                 >
                   <FontAwesomeIcon icon={faSave} />
                   {saving ? 'Saving...' : 'Save Changes'}
@@ -1228,24 +1224,12 @@ export default function HomepageContentDashboard() {
 
             {/* Quick Start Section */}
             <div className="homepage-section-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div className="homepage-section-header">
                 <h2 className="section-title">Quick Start Section</h2>
                 <button
                   onClick={handleSave}
                   disabled={saving || loading}
                   className="homepage-save-btn"
-                  style={{
-                    padding: '0.5rem 1.5rem',
-                    backgroundColor: '#4f46e5',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: saving || loading ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    opacity: saving || loading ? 0.6 : 1,
-                  }}
                 >
                   <FontAwesomeIcon icon={faSave} />
                   {saving ? 'Saving...' : 'Save Changes'}
