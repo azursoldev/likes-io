@@ -14,44 +14,17 @@ type Benefit = {
   description: string;
 };
 
-const initialBenefits: Benefit[] = [
-  {
-    id: 1,
-    icon: "RocketLaunchIcon",
-    title: "Instant Delivery",
-    description: "Your order begins the moment you c",
-  },
-  {
-    id: 2,
-    icon: "AwardIcon",
-    title: "Premium Quality Engagement",
-    description: "Enhance your social proof with engr",
-  },
-  {
-    id: 3,
-    icon: "ShieldCheckIcon",
-    title: "100% Safe & Secure",
-    description: "Your account's safety is our top pric",
-  },
-  {
-    id: 4,
-    icon: "HeadsetIcon",
-    title: "24/7 Customer Support",
-    description: "Our dedicated global support team",
-  },
-];
+const initialBenefits: Benefit[] = [];
 
 // Default values matching the current Hero component
-const DEFAULT_HERO_TITLE = `Real Social Media
-Growth, <span class="accent">Delivered</span>
-<span class="accent"> Instantly!</span>`;
-const DEFAULT_HERO_SUBTITLE = "Get real, high-quality likes, followers, and views to boost your social presence, reach the Explore Page, and grow your brand organically.";
-const DEFAULT_BUTTON1_TEXT = "View Packages";
-const DEFAULT_BUTTON1_LINK = "#services-overview";
-const DEFAULT_BUTTON2_TEXT = "Free Likes Trial";
-const DEFAULT_BUTTON2_LINK = "#free-trial";
-const DEFAULT_REVIEW_COUNT = "1,442+ Reviews";
-const DEFAULT_RATING = "5.0";
+const DEFAULT_HERO_TITLE = "";
+const DEFAULT_HERO_SUBTITLE = "";
+const DEFAULT_BUTTON1_TEXT = "";
+const DEFAULT_BUTTON1_LINK = "";
+const DEFAULT_BUTTON2_TEXT = "";
+const DEFAULT_BUTTON2_LINK = "";
+const DEFAULT_REVIEW_COUNT = "";
+const DEFAULT_RATING = "";
 
 type PlatformCard = {
   key: string;
@@ -82,64 +55,11 @@ type QuickStartButton = {
   icon: string;
 };
 
-const initialInfluenceSteps: InfluenceStep[] = [
-  {
-    id: 1,
-    title: "Build Instant Credibility & Trust",
-    description: "A high follower count is the ultimate social proof. It tells new visitors your account is worth following, making them more likely to click \"Follow\" without hesitation.",
-    subpoints: [
-      { title: "Attract Organic Growth", text: "People naturally gravitate towards popular accounts. A strong follower base acts like a magnet for organic growth." },
-      { title: "Increase Brand Trust", text: "For businesses, a large following establishes credibility and makes your brand appear more reputable to potential customers and partners." },
-      { title: "Unlock Platform Features", text: "Reaching follower milestones on Instagram can unlock powerful features for driving traffic and engagement." }
-    ]
-  },
-  {
-    id: 2,
-    title: "Amplify Your Reach & Influence",
-    description: "A well-grown profile signals trust and authority, increasing audience confidence and brand appeal."
-  },
-  {
-    id: 3,
-    title: "Kickstart Your Growth",
-    description: "Higher social proof improves reach and engagement, unlocking new growth loops over time."
-  }
-];
+const initialInfluenceSteps: InfluenceStep[] = [];
 
-const initialQuickStartButtons: QuickStartButton[] = [
-  { id: 1, label: "BUY INSTAGRAM FOLLOWERS", link: "instagram/followers", gradientClass: "grad-orange", icon: "instagram" },
-  { id: 2, label: "BUY INSTAGRAM LIKES", link: "instagram/likes", gradientClass: "grad-red", icon: "instagram" },
-  { id: 3, label: "BUY INSTAGRAM VIEWS", link: "instagram/views", gradientClass: "grad-pink", icon: "instagram" },
-  { id: 4, label: "BUY TIKTOK LIKES", link: "tiktok/likes", gradientClass: "grad-purple", icon: "tiktok" },
-  { id: 5, label: "BUY TIKTOK VIEWS", link: "tiktok/views", gradientClass: "grad-violet", icon: "tiktok" },
-  { id: 6, label: "BUY TIKTOK FOLLOWERS", link: "tiktok/followers", gradientClass: "grad-magenta", icon: "tiktok" },
-];
+const initialQuickStartButtons: QuickStartButton[] = [];
 
-const initialPlatformCards: PlatformCard[] = [
-  {
-    key: "instagram",
-    name: "Instagram",
-    desc: "Boost your posts, gain credibility, and reach the Explore Page with our premium Instagram services.",
-    tags: ["Likes", "Followers", "Views"],
-    cta: "View Instagram Services",
-    serviceType: "likes",
-  },
-  {
-    key: "tiktok",
-    name: "TikTok",
-    desc: "Give your videos the viral push they need to land on the FYP and capture millions of views.",
-    tags: ["Likes", "Followers", "Views"],
-    cta: "View TikTok Services",
-    serviceType: "likes",
-  },
-  {
-    key: "youtube",
-    name: "YouTube",
-    desc: "Increase your video rankings, watch time, and channel authority to stand out on the world's largest video platform.",
-    tags: ["Views", "Subscribers", "Likes"],
-    cta: "View YouTube Services",
-    serviceType: "views",
-  },
-];
+const initialPlatformCards: PlatformCard[] = [];
 
 export default function HomepageContentDashboard() {
   const [loading, setLoading] = useState(true);
@@ -158,30 +78,30 @@ export default function HomepageContentDashboard() {
   const [heroImage, setHeroImage] = useState<File | null>(null);
   const [heroImageName, setHeroImageName] = useState("");
   const [heroProfileImage, setHeroProfileImage] = useState("");
-  const [heroProfileHandle, setHeroProfileHandle] = useState("@yourprofile");
-  const [heroProfileRole, setHeroProfileRole] = useState("Lifestyle Creator");
-  const [heroProfileLikes, setHeroProfileLikes] = useState("1,258");
-  const [heroProfileFollowers, setHeroProfileFollowers] = useState("15.2k");
-  const [heroProfileEngagement, setHeroProfileEngagement] = useState("3.4%");
+  const [heroProfileHandle, setHeroProfileHandle] = useState("");
+  const [heroProfileRole, setHeroProfileRole] = useState("");
+  const [heroProfileLikes, setHeroProfileLikes] = useState("");
+  const [heroProfileFollowers, setHeroProfileFollowers] = useState("");
+  const [heroProfileEngagement, setHeroProfileEngagement] = useState("");
   
-  const [platformTitle, setPlatformTitle] = useState("Choose Your Platform to Start Growing");
-  const [platformSubtitle, setPlatformSubtitle] = useState("We support all major social media platforms");
+  const [platformTitle, setPlatformTitle] = useState("");
+  const [platformSubtitle, setPlatformSubtitle] = useState("");
   const [platformCards, setPlatformCards] = useState<PlatformCard[]>(initialPlatformCards);
   
-  const [whyChooseTitle, setWhyChooseTitle] = useState("Why Choose Us?");
-  const [whyChooseSubtitle, setWhyChooseSubtitle] = useState("Why Buying Instagram Likes is a Game-Changer");
+  const [whyChooseTitle, setWhyChooseTitle] = useState("");
+  const [whyChooseSubtitle, setWhyChooseSubtitle] = useState("");
   const [benefits, setBenefits] = useState<Benefit[]>(initialBenefits);
 
-  const [influenceTitle, setInfluenceTitle] = useState("Build Your Empire of Influence");
-  const [influenceSubtitle, setInfluenceSubtitle] = useState("Start your journey to becoming a social media influencer today");
+  const [influenceTitle, setInfluenceTitle] = useState("");
+  const [influenceSubtitle, setInfluenceSubtitle] = useState("");
   const [influenceSteps, setInfluenceSteps] = useState<InfluenceStep[]>(initialInfluenceSteps);
   const [influenceImageFile, setInfluenceImageFile] = useState<File | null>(null);
   const [influenceImageName, setInfluenceImageName] = useState("");
   const [influenceImage, setInfluenceImage] = useState("");
   
-  const [quickStartTitle, setQuickStartTitle] = useState("Get Started Now");
-  const [quickStartDescription1, setQuickStartDescription1] = useState("Select a package that fits your needs and watch your social media presence grow.");
-  const [quickStartDescription2, setQuickStartDescription2] = useState("Our services are safe, secure, and delivered instantly.");
+  const [quickStartTitle, setQuickStartTitle] = useState("");
+  const [quickStartDescription1, setQuickStartDescription1] = useState("");
+  const [quickStartDescription2, setQuickStartDescription2] = useState("");
   const [quickStartButtons, setQuickStartButtons] = useState<QuickStartButton[]>(initialQuickStartButtons);
 
   // Get Started Instantly State
@@ -272,17 +192,17 @@ export default function HomepageContentDashboard() {
   const updateStateFromData = (content: any) => {
     if (!content) return;
 
-    setHeroTitle(content.heroTitle || DEFAULT_HERO_TITLE);
-    setHeroSubtitle(content.heroSubtitle || DEFAULT_HERO_SUBTITLE);
-    setRating(content.heroRating || DEFAULT_RATING);
-    setReviewCountText(content.heroReviewCount || DEFAULT_REVIEW_COUNT);
+    setHeroTitle(content.heroTitle || "");
+    setHeroSubtitle(content.heroSubtitle || "");
+    setRating(content.heroRating || "");
+    setReviewCountText(content.heroReviewCount || "");
     
     // Hero Profile Card
-    setHeroProfileHandle(content.heroProfileHandle || "@yourprofile");
-    setHeroProfileRole(content.heroProfileRole || "Lifestyle Creator");
-    setHeroProfileLikes(content.heroProfileLikes || "1,258");
-    setHeroProfileFollowers(content.heroProfileFollowers || "15.2k");
-    setHeroProfileEngagement(content.heroProfileEngagement || "3.4%");
+    setHeroProfileHandle(content.heroProfileHandle || "");
+    setHeroProfileRole(content.heroProfileRole || "");
+    setHeroProfileLikes(content.heroProfileLikes || "");
+    setHeroProfileFollowers(content.heroProfileFollowers || "");
+    setHeroProfileEngagement(content.heroProfileEngagement || "");
     setHeroProfileImage(content.heroProfileImage || "");
     if (content.heroProfileImage) {
       const fileName = content.heroProfileImage.split('/').pop();
@@ -290,19 +210,19 @@ export default function HomepageContentDashboard() {
     }
     
     // Platform Section
-    setPlatformTitle(content.platformTitle || "Choose Your Platform to Start Growing");
-    setPlatformSubtitle(content.platformSubtitle || "We support all major social media platforms");
+    setPlatformTitle(content.platformTitle || "");
+    setPlatformSubtitle(content.platformSubtitle || "");
     if (content.platformCards) {
       setPlatformCards(content.platformCards);
     }
     
     // Why Choose Us
-    setWhyChooseTitle(content.whyChooseTitle || "Why Choose Us?");
-    setWhyChooseSubtitle(content.whyChooseSubtitle || "Why Buying Instagram Likes is a Game-Changer");
+    setWhyChooseTitle(content.whyChooseTitle || "");
+    setWhyChooseSubtitle(content.whyChooseSubtitle || "");
     
     // Influence Section
-    setInfluenceTitle(content.influenceTitle || "Build Your Empire of Influence");
-    setInfluenceSubtitle(content.influenceSubtitle || "Start your journey to becoming a social media influencer today");
+    setInfluenceTitle(content.influenceTitle || "");
+    setInfluenceSubtitle(content.influenceSubtitle || "");
     if (content.influenceSteps) {
       setInfluenceSteps(content.influenceSteps);
     }
@@ -313,9 +233,9 @@ export default function HomepageContentDashboard() {
     }
     
     // Quick Start Section
-    setQuickStartTitle(content.quickStartTitle || "Get Started Now");
-    setQuickStartDescription1(content.quickStartDescription1 || "Select a package that fits your needs and watch your social media presence grow.");
-    setQuickStartDescription2(content.quickStartDescription2 || "Our services are safe, secure, and delivered instantly.");
+    setQuickStartTitle(content.quickStartTitle || "");
+    setQuickStartDescription1(content.quickStartDescription1 || "");
+    setQuickStartDescription2(content.quickStartDescription2 || "");
     if (content.quickStartButtons) {
       setQuickStartButtons(content.quickStartButtons);
     }
@@ -327,12 +247,12 @@ export default function HomepageContentDashboard() {
     // Parse CTA buttons if they exist
     if (content.heroCtaButtons && Array.isArray(content.heroCtaButtons)) {
       if (content.heroCtaButtons[0]) {
-        setButton1Text(content.heroCtaButtons[0].text || DEFAULT_BUTTON1_TEXT);
-        setButton1Link(content.heroCtaButtons[0].link || DEFAULT_BUTTON1_LINK);
+        setButton1Text(content.heroCtaButtons[0].text || "");
+        setButton1Link(content.heroCtaButtons[0].link || "");
       }
       if (content.heroCtaButtons[1]) {
-        setButton2Text(content.heroCtaButtons[1].text || DEFAULT_BUTTON2_TEXT);
-        setButton2Link(content.heroCtaButtons[1].link || DEFAULT_BUTTON2_LINK);
+        setButton2Text(content.heroCtaButtons[1].text || "");
+        setButton2Link(content.heroCtaButtons[1].link || "");
       }
     }
   };
