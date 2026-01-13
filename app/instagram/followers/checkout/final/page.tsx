@@ -43,13 +43,13 @@ function FinalCheckoutContent() {
   
   // Create URLs for navigation
   const baseUrl = service === "checkout" ? `/${platform}` : `/${platform}/${service}`;
-  const detailsUrl = `${baseUrl}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
+  const detailsUrl = `${baseUrl}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&email=${encodeURIComponent(searchParams.get("email") || "")}`;
   // No postsUrl for followers
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet" | "myfatoorah">("card");
   const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvc, setCvc] = useState("");
@@ -687,7 +687,7 @@ function FinalCheckoutContent() {
                     </div>
                     <span>@{username || "username"}</span>
                   </div>
-                  <button type="button" className="change-button">Change</button>
+                  <Link href={detailsUrl} className="change-button" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Change</Link>
                 </div>
               </div>
 

@@ -45,6 +45,7 @@ function PostsSelectionContent() {
   const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
   const serviceId = searchParams.get("serviceId") || "";
+  const email = searchParams.get("email") || "";
 
   const [userProfile, setUserProfile] = useState<{ profilePicture: string; username: string } | null>(null);
   const [imageError, setImageError] = useState(false);
@@ -172,6 +173,7 @@ function PostsSelectionContent() {
         price: String(priceValue),
         type: packageType,
         postLink: finalLinks.join(','),
+        email
       });
       if (serviceId) {
         params.append("serviceId", serviceId);

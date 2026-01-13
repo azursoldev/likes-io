@@ -56,7 +56,7 @@ function FinalCheckoutContent() {
   }, []);
 
   const [cardholderName, setCardholderName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvc, setCvc] = useState("");

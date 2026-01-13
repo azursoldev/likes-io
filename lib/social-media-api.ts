@@ -159,7 +159,8 @@ export class SocialMediaAPI {
 
   async fetchPosts(platform: Platform, username: string, cursor?: string): Promise<FetchPostsResult> {
     // Only check cache for initial page, and skip for Instagram and YouTube to ensure we get fresh cursor for pagination
-    if (!cursor && platform !== 'INSTAGRAM' && platform !== 'YOUTUBE') {
+    // Also skip for TikTok to force fresh fetch and avoid stale empty results
+    if (!cursor && platform !== 'INSTAGRAM' && platform !== 'YOUTUBE' && platform !== 'TIKTOK') {
       const cached = await prisma.socialProfile.findUnique({
         where: {
           platform_username: {
@@ -437,7 +438,7 @@ export class SocialMediaAPI {
 
     try {
       const response = await axios.get(
-        `https://${config.tikTokHost}/api/user/info-with-region`,
+        `https://${config.tikTokHost}/api/user/info`,
         {
           params: { uniqueId: username.replace('@', '') },
           headers: {
@@ -545,13 +546,13 @@ export class SocialMediaAPI {
         } else {
             console.warn(`No secUid found in profile for ${username}`);
         }
-      } catch (e) {
+      } catch (e: any) {
         console.warn('Error fetching profile for secUid:', e);
       }
 
       // Step 2: Fetch posts using secUid (preferred) or uniqueId (fallback)
       const params: any = {
-        count: 100, // Increased to 100 to show more posts
+        count: 35, // Updated to 35 as requested
         cursor: cursor || '0'
       };
 
@@ -581,12 +582,11 @@ export class SocialMediaAPI {
       const posts = videos.map((video: any) => ({
         id: video.id || video.video_id || video.aweme_id,
         url: `https://www.tiktok.com/@${video.author?.uniqueId || username.replace('@', '')}/video/${video.id || video.video_id || video.aweme_id}`,
-        thumbnail: this.extractUrl(video.video?.cover) || this.extractUrl(video.video?.originCover) || this.extractUrl(video.cover) || this.extractUrl(video.cover_url) || this.extractUrl(video.origin_cover),
-        caption: video.title || video.desc || video.description,
-        likes: Number(video.stats?.diggCount || video.stats?.likeCount || video.digg_count || video.statistics?.digg_count || 0),
-        comments: Number(video.comment_count || video.statistics?.comment_count || 0),
-        views: Number(video.stats?.playCount || video.stats?.viewCount || video.play_count || video.statistics?.play_count || 0),
-        timestamp: video.create_time || video.createTime || 0,
+        thumbnail: video.cover || video.origin_cover || video.video?.cover || video.video?.originCover || video.video?.origin_cover || video.video?.dynamicCover || video.video?.dynamic_cover,
+        likes: video.diggCount || video.digg_count || video.stats?.diggCount || video.statistics?.digg_count || video.authorStats?.diggCount || 0,
+        comments: video.commentCount || video.comment_count || video.stats?.commentCount || video.statistics?.comment_count || video.authorStats?.commentCount || 0,
+        views: video.playCount || video.play_count || video.stats?.playCount || video.statistics?.play_count || video.authorStats?.playCount || 0,
+        date: video.createTime ? new Date(video.createTime * 1000).toISOString() : new Date().toISOString(),
       }));
 
       return { 

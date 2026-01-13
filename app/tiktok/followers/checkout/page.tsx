@@ -21,6 +21,8 @@ function CheckoutContent() {
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [username, setUsername] = useState("kyliejenner");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -70,10 +72,20 @@ function CheckoutContent() {
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
-      // Navigate to posts selection page (if exists) or final checkout
-      router.push(`/tiktok/followers/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+    setError("");
+
+    if (!username.trim()) {
+      setError("Please enter a valid username");
+      return;
     }
+
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    // Navigate to final checkout directly
+    router.push(`/tiktok/followers/checkout/final?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&email=${encodeURIComponent(email)}`);
   };
 
   return (
@@ -122,8 +134,25 @@ function CheckoutContent() {
                   type="text"
                   className="checkout-input"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (error) setError("");
+                  }}
                   placeholder="Enter your TikTok username"
+                />
+              </div>
+
+              <div className="checkout-form-group">
+                <label className="checkout-label">Email address</label>
+                <input
+                  type="email"
+                  className="checkout-input"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="Enter your email"
                 />
               </div>
 
@@ -164,6 +193,13 @@ function CheckoutContent() {
                 <a href="/privacy" className="checkout-link">privacy policy</a>.
               </p>
 
+              {/* Error Message */}
+              {error && (
+                <div className="checkout-error" style={{ color: 'red', marginBottom: '15px', fontSize: '14px' }}>
+                  {error}
+                </div>
+              )}
+
               {/* Continue Button */}
               <button type="submit" className="checkout-continue-btn">
                 Continue
@@ -184,30 +220,7 @@ function CheckoutContent() {
           </div>
 
           {/* Payment Methods Card */}
-          <div className="checkout-card checkout-payment-card">
-            <div className="checkout-payment">
-              <span className="checkout-payment-label">Pay securely with</span>
-              <div className="checkout-payment-icons">
-                {/* iCH Logo */}
-                <div className="checkout-payment-icon-wrapper">
-                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" rx="6" fill="#0066CC"/>
-                    <circle cx="12" cy="12" r="3" fill="#FFA500"/>
-                    <text x="30" y="26" fontFamily="Arial, sans-serif" fontSize="18" fontWeight="bold" fill="white" textAnchor="middle" letterSpacing="1px">iCH</text>
-                  </svg>
-                </div>
-                {/* Mastercard Logo */}
-                <div className="checkout-payment-icon-wrapper">
-                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" rx="6" fill="#1A1F71"/>
-                    <circle cx="20" cy="20" r="9" fill="#EB001B"/>
-                    <circle cx="40" cy="20" r="9" fill="#F79E1B"/>
-                    <circle cx="30" cy="20" r="8.5" fill="#FF5F00"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
+       
         </div>
       </main>
       <Footer />

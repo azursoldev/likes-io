@@ -21,6 +21,7 @@ function CheckoutContent() {
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -74,6 +75,12 @@ function CheckoutContent() {
     e.preventDefault();
     if (!username.trim()) {
       setError("Please enter a YouTube channel URL or username");
+      return;
+    }
+
+    // Basic email validation
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address");
       return;
     }
 
@@ -161,6 +168,21 @@ function CheckoutContent() {
               </div>
 
               <div className="checkout-form-group">
+                <label className="checkout-label">Email Address</label>
+                <input
+                  type="email"
+                  className="checkout-input"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Enter your email address"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="checkout-form-group">
                 <label className="checkout-label">Product package</label>
                 <div className="checkout-dropdown-wrapper" ref={dropdownRef}>
                   <button
@@ -217,30 +239,7 @@ function CheckoutContent() {
           </div>
 
           {/* Payment Methods Card */}
-          <div className="checkout-card checkout-payment-card">
-            <div className="checkout-payment">
-              <span className="checkout-payment-label">Pay securely with</span>
-              <div className="checkout-payment-icons">
-                {/* iCH Logo */}
-                <div className="checkout-payment-icon-wrapper">
-                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" rx="6" fill="#0066CC"/>
-                    <circle cx="12" cy="12" r="3" fill="#FFA500"/>
-                    <text x="30" y="26" fontFamily="Arial, sans-serif" fontSize="18" fontWeight="bold" fill="white" textAnchor="middle" letterSpacing="1px">iCH</text>
-                  </svg>
-                </div>
-                {/* Mastercard Logo */}
-                <div className="checkout-payment-icon-wrapper">
-                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" rx="6" fill="#1A1F71"/>
-                    <circle cx="20" cy="20" r="9" fill="#EB001B"/>
-                    <circle cx="40" cy="20" r="9" fill="#F79E1B"/>
-                    <circle cx="30" cy="20" r="8.5" fill="#FF5F00"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </main>
       <Footer />

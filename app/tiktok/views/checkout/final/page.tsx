@@ -34,6 +34,9 @@ function FinalCheckoutContent() {
   const priceValue = parseFloat(searchParams.get("price") || "9.99");
   const packageType = searchParams.get("type") || "High-Quality";
   const postLink = searchParams.get("postLink") || "";
+  const postLinks = postLink ? postLink.split(',') : [];
+  const postCount = postLinks.length || 1;
+  const urlEmail = searchParams.get("email");
   const packageServiceId = searchParams.get("serviceId") || "";
 
   // Get platform and service from pathname
@@ -48,7 +51,7 @@ function FinalCheckoutContent() {
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet">("card");
   const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(urlEmail || "");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvc, setCvc] = useState("");

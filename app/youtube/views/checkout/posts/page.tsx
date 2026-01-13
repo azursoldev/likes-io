@@ -203,6 +203,7 @@ function PostsSelectionContent({ basePath }: { basePath?: string }) {
         qty: String(splitQty),
         price: String(totalBasePrice), // Pass the calculated total price
         type: packageType,
+        email
       });
       if (serviceId) {
         params.append("serviceId", serviceId);

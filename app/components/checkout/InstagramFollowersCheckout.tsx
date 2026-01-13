@@ -8,10 +8,11 @@ import {
   faThumbsUp, 
   faCoffee, 
   faClock, 
-  faShield,
-  faShieldHalved,
-  faLock,
-  faAngleDown,
+  faShield, 
+  faShieldHalved, 
+  faLock, 
+  faAngleDown, 
+  faUser,
   faEnvelope
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -31,19 +32,19 @@ type PackageTab = {
   packages: PackageOption[];
 };
 
-function CheckoutContent() {
+function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: string; packages?: any[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
-  const [username, setUsername] = useState(searchParams.get("username") || "");
-  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [usernameError, setUsernameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [usernameValid, setUsernameValid] = useState(false);
-  const [packages, setPackages] = useState<PackageTab[]>([]);
-  const [loadingPackages, setLoadingPackages] = useState(true);
+  const [packages, setPackages] = useState<PackageTab[]>(initialPackages || []);
+  const [loadingPackages, setLoadingPackages] = useState(!initialPackages);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get package info from URL params if available
@@ -55,11 +56,13 @@ function CheckoutContent() {
   const [priceValue, setPriceValue] = useState(initialPrice);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   
-  // Fetch packages from CMS
+  // Fetch packages from CMS if not provided via props
   useEffect(() => {
+    if (initialPackages && initialPackages.length > 0) return;
+    
     const fetchPackages = async () => {
       try {
-        const response = await fetch("/api/cms/service-pages/instagram/likes");
+        const response = await fetch("/api/cms/service-pages/instagram/followers");
         if (response.ok) {
           const data = await response.json();
           if (data.packages && Array.isArray(data.packages) && data.packages.length > 0) {
@@ -103,7 +106,7 @@ function CheckoutContent() {
   const currencyCode = getCurrencySymbol() === "€" ? "EUR" : "USD";
   const selectedPackage = useMemo(() => {
     const qtyDisplay = typeof qty === "string" ? qty : String(qty);
-    return `${qtyDisplay} Likes / ${formatPrice(priceValue)} ${currencyCode}`;
+    return `${qtyDisplay} Followers / ${formatPrice(priceValue)} ${currencyCode}`;
   }, [qty, priceValue, formatPrice, currencyCode]);
 
   // Build package options list from CMS data (remove duplicates, prioritize ones with serviceId)
@@ -123,7 +126,7 @@ function CheckoutContent() {
         if (!existing || pkg.offText || (pkg.serviceId && !existing.serviceId)) {
           const offText = pkg.offText ? ` - ${pkg.offText}` : "";
           optionsMap.set(uniqueKey, {
-            label: `${qtyDisplay} Likes / ${formatPrice(priceNum)} ${currencyCode}${offText}`,
+            label: `${qtyDisplay} Followers / ${formatPrice(priceNum)} ${currencyCode}${offText}`,
             qty: pkg.qty,
             price: priceNum,
             tabLabel: tab.label,
@@ -176,6 +179,14 @@ function CheckoutContent() {
     }
   };
 
+  const validateEmail = (email: string) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -191,14 +202,6 @@ function CheckoutContent() {
       };
     }
   }, [isPackageOpen]);
-
-  const validateEmail = (email: string) => {
-    return String(email)
-      .toLowerCase()
-      .match(
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-      );
-  };
 
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,7 +228,7 @@ function CheckoutContent() {
     const isUsernameValid = await validateUsername(username);
     
     if (isUsernameValid) {
-      // Navigate to posts selection page, include serviceId if available
+      // Navigate to posts selection page
       const params = new URLSearchParams({
         username: username,
         email: email,
@@ -236,7 +239,7 @@ function CheckoutContent() {
       if (selectedServiceId) {
         params.append("serviceId", selectedServiceId);
       }
-      router.push(`/instagram/likes/checkout/posts?${params.toString()}`);
+      router.push(`/instagram/followers/checkout/final?${params.toString()}`);
     }
   };
 
@@ -252,14 +255,14 @@ function CheckoutContent() {
           </div>
 
           {/* Title and Subtitle */}
-          <h1 className="checkout-title">Instagram Likes Checkout</h1>
+          <h1 className="checkout-title">Instagram Followers Checkout</h1>
           <p className="checkout-subtitle">Start by entering your username.</p>
 
           {/* Features List Card */}
           <div className="checkout-card checkout-features-card">
             <div className="checkout-features">
               <div className="checkout-feature-item">
-                <FontAwesomeIcon icon={faThumbsUp} className="checkout-feature-icon" />
+                <FontAwesomeIcon icon={faUser} className="checkout-feature-icon" />
                 <span>Internationally acclaimed services & top ratings.</span>
               </div>
               <div className="checkout-feature-item">
@@ -294,6 +297,18 @@ function CheckoutContent() {
                     placeholder="Enter your Instagram username"
                     disabled={isValidating}
                   />
+                  {isValidating && (
+                    <span style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "14px",
+                      color: "#666"
+                    }}>
+                      Validating...
+                    </span>
+                  )}
                   {usernameValid && !isValidating && (
                     <span style={{
                       position: "absolute",
@@ -405,13 +420,8 @@ function CheckoutContent() {
               </p>
 
               {/* Continue Button */}
-              <button 
-                type="submit" 
-                className="checkout-continue-btn"
-                disabled={isValidating}
-                style={{ opacity: isValidating ? 0.7 : 1, cursor: isValidating ? 'not-allowed' : 'pointer' }}
-              >
-                {isValidating ? "Validating..." : "Continue"}
+              <button type="submit" className="checkout-continue-btn">
+                Continue
               </button>
 
               {/* Security Assurance */}
@@ -437,10 +447,10 @@ function CheckoutContent() {
   );
 }
 
-export default function InstagramLikesCheckout() {
+export default function InstagramFollowersCheckout({ basePath, packages }: { basePath?: string; packages?: any[] }) {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <CheckoutContent />
+    <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+      <CheckoutContent basePath={basePath} packages={packages} />
     </Suspense>
   );
 }

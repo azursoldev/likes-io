@@ -43,6 +43,9 @@ function FinalCheckoutContent() {
       setPriceValue(parseFloat(sp.get("price") || "17.99"));
       setPackageType(sp.get("type") || "High-Quality");
       setPostLink(sp.get("postLink") || "");
+      const em = sp.get("email") || "";
+      setUrlEmail(em);
+      setEmail(em);
     }
   }, []);
 
@@ -65,6 +68,7 @@ function FinalCheckoutContent() {
   }, []);
 
   const [cardholderName, setCardholderName] = useState("");
+  const [urlEmail, setUrlEmail] = useState("");
   const [email, setEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");

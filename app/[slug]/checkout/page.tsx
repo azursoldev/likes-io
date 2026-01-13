@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { InstagramFollowersCheckout } from '../../instagram/followers/checkout/page';
+import InstagramFollowersCheckout from '../../components/checkout/InstagramFollowersCheckout';
 import InstagramLikesCheckout from '../../components/checkout/InstagramLikesCheckout';
 import InstagramViewsCheckout from '../../instagram/views/checkout/page';
 import TikTokFollowersCheckout from '../../tiktok/followers/checkout/page';

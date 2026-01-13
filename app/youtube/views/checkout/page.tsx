@@ -37,6 +37,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [inputValue, setInputValue] = useState("");
+  const [email, setEmail] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState("");
@@ -140,7 +141,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
-    validateInput(val);
+    setError("");
   };
 
   const handlePackageSelect = (pkg: PackageOption) => {
@@ -160,17 +161,35 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
       return;
     }
 
+    // Basic email validation
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
     setIsValidating(true);
     setError("");
 
+    // Determine input type
+    let currentInputType = inputType;
+    if (!currentInputType) {
+        const videoRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        if (videoRegex.test(inputValue)) {
+            currentInputType = "video";
+        } else {
+            currentInputType = "channel";
+        }
+    }
+
     try {
-      if (inputType === "video") {
+      if (currentInputType === "video") {
          // Direct to Final Checkout
          const params = new URLSearchParams({
             videoLink: inputValue,
             qty: typeof qty === "string" ? qty : String(qty),
             price: String(priceValue),
             type: packageType,
+            email
          });
          
          if (selectedServiceId) {
@@ -196,6 +215,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
                 qty: typeof qty === "string" ? qty : String(qty),
                 price: String(priceValue),
                 type: packageType,
+                email
             });
             if (selectedServiceId) {
                 params.append("serviceId", selectedServiceId);
@@ -276,8 +296,23 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
                         </div>
                     )}
                 </div>
-                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
               </div>
+
+              <div className="checkout-form-group">
+                <label className="checkout-label">Email Address</label>
+                <input
+                  type="email"
+                  className="checkout-input"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Enter your email address"
+                />
+              </div>
+
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
               <div className="checkout-form-group">
                 <label className="checkout-label">Product package</label>
@@ -351,30 +386,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
           </div>
 
           {/* Payment Methods Card */}
-          <div className="checkout-card checkout-payment-card">
-            <div className="checkout-payment">
-              <span className="checkout-payment-label">Pay securely with</span>
-              <div className="checkout-payment-icons">
-                {/* iCH Logo */}
-                <div className="checkout-payment-icon-wrapper">
-                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" rx="6" fill="#0066CC"/>
-                    <circle cx="12" cy="12" r="3" fill="#FFA500"/>
-                    <text x="30" y="26" fontFamily="Arial, sans-serif" fontSize="18" fontWeight="bold" fill="white" textAnchor="middle" letterSpacing="1px">iCH</text>
-                  </svg>
-                </div>
-                {/* Mastercard Logo */}
-                <div className="checkout-payment-icon-wrapper">
-                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" rx="6" fill="#1A1F71"/>
-                    <circle cx="20" cy="20" r="9" fill="#EB001B"/>
-                    <circle cx="40" cy="20" r="9" fill="#F79E1B"/>
-                    <circle cx="30" cy="20" r="8.5" fill="#FF5F00"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
+         
         </div>
       </main>
       <Footer />

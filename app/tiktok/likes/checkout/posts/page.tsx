@@ -37,11 +37,25 @@ function PostsSelectionContent() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [selectionError, setSelectionError] = useState("");
   
   const username = searchParams.get("username") || "";
+  const email = searchParams.get("email") || "";
   const qty = searchParams.get("qty") || "500";
   const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
+
+  const parseQty = (val: string) => {
+    if (!val) return 0;
+    const clean = val.toLowerCase().trim();
+    if (clean.endsWith('k')) return parseFloat(clean) * 1000;
+    if (clean.endsWith('m')) return parseFloat(clean) * 1000000;
+    return parseInt(clean.replace(/[^0-9]/g, ''), 10) || 0;
+  };
+
+  const totalLikes = parseQty(qty);
+  const selectedCount = selectedPosts.length || (postLink ? 1 : 0);
+  const likesPerPost = selectedCount > 0 ? Math.floor(totalLikes / selectedCount) : totalLikes;
 
   const formatCount = (count: number) => {
     if (!count) return '0';
@@ -107,13 +121,7 @@ function PostsSelectionContent() {
       console.log('API Response:', data);
 
       if (response.ok) {
-        // data.posts is the result object containing { posts: [...], nextCursor: ... }
-        const result = data.posts;
-        if (!result) {
-            console.error('Invalid response structure: data.posts is undefined', data);
-            throw new Error('Invalid API response');
-        }
-        const newPosts = result.posts || [];
+        const newPosts = data.posts || [];
         console.log('Parsed posts:', newPosts.length);
         
         if (cursor) {
@@ -125,7 +133,7 @@ function PostsSelectionContent() {
         } else {
           setPosts(newPosts);
         }
-        setNextCursor(result.nextCursor || null);
+        setNextCursor(data.nextCursor || null);
       } else {
         console.error('API Error:', data.error);
         if (!cursor) setError(data.error || "Failed to fetch posts");
@@ -156,8 +164,18 @@ function PostsSelectionContent() {
   const handlePostSelect = (url: string) => {
     setSelectedPosts(prev => {
       if (prev.includes(url)) {
+        setSelectionError("");
         return prev.filter(p => p !== url);
       } else {
+        const newCount = prev.length + 1;
+        const potentialLikesPerPost = Math.floor(totalLikes / newCount);
+        
+        if (potentialLikesPerPost < 50 && totalLikes >= 50) {
+            setSelectionError("Minimum 50 likes per post required. Please deselect a post to add another.");
+            return prev;
+        }
+        
+        setSelectionError("");
         return [...prev, url];
       }
     });
@@ -171,7 +189,7 @@ function PostsSelectionContent() {
     if (finalLinks.length > 0) {
       // Navigate to final checkout step
       // Pass comma-separated links
-      router.push(`/tiktok/likes/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${packageType}&postLink=${encodeURIComponent(finalLinks.join(','))}`);
+      router.push(`/tiktok/likes/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${packageType}&postLink=${encodeURIComponent(finalLinks.join(','))}&email=${encodeURIComponent(email)}`);
     }
   };
 
@@ -213,7 +231,14 @@ function PostsSelectionContent() {
             <div className="posts-selection-left">
               <div className="checkout-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h2 className="posts-selection-title" style={{ margin: 0 }}>Select Posts</h2>
+                  <div>
+                    <h2 className="posts-selection-title" style={{ margin: 0 }}>Select Posts</h2>
+                    {selectionError && (
+                        <p style={{ color: '#dc2626', fontSize: '13px', marginTop: '4px', fontWeight: '500' }}>
+                            {selectionError}
+                        </p>
+                    )}
+                  </div>
                   <span style={{ color: '#666', fontSize: '14px' }}>
                     {selectedPosts.length || (postLink ? 1 : 0)} selected
                   </span>
@@ -249,8 +274,8 @@ function PostsSelectionContent() {
                   <>
                     <div className="posts-grid" style={{ 
                       display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
-                      gap: '10px',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
+                      gap: '12px',
                       marginBottom: '20px'
                     }}>
                       {posts.map((post) => (
@@ -260,12 +285,14 @@ function PostsSelectionContent() {
                           onClick={() => handlePostSelect(post.url)}
                           style={{
                             cursor: 'pointer',
-                            border: selectedPosts.includes(post.url) ? '3px solid #f97316' : '1px solid #eee',
-                            borderRadius: '8px',
+                            borderRadius: '16px',
                             overflow: 'hidden',
                             aspectRatio: '1/1',
                             position: 'relative',
-                            backgroundColor: '#000'
+                            backgroundColor: '#000',
+                            transition: 'all 0.2s ease',
+                            transform: selectedPosts.includes(post.url) ? 'scale(0.98)' : 'scale(1)',
+                            boxShadow: selectedPosts.includes(post.url) ? '0 0 0 3px #ff4500' : 'none'
                           }}
                         >
                           <img 
@@ -276,50 +303,75 @@ function PostsSelectionContent() {
                               width: '100%', 
                               height: '100%', 
                               objectFit: 'cover',
-                              opacity: selectedPosts.includes(post.url) ? 0.8 : 1
+                              opacity: selectedPosts.includes(post.url) ? 0.9 : 1
                             }} 
                           />
-                          {selectedPosts.includes(post.url) && (
+                          
+                          {/* Selection Indicator (Checkmark) or Play Icon */}
+                          {selectedPosts.includes(post.url) ? (
                             <div style={{
                               position: 'absolute',
-                              top: '5px',
-                              right: '5px',
-                              background: '#f97316',
-                              color: 'white',
+                              top: '8px',
+                              right: '8px',
+                              width: '24px',
+                              height: '24px',
+                              background: '#ff4500',
                               borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
+                              color: '#fff',
                               fontSize: '12px',
-                              zIndex: 10
+                              zIndex: 10,
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                             }}>
                               <FontAwesomeIcon icon={faCheck} />
                             </div>
+                          ) : (
+                            <div style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              width: '24px',
+                              height: '24px',
+                              background: 'rgba(0,0,0,0.4)',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#fff',
+                              fontSize: '10px',
+                              backdropFilter: 'blur(2px)'
+                            }}>
+                              <FontAwesomeIcon icon={faPlay} style={{ marginLeft: '2px' }} />
+                            </div>
                           )}
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
-                            right: '0',
-                            padding: '4px 8px',
-                            background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                            color: '#fff',
-                            fontSize: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <FontAwesomeIcon icon={faPlay} style={{ fontSize: '10px' }} />
-                              <span>{formatCount(post.views || 0)}</span>
+
+                          {/* Selected Badge - Bottom Center (Like "Needs likes") */}
+                          {selectedPosts.includes(post.url) && (
+                            <div style={{
+                              position: 'absolute',
+                              bottom: '10px',
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              background: '#ff4500', // Orange color similar to screenshot
+                              color: '#fff',
+                              padding: '6px 12px',
+                              borderRadius: '20px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              zIndex: 10,
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                              whiteSpace: 'nowrap',
+                              width: 'max-content'
+                            }}>
+                              <FontAwesomeIcon icon={faHeart} />
+                              <span>+ {likesPerPost}</span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <FontAwesomeIcon icon={faHeart} style={{ fontSize: '10px' }} />
-                              <span>{formatCount(post.likes || 0)}</span>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -419,10 +471,12 @@ function PostsSelectionContent() {
                       </div>
                       <div className="order-summary-details">
                         <span className="order-summary-text">{qty} TikTok Likes</span>
-                        <span className="order-summary-subtext">Applying to {selectedPosts.length || (postLink ? 1 : 0)} post{selectedPosts.length !== 1 && (selectedPosts.length !== 0 || !postLink) ? 's' : ''}.</span>
+                        <span className="order-summary-subtext">
+                          {likesPerPost} likes / {selectedCount} post{selectedCount !== 1 ? 's' : ''}
+                        </span>
                       </div>
                     </div>
-                    <button type="button" className="order-change-btn" onClick={() => router.push(`/tiktok/likes/checkout?qty=${qty}&price=${priceValue}&type=${packageType}`)}>Change</button>
+                    <button type="button" className="order-change-btn" onClick={() => router.push(`/tiktok/likes/checkout?qty=${qty}&price=${priceValue}&type=${packageType}&email=${email}`)}>Change</button>
                   </div>
 
                   <div className="order-summary-divider"></div>

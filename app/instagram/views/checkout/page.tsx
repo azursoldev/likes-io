@@ -12,7 +12,8 @@ import {
   faShieldHalved,
   faLock,
   faAngleDown,
-  faEye
+  faEye,
+  faEnvelope
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../contexts/CurrencyContext";
@@ -36,9 +37,11 @@ function CheckoutContent() {
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [usernameError, setUsernameError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [usernameValid, setUsernameValid] = useState(false);
   const [packages, setPackages] = useState<PackageTab[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
@@ -140,11 +143,11 @@ function CheckoutContent() {
   }, [packages, formatPrice, currencyCode]);
 
   // Validate Instagram username via API
-  const validateUsername = async (usernameValue: string) => {
+  const validateUsername = async (usernameValue: string): Promise<boolean> => {
     if (!usernameValue.trim()) {
-      setUsernameError("");
+      setUsernameError("Please enter your Instagram username");
       setUsernameValid(false);
-      return;
+      return false;
     }
 
     setIsValidating(true);
@@ -157,32 +160,30 @@ function CheckoutContent() {
       if (response.ok && data.valid) {
         setUsernameValid(true);
         setUsernameError("");
+        setIsValidating(false);
+        return true;
       } else {
         setUsernameValid(false);
         setUsernameError(data.error || "Invalid username");
+        setIsValidating(false);
+        return false;
       }
     } catch (error) {
       console.error("Error validating username:", error);
       setUsernameValid(false);
       setUsernameError("Failed to validate username. Please try again.");
-    } finally {
       setIsValidating(false);
+      return false;
     }
   };
 
-  // Debounce username validation
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (username.trim()) {
-        validateUsername(username);
-      } else {
-        setUsernameValid(false);
-        setUsernameError("");
-      }
-    }, 500); // Wait 500ms after user stops typing
-
-    return () => clearTimeout(timeoutId);
-  }, [username]);
+  const validateEmail = (email: string) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -200,12 +201,35 @@ function CheckoutContent() {
     }
   }, [isPackageOpen]);
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim() && usernameValid) {
+    
+    // Reset errors
+    setEmailError("");
+    
+    // First validate email format locally
+    let isEmailValid = true;
+    if (!email.trim()) {
+      setEmailError("Please enter your email address");
+      isEmailValid = false;
+    } else if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email address");
+      isEmailValid = false;
+    }
+
+    if (!isEmailValid) {
+        return;
+    }
+
+    // Then validate username via API
+    // This is now an async check that blocks continuation until resolved
+    const isUsernameValid = await validateUsername(username);
+    
+    if (isUsernameValid) {
       // Navigate to posts selection page, include serviceId if available
       const params = new URLSearchParams({
         username: username,
+        email: email,
         qty: typeof qty === "string" ? qty : String(qty),
         price: String(priceValue),
         type: packageType,
@@ -214,10 +238,6 @@ function CheckoutContent() {
         params.append("serviceId", selectedServiceId);
       }
       router.push(`/instagram/views/checkout/posts?${params.toString()}`);
-    } else if (!username.trim()) {
-      setUsernameError("Please enter your Instagram username");
-    } else if (!usernameValid) {
-      setUsernameError("Please enter a valid Instagram username");
     }
   };
 
@@ -300,7 +320,54 @@ function CheckoutContent() {
                     </span>
                   )}
                 </div>
-                {usernameError && <p className="checkout-error-text">{usernameError}</p>}
+                {usernameError && (
+                  <span style={{
+                    display: "block",
+                    marginTop: "6px",
+                    fontSize: "13px",
+                    color: "#ef4444"
+                  }}>
+                    {usernameError}
+                  </span>
+                )}
+              </div>
+
+              <div className="checkout-form-group">
+                <label className="checkout-label">Email address</label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="email"
+                    className={`checkout-input ${emailError ? "checkout-input-error" : ""}`}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setEmailError("");
+                    }}
+                    placeholder="Enter your email address"
+                  />
+                  <FontAwesomeIcon 
+                    icon={faEnvelope} 
+                    style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#9ca3af",
+                      width: "16px",
+                      height: "16px"
+                    }}
+                  />
+                </div>
+                {emailError && (
+                  <span style={{
+                    display: "block",
+                    marginTop: "6px",
+                    fontSize: "13px",
+                    color: "#ef4444"
+                  }}>
+                    {emailError}
+                  </span>
+                )}
               </div>
 
               <div className="checkout-form-group">
@@ -358,10 +425,10 @@ function CheckoutContent() {
               <button 
                 type="submit" 
                 className="checkout-continue-btn"
-                disabled={!usernameValid || isValidating}
-                style={{ opacity: (!usernameValid || isValidating) ? 0.7 : 1 }}
+                disabled={isValidating}
+                style={{ opacity: isValidating ? 0.7 : 1, cursor: isValidating ? 'not-allowed' : 'pointer' }}
               >
-                Continue
+                {isValidating ? "Validating..." : "Continue"}
               </button>
 
               {/* Security Assurance */}
@@ -379,30 +446,7 @@ function CheckoutContent() {
           </div>
 
           {/* Payment Methods Card */}
-          <div className="checkout-card checkout-payment-card">
-            <div className="checkout-payment">
-              <span className="checkout-payment-label">Pay securely with</span>
-              <div className="checkout-payment-icons">
-                {/* iCH Logo */}
-                <div className="checkout-payment-icon-wrapper">
-                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" rx="6" fill="#0066CC"/>
-                    <circle cx="12" cy="12" r="3" fill="#FFA500"/>
-                    <text x="30" y="26" fontFamily="Arial, sans-serif" fontSize="18" fontWeight="bold" fill="white" textAnchor="middle" letterSpacing="1px">iCH</text>
-                  </svg>
-                </div>
-                {/* Mastercard Logo */}
-                <div className="checkout-payment-icon-wrapper">
-                  <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="60" height="40" rx="6" fill="#1A1F71"/>
-                    <circle cx="20" cy="20" r="9" fill="#EB001B"/>
-                    <circle cx="40" cy="20" r="9" fill="#F79E1B"/>
-                    <circle cx="30" cy="20" r="8.5" fill="#FF5F00"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
+         
         </div>
       </main>
       <Footer />

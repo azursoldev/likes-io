@@ -45,13 +45,14 @@ function FinalCheckoutContent() {
   const service = "views";
   
   // Create URLs for navigation
-  const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
-  const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}`;
+  const emailParam = searchParams.get("email") || "";
+  const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&email=${encodeURIComponent(emailParam)}`;
+  const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}&email=${encodeURIComponent(emailParam)}`;
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "wallet">("card");
   const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(emailParam);
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvc, setCvc] = useState("");
@@ -734,7 +735,7 @@ function FinalCheckoutContent() {
                     </div>
                     <span>@{username || "username"}</span>
                   </div>
-                  <button type="button" className="change-button">Change</button>
+                  <Link href={detailsUrl} className="change-button" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Change</Link>
                 </div>
               </div>
 

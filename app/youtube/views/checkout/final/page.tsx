@@ -59,6 +59,8 @@ function FinalCheckoutContent() {
       setPriceValue(parseFloat(sp.get("price") || "29.99"));
       setPackageType(sp.get("type") || "High-Retention");
       setVideoLink(sp.get("videoLink") || "");
+      const em = sp.get("email") || "";
+      setEmail(em);
     }
   }, []);
 

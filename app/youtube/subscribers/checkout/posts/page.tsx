@@ -21,11 +21,12 @@ function PostsSelectionContent() {
   const qty = searchParams.get("qty") || "500";
   const priceValue = parseFloat(searchParams.get("price") || "34.99");
   const packageType = searchParams.get("type") || "High-Quality";
+  const email = searchParams.get("email") || "";
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     // Navigate to final checkout step
-    router.push(`/youtube/subscribers/checkout/final?username=${username}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+    router.push(`/youtube/subscribers/checkout/final?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&email=${encodeURIComponent(email)}`);
   };
 
   return (

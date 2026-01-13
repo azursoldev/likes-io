@@ -40,6 +40,7 @@ function PostsSelectionContent() {
   const [error, setError] = useState("");
   
   const username = searchParams.get("username") || "";
+  const email = searchParams.get("email") || "";
   const qty = searchParams.get("qty") || "500";
   const priceValue = parseFloat(searchParams.get("price") || "17.99");
   const packageType = searchParams.get("type") || "High-Quality";
@@ -158,6 +159,7 @@ function PostsSelectionContent() {
       // Navigate to final checkout step
       const params = new URLSearchParams({
         username: username,
+        email: email,
         qty: qty,
         price: String(priceValue),
         type: packageType,
@@ -445,7 +447,7 @@ function PostsSelectionContent() {
                         </span>
                       </div>
                     </div>
-                    <button type="button" className="order-change-btn" onClick={() => router.push(`/instagram/likes/checkout?qty=${qty}&price=${priceValue}&type=${packageType}`)}>Change</button>
+                    <button type="button" className="order-change-btn" onClick={() => router.push(`/instagram/likes/checkout?qty=${qty}&price=${priceValue}&type=${packageType}&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}`)}>Change</button>
                   </div>
 
                   <div className="order-summary-divider"></div>
