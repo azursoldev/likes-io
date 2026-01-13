@@ -22,6 +22,7 @@ interface AdvantageSectionProps {
   title?: string;
   subtitle?: string;
   items?: BenefitItem[];
+  fetchHomepageData?: boolean;
 }
 
 const ICON_MAPPING: Record<string, IconDefinition> = {
@@ -33,7 +34,7 @@ const ICON_MAPPING: Record<string, IconDefinition> = {
   CheckCircleIcon: faCheckCircle,
 };
 
-export default function AdvantageSection({ title, subtitle, items }: AdvantageSectionProps) {
+export default function AdvantageSection({ title, subtitle, items, fetchHomepageData = false }: AdvantageSectionProps) {
   const [content, setContent] = useState<{
     title: string;
     subtitle: string;
@@ -41,6 +42,8 @@ export default function AdvantageSection({ title, subtitle, items }: AdvantageSe
   } | null>(null);
 
   useEffect(() => {
+    if (!fetchHomepageData) return;
+
     const fetchContent = async () => {
       try {
         const response = await fetch(`/api/cms/homepage?t=${Date.now()}`);

@@ -19,7 +19,7 @@ export default function HomePage() {
         <PlatformSection />
         <GetStarted />
         <InfluenceSection />
-        <AdvantageSection />
+        <AdvantageSection fetchHomepageData={true} />
         <FeaturedOn />
         {/* <ReviewsSection /> */}
          <FAQSection category="homepage" />
