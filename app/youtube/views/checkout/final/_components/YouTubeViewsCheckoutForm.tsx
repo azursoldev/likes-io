@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Script from "next/script";
-import Header from "../../../../components/Header";
-import Footer from "../../../../components/Footer";
+import Header from "@/app/components/Header";
+import Footer from "@/app/components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCheck,
@@ -20,7 +20,7 @@ import {
 import {
   faBitcoin
 } from "@fortawesome/free-brands-svg-icons";
-import { useCurrency } from "../../../../contexts/CurrencyContext";
+import { useCurrency } from "@/app/contexts/CurrencyContext";
 
 export default function YouTubeViewsCheckoutForm() {
   const { currency } = useCurrency();

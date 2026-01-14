@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Script from "next/script";
-import Header from "../../../../components/Header";
-import Footer from "../../../../components/Footer";
+import Header from "@/app/components/Header";
+import Footer from "@/app/components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCheck,
@@ -21,8 +21,8 @@ import {
   faWallet
 } from "@fortawesome/free-solid-svg-icons";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCurrency } from "../../../../contexts/CurrencyContext";
-import { useGoogleAnalytics } from "../../../../hooks/useGoogleAnalytics";
+import { useCurrency } from "@/app/contexts/CurrencyContext";
+import { useGoogleAnalytics } from "@/app/hooks/useGoogleAnalytics";
 
 export default function YouTubeSubscribersCheckoutForm() {
   const searchParams = useSearchParams();
