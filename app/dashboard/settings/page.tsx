@@ -7,6 +7,10 @@ import "../dashboard.css";
 export const metadata: Metadata = {
   title: "Settings | Likes.io",
   description: "Manage your account settings, profile information, and notification preferences.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function Page() {

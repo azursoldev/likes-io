@@ -9,6 +9,10 @@ import SignupPage from "../components/SignupPage";
 export const metadata: Metadata = {
   title: "Create Your Account | Likes.io",
   description: "Create a new account on Likes.io to start boosting your social media presence.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default async function Page() {

@@ -11,6 +11,10 @@ import { prisma } from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "Sign In | Likes.io",
   description: "Sign in to your Likes.io account to access your dashboard, manage orders, and boost your social media presence.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default async function Page({

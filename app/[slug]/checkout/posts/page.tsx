@@ -1,10 +1,18 @@
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import InstagramLikesPosts from '../../../instagram/likes/checkout/posts/page';
 import InstagramViewsPosts from '../../../instagram/views/checkout/posts/page';
 import TikTokLikesPosts from '../../../tiktok/likes/checkout/posts/page';
 import TikTokViewsPosts from '../../../tiktok/views/checkout/posts/page';
 import YouTubeViewsPosts from '../../../youtube/views/checkout/posts/page';
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function CheckoutPostsPage({ 
   params, 

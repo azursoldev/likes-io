@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import InstagramFollowersFinal from '../../../instagram/followers/checkout/final/page';
 import InstagramLikesFinal from '../../../instagram/likes/checkout/final/page';
@@ -9,6 +10,13 @@ import TikTokViewsFinal from '../../../tiktok/views/checkout/final/page';
 import YouTubeViewsFinal from '../../../youtube/views/checkout/final/page';
 import YouTubeLikesFinal from '../../../youtube/likes/checkout/final/page';
 import YouTubeSubscribersFinal from '../../../youtube/subscribers/checkout/final/page';
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function CheckoutFinalPage({ 
   params, 
