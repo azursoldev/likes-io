@@ -13,7 +13,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useCurrency } from "../../../../contexts/CurrencyContext";
 
 function PostsSelectionContent() {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); 
   const router = useRouter();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   
