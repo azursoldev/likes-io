@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
@@ -44,6 +44,8 @@ export default function BlogDashboard() {
     metaTitle: "",
     metaDescription: "",
   });
+  const quillEditorRef = useRef<HTMLDivElement | null>(null);
+  const quillInstanceRef = useRef<any>(null);
 
   const loadPosts = async () => {
     try {
@@ -73,6 +75,86 @@ export default function BlogDashboard() {
   useEffect(() => {
     void loadPosts();
   }, []);
+
+  useEffect(() => {
+    if (!showEditModal) {
+      if (quillInstanceRef.current) {
+        quillInstanceRef.current.off("text-change");
+        quillInstanceRef.current = null;
+      }
+      return;
+    }
+    if (!quillEditorRef.current) return;
+    const loadQuill = async () => {
+      if (typeof window === "undefined") return;
+      const w = window as any;
+      if (!w.Quill) {
+        await new Promise<void>((resolve, reject) => {
+          const existingScript = document.getElementById("quill-cdn-script");
+          if (existingScript) {
+            resolve();
+            return;
+          }
+          const script = document.createElement("script");
+          script.id = "quill-cdn-script";
+          script.src = "https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js";
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Quill"));
+          document.body.appendChild(script);
+        });
+        const existingLink = document.getElementById("quill-snow-style");
+        if (!existingLink) {
+          const link = document.createElement("link");
+          link.id = "quill-snow-style";
+          link.rel = "stylesheet";
+          link.href = "https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css";
+          document.head.appendChild(link);
+        }
+      }
+      if (!quillEditorRef.current) return;
+      const QuillCtor = (window as any).Quill;
+      if (!QuillCtor) return;
+      const toolbarOptions = [
+        ["bold", "italic", "underline", "strike"],
+        ["blockquote", "code-block"],
+        ["link", "image", "video", "formula"],
+        [{ header: 1 }, { header: 2 }],
+        [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
+        [{ script: "sub" }, { script: "super" }],
+        [{ indent: "-1" }, { indent: "+1" }],
+        [{ direction: "rtl" }],
+        [{ size: ["small", false, "large", "huge"] }],
+        [{ header: [1, 2, 3, 4, 5, 6, false] }],
+        [{ color: [] }, { background: [] }],
+        [{ font: [] }],
+        [{ align: [] }],
+        ["clean"],
+      ];
+      const initialContent =
+        editForm.content && editForm.content.trim().length > 0
+          ? editForm.content
+          : "<h2>Demo Content</h2><p>Preset build with <code>snow</code> theme, and some common formats.</p>";
+      if (quillInstanceRef.current) {
+        quillInstanceRef.current.root.innerHTML = initialContent;
+        return;
+      }
+      const quill = new QuillCtor(quillEditorRef.current, {
+        modules: {
+          toolbar: toolbarOptions,
+        },
+        theme: "snow",
+      });
+      quill.root.innerHTML = initialContent;
+      quill.on("text-change", () => {
+        const html = quill.root.innerHTML;
+        setEditForm((prev) => ({ ...prev, content: html }));
+      });
+      quillInstanceRef.current = quill;
+    };
+    loadQuill().catch((error) => {
+      console.error("Failed to initialize Quill editor:", error);
+    });
+  }, [showEditModal]);
 
   const handleToggleStatus = (id: number) => {
     setPosts(prev =>
@@ -486,26 +568,11 @@ export default function BlogDashboard() {
 
               <div className="blog-edit-form-group">
                 <label htmlFor="edit-content">Content</label>
-                <div className="blog-edit-toolbar">
-                  <button type="button" className="blog-edit-toolbar-btn">P</button>
-                  <button type="button" className="blog-edit-toolbar-btn">H2</button>
-                  <button type="button" className="blog-edit-toolbar-btn">H3</button>
-                  <button type="button" className="blog-edit-toolbar-btn">B</button>
-                  <button type="button" className="blog-edit-toolbar-btn">Image</button>
-                  <button type="button" className="blog-edit-toolbar-btn">Audio</button>
-                  <button type="button" className="blog-edit-toolbar-btn">UL</button>
-                  <button type="button" className="blog-edit-toolbar-btn">Callout</button>
-                  <button type="button" className="blog-edit-toolbar-btn">Pros</button>
-                  <button type="button" className="blog-edit-toolbar-btn">Cons</button>
-                  <button type="button" className="blog-edit-toolbar-btn">FAQ</button>
-                </div>
-                <textarea
-                  id="edit-content"
+                <div
+                  id="editor"
                   className="blog-edit-textarea blog-edit-content-textarea"
-                  rows={15}
-                  value={editForm.content}
-                  onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                  placeholder="[B]Visual Quality:[/B] The algorithm now actively penalizes low-resolution videos..."
+                  ref={quillEditorRef}
+                  style={{ minHeight: "300px" }}
                 />
               </div>
 
