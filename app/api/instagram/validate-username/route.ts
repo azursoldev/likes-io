@@ -46,9 +46,14 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Use the shared service which has caching and centralized logic
       const profile = await socialMediaAPI.fetchProfile('INSTAGRAM', cleanUsername);
-      
+      if (profile.isPrivate) {
+        return NextResponse.json({
+          valid: false,
+          isPrivate: true,
+          error: 'The account you entered is private! Please change it to public and try again.',
+        });
+      }
       return NextResponse.json({
         valid: true,
         username: profile.username,
@@ -62,9 +67,6 @@ export async function GET(request: NextRequest) {
       });
     } catch (error: any) {
       console.error("Validation error:", error.message);
-      
-      // Since we disabled mock data, any error means validation failed
-      // (either user not found or API issue)
       return NextResponse.json({
         valid: false,
         error: 'Username not found or could not be validated.'

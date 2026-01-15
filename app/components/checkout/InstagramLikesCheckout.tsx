@@ -163,7 +163,12 @@ function CheckoutContent() {
         return true;
       } else {
         setUsernameValid(false);
-        setUsernameError(data.error || "Invalid username");
+        setUsernameError(
+          data.error ||
+          (data.isPrivate
+            ? "The account you entered is private! Please change it to public and try again."
+            : "Invalid username")
+        );
         setIsValidating(false);
         return false;
       }
