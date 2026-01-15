@@ -5,7 +5,7 @@ import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faChevronDown } from "@fortawesome/free-solid-svg-icons";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type FAQItem = {
   id: number;
@@ -146,6 +146,8 @@ export default function FAQDashboard() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingCategory, setEditingCategory] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const quillEditorRef = useRef<HTMLDivElement | null>(null);
+  const quillInstanceRef = useRef<any>(null);
 
   // Fetch FAQs from API
   useEffect(() => {
@@ -222,6 +224,62 @@ export default function FAQDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!showAddModal) {
+      if (quillInstanceRef.current) {
+        quillInstanceRef.current.off("text-change");
+        quillInstanceRef.current = null;
+      }
+      return;
+    }
+    if (!quillEditorRef.current) return;
+    const loadQuill = async () => {
+      if (typeof window === "undefined") return;
+      const w = window as any;
+      if (!w.Quill) {
+        await new Promise<void>((resolve, reject) => {
+          const existingScript = document.getElementById("quill-cdn-script");
+          if (existingScript) {
+            resolve();
+            return;
+          }
+          const script = document.createElement("script");
+          script.id = "quill-cdn-script";
+          script.src = "https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js";
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Quill"));
+          document.body.appendChild(script);
+        });
+        const existingLink = document.getElementById("quill-snow-style");
+        if (!existingLink) {
+          const link = document.createElement("link");
+          link.id = "quill-snow-style";
+          link.rel = "stylesheet";
+          link.href = "https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css";
+          document.head.appendChild(link);
+        }
+      }
+      if (!quillEditorRef.current) return;
+      const QuillCtor = (window as any).Quill;
+      if (!QuillCtor) return;
+      if (quillInstanceRef.current) {
+        quillInstanceRef.current.root.innerHTML = newAnswer || "";
+        return;
+      }
+      const quill = new QuillCtor(quillEditorRef.current, {
+        theme: "snow",
+      });
+      quill.root.innerHTML = newAnswer || "";
+      quill.on("text-change", () => {
+        setNewAnswer(quill.root.innerHTML);
+      });
+      quillInstanceRef.current = quill;
+    };
+    loadQuill().catch((error) => {
+      console.error("Failed to initialize Quill editor:", error);
+    });
+  }, [showAddModal]);
 
   // Seed default FAQs
   const seedDefaultFAQs = async () => {
@@ -346,7 +404,14 @@ export default function FAQDashboard() {
   const handleStartEdit = (faq: FAQItem) => {
     setEditingId(faq.id);
     setNewQuestion(faq.question);
-    setNewAnswer(faq.answer);
+    const quillUrl = "";
+    const baseAnswer = faq.answer || "";
+    const answerWithDocs = baseAnswer.includes(quillUrl)
+      ? baseAnswer
+      : baseAnswer
+      ? `${baseAnswer}\n${quillUrl}`
+      : quillUrl;
+    setNewAnswer(answerWithDocs);
     setEditingCategory(faq.category || "");
     setNewCategory(faq.category || "");
     setShowAddModal(true);
@@ -517,12 +582,10 @@ export default function FAQDashboard() {
               </label>
               <label className="faq-modal-label">
                 Answer
-                <textarea
+                <div
                   className="faq-modal-textarea"
-                  value={newAnswer}
-                  onChange={(e) => setNewAnswer(e.target.value)}
-                  placeholder="Enter answer"
-                  rows={5}
+                  ref={quillEditorRef}
+                  style={{ minHeight: "200px" }}
                 />
               </label>
             </div>

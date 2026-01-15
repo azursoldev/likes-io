@@ -17,6 +17,7 @@ export default function GetStarted() {
   
   // Profile fetch state
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [usernameError, setUsernameError] = useState("");
@@ -76,42 +77,6 @@ export default function GetStarted() {
     setUsername("");
   }, [platform]);
 
-  // Fetch profile when username changes (debounced)
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!username.trim()) {
-        setProfileData(null);
-        return;
-      }
-
-      setIsFetchingProfile(true);
-      setUsernameError("");
-
-      try {
-        const cleanUsername = username.replace(/^@/, '');
-        const res = await fetch(`/api/social/${platform}/profile?username=${cleanUsername}`);
-        const data = await res.json();
-
-        if (res.ok && data.profile) {
-          setProfileData(data.profile);
-        } else {
-          // Don't show error immediately while typing, just clear profile
-          setProfileData(null);
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      } finally {
-        setIsFetchingProfile(false);
-      }
-    };
-
-    const timeoutId = setTimeout(() => {
-      if (username) fetchProfile();
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [username, platform]);
-
   const handleBuy = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) {
@@ -127,9 +92,10 @@ export default function GetStarted() {
     
     const cleanUsername = username.replace(/^@/, '');
     const type = quality === "hq" ? "High-Quality" : "Premium";
+    const emailParam = email ? `&email=${encodeURIComponent(email)}` : "";
     
     // Construct checkout URL
-    const checkoutUrl = `/${platform}/${packType}/checkout/${nextStep}?qty=${displayQty}&price=${displayPrice}&type=${encodeURIComponent(type)}&username=${encodeURIComponent(cleanUsername)}`;
+    const checkoutUrl = `/${platform}/${packType}/checkout/${nextStep}?qty=${displayQty}&price=${displayPrice}&type=${encodeURIComponent(type)}&username=${encodeURIComponent(cleanUsername)}${emailParam}`;
 
     // If we already have valid profile data, just redirect
     if (profileData && profileData.username.toLowerCase() === cleanUsername.toLowerCase()) {
@@ -462,6 +428,21 @@ export default function GetStarted() {
                   </div>
                 </div>
                 {usernameError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', marginLeft: '5px' }}>{usernameError}</div>}
+              </div>
+
+              <div className="gs-input-group" style={{ marginTop: '10px' }}>
+                <div className="gs-input-wrapper" style={{ display: 'flex', alignItems: 'center', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '5px' }}>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      className="input-field"
+                      type="email"
+                      style={{ border: 'none', width: '100%', outline: 'none', padding: '10px 5px' }}
+                      placeholder="Your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
 
               <button type="submit" className="btn buy-btn" style={{ marginTop: '15px' }}>Get Started</button>

@@ -298,6 +298,7 @@ html.dark .shimmer-bg {
     max-width: 100%;
     font-size: 15px;
     font-weight: 400;
+    color:#000;
   }
   .input-field:focus {
     outline: none;
