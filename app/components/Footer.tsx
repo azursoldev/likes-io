@@ -6,11 +6,25 @@ import { useSettings } from "../contexts/SettingsContext";
 
 export default function Footer() {
   const year = new Date().getFullYear();
-  const { footerLogoUrl } = useSettings();
+  const { footerLogoUrl, footerMenu, footerColumnMenus } = useSettings() as any;
   const [showTooltip, setShowTooltip] = useState(false);
   const langBtnRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { getLink, loading } = useNavigation();
+  const footerMenuItems =
+    Array.isArray(footerMenu) && footerMenu.length > 0
+      ? footerMenu
+      : [
+          { id: "fallback-faq", label: "FAQ", url: "/faq" },
+          { id: "fallback-blog", label: "Blog", url: "/blog" },
+          { id: "fallback-about", label: "About Us", url: "/about" },
+          { id: "fallback-team", label: "Our Team", url: "/team" },
+          { id: "fallback-contact", label: "Contact Us", url: "/contact" },
+          { id: "fallback-terms", label: "Terms of Service", url: "/terms" },
+          { id: "fallback-privacy", label: "Privacy Policy", url: "/privacy" },
+        ];
+  const configuredFooterColumns =
+    Array.isArray(footerColumnMenus) && footerColumnMenus.length > 0 ? footerColumnMenus : null;
 
   const [systemStatusEnabled, setSystemStatusEnabled] = useState(false);
   const [systemStatus, setSystemStatus] = useState("Operational");
@@ -105,13 +119,11 @@ export default function Footer() {
         {/* Top row nav */}
         <div className="footer-top">
           <nav className="footer-top-nav">
-            <a href="/faq">FAQ</a>
-            <a href="/blog">Blog</a>
-            <a href="/about">About Us</a>
-            <a href="/team">Our Team</a>
-            <a href="/contact">Contact Us</a>
-            <a href="/terms">Terms of Service</a>
-            <a href="/privacy">Privacy Policy</a>
+            {footerMenuItems.map((item: any) => (
+              <a key={item.id} href={item.url || "#"}>
+                {item.label || "Menu item"}
+              </a>
+            ))}
           </nav>
           <div className="footer-lang">
             <div className="lang-wrapper">
@@ -140,57 +152,79 @@ export default function Footer() {
         <div className="footer-divider" />
 
         {/* Columns */}
-        <div className="footer-columns">
-          <div className="f-col">
-            <h4>Instagram Services</h4>
-            <ul>
-              <li><a href={loading ? "#" : getLink("instagram", "likes")}>Buy Instagram Likes</a></li>
-              <li><a href={loading ? "#" : getLink("instagram", "followers")}>Buy Instagram Followers</a></li>
-              <li><a href={loading ? "#" : getLink("instagram", "views")}>Buy Instagram Views</a></li>
-            </ul>
+        {configuredFooterColumns ? (
+          <div className="footer-columns">
+            {configuredFooterColumns.map((column: any, columnIndex: number) => (
+              <div className="f-col" key={column.id || columnIndex}>
+                <h4>{column.title || "Column"}</h4>
+                <ul>
+                  {Array.isArray(column.items) &&
+                    column.items.map((item: any, itemIndex: number) => (
+                      <li key={item.id || itemIndex}>
+                        {item.url ? (
+                          <a href={item.url}>{item.label || "Link"}</a>
+                        ) : (
+                          <span>{item.label || "Link"}</span>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <div className="f-col">
-            <h4>TikTok Services</h4>
-            <ul>
-              <li><a href={loading ? "#" : getLink("tiktok", "likes")}>Buy TikTok Likes</a></li>
-              <li><a href={loading ? "#" : getLink("tiktok", "followers")}>Buy TikTok Followers</a></li>
-              <li><a href={loading ? "#" : getLink("tiktok", "views")}>Buy TikTok Views</a></li>
-            </ul>
+        ) : (
+          <div className="footer-columns">
+            <div className="f-col">
+              <h4>Instagram Services</h4>
+              <ul>
+                <li><a href={loading ? "#" : getLink("instagram", "likes")}>Buy Instagram Likes</a></li>
+                <li><a href={loading ? "#" : getLink("instagram", "followers")}>Buy Instagram Followers</a></li>
+                <li><a href={loading ? "#" : getLink("instagram", "views")}>Buy Instagram Views</a></li>
+              </ul>
+            </div>
+            <div className="f-col">
+              <h4>TikTok Services</h4>
+              <ul>
+                <li><a href={loading ? "#" : getLink("tiktok", "likes")}>Buy TikTok Likes</a></li>
+                <li><a href={loading ? "#" : getLink("tiktok", "followers")}>Buy TikTok Followers</a></li>
+                <li><a href={loading ? "#" : getLink("tiktok", "views")}>Buy TikTok Views</a></li>
+              </ul>
+            </div>
+            <div className="f-col">
+              <h4>YouTube Services</h4>
+              <ul>
+                <li><a href={loading ? "#" : getLink("youtube", "views")}>Buy YouTube Views</a></li>
+                <li><a href={loading ? "#" : getLink("youtube", "subscribers")}>Buy YouTube Subscribers</a></li>
+                <li><a href={loading ? "#" : getLink("youtube", "likes")}>Buy YouTube Likes</a></li>
+              </ul>
+            </div>
+            <div className="f-col">
+              <h4>Tools & Resources</h4>
+              <ul>
+                <li><a href="/free-instagram-likes">Free Instagram Likes</a></li>
+                <li><a href="/free-instagram-followers">Free Instagram Followers</a></li>
+                <li><a href="/reviews">Reviews</a></li>
+              </ul>
+            </div>
+            <div className="f-col">
+              <h4>My Account</h4>
+              <ul>
+                <li><a href="/login">Log In</a></li>
+                <li><a href="/signup">Sign Up</a></li>
+              </ul>
+            </div>
+            <div className="f-col">
+              <h4>Affiliate Program</h4>
+              <ul>
+                <li><a href="/affiliate">Become an Affiliate</a></li>
+                <li>
+                  <a href="/login" className="login-link">Log in</a>
+                  <span className="login-note"> to view stats.</span>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="f-col">
-            <h4>YouTube Services</h4>
-            <ul>
-              <li><a href={loading ? "#" : getLink("youtube", "views")}>Buy YouTube Views</a></li>
-              <li><a href={loading ? "#" : getLink("youtube", "subscribers")}>Buy YouTube Subscribers</a></li>
-              <li><a href={loading ? "#" : getLink("youtube", "likes")}>Buy YouTube Likes</a></li>
-            </ul>
-          </div>
-          <div className="f-col">
-            <h4>Tools & Resources</h4>
-            <ul>
-              <li><a href="/free-instagram-likes">Free Instagram Likes</a></li>
-              <li><a href="/free-instagram-followers">Free Instagram Followers</a></li>
-              <li><a href="/reviews">Reviews</a></li>
-            </ul>
-          </div>
-          <div className="f-col">
-            <h4>My Account</h4>
-            <ul>
-              <li><a href="/login">Log In</a></li>
-              <li><a href="/signup">Sign Up</a></li>
-            </ul>
-          </div>
-          <div className="f-col">
-            <h4>Affiliate Program</h4>
-            <ul>
-              <li><a href="/affiliate">Become an Affiliate</a></li>
-              <li>
-                <a href="/login" className="login-link">Log in</a>
-                <span className="login-note"> to view stats.</span>
-              </li>
-            </ul>
-          </div>
-        </div>
+        )}
 
         {/* Bottom */}
         <div className="footer-bottom">

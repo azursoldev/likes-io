@@ -14,6 +14,10 @@ type Settings = {
   exitIntentTitle?: string | null;
   exitIntentSubtitle?: string | null;
   exitIntentDiscountCode?: string | null;
+  headerMenu?: any[] | null;
+  footerMenu?: any[] | null;
+  headerColumnMenus?: any[] | null;
+  footerColumnMenus?: any[] | null;
   // Add other settings as needed
 };
 

@@ -384,7 +384,7 @@ export default function YouTubeViewsCheckoutForm() {
           <div className="checkout-progress">
             <div className="progress-step completed">
               <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
+                <span>1</span>
               </div>
               <span className="progress-step-label">Details</span>
             </div>
@@ -393,7 +393,7 @@ export default function YouTubeViewsCheckoutForm() {
             </div>
             <div className="progress-step completed">
               <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
+                <span>2</span>
               </div>
               <span className="progress-step-label">Videos</span>
             </div>

@@ -375,7 +375,7 @@ function FinalCheckoutContent() {
           <div className="checkout-progress">
             <div className="progress-step completed">
               <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
+                <span>1</span>
               </div>
               <span className="progress-step-label">Details</span>
             </div>
@@ -384,7 +384,7 @@ function FinalCheckoutContent() {
             </div>
             <div className="progress-step completed">
               <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
+                <span>2</span>
               </div>
               <span className="progress-step-label">Posts</span>
             </div>

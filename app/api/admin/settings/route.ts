@@ -135,6 +135,10 @@ export async function GET() {
       faviconUrl: getField(settings, 'faviconUrl', ''),
       headerLogoUrl: getField(settings, 'headerLogoUrl', ''),
       footerLogoUrl: getField(settings, 'footerLogoUrl', ''),
+      headerMenu: getField(settings, 'headerMenu', null),
+      footerMenu: getField(settings, 'footerMenu', null),
+      headerColumnMenus: getField(settings, 'headerColumnMenus', null),
+      footerColumnMenus: getField(settings, 'footerColumnMenus', null),
       robotsTxtContent: getField(settings, 'robotsTxtContent', 'User-agent: *\nAllow: /'),
       customSitemapXml: getField(settings, 'customSitemapXml', ''),
       sitemapEnabled: getField(settings, 'sitemapEnabled', true),
@@ -193,6 +197,10 @@ export async function PUT(request: NextRequest) {
       faviconUrl,
       headerLogoUrl,
       footerLogoUrl,
+      headerMenu,
+      footerMenu,
+      headerColumnMenus,
+      footerColumnMenus,
       
       // Analytics & Integrations
       googleAnalyticsId,
@@ -328,6 +336,9 @@ export async function PUT(request: NextRequest) {
 
     if (defaultCurrency !== undefined) updateData.defaultCurrency = defaultCurrency;
 
+    if (headerMenu !== undefined) updateData.headerMenu = headerMenu || null;
+    if (footerMenu !== undefined) updateData.footerMenu = footerMenu || null;
+
     try {
       if (settings) {
         console.log('Updating existing settings record:', settings.id);
@@ -350,7 +361,7 @@ export async function PUT(request: NextRequest) {
       // and therefore unaware of these new columns.
       if (settings && settings.id) {
        try {
-         console.log('Force updating SEO/Branding fields via raw SQL for ID:', settings.id);
+          console.log('Force updating SEO/Branding fields via raw SQL for ID:', settings.id);
          
            // Ensure values are safe for SQL (convert undefined to null if not provided, but prefer existing value if undefined)
            // Note: Empty strings from frontend will be treated as valid values, but we can convert to null if desired.
@@ -366,9 +377,11 @@ export async function PUT(request: NextRequest) {
            const safeRobots = getVal(robotsTxtContent, settings.robotsTxtContent);
            const safeFavicon = getVal(faviconUrl, settings.faviconUrl);
            const safeHeader = getVal(headerLogoUrl, settings.headerLogoUrl);
-           const safeFooter = getVal(footerLogoUrl, settings.footerLogoUrl);
-           const safeCustomSitemapXml = getVal(customSitemapXml, settings.customSitemapXml);
-           const safeSitemapEnabled = getVal(sitemapEnabled, settings.sitemapEnabled);
+          const safeFooter = getVal(footerLogoUrl, settings.footerLogoUrl);
+          const safeCustomSitemapXml = getVal(customSitemapXml, settings.customSitemapXml);
+          const safeSitemapEnabled = getVal(sitemapEnabled, settings.sitemapEnabled);
+          const safeHeaderColumnMenus = getVal(headerColumnMenus, (settings as any).headerColumnMenus);
+          const safeFooterColumnMenus = getVal(footerColumnMenus, (settings as any).footerColumnMenus);
 
            const result = await prisma.$executeRaw`
              UPDATE "admin_settings"
@@ -380,7 +393,9 @@ export async function PUT(request: NextRequest) {
                "sitemapEnabled" = ${safeSitemapEnabled},
                "faviconUrl" = ${safeFavicon},
                "headerLogoUrl" = ${safeHeader},
-               "footerLogoUrl" = ${safeFooter}
+              "footerLogoUrl" = ${safeFooter},
+              "headerColumnMenus" = ${safeHeaderColumnMenus},
+              "footerColumnMenus" = ${safeFooterColumnMenus}
              WHERE "id" = ${settings.id}
            `;
            console.log('Raw SQL update result:', result);
