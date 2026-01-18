@@ -13,17 +13,47 @@ import "../mobile-response.css";
 export default function Header() {
   const { status } = useSession();
   const { currency, setCurrency } = useCurrency();
-  const { headerLogoUrl } = useSettings();
+  const { headerLogoUrl, headerMenu, headerColumnMenus } = useSettings() as any;
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const currencyRef = useRef<HTMLDivElement>(null);
   const { getLink, loading } = useNavigation();
+  const headerMenuItems =
+    Array.isArray(headerMenu) && headerMenu.length > 0
+      ? headerMenu
+      : [
+          { id: "fallback-faq", label: "FAQ", url: "/faq" },
+          { id: "fallback-blog", label: "Blog", url: "/blog" },
+        ];
+
+  const headerColumns =
+    Array.isArray(headerColumnMenus)
+      ? headerColumnMenus
+          .map((column: any, index: number) => ({
+            id: column.id || `header-col-${index}`,
+            title: column.title || "",
+            items: Array.isArray(column.items) ? column.items : [],
+          }))
+          .filter((column: any) => column.title || column.items.length > 0)
+      : [];
+  const hasHeaderColumns = headerColumns.length > 0;
 
   const currencies = ["USD", "EUR"] as const;
 
   const toggleMobileSection = (section: string) => {
     setMobileExpanded(mobileExpanded === section ? null : section);
+  };
+
+  const resolveItemUrl = (item: any) => {
+    if (item.url && typeof item.url === "string") {
+      return item.url;
+    }
+    if (item.platform && item.serviceType) {
+      if (loading) return "#";
+      return getLink(item.platform, item.serviceType);
+    }
+    return "#";
   };
 
   useEffect(() => {
@@ -64,50 +94,76 @@ export default function Header() {
             </a>
           </div>
           <nav className="nav">
-            <div className="nav-item">
-              <a href="#instagram" className="nav-link">
-                Instagram
-                <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
-                <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
-              </a>
-              <div className="nav-dropdown-wrap">
-                <div className="nav-dropdown">
-                  <a href={loading ? "#" : getLink("instagram", "likes")}>Buy Instagram Likes</a>
-                  <a href={loading ? "#" : getLink("instagram", "followers")}>Buy Instagram Followers</a>
-                  <a href={loading ? "#" : getLink("instagram", "views")}>Buy Instagram Views</a>
+            {hasHeaderColumns ? (
+              headerColumns.map((column: any) => (
+                <div className="nav-item" key={column.id}>
+                  <a href="#" className="nav-link">
+                    {column.title || "Menu"}
+                    <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
+                    <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
+                  </a>
+                  <div className="nav-dropdown-wrap">
+                    <div className="nav-dropdown">
+                      {column.items.map((item: any) => (
+                        <a key={item.id} href={resolveItemUrl(item)}>
+                          {item.label || "Menu item"}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="nav-item">
-              <a href="#tiktok" className="nav-link">
-                TikTok
-                <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
-                <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
-              </a>
-              <div className="nav-dropdown-wrap">
-                <div className="nav-dropdown">
-                  <a href={loading ? "#" : getLink("tiktok", "likes")}>Buy TikTok Likes</a>
-                  <a href={loading ? "#" : getLink("tiktok", "followers")}>Buy TikTok Followers</a>
-                  <a href={loading ? "#" : getLink("tiktok", "views")}>Buy TikTok Views</a>
+              ))
+            ) : (
+              <>
+                <div className="nav-item">
+                  <a href="#instagram" className="nav-link">
+                    Instagram
+                    <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
+                    <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
+                  </a>
+                  <div className="nav-dropdown-wrap">
+                    <div className="nav-dropdown">
+                      <a href={loading ? "#" : getLink("instagram", "likes")}>Buy Instagram Likes</a>
+                      <a href={loading ? "#" : getLink("instagram", "followers")}>Buy Instagram Followers</a>
+                      <a href={loading ? "#" : getLink("instagram", "views")}>Buy Instagram Views</a>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="nav-item">
-              <a href="#youtube" className="nav-link">
-                YouTube
-                <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
-                <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
-              </a>
-              <div className="nav-dropdown-wrap">
-                <div className="nav-dropdown">
-                  <a href={loading ? "#" : getLink("youtube", "likes")}>Buy YouTube Likes</a>
-                  <a href={loading ? "#" : getLink("youtube", "views")}>Buy YouTube Views</a>
-                  <a href={loading ? "#" : getLink("youtube", "subscribers")}>Buy YouTube Subscribers</a>
+                <div className="nav-item">
+                  <a href="#tiktok" className="nav-link">
+                    TikTok
+                    <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
+                    <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
+                  </a>
+                  <div className="nav-dropdown-wrap">
+                    <div className="nav-dropdown">
+                      <a href={loading ? "#" : getLink("tiktok", "likes")}>Buy TikTok Likes</a>
+                      <a href={loading ? "#" : getLink("tiktok", "followers")}>Buy TikTok Followers</a>
+                      <a href={loading ? "#" : getLink("tiktok", "views")}>Buy TikTok Views</a>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <a href="/faq">FAQ</a>
-            <a href="/blog">Blog</a>
+                <div className="nav-item">
+                  <a href="#youtube" className="nav-link">
+                    YouTube
+                    <FontAwesomeIcon icon={faAngleDown} className="caret caret-down" aria-hidden="true" />
+                    <FontAwesomeIcon icon={faAngleUp} className="caret caret-up" aria-hidden="true" />
+                  </a>
+                  <div className="nav-dropdown-wrap">
+                    <div className="nav-dropdown">
+                      <a href={loading ? "#" : getLink("youtube", "likes")}>Buy YouTube Likes</a>
+                      <a href={loading ? "#" : getLink("youtube", "views")}>Buy YouTube Views</a>
+                      <a href={loading ? "#" : getLink("youtube", "subscribers")}>Buy YouTube Subscribers</a>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+            {headerMenuItems.map((item: any) => (
+              <a key={item.id} href={item.url || "#"}>
+                {item.label || "Menu item"}
+              </a>
+            ))}
           </nav>
           <div className="header-actions">
             <NotificationBell />
@@ -201,55 +257,75 @@ export default function Header() {
         </div>
 
         <nav className="mobile-nav-list">
-          <div className="mobile-nav-item">
-            <button className="mobile-nav-link" onClick={() => toggleMobileSection('instagram')}>
-              <span className="nav-text-icon">Instagram</span>
-              <FontAwesomeIcon icon={mobileExpanded === 'instagram' ? faAngleUp : faAngleDown} className="nav-chevron" />
-            </button>
-            <div className={`mobile-dropdown ${mobileExpanded === 'instagram' ? 'open' : ''}`}>
-               <a href={loading ? "#" : getLink("instagram", "likes")} className="mobile-dropdown-link">Buy Instagram Likes</a>
-               <a href={loading ? "#" : getLink("instagram", "followers")} className="mobile-dropdown-link">Buy Instagram Followers</a>
-               <a href={loading ? "#" : getLink("instagram", "views")} className="mobile-dropdown-link">Buy Instagram Views</a>
+          {hasHeaderColumns ? (
+            headerColumns.map((column: any) => (
+              <div className="mobile-nav-item" key={column.id}>
+                <button className="mobile-nav-link" onClick={() => toggleMobileSection(column.id)}>
+                  <span className="nav-text-icon">{column.title || "Menu"}</span>
+                  <FontAwesomeIcon
+                    icon={mobileExpanded === column.id ? faAngleUp : faAngleDown}
+                    className="nav-chevron"
+                  />
+                </button>
+                <div className={`mobile-dropdown ${mobileExpanded === column.id ? "open" : ""}`}>
+                  {column.items.map((item: any) => (
+                    <a
+                      key={item.id}
+                      href={resolveItemUrl(item)}
+                      className="mobile-dropdown-link"
+                    >
+                      {item.label || "Menu item"}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="mobile-nav-item">
+                <button className="mobile-nav-link" onClick={() => toggleMobileSection('instagram')}>
+                  <span className="nav-text-icon">Instagram</span>
+                  <FontAwesomeIcon icon={mobileExpanded === 'instagram' ? faAngleUp : faAngleDown} className="nav-chevron" />
+                </button>
+                <div className={`mobile-dropdown ${mobileExpanded === 'instagram' ? 'open' : ''}`}>
+                   <a href={loading ? "#" : getLink("instagram", "likes")} className="mobile-dropdown-link">Buy Instagram Likes</a>
+                   <a href={loading ? "#" : getLink("instagram", "followers")} className="mobile-dropdown-link">Buy Instagram Followers</a>
+                   <a href={loading ? "#" : getLink("instagram", "views")} className="mobile-dropdown-link">Buy Instagram Views</a>
+                </div>
+              </div>
+              <div className="mobile-nav-item">
+                <button className="mobile-nav-link" onClick={() => toggleMobileSection('tiktok')}>
+                  <span className="nav-text-icon">TikTok</span>
+                  <FontAwesomeIcon icon={mobileExpanded === 'tiktok' ? faAngleUp : faAngleDown} className="nav-chevron" />
+                </button>
+                <div className={`mobile-dropdown ${mobileExpanded === 'tiktok' ? 'open' : ''}`}>
+                   <a href={loading ? "#" : getLink("tiktok", "likes")} className="mobile-dropdown-link">Buy TikTok Likes</a>
+                   <a href={loading ? "#" : getLink("tiktok", "followers")} className="mobile-dropdown-link">Buy TikTok Followers</a>
+                   <a href={loading ? "#" : getLink("tiktok", "views")} className="mobile-dropdown-link">Buy TikTok Views</a>
+                </div>
+              </div>
+              <div className="mobile-nav-item">
+                <button className="mobile-nav-link" onClick={() => toggleMobileSection('youtube')}>
+                  <span className="nav-text-icon">YouTube</span>
+                  <FontAwesomeIcon icon={mobileExpanded === 'youtube' ? faAngleUp : faAngleDown} className="nav-chevron" />
+                </button>
+                <div className={`mobile-dropdown ${mobileExpanded === 'youtube' ? 'open' : ''}`}>
+                   <a href={loading ? "#" : getLink("youtube", "likes")} className="mobile-dropdown-link">Buy YouTube Likes</a>
+                   <a href={loading ? "#" : getLink("youtube", "views")} className="mobile-dropdown-link">Buy YouTube Views</a>
+                   <a href={loading ? "#" : getLink("youtube", "subscribers")} className="mobile-dropdown-link">Buy YouTube Subscribers</a>
+                </div>
+              </div>
+            </>
+          )}
+          {headerMenuItems.map((item: any) => (
+            <div key={item.id} className="mobile-nav-item">
+              <a href={item.url || "#"} className="mobile-nav-link">
+                <span className="nav-text-icon">
+                  {item.label || "Menu item"}
+                </span>
+              </a>
             </div>
-          </div>
-          <div className="mobile-nav-item">
-            <button className="mobile-nav-link" onClick={() => toggleMobileSection('tiktok')}>
-              <span className="nav-text-icon">TikTok</span>
-              <FontAwesomeIcon icon={mobileExpanded === 'tiktok' ? faAngleUp : faAngleDown} className="nav-chevron" />
-            </button>
-            <div className={`mobile-dropdown ${mobileExpanded === 'tiktok' ? 'open' : ''}`}>
-               <a href={loading ? "#" : getLink("tiktok", "likes")} className="mobile-dropdown-link">Buy TikTok Likes</a>
-               <a href={loading ? "#" : getLink("tiktok", "followers")} className="mobile-dropdown-link">Buy TikTok Followers</a>
-               <a href={loading ? "#" : getLink("tiktok", "views")} className="mobile-dropdown-link">Buy TikTok Views</a>
-            </div>
-          </div>
-          <div className="mobile-nav-item">
-            <button className="mobile-nav-link" onClick={() => toggleMobileSection('youtube')}>
-              <span className="nav-text-icon">YouTube</span>
-              <FontAwesomeIcon icon={mobileExpanded === 'youtube' ? faAngleUp : faAngleDown} className="nav-chevron" />
-            </button>
-            <div className={`mobile-dropdown ${mobileExpanded === 'youtube' ? 'open' : ''}`}>
-               <a href={loading ? "#" : getLink("youtube", "likes")} className="mobile-dropdown-link">Buy YouTube Likes</a>
-               <a href={loading ? "#" : getLink("youtube", "views")} className="mobile-dropdown-link">Buy YouTube Views</a>
-               <a href={loading ? "#" : getLink("youtube", "subscribers")} className="mobile-dropdown-link">Buy YouTube Subscribers</a>
-            </div>
-          </div>
-          <div className="mobile-nav-item">
-            <a href="/faq" className="mobile-nav-link">
-              <span className="nav-text-icon">
-                <FontAwesomeIcon icon={faClock} className="nav-icon" />
-                FAQ
-              </span>
-            </a>
-          </div>
-          <div className="mobile-nav-item">
-            <a href="/blog" className="mobile-nav-link">
-              <span className="nav-text-icon">
-                <FontAwesomeIcon icon={faBook} className="nav-icon" />
-                Blog
-              </span>
-            </a>
-          </div>
+          ))}
         </nav>
         
         <div className="mobile-actions">

@@ -806,6 +806,21 @@
   color: #991b1b;
 }
 
+.order-status-processing {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.order-status-refunded {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.order-status-cancelled {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
 .order-history-pagination {
   display: flex;
   align-items: center;

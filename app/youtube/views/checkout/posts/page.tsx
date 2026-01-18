@@ -229,7 +229,7 @@ function PostsSelectionContent({ basePath }: { basePath?: string }) {
           <div className="checkout-progress">
             <div className="progress-step completed">
               <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
+                <span>1</span>
               </div>
               <span className="progress-step-label">Details</span>
             </div>

@@ -20,6 +20,7 @@ import {
   faGear,
   faDollarSign,
   faSliders,
+  faSitemap,
   faServer,
   faIcons,
   faArrowRightFromBracket,
@@ -62,6 +63,7 @@ type AdminSidebarProps = {
   | "socialProof"
   | "featuredOn"
   | "homepageContent"
+  | "navigation"
   | "settings"
   | "currencyRates"
   | "smmPanel"
@@ -122,6 +124,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
         { label: "Social Proof", icon: faThumbsUp, active: activePage === "socialProof", href: getAdminUrl("social-proof") },
         { label: "Featured On", icon: faStar, active: activePage === "featuredOn", href: getAdminUrl("featured-on") },
         { label: "Homepage Content", icon: faHome, active: activePage === "homepageContent", href: getAdminUrl("homepage-content") },
+        { label: "Navigation", icon: faSitemap, active: activePage === "navigation", href: getAdminUrl("navigation") },
       ],
     },
     {

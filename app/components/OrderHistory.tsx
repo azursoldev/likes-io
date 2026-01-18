@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "../dashboard/dashboard.css";
 import Header from "./Header";
@@ -31,16 +32,79 @@ type Order = {
   smmOrderId?: string;
 };
 
-interface OrderHistoryProps {
-  initialOrders: Order[];
+type StatusFilterValue =
+  | "All"
+  | "Completed"
+  | "Processing"
+  | "Pending"
+  | "Failed"
+  | "RefundedCanceled";
+
+const STATUS_FILTER_OPTIONS: { value: StatusFilterValue; label: string }[] = [
+  { value: "All", label: "All" },
+  { value: "Completed", label: "Completed" },
+  { value: "Processing", label: "Processing" },
+  { value: "Pending", label: "Pending" },
+  { value: "Failed", label: "Failed" },
+  { value: "RefundedCanceled", label: "Refunded / Canceled" },
+];
+
+function getStatusMeta(status: string): { label: string; className: string } {
+  if (status === "COMPLETED") return { label: "Completed", className: "completed" };
+  if (status === "PROCESSING") return { label: "Processing", className: "processing" };
+  if (status === "PENDING_PAYMENT") return { label: "Pending", className: "pending" };
+  if (status === "FAILED") return { label: "Failed", className: "failed" };
+  if (status === "REFUNDED") return { label: "Refunded", className: "refunded" };
+  if (status === "CANCELLED") return { label: "Canceled", className: "cancelled" };
+  return {
+    label: status
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" "),
+    className: status.toLowerCase(),
+  };
 }
 
-export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) {
+interface OrderHistoryProps {
+  initialOrders: Order[];
+  initialFilter?: StatusFilterValue;
+}
+
+export default function OrderHistory({
+  initialOrders = [],
+  initialFilter = "Completed",
+}: OrderHistoryProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [orders] = useState<Order[]>(initialOrders);
   const totalOrders = orders.length;
   const startIndex = totalOrders > 0 ? 1 : 0;
   const endIndex = totalOrders;
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showFilter, setShowFilter] = useState(false);
+
+  const activeFilter = initialFilter;
+  const activeFilterOption =
+    STATUS_FILTER_OPTIONS.find((option) => option.value === activeFilter) ||
+    STATUS_FILTER_OPTIONS[0];
+
+  const filterLabel =
+    activeFilter === "All"
+      ? "Showing all orders"
+      : `Showing ${activeFilterOption.label.toLowerCase()} orders`;
+
+  const handleFilterSelect = (value: StatusFilterValue) => {
+    const current = searchParams ? new URLSearchParams(searchParams.toString()) : new URLSearchParams();
+    if (value === "All") {
+      current.delete("status");
+    } else {
+      current.set("status", value);
+    }
+    const query = current.toString();
+    setShowFilter(false);
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
 
   return (
     <div className="dashboard-wrapper">
@@ -56,7 +120,6 @@ export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) 
               <h1 className="order-history-title">Order History</h1>
               
               <div className="order-history-controls">
-                {/* Search */}
                 <div className="order-search">
                   <FontAwesomeIcon icon={faSearch} className="search-icon" />
                   <input
@@ -66,11 +129,31 @@ export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) 
                   />
                 </div>
                 
-                {/* Filter Button */}
-                <button className="order-filter-btn">
-                  <FontAwesomeIcon icon={faFilter} />
-                  <span>Showing all orders</span>
-                </button>
+                <div className="orders-filter-dropdown-wrapper">
+                  <button
+                    className="order-filter-btn"
+                    type="button"
+                    onClick={() => setShowFilter(!showFilter)}
+                  >
+                    <FontAwesomeIcon icon={faFilter} />
+                    <span>{filterLabel}</span>
+                  </button>
+                  {showFilter && (
+                    <div className="orders-filter-dropdown-menu">
+                      {STATUS_FILTER_OPTIONS.map((option) => (
+                        <div
+                          key={option.value}
+                          className={`orders-filter-option${
+                            option.value === activeFilter ? " active" : ""
+                          }`}
+                          onClick={() => handleFilterSelect(option.value)}
+                        >
+                          {option.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -104,48 +187,61 @@ export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) 
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order) => (
-                    <tr key={order.id}>
-                      <td>{order.date}</td>
-                      <td>{order.profile}</td>
-                      <td>{order.package}</td>
-                      <td>
-                        <div className="amount-display">
-                          <span className="currency-badge">{order.currency}</span>
-                          <span className="amount-value">{order.amount}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="payment-method">
-                          <div className="mastercard-logo">
-                            <svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="24" height="16" rx="2" fill="#1A1F71"/>
-                              <circle cx="10" cy="8" r="4.5" fill="#EB001B"/>
-                              <circle cx="14" cy="8" r="4.5" fill="#F79E1B"/>
-                            </svg>
+                  {orders.map((order) => {
+                    const statusMeta = getStatusMeta(order.status);
+                    return (
+                      <tr key={order.id}>
+                        <td>{order.date}</td>
+                        <td>{order.profile}</td>
+                        <td>{order.package}</td>
+                        <td>
+                          <div className="amount-display">
+                            <span className="currency-badge">{order.currency}</span>
+                            <span className="amount-value">{order.amount}</span>
                           </div>
-                          <span className="payment-last-four">... {order.paidWith.lastFour}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`order-status order-status-${order.status.toLowerCase()}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="order-action-cell">
-                        <button
-                          className="order-action-btn"
-                          aria-label="View order"
-                          onClick={() => setSelectedOrder(order)}
-                        >
-                          <span className="order-action-dot">
-                            <span className="dot-large"></span>
-                            <span className="dot-small"></span>
+                        </td>
+                        <td>
+                          <div className="payment-method">
+                            <div className="mastercard-logo">
+                              <svg
+                                width="24"
+                                height="16"
+                                viewBox="0 0 24 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <rect width="24" height="16" rx="2" fill="#1A1F71" />
+                                <circle cx="10" cy="8" r="4.5" fill="#EB001B" />
+                                <circle cx="14" cy="8" r="4.5" fill="#F79E1B" />
+                              </svg>
+                            </div>
+                            <span className="payment-last-four">
+                              ... {order.paidWith.lastFour}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            className={`order-status order-status-${statusMeta.className}`}
+                          >
+                            {statusMeta.label}
                           </span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="order-action-cell">
+                          <button
+                            className="order-action-btn"
+                            aria-label="View order"
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            <span className="order-action-dot">
+                              <span className="dot-large"></span>
+                              <span className="dot-small"></span>
+                            </span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -190,7 +286,9 @@ export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) 
               </button>
             </div>
 
-            <div className="order-modal-subtitle">Your order is completed!</div>
+            <div className="order-modal-subtitle">
+              {`Your order is ${getStatusMeta(selectedOrder.status).label.toLowerCase()}!`}
+            </div>
 
             <div className="order-modal-progress">
               <div className="order-modal-progress-bar">
@@ -205,8 +303,12 @@ export default function OrderHistory({ initialOrders = [] }: OrderHistoryProps) 
 
             <div className="order-modal-status-row">
               <span className="order-modal-status-label">Order status</span>
-              <span className={`order-status order-status-${selectedOrder.status.toLowerCase()}`}>
-                {selectedOrder.status}
+              <span
+                className={`order-status order-status-${
+                  getStatusMeta(selectedOrder.status).className
+                }`}
+              >
+                {getStatusMeta(selectedOrder.status).label}
               </span>
             </div>
 

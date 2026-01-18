@@ -401,14 +401,13 @@ function FinalCheckoutContent() {
           <div className="checkout-progress">
             <Link href={detailsUrl} className="progress-step completed" style={{ textDecoration: "none", color: "inherit" }}>
               <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
+                <span>1</span>
               </div>
               <span className="progress-step-label">Details</span>
             </Link>
             <div className="progress-arrow">
               <FontAwesomeIcon icon={faChevronRight} />
             </div>
-            {/* Removed Posts Step */}
             <div className="progress-step active">
               <div className="progress-step-icon">
                 <span>2</span>

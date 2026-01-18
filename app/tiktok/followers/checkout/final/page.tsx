@@ -238,7 +238,7 @@ function FinalCheckoutContent() {
           <div className="checkout-progress">
             <Link href={detailsUrl} className="progress-step completed" style={{ textDecoration: "none", color: "inherit" }}>
               <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
+                <span>1</span>
               </div>
               <span className="progress-step-label">Details</span>
             </Link>
@@ -247,7 +247,7 @@ function FinalCheckoutContent() {
             </div>
             <Link href={accountUrl} className="progress-step completed" style={{ textDecoration: "none", color: "inherit" }}>
               <div className="progress-step-icon">
-                <FontAwesomeIcon icon={faCheck} />
+                <span>2</span>
               </div>
               <span className="progress-step-label">Account</span>
             </Link>

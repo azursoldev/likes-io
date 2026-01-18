@@ -201,6 +201,10 @@ model AdminSettings {
   faviconUrl             String?
   footerLogoUrl          String?
   headerLogoUrl          String?
+  headerMenu             Json?
+  footerMenu             Json?
+  headerColumnMenus      Json?
+  footerColumnMenus      Json?
   homeMetaDescription    String?
   homeMetaTitle          String?
   robotsTxtContent       String?  @default("User-agent: *\nAllow: /")
