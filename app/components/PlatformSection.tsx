@@ -121,8 +121,8 @@ export default function PlatformSection() {
                 <div className="p-name">{p.name}</div>
                 <div className="rating-pill">
                   <span className="star">★</span>
-                  <span>5.0</span>
-                  <span className="muted">4,500+</span>
+                  <span>{p.rating || "5.0"}</span>
+                  <span className="muted">{p.reviews || "4,500+"}</span>
                 </div>
               </div>
 

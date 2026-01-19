@@ -67,6 +67,25 @@ export default function GetStarted() {
   const [availablePackages, setAvailablePackages] = useState<any[]>([]);
   const [sliderIndex, setSliderIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [mainHeading, setMainHeading] = useState("Get Started Instantly");
+
+  // Fetch global homepage content (for main heading)
+  useEffect(() => {
+    const fetchGlobalContent = async () => {
+      try {
+        const res = await fetch(`/api/cms/homepage`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.content && data.content.getStartedMainHeading) {
+            setMainHeading(data.content.getStartedMainHeading);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch global homepage content", error);
+      }
+    };
+    fetchGlobalContent();
+  }, []);
 
   // Clear profile data when platform changes
   useEffect(() => {
@@ -254,7 +273,7 @@ export default function GetStarted() {
       <section className="getstarted">
         <div className="container">
           <div className="gs-header">
-            <h3 className="font-heading">Get Started Instantly</h3>
+            <h3 className="font-heading">{mainHeading}</h3>
             <div className="gs-platforms">
               {['Instagram', 'TikTok', 'YouTube'].map((p) => (
                 <button key={p} className="pill">
@@ -317,7 +336,7 @@ export default function GetStarted() {
     <section className="getstarted">
       <div className="container">
         <div className="gs-header">
-          <h3 className="font-heading">Get Started Instantly</h3>
+          <h3 className="font-heading">{mainHeading}</h3>
           <div className="gs-platforms">
             <button className={`pill ${platform === "instagram" ? "active" : ""}`} onClick={() => setPlatform("instagram")}>
               <span className="pill-icon"><img src="/instagram-11.png" alt="Instagram" width={12} height={12} /></span>

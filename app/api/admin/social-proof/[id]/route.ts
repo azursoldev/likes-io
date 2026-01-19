@@ -17,7 +17,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { platform, username, service, timeText } = body;
+    const { platform, username, service, timeText, notificationLabel } = body;
 
     const item = await prisma.socialProof.update({
       where: { id: params.id },
@@ -26,6 +26,7 @@ export async function PUT(
         username,
         service,
         timeText,
+        notificationLabel,
       },
     });
 

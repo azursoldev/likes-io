@@ -16,6 +16,7 @@ type SocialProofActivity = {
   username: string;
   service: string;
   timeText: string;
+  notificationLabel?: string;
 };
 
 const platformIconMap: Record<Platform, any> = {
@@ -32,6 +33,7 @@ export default function SocialProofDashboard() {
   const [username, setUsername] = useState("");
   const [service, setService] = useState("");
   const [timeText, setTimeText] = useState("");
+  const [notificationLabel, setNotificationLabel] = useState("just purchased");
   const [loading, setLoading] = useState(true);
 
   const isEditing = useMemo(() => editingId !== null, [editingId]);
@@ -42,7 +44,7 @@ export default function SocialProofDashboard() {
 
   const fetchActivities = async () => {
     try {
-      const res = await fetch('/api/admin/social-proof');
+      const res = await fetch('/api/admin/social-proof', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setActivities(data);
@@ -59,6 +61,7 @@ export default function SocialProofDashboard() {
     setUsername("");
     setService("");
     setTimeText("");
+    setNotificationLabel("just purchased");
     setEditingId(null);
   };
 
@@ -73,6 +76,7 @@ export default function SocialProofDashboard() {
     setUsername(item.username);
     setService(item.service);
     setTimeText(item.timeText);
+    setNotificationLabel(item.notificationLabel || "just purchased");
     setShowModal(true);
   };
 
@@ -85,7 +89,7 @@ export default function SocialProofDashboard() {
         const res = await fetch(`/api/admin/social-proof/${editingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform, username, service, timeText })
+          body: JSON.stringify({ platform, username, service, timeText, notificationLabel })
         });
         
         if (res.ok) {
@@ -100,7 +104,7 @@ export default function SocialProofDashboard() {
         const res = await fetch('/api/admin/social-proof', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform, username, service, timeText })
+          body: JSON.stringify({ platform, username, service, timeText, notificationLabel })
         });
         
         if (res.ok) {
@@ -164,6 +168,7 @@ export default function SocialProofDashboard() {
                     <tr>
                       <th>Platform</th>
                       <th>Username</th>
+                      <th>Notification Label</th>
                       <th>Service Purchased</th>
                       <th>Time Text</th>
                       <th className="actions-col">Actions</th>
@@ -172,7 +177,7 @@ export default function SocialProofDashboard() {
                   <tbody>
                     {activities.length === 0 ? (
                         <tr>
-                            <td colSpan={5} style={{textAlign: "center", padding: "20px"}}>No activities found. Add one to get started.</td>
+                            <td colSpan={6} style={{textAlign: "center", padding: "20px"}}>No activities found. Add one to get started.</td>
                         </tr>
                     ) : (
                         activities.map((item) => (
@@ -183,6 +188,7 @@ export default function SocialProofDashboard() {
                             </span>
                             </td>
                             <td className="username-cell">{item.username}</td>
+                            <td>{item.notificationLabel || "just purchased"}</td>
                             <td>{item.service}</td>
                             <td>{item.timeText}</td>
                             <td className="actions-cell">
@@ -243,6 +249,15 @@ export default function SocialProofDashboard() {
 
               <div className="modal-row two-col">
                 <label className="faq-modal-label">
+                  Notification Label
+                  <input
+                    className="faq-modal-input"
+                    value={notificationLabel}
+                    onChange={(e) => setNotificationLabel(e.target.value)}
+                    placeholder="e.g. just purchased"
+                  />
+                </label>
+                <label className="faq-modal-label">
                   Service
                   <input
                     className="faq-modal-input"
@@ -251,6 +266,9 @@ export default function SocialProofDashboard() {
                     placeholder="e.g. 1,000 Premium Likes"
                   />
                 </label>
+              </div>
+
+              <div className="modal-row">
                 <label className="faq-modal-label">
                   Time Text
                   <input

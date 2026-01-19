@@ -30,6 +30,7 @@ import {
   faShieldHalved,
   faTicket,
   faTag,
+  faGift,
 } from "@fortawesome/free-solid-svg-icons";
 import { getAdminUrl } from "@/lib/url-utils";
 
@@ -107,6 +108,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
         { label: "Blog", icon: faNewspaper, active: activePage === "blog", href: getAdminUrl("blog") },
         { label: "Review Moderation", icon: faCheckCircle, active: activePage === "reviewModeration", href: getAdminUrl("review-moderation") },
         { label: "Published Testimonials", icon: faQuoteLeft, active: activePage === "testimonials", href: getAdminUrl("testimonials") },
+        { label: "Free Tools", icon: faGift, active: activePage === "freeTools", href: getAdminUrl("free-tools") },
         { label: "Terms of Service", icon: faFileContract, active: activePage === "terms", href: getAdminUrl("legal/terms") },
         { label: "Privacy Policy", icon: faShieldHalved, active: activePage === "privacy", href: getAdminUrl("legal/privacy") },
         { label: "FAQ", icon: faQuestionCircle, active: activePage === "faq", href: getAdminUrl("faq") },

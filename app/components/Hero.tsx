@@ -27,6 +27,7 @@ type HeroContent = {
   reviewCount: string;
   buttons: HeroButton[];
   profile: HeroProfile;
+  socialProofLabel?: string;
 };
 
 const HeroSkeleton = () => (
@@ -126,7 +127,8 @@ export default function Hero() {
                 followers: data.content.heroProfileFollowers || "",
                 engagement: data.content.heroProfileEngagement || "",
                 image: data.content.heroProfileImage || "",
-              }
+              },
+              socialProofLabel: data.content.socialProofLabel || "just purchased"
             });
           }
         }
@@ -148,7 +150,7 @@ export default function Hero() {
     // Fetch social proof items
     const fetchSocialProof = async () => {
       try {
-        const res = await fetch('/api/admin/social-proof');
+        const res = await fetch('/api/admin/social-proof', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -156,7 +158,8 @@ export default function Hero() {
               handle: item.username,
               item: item.service,
               time: item.timeText,
-              platform: item.platform
+              platform: item.platform,
+              label: item.notificationLabel
             })));
           }
         }
@@ -306,7 +309,7 @@ export default function Hero() {
           <span className="pill">
             <span className={getPlatformClass(currentSocialUpdate.platform)} aria-hidden="true" />
             <span className="handle">{currentSocialUpdate.handle}</span>      
-            <span className="muted">just purchased</span>
+            <span className="muted">{currentSocialUpdate.label || "just purchased"}</span>
             <b className="accent-num">{currentSocialUpdate.item}</b>
             <span className="time">{currentSocialUpdate.time}</span>
           </span>
