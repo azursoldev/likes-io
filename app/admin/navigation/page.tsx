@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import NavigationDashboard from "../../components/NavigationDashboard";
 
 export const metadata: Metadata = {
-  title: "Navigation | Likes.io Admin",
-  description: "Manage header and footer branding from a single navigation page.",
+  title: "Navigation | Likes.io",
+  description: "Manage header and footer navigation menus used across the site.",
 };
 
 export default function Page() {

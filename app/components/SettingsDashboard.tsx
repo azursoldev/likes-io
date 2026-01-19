@@ -68,6 +68,93 @@ export default function SettingsDashboard() {
   const [myFatoorahTestMode, setMyFatoorahTestMode] = useState(true);
   const [myFatoorahWebhookSecret, setMyFatoorahWebhookSecret] = useState("");
 
+  const [headerMenu, setHeaderMenu] = useState<any[]>([]);
+  const [headerColumnMenus, setHeaderColumnMenus] = useState<any[]>([]);
+
+  const getDefaultHeaderColumnMenus = () => [
+    {
+      id: "header-col-instagram",
+      title: "Instagram Services",
+      items: [
+        {
+          id: "header-col-instagram-likes",
+          label: "Buy Instagram Likes",
+          platform: "instagram",
+          serviceType: "likes",
+          url: "",
+        },
+        {
+          id: "header-col-instagram-followers",
+          label: "Buy Instagram Followers",
+          platform: "instagram",
+          serviceType: "followers",
+          url: "",
+        },
+        {
+          id: "header-col-instagram-views",
+          label: "Buy Instagram Views",
+          platform: "instagram",
+          serviceType: "views",
+          url: "",
+        },
+      ],
+    },
+    {
+      id: "header-col-tiktok",
+      title: "TikTok Services",
+      items: [
+        {
+          id: "header-col-tiktok-likes",
+          label: "Buy TikTok Likes",
+          platform: "tiktok",
+          serviceType: "likes",
+          url: "",
+        },
+        {
+          id: "header-col-tiktok-followers",
+          label: "Buy TikTok Followers",
+          platform: "tiktok",
+          serviceType: "followers",
+          url: "",
+        },
+        {
+          id: "header-col-tiktok-views",
+          label: "Buy TikTok Views",
+          platform: "tiktok",
+          serviceType: "views",
+          url: "",
+        },
+      ],
+    },
+    {
+      id: "header-col-youtube",
+      title: "YouTube Services",
+      items: [
+        {
+          id: "header-col-youtube-views",
+          label: "Buy YouTube Views",
+          platform: "youtube",
+          serviceType: "views",
+          url: "",
+        },
+        {
+          id: "header-col-youtube-subscribers",
+          label: "Buy YouTube Subscribers",
+          platform: "youtube",
+          serviceType: "subscribers",
+          url: "",
+        },
+        {
+          id: "header-col-youtube-likes",
+          label: "Buy YouTube Likes",
+          platform: "youtube",
+          serviceType: "likes",
+          url: "",
+        },
+      ],
+    },
+  ];
+
   // Fetch settings on mount
   useEffect(() => {
     fetchSettings();
@@ -79,7 +166,6 @@ export default function SettingsDashboard() {
       const response = await fetch("/api/admin/settings");
       if (response.ok) {
         const data = await response.json();
-        // Set all state from fetched data
         if (data.cryptomusMerchantId) setCryptomusMerchantId(data.cryptomusMerchantId);
         if (data.cryptomusApiKey) setCryptomusApiKey(data.cryptomusApiKey);
         if (data.cryptomusDisplayName) setCryptomusDisplayName(data.cryptomusDisplayName);
@@ -99,7 +185,6 @@ export default function SettingsDashboard() {
         if (data.newServiceIndicator !== undefined) setNewServiceIndicator(data.newServiceIndicator);
         if (data.supportEmail) setSupportEmail(data.supportEmail);
         
-        // RapidAPI
         if (data.rapidApiKey) setRapidApiKey(data.rapidApiKey);
         if (data.rapidApiInstagramHost) setRapidApiInstagramHost(data.rapidApiInstagramHost);
         if (data.rapidApiTikTokHost) setRapidApiTikTokHost(data.rapidApiTikTokHost);
@@ -112,21 +197,18 @@ export default function SettingsDashboard() {
         if (data.facebookClientId) setFacebookClientId(data.facebookClientId);
         if (data.facebookClientSecret) setFacebookClientSecret(data.facebookClientSecret);
 
-        // SMTP Configuration
         if (data.smtpHost) setSmtpHost(data.smtpHost);
         if (data.smtpPort) setSmtpPort(data.smtpPort.toString());
         if (data.smtpSecure !== undefined) setSmtpSecure(data.smtpSecure);
         if (data.smtpUser) setSmtpUser(data.smtpUser);
-        if (data.smtpPass) setSmtpPass(data.smtpPass); // Passwords should probably be masked if not changed, but let's assume API returns it or masked
+        if (data.smtpPass) setSmtpPass(data.smtpPass);
         if (data.smtpFrom) setSmtpFrom(data.smtpFrom);
 
-        // MyFatoorah Configuration
         if (data.myFatoorahToken) setMyFatoorahToken(data.myFatoorahToken);
         if (data.myFatoorahBaseURL) setMyFatoorahBaseURL(data.myFatoorahBaseURL);
         if (data.myFatoorahTestMode !== undefined) setMyFatoorahTestMode(data.myFatoorahTestMode);
         if (data.myFatoorahWebhookSecret) setMyFatoorahWebhookSecret(data.myFatoorahWebhookSecret);
 
-        // SEO & Branding
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
         if (data.homeMetaDescription) setHomeMetaDescription(data.homeMetaDescription);
         if (data.robotsTxtContent) setRobotsTxtContent(data.robotsTxtContent);
@@ -138,6 +220,54 @@ export default function SettingsDashboard() {
         if (data.googleAnalyticsId) setGoogleAnalyticsId(data.googleAnalyticsId);
         if (data.googleSiteVerification) setGoogleSiteVerification(data.googleSiteVerification);
       }
+
+      try {
+        const navResponse = await fetch("/api/admin/navigation");
+        if (navResponse.ok) {
+          const navData = await navResponse.json();
+          if (Array.isArray(navData.headerMenu)) {
+            setHeaderMenu(
+              navData.headerMenu.map((item: any, index: number) => ({
+                id: item.id || `header-${index}-${Date.now()}`,
+                label: item.label || "",
+                url: item.url || "",
+              }))
+            );
+          } else {
+            setHeaderMenu([
+              { id: "header-instagram", label: "Instagram", url: "" },
+              { id: "header-tiktok", label: "TikTok", url: "" },
+              { id: "header-youtube", label: "YouTube", url: "" },
+              { id: "header-faq", label: "FAQ", url: "/faq" },
+              { id: "header-blog", label: "Blog", url: "/blog" },
+            ]);
+          }
+          if (Array.isArray(navData.headerColumnMenus)) {
+            setHeaderColumnMenus(
+              navData.headerColumnMenus.map((column: any, columnIndex: number) => ({
+                id: column.id || `header-col-${columnIndex}-${Date.now()}`,
+                title: column.title || "",
+                items: Array.isArray(column.items)
+                  ? column.items.map((item: any, itemIndex: number) => ({
+                      id: item.id || `header-item-${columnIndex}-${itemIndex}-${Date.now()}`,
+                      label: item.label || "",
+                      platform: item.platform || "",
+                      serviceType: item.serviceType || "",
+                      url: item.url || "",
+                    }))
+                  : [],
+              }))
+            );
+          } else {
+            setHeaderColumnMenus(getDefaultHeaderColumnMenus());
+          }
+        } else {
+          setHeaderColumnMenus(getDefaultHeaderColumnMenus());
+        }
+      } catch (error) {
+        console.error("Error fetching navigation settings:", error);
+        setHeaderColumnMenus(getDefaultHeaderColumnMenus());
+      }
     } catch (error) {
       console.error("Error fetching settings:", error);
     } finally {
@@ -148,69 +278,81 @@ export default function SettingsDashboard() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const response = await fetch("/api/admin/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cryptomusMerchantId,
-          cryptomusApiKey: cryptomusApiKey.includes('••••') ? undefined : cryptomusApiKey,
-          cryptomusDisplayName,
-          cryptomusTestMode,
-          bigPayMerchantId,
-          bigPayApiKey: bigPayApiKey.includes('••••') ? undefined : bigPayApiKey,
-          bigPayApiSecret: bigPayApiSecret.includes('••••') ? undefined : bigPayApiSecret,
-          bigPayDisplayName,
-          bigPayTestMode,
-          exitIntentEnabled,
-          exitIntentTitle,
-          exitIntentSubtitle,
-          exitIntentDiscountCode,
-          newServiceIndicator,
-          supportEmail,
-          // RapidAPI
-          rapidApiKey: rapidApiKey.includes('••••') ? undefined : rapidApiKey,
-          rapidApiInstagramHost,
-          rapidApiTikTokHost,
-          rapidApiYouTubeHost,
-          recaptchaSiteKey,
-          recaptchaSecretKey: recaptchaSecretKey.includes('••••') ? undefined : recaptchaSecretKey,
-          googleClientId,
-          googleClientSecret: googleClientSecret.includes('••••') ? undefined : googleClientSecret,
-          facebookClientId,
-          facebookClientSecret: facebookClientSecret.includes('••••') ? undefined : facebookClientSecret,
-          // SMTP Configuration
-          smtpHost,
-          smtpPort: parseInt(smtpPort),
-          smtpSecure,
-          smtpUser,
-          smtpPass,
-          smtpFrom,
-          // MyFatoorah Configuration
-          myFatoorahToken: myFatoorahToken?.includes('••••') ? undefined : myFatoorahToken,
-          myFatoorahBaseURL,
-          myFatoorahTestMode,
-          myFatoorahWebhookSecret,
-          // SEO & Branding
-          homeMetaTitle,
-          homeMetaDescription,
-          robotsTxtContent,
-          customSitemapXml,
-          sitemapEnabled,
-          faviconUrl,
-          headerLogoUrl,
-          footerLogoUrl,
-          googleAnalyticsId,
-          googleSiteVerification,
-        }),
-      });
 
-      if (!response.ok) {
-        const error = await response.json();
+      const [settingsResponse, navigationResponse] = await Promise.all([
+        fetch("/api/admin/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cryptomusMerchantId,
+            cryptomusApiKey: cryptomusApiKey.includes('••••') ? undefined : cryptomusApiKey,
+            cryptomusDisplayName,
+            cryptomusTestMode,
+            bigPayMerchantId,
+            bigPayApiKey: bigPayApiKey.includes('••••') ? undefined : bigPayApiKey,
+            bigPayApiSecret: bigPayApiSecret.includes('••••') ? undefined : bigPayApiSecret,
+            bigPayDisplayName,
+            bigPayTestMode,
+            exitIntentEnabled,
+            exitIntentTitle,
+            exitIntentSubtitle,
+            exitIntentDiscountCode,
+            newServiceIndicator,
+            supportEmail,
+            rapidApiKey: rapidApiKey.includes('••••') ? undefined : rapidApiKey,
+            rapidApiInstagramHost,
+            rapidApiTikTokHost,
+            rapidApiYouTubeHost,
+            recaptchaSiteKey,
+            recaptchaSecretKey: recaptchaSecretKey.includes('••••') ? undefined : recaptchaSecretKey,
+            googleClientId,
+            googleClientSecret: googleClientSecret.includes('••••') ? undefined : googleClientSecret,
+            facebookClientId,
+            facebookClientSecret: facebookClientSecret.includes('••••') ? undefined : facebookClientSecret,
+            smtpHost,
+            smtpPort: parseInt(smtpPort),
+            smtpSecure,
+            smtpUser,
+            smtpPass,
+            smtpFrom,
+            myFatoorahToken: myFatoorahToken?.includes('••••') ? undefined : myFatoorahToken,
+            myFatoorahBaseURL,
+            myFatoorahTestMode,
+            myFatoorahWebhookSecret,
+            homeMetaTitle,
+            homeMetaDescription,
+            robotsTxtContent,
+            customSitemapXml,
+            sitemapEnabled,
+            faviconUrl,
+            headerLogoUrl,
+            footerLogoUrl,
+            googleAnalyticsId,
+            googleSiteVerification,
+          }),
+        }),
+        fetch("/api/admin/navigation", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            headerMenu,
+            headerColumnMenus,
+          }),
+        }),
+      ]);
+
+      if (!settingsResponse.ok) {
+        const error = await settingsResponse.json().catch(() => ({}));
         throw new Error(error.error || "Failed to save settings");
       }
 
+      if (!navigationResponse.ok) {
+        const error = await navigationResponse.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to save navigation settings");
+      }
+
       alert("Settings saved successfully!");
-      await fetchSettings(); // Refresh to get masked values
+      await fetchSettings();
     } catch (error: any) {
       console.error("Error saving settings:", error);
       alert(error.message || "Failed to save settings");
@@ -382,6 +524,211 @@ export default function SettingsDashboard() {
                     </div>
                   )}
                 </label>
+              </div>
+            </div>
+
+            <div className="settings-card">
+              <h2 className="settings-card-title">Header Menu</h2>
+              <p className="settings-card-description">Control top navigation items like Instagram, TikTok, YouTube, FAQ, Blog.</p>
+              <div className="settings-form-group">
+                {headerMenu.map((item, index) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr auto",
+                      gap: "8px",
+                      marginBottom: "8px",
+                      alignItems: "center",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      className="settings-input"
+                      placeholder="Label (e.g. Instagram)"
+                      value={item.label}
+                      onChange={(e) => {
+                        const next = [...headerMenu];
+                        next[index] = { ...next[index], label: e.target.value };
+                        setHeaderMenu(next);
+                      }}
+                    />
+                    <input
+                      type="text"
+                      className="settings-input"
+                      placeholder="URL (optional, e.g. /instagram/likes)"
+                      value={item.url}
+                      onChange={(e) => {
+                        const next = [...headerMenu];
+                        next[index] = { ...next[index], url: e.target.value };
+                        setHeaderMenu(next);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="settings-btn"
+                      onClick={() => {
+                        setHeaderMenu(headerMenu.filter((_, i) => i !== index));
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="settings-btn"
+                  onClick={() => {
+                    setHeaderMenu([
+                      ...headerMenu,
+                      {
+                        id: `header-${Date.now()}-${headerMenu.length}`,
+                        label: "",
+                        url: "",
+                      },
+                    ]);
+                  }}
+                >
+                  Add Header Item
+                </button>
+              </div>
+            </div>
+
+            <div className="settings-card">
+              <h2 className="settings-card-title">Header Dropdown Columns</h2>
+              <p className="settings-card-description">Control dropdown sections and items under header navigation.</p>
+              <div className="settings-form-group">
+                {headerColumnMenus.map((column, columnIndex) => (
+                  <div
+                    key={column.id}
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      className="settings-input"
+                      placeholder="Column title (e.g. Instagram Services)"
+                      value={column.title}
+                      onChange={(e) => {
+                        const next = [...headerColumnMenus];
+                        next[columnIndex] = { ...next[columnIndex], title: e.target.value };
+                        setHeaderColumnMenus(next);
+                      }}
+                    />
+                    {Array.isArray(column.items) &&
+                      column.items.map((item: any, itemIndex: number) => (
+                        <div
+                          key={item.id}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr auto",
+                            gap: "8px",
+                            marginTop: "8px",
+                            alignItems: "center",
+                          }}
+                        >
+                          <input
+                            type="text"
+                            className="settings-input"
+                            placeholder="Item label (e.g. Buy Instagram Likes)"
+                            value={item.label}
+                            onChange={(e) => {
+                              const next = [...headerColumnMenus];
+                              const items = Array.isArray(next[columnIndex].items)
+                                ? [...next[columnIndex].items]
+                                : [];
+                              items[itemIndex] = { ...items[itemIndex], label: e.target.value };
+                              next[columnIndex] = { ...next[columnIndex], items };
+                              setHeaderColumnMenus(next);
+                            }}
+                          />
+                          <input
+                            type="text"
+                            className="settings-input"
+                            placeholder="URL (optional, e.g. /instagram/likes)"
+                            value={item.url}
+                            onChange={(e) => {
+                              const next = [...headerColumnMenus];
+                              const items = Array.isArray(next[columnIndex].items)
+                                ? [...next[columnIndex].items]
+                                : [];
+                              items[itemIndex] = { ...items[itemIndex], url: e.target.value };
+                              next[columnIndex] = { ...next[columnIndex], items };
+                              setHeaderColumnMenus(next);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="settings-btn"
+                            onClick={() => {
+                              const next = [...headerColumnMenus];
+                              const items = Array.isArray(next[columnIndex].items)
+                                ? next[columnIndex].items.filter((_: any, i: number) => i !== itemIndex)
+                                : [];
+                              next[columnIndex] = { ...next[columnIndex], items };
+                              setHeaderColumnMenus(next);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    <button
+                      type="button"
+                      className="settings-btn"
+                      style={{ marginTop: "8px" }}
+                      onClick={() => {
+                        const next = [...headerColumnMenus];
+                        const items = Array.isArray(next[columnIndex].items)
+                          ? [...next[columnIndex].items]
+                          : [];
+                        items.push({
+                          id: `header-item-${columnIndex}-${Date.now()}-${items.length}`,
+                          label: "",
+                          platform: "",
+                          serviceType: "",
+                          url: "",
+                        });
+                        next[columnIndex] = { ...next[columnIndex], items };
+                        setHeaderColumnMenus(next);
+                      }}
+                    >
+                      Add Item
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-btn"
+                      style={{ marginTop: "8px", marginLeft: "8px" }}
+                      onClick={() => {
+                        setHeaderColumnMenus(
+                          headerColumnMenus.filter((_: any, i: number) => i !== columnIndex)
+                        );
+                      }}
+                    >
+                      Remove Column
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="settings-btn"
+                  onClick={() => {
+                    setHeaderColumnMenus([
+                      ...headerColumnMenus,
+                      {
+                        id: `header-col-${Date.now()}-${headerColumnMenus.length}`,
+                        title: "",
+                        items: [],
+                      },
+                    ]);
+                  }}
+                >
+                  Add Column
+                </button>
               </div>
             </div>
 

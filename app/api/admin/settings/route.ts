@@ -197,10 +197,6 @@ export async function PUT(request: NextRequest) {
       faviconUrl,
       headerLogoUrl,
       footerLogoUrl,
-      headerMenu,
-      footerMenu,
-      headerColumnMenus,
-      footerColumnMenus,
       
       // Analytics & Integrations
       googleAnalyticsId,
@@ -336,9 +332,6 @@ export async function PUT(request: NextRequest) {
 
     if (defaultCurrency !== undefined) updateData.defaultCurrency = defaultCurrency;
 
-    if (headerMenu !== undefined) updateData.headerMenu = headerMenu || null;
-    if (footerMenu !== undefined) updateData.footerMenu = footerMenu || null;
-
     try {
       if (settings) {
         console.log('Updating existing settings record:', settings.id);
@@ -372,16 +365,14 @@ export async function PUT(request: NextRequest) {
              return existingVal !== undefined ? existingVal : null;
            };
 
-           const safeTitle = getVal(homeMetaTitle, settings.homeMetaTitle);
-           const safeDesc = getVal(homeMetaDescription, settings.homeMetaDescription);
-           const safeRobots = getVal(robotsTxtContent, settings.robotsTxtContent);
-           const safeFavicon = getVal(faviconUrl, settings.faviconUrl);
-           const safeHeader = getVal(headerLogoUrl, settings.headerLogoUrl);
+          const safeTitle = getVal(homeMetaTitle, settings.homeMetaTitle);
+          const safeDesc = getVal(homeMetaDescription, settings.homeMetaDescription);
+          const safeRobots = getVal(robotsTxtContent, settings.robotsTxtContent);
+          const safeFavicon = getVal(faviconUrl, settings.faviconUrl);
+          const safeHeader = getVal(headerLogoUrl, settings.headerLogoUrl);
           const safeFooter = getVal(footerLogoUrl, settings.footerLogoUrl);
           const safeCustomSitemapXml = getVal(customSitemapXml, settings.customSitemapXml);
           const safeSitemapEnabled = getVal(sitemapEnabled, settings.sitemapEnabled);
-          const safeHeaderColumnMenus = getVal(headerColumnMenus, (settings as any).headerColumnMenus);
-          const safeFooterColumnMenus = getVal(footerColumnMenus, (settings as any).footerColumnMenus);
 
            const result = await prisma.$executeRaw`
              UPDATE "admin_settings"
@@ -393,9 +384,7 @@ export async function PUT(request: NextRequest) {
                "sitemapEnabled" = ${safeSitemapEnabled},
                "faviconUrl" = ${safeFavicon},
                "headerLogoUrl" = ${safeHeader},
-              "footerLogoUrl" = ${safeFooter},
-              "headerColumnMenus" = ${safeHeaderColumnMenus},
-              "footerColumnMenus" = ${safeFooterColumnMenus}
+               "footerLogoUrl" = ${safeFooter}
              WHERE "id" = ${settings.id}
            `;
            console.log('Raw SQL update result:', result);

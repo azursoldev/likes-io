@@ -201,10 +201,6 @@ model AdminSettings {
   faviconUrl             String?
   footerLogoUrl          String?
   headerLogoUrl          String?
-  headerMenu             Json?
-  footerMenu             Json?
-  headerColumnMenus      Json?
-  footerColumnMenus      Json?
   homeMetaDescription    String?
   homeMetaTitle          String?
   robotsTxtContent       String?  @default("User-agent: *\nAllow: /")
@@ -700,4 +696,15 @@ model WalletTransaction {
 enum WalletTxnType {
   CREDIT
   DEBIT
+}
+
+model Navigation {
+  id                String   @id @default(cuid())
+  headerMenu        Json?
+  footerMenu        Json?
+  headerColumnMenus Json?
+  footerColumnMenus Json?
+  updatedAt         DateTime @updatedAt
+
+  @@map("navigation")
 }

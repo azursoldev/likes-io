@@ -159,13 +159,13 @@ export default function NavigationDashboard() {
   ];
 
   useEffect(() => {
-    fetchSettings();
+    fetchNavigation();
   }, []);
 
-  const fetchSettings = async () => {
+  const fetchNavigation = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/settings");
+      const response = await fetch("/api/admin/navigation");
       if (response.ok) {
         const data = await response.json();
         if (data.headerLogoUrl) setHeaderLogoUrl(data.headerLogoUrl);
@@ -269,7 +269,7 @@ export default function NavigationDashboard() {
           return { ...column, title, items };
         })
         .filter((column: any) => column !== null);
-      const response = await fetch("/api/admin/settings", {
+      const response = await fetch("/api/admin/navigation", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -289,7 +289,7 @@ export default function NavigationDashboard() {
       }
 
       alert("Navigation settings saved successfully.");
-      await fetchSettings();
+      await fetchNavigation();
     } catch (error: any) {
       console.error("Error saving navigation settings:", error);
       alert(error.message || "Failed to save navigation settings");

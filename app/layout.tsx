@@ -33,8 +33,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let settings: any = {};
+  let navigation: any = {};
+
   try {
-    // Use raw query to ensure we get all fields even if client is outdated
     const result: any = await prisma.$queryRaw`SELECT * FROM "admin_settings" LIMIT 1`;
     if (Array.isArray(result) && result.length > 0) {
       settings = result[0];
@@ -43,10 +44,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     console.error('Error fetching settings for layout:', error);
   }
 
+  try {
+    navigation = await prisma.navigation.findFirst();
+  } catch (error) {
+    console.error('Error fetching navigation settings for layout:', error);
+  }
+
+  const settingsWithNavigation = {
+    ...settings,
+    headerMenu: navigation?.headerMenu ?? null,
+    footerMenu: navigation?.footerMenu ?? null,
+    headerColumnMenus: navigation?.headerColumnMenus ?? null,
+    footerColumnMenus: navigation?.footerColumnMenus ?? null,
+  };
+
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'https://likes.io';
   const orgId = `${baseUrl}/#organization`;
   const websiteId = `${baseUrl}/#website`;
-  const logoUrl = (settings?.headerLogoUrl as string) || `${baseUrl}/logo.png`;
+  const logoUrl = (settingsWithNavigation?.headerLogoUrl as string) || `${baseUrl}/logo.png`;
   const orgJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -72,8 +87,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {settings?.googleSiteVerification && (
-          <meta name="google-site-verification" content={settings.googleSiteVerification} />
+        {settingsWithNavigation?.googleSiteVerification && (
+          <meta name="google-site-verification" content={settingsWithNavigation.googleSiteVerification} />
         )}
         <script
           type="application/ld+json"
@@ -86,7 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body suppressHydrationWarning>
         <NextAuthSessionProvider>
-          <SettingsProvider settings={settings}>
+          <SettingsProvider settings={settingsWithNavigation}>
             <CurrencyProvider>
               {settings?.googleAnalyticsId && <GoogleAnalytics gaId={settings.googleAnalyticsId} />}
               {children}
