@@ -33,6 +33,8 @@ type PlatformCard = {
   tags: string[];
   cta: string;
   serviceType: string;
+  rating?: string;
+  reviews?: string;
 };
 
 type InfluenceSubpoint = {
@@ -103,6 +105,8 @@ export default function HomepageContentDashboard() {
   const [quickStartDescription1, setQuickStartDescription1] = useState("");
   const [quickStartDescription2, setQuickStartDescription2] = useState("");
   const [quickStartButtons, setQuickStartButtons] = useState<QuickStartButton[]>(initialQuickStartButtons);
+
+  const [getStartedMainHeading, setGetStartedMainHeading] = useState("Get Started Instantly");
 
   // Get Started Instantly State
   const [gsPlatform, setGsPlatform] = useState("instagram");
@@ -240,6 +244,8 @@ export default function HomepageContentDashboard() {
       setQuickStartButtons(content.quickStartButtons);
     }
     
+    setGetStartedMainHeading(content.getStartedMainHeading || "Get Started Instantly");
+    
     if (content.benefits) {
       setBenefits(content.benefits);
     }
@@ -367,6 +373,7 @@ export default function HomepageContentDashboard() {
           quickStartDescription1,
           quickStartDescription2,
           quickStartButtons,
+          getStartedMainHeading,
           isActive: true,
       };
       
@@ -861,6 +868,36 @@ export default function HomepageContentDashboard() {
                           />
                         </label>
                       </div>
+                      <div className="homepage-two-col">
+                        <label className="homepage-label">
+                          Rating
+                          <input
+                            type="text"
+                            className="homepage-input"
+                            value={card.rating || ""}
+                            onChange={(e) => {
+                              const newCards = [...platformCards];
+                              newCards[index].rating = e.target.value;
+                              setPlatformCards(newCards);
+                            }}
+                            placeholder="5.0"
+                          />
+                        </label>
+                        <label className="homepage-label">
+                          Reviews
+                          <input
+                            type="text"
+                            className="homepage-input"
+                            value={card.reviews || ""}
+                            onChange={(e) => {
+                              const newCards = [...platformCards];
+                              newCards[index].reviews = e.target.value;
+                              setPlatformCards(newCards);
+                            }}
+                            placeholder="4,500+"
+                          />
+                        </label>
+                      </div>
                       <label className="homepage-label">
                         Name
                         <input
@@ -1021,10 +1058,10 @@ export default function HomepageContentDashboard() {
                 </button>
               </div>
             </div>
-          {/* Influence Section */}
+          {/* How It Works Section (formerly Influence Section) */}
             <div className="homepage-section-card">
               <div className="homepage-section-header">
-                <h2 className="section-title">Influence Section</h2>
+                <h2 className="section-title">How It Works Content</h2>
                 <button
                   onClick={handleSave}
                   disabled={saving || loading}
@@ -1036,12 +1073,13 @@ export default function HomepageContentDashboard() {
               </div>
               <div className="homepage-form-grid">
                 <label className="homepage-label">
-                  Title
+                  Section Heading (HTML allowed)
                   <input
                     type="text"
                     className="homepage-input"
                     value={influenceTitle}
                     onChange={(e) => setInfluenceTitle(e.target.value)}
+                    placeholder="e.g. How It Works"
                   />
                 </label>
                 <label className="homepage-label">
@@ -1057,7 +1095,7 @@ export default function HomepageContentDashboard() {
               
               <div className="homepage-section-divider"></div>
               
-              <h3 className="section-subtitle">Influence Image</h3>
+              <h3 className="section-subtitle">Side Image</h3>
               <div className="homepage-image-upload">
                 <div className="homepage-image-frame">
                   {influenceImageFile || influenceImageName ? (
@@ -1075,7 +1113,7 @@ export default function HomepageContentDashboard() {
                   ) : null}
                 </div>
                 <div className="homepage-image-upload-info">
-                  <p className="homepage-upload-text">Upload an image for the right side of the Influence section.</p>
+                  <p className="homepage-upload-text">Upload an image for the right side of the section.</p>
                   <label htmlFor="influence-image-upload" className="homepage-upload-btn">
                     Upload Image
                   </label>
@@ -1259,7 +1297,36 @@ export default function HomepageContentDashboard() {
 
             {/* Get Started Instantly Section */}
             <div className="homepage-section-card">
-              <h2 className="section-title">Get Started Instantly Content</h2>
+              <div className="homepage-section-header">
+                <h2 className="section-title">Get Started Instantly Content</h2>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || loading}
+                  className="homepage-save-btn"
+                >
+                  <FontAwesomeIcon icon={faSave} />
+                  {saving ? 'Saving...' : 'Save Global Settings'}
+                </button>
+              </div>
+
+              {/* Global Settings */}
+              <div className="homepage-form-grid" style={{ marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '1px solid #e5e7eb' }}>
+                <label className="homepage-label">
+                  Main Section Heading
+                  <input
+                    type="text"
+                    className="homepage-input"
+                    value={getStartedMainHeading}
+                    onChange={(e) => setGetStartedMainHeading(e.target.value)}
+                    placeholder="Get Started Instantly"
+                  />
+                  <span style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.25rem', display: 'block' }}>
+                    This is the main heading displayed above the section.
+                  </span>
+                </label>
+              </div>
+
+              <h3 className="section-subtitle" style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>Dynamic Content (Per Platform)</h3>
               <div className="homepage-form-grid" style={{ marginBottom: '1.5rem' }}>
                 <div className="homepage-two-col">
                   <label className="homepage-label">

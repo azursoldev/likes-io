@@ -110,6 +110,11 @@ export default function ServicesDashboard() {
   
   const [steps, setSteps] = useState<Array<{ id: number; title: string; description: string; icon: string }>>([]);
   const [faqItems, setFaqItems] = useState<Array<{ id: number; question: string; answer: string }>>([]);
+  
+  // Package Titles State
+  const [highQualityTitle, setHighQualityTitle] = useState("High-Quality Likes Packages");
+  const [premiumTitle, setPremiumTitle] = useState("Premium Packages");
+
   const [highQualityPriceOptions, setHighQualityPriceOptions] = useState<Array<{ id: number; name: string; item: string; price1: string; price2: string; disc: string; serviceId: string }>>([]);
   const [premiumPriceOptions, setPremiumPriceOptions] = useState<Array<{ id: number; name: string; item: string; price1: string; price2: string; disc: string; serviceId: string }>>([]);
   const [highQualityFeatures, setHighQualityFeatures] = useState<Array<{ id: number; name: string }>>([]);
@@ -183,6 +188,9 @@ export default function ServicesDashboard() {
       { id: 3, title: "100% Safe & Secure", desc: "Your account's safety is our priority. We never ask for your password.", icon: "/shield.svg" },
       { id: 4, title: "24/7 Customer Support", desc: "Our dedicated global support team is always available to help you.", icon: "/24-hour-service.svg" }
     ]);
+
+    setHighQualityTitle("High-Quality Likes Packages");
+    setPremiumTitle("Premium Packages");
 
     // Default High-Quality Packages
     setHighQualityPriceOptions([
@@ -275,6 +283,8 @@ export default function ServicesDashboard() {
     setBenefitsSubtitle("");
     setBenefitsItems([]);
     setSteps([]);
+    setHighQualityTitle("High-Quality Likes Packages");
+    setPremiumTitle("Premium Packages");
     setHighQualityPriceOptions([]);
     setPremiumPriceOptions([]);
     setHighQualityFeatures([]);
@@ -387,6 +397,14 @@ export default function ServicesDashboard() {
         // Parse packages into price options
         const highQualityTab = data.packages.find((tab: any) => tab.id === "high" || tab.label?.toLowerCase().includes("high"));
         const premiumTab = data.packages.find((tab: any) => tab.id === "premium" || tab.label?.toLowerCase().includes("premium"));
+        
+        if (highQualityTab && highQualityTab.label) {
+          setHighQualityTitle(highQualityTab.label);
+        }
+        
+        if (premiumTab && premiumTab.label) {
+          setPremiumTitle(premiumTab.label);
+        }
         
         if (highQualityTab && highQualityTab.packages && Array.isArray(highQualityTab.packages) && highQualityTab.packages.length > 0) {
           setHighQualityPriceOptions(highQualityTab.packages.map((pkg: any, idx: number) => ({
@@ -594,7 +612,7 @@ export default function ServicesDashboard() {
       // Always add high-quality packages (even if empty)
       packages.push({
         id: "high",
-        label: "High-Quality " + (mapping.serviceType === "likes" ? "Likes" : mapping.serviceType === "followers" ? "Followers" : mapping.serviceType === "views" ? "Views" : "Subscribers"),
+        label: highQualityTitle,
         packages: highQualityPriceOptions.length > 0 ? highQualityPriceOptions.map(opt => {
           const qty = parseQty(opt.item);
           return {
@@ -612,7 +630,7 @@ export default function ServicesDashboard() {
       // Always add premium packages (even if empty)
       packages.push({
         id: "premium",
-        label: "Premium " + (mapping.serviceType === "likes" ? "Likes" : mapping.serviceType === "followers" ? "Followers" : mapping.serviceType === "views" ? "Views" : "Subscribers"),
+        label: premiumTitle,
         packages: premiumPriceOptions.length > 0 ? premiumPriceOptions.map(opt => {
           const qty = parseQty(opt.item);
           return {
@@ -820,6 +838,69 @@ export default function ServicesDashboard() {
       }, 1500);
     } catch (err: any) {
       console.error("Error saving service content:", err);
+      
+      // Special handling for "Failed to fetch" (network error)
+      // Users reported that changes are saved despite this error
+      if (err.message === "Failed to fetch" || err.message.includes("NetworkError")) {
+        try {
+          console.log("Network error detected, attempting to verify save...");
+          // Wait a moment for server to finish processing
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // Verify if changes were actually applied
+          // Add timestamp to bypass cache
+          const verifyResponse = await fetch(`/api/cms/service-pages/${mapping.platform}/${mapping.serviceType}?t=${Date.now()}`);
+          if (verifyResponse.ok) {
+             const verifyData = await verifyResponse.json();
+             
+             // Check if we got mock data (DB unreachable)
+             if (verifyData._isMock) {
+               console.warn("Verification returned mock data, cannot verify save.");
+               // If we can't verify, we should probably assume it might have worked if the user says so, 
+               // but safest is to show a specific warning or just the error.
+               // However, if the user says "changes are being saved", we might want to be optimistic.
+               // But let's stick to verifying.
+             } else {
+                 // Check if the High-Quality Title matches what we just sent
+                 const highTab = verifyData.packages?.find((p: any) => p.id === "high");
+                 // Also check premium title
+                 const premiumTab = verifyData.packages?.find((p: any) => p.id === "premium");
+                 
+                 console.log("Verification data:", {
+                   highTabLabel: highTab?.label,
+                   highQualityTitle,
+                   premiumTabLabel: premiumTab?.label,
+                   premiumTitle
+                 });
+
+                 // Check for match. Use strict equality for what we expect.
+                  // We only verify that the data in DB matches our current state.
+                  // Handle potential undefined/null from DB
+                  const dbHighLabel = highTab?.label || "";
+                  const dbPremiumLabel = premiumTab?.label || "";
+                  
+                  const highMatch = dbHighLabel === highQualityTitle;
+                  const premiumMatch = dbPremiumLabel === premiumTitle;
+                  
+                  if (highMatch && premiumMatch) {
+                    console.log("Verified save success despite network error");
+                    setSuccess(true);
+                    setError(null);
+                    
+                    setTimeout(() => {
+                      setShowEditModal(false);
+                      setSelectedService(null);
+                      setSuccess(false);
+                    }, 1500);
+                    return;
+                 }
+             }
+          }
+        } catch (verifyErr) {
+          console.error("Verification failed:", verifyErr);
+        }
+      }
+
       setError(err.message || "Failed to save service content");
     } finally {
       setSaving(false);
@@ -1442,7 +1523,14 @@ export default function ServicesDashboard() {
                   <h3 className="add-service-section-title">Pricing Tiers</h3>
                   <div className="add-service-pricing-cards">
                     <div className="add-service-pricing-card">
-                      <h4 className="pricing-card-title">High-Quality Likes Packages</h4>
+                      <input
+                        type="text"
+                        className="add-service-input"
+                        style={{ marginBottom: '15px', fontWeight: 'bold', fontSize: '1.1em' }}
+                        value={highQualityTitle}
+                        onChange={(e) => setHighQualityTitle(e.target.value)}
+                        placeholder="High-Quality Package Title"
+                      />
                       
                       <div className="price-options-list">
                         {highQualityPriceOptions.map((option) => (
@@ -1546,7 +1634,14 @@ export default function ServicesDashboard() {
                     </div>
                     
                     <div className="add-service-pricing-card">
-                      <h4 className="pricing-card-title">Premium Packages</h4>
+                      <input
+                        type="text"
+                        className="add-service-input"
+                        style={{ marginBottom: '15px', fontWeight: 'bold', fontSize: '1.1em' }}
+                        value={premiumTitle}
+                        onChange={(e) => setPremiumTitle(e.target.value)}
+                        placeholder="Premium Package Title"
+                      />
                       
                       <div className="price-options-list">
                         {premiumPriceOptions.map((option) => (
@@ -2104,7 +2199,14 @@ export default function ServicesDashboard() {
                   <h3 className="add-service-section-title">Pricing Tiers</h3>
                   <div className="add-service-pricing-cards">
                     <div className="add-service-pricing-card">
-                      <h4 className="pricing-card-title">High-Quality Likes Packages</h4>
+                      <input
+                        type="text"
+                        className="add-service-input"
+                        style={{ marginBottom: '15px', fontWeight: 'bold', fontSize: '1.1em' }}
+                        value={highQualityTitle}
+                        onChange={(e) => setHighQualityTitle(e.target.value)}
+                        placeholder="High-Quality Package Title"
+                      />
                       
                       <div className="price-options-list">
                         {highQualityPriceOptions.map((option) => (
@@ -2208,7 +2310,14 @@ export default function ServicesDashboard() {
                     </div>
                     
                     <div className="add-service-pricing-card">
-                      <h4 className="pricing-card-title">Premium Packages</h4>
+                      <input
+                        type="text"
+                        className="add-service-input"
+                        style={{ marginBottom: '15px', fontWeight: 'bold', fontSize: '1.1em' }}
+                        value={premiumTitle}
+                        onChange={(e) => setPremiumTitle(e.target.value)}
+                        placeholder="Premium Package Title"
+                      />
                       
                       <div className="price-options-list">
                         {premiumPriceOptions.map((option) => (

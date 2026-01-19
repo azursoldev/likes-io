@@ -64,19 +64,12 @@ export async function PATCH(request: NextRequest) {
       whyChooseTitle, whyChooseSubtitle, benefits,
       influenceTitle, influenceSubtitle, influenceSteps, influenceImage,
       quickStartTitle, quickStartDescription1, quickStartDescription2, quickStartButtons,
+      getStartedMainHeading,
+      socialProofLabel,
       isActive 
     } = body;
 
     console.log('PATCH /api/cms/homepage body:', JSON.stringify(body, null, 2));
-
-    // Validate required fields
-    if (!heroTitle || !heroSubtitle) {
-      console.log('PATCH /api/cms/homepage: Missing required fields');
-      return NextResponse.json(
-        { error: 'Hero title and subtitle are required' },
-        { status: 400 }
-      );
-    }
 
     // Find existing active content or create new
     let homepageContent = await prisma.homepageContent.findFirst({
@@ -84,6 +77,15 @@ export async function PATCH(request: NextRequest) {
     });
     
     console.log('PATCH /api/cms/homepage: Existing content found:', homepageContent ? homepageContent.id : 'None');
+
+    // Validate required fields only if creating new content
+    if (!homepageContent && (!heroTitle || !heroSubtitle)) {
+      console.log('PATCH /api/cms/homepage: Missing required fields for creation');
+      return NextResponse.json(
+        { error: 'Hero title and subtitle are required for creating new content' },
+        { status: 400 }
+      );
+    }
 
     if (homepageContent) {
       // Update existing
@@ -118,6 +120,8 @@ export async function PATCH(request: NextRequest) {
           quickStartDescription1: quickStartDescription1 || null,
           quickStartDescription2: quickStartDescription2 || null,
           quickStartButtons: quickStartButtons ? JSON.parse(JSON.stringify(quickStartButtons)) : null,
+          getStartedMainHeading: getStartedMainHeading || null,
+          socialProofLabel: socialProofLabel || null,
           isActive: isActive !== undefined ? isActive : true,
         },
       });
@@ -151,6 +155,8 @@ export async function PATCH(request: NextRequest) {
           quickStartDescription1: quickStartDescription1 || null,
           quickStartDescription2: quickStartDescription2 || null,
           quickStartButtons: quickStartButtons ? JSON.parse(JSON.stringify(quickStartButtons)) : null,
+          getStartedMainHeading: getStartedMainHeading || null,
+          socialProofLabel: socialProofLabel || null,
           isActive: isActive !== undefined ? isActive : true,
         },
       });

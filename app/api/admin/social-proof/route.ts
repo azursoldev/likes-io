@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { platform, username, service, timeText } = body;
+    const { platform, username, service, timeText, notificationLabel } = body;
 
     if (!platform || !username || !service || !timeText) {
       return NextResponse.json(
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
         username,
         service,
         timeText,
+        notificationLabel: notificationLabel || "just purchased",
         displayOrder: 0, // Default, user can reorder if we add that feature
       },
     });
