@@ -24,7 +24,7 @@ type StatusFilterParam =
   | "RefundedCanceled";
 
 function normalizeStatusFilter(raw: string | undefined): StatusFilterParam {
-  if (!raw) return "Completed";
+  if (!raw) return "All";
   if (
     raw === "All" ||
     raw === "Completed" ||
@@ -35,7 +35,44 @@ function normalizeStatusFilter(raw: string | undefined): StatusFilterParam {
   ) {
     return raw;
   }
-  return "Completed";
+  return "All";
+}
+
+function extractUsername(link: string | null | undefined): string {
+  if (!link) return "N/A";
+
+  const trimmed = link.trim();
+  if (!trimmed) return "N/A";
+
+  try {
+    const url = trimmed.startsWith("http") ? new URL(trimmed) : new URL(`https://${trimmed}`);
+    const segments = url.pathname.split("/").filter(Boolean);
+    let lastSegment = segments[segments.length - 1] || "";
+
+    if (lastSegment.startsWith("@")) {
+      lastSegment = lastSegment.slice(1);
+    }
+
+    if (lastSegment) {
+      return lastSegment;
+    }
+
+    return url.hostname;
+  } catch {
+    const noProtocol = trimmed.replace(/^[a-zA-Z]+:\/\//, "");
+    const parts = noProtocol.split("/");
+    let lastPart = parts[parts.length - 1] || "";
+
+    if (lastPart.startsWith("@")) {
+      lastPart = lastPart.slice(1);
+    }
+
+    if (lastPart) {
+      return lastPart;
+    }
+
+    return trimmed;
+  }
 }
 
 function buildStatusWhere(
@@ -74,13 +111,29 @@ export default async function Page({
   const statusFilter = normalizeStatusFilter(rawStatus);
   const statusWhere = buildStatusWhere(statusFilter);
 
-  const where: Prisma.OrderWhereInput = {
-    userId: session.user.id,
-  };
+  const orConditions: Prisma.OrderWhereInput[] = [
+    { userId: session.user.id },
+  ];
+
+  if (session.user.email) {
+    orConditions.push({
+      user: {
+        email: session.user.email,
+      },
+    });
+  }
+
+  const andConditions: Prisma.OrderWhereInput[] = [
+    { OR: orConditions },
+  ];
 
   if (statusWhere) {
-    where.status = statusWhere as any;
+    andConditions.push({ status: statusWhere as any });
   }
+
+  const where: Prisma.OrderWhereInput = {
+    AND: andConditions,
+  };
 
   const orders = await prisma.order.findMany({
     where,
@@ -105,32 +158,34 @@ export default async function Page({
       year: "numeric",
     });
 
-    let paymentType = "Unknown";
-    let lastFour = "****";
+    let paymentType = "N/A";
+    let lastFour = "";
 
     if (order.payment) {
       if (order.payment.gateway === "CHECKOUT_COM") {
         paymentType = "Card";
-        lastFour = "****"; 
+        lastFour = "****";
       } else if (order.payment.gateway === "CRYPTOMUS") {
         paymentType = "Crypto";
       } else if (order.payment.gateway === "MYFATOORAH") {
         paymentType = "MyFatoorah";
+      } else if (order.payment.gateway === "WALLET") {
+        paymentType = "Wallet";
       }
     }
 
     return {
       id: order.id,
       date,
-      profile: order.link || "N/A",
-      package: `${order.quantity} ${order.serviceType.toLowerCase()}`, // or use service.name
+      profile: extractUsername(order.link),
+      package: `${order.quantity} ${order.serviceType.toLowerCase()}`,
       currency: order.currency,
       amount: order.price.toFixed(2),
       paidWith: {
         type: paymentType,
         lastFour,
       },
-      status: order.status, // We might need to map status if enums don't match exactly
+      status: order.status,
       email: order.user.email,
       smmOrderId: order.japOrderId || "N/A",
     };

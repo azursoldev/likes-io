@@ -77,7 +77,7 @@ export default function OrderHistory({
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const [orders] = useState<Order[]>(initialOrders);
+  const orders = initialOrders;
   const totalOrders = orders.length;
   const startIndex = totalOrders > 0 ? 1 : 0;
   const endIndex = totalOrders;
@@ -202,21 +202,25 @@ export default function OrderHistory({
                         </td>
                         <td>
                           <div className="payment-method">
-                            <div className="mastercard-logo">
-                              <svg
-                                width="24"
-                                height="16"
-                                viewBox="0 0 24 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <rect width="24" height="16" rx="2" fill="#1A1F71" />
-                                <circle cx="10" cy="8" r="4.5" fill="#EB001B" />
-                                <circle cx="14" cy="8" r="4.5" fill="#F79E1B" />
-                              </svg>
-                            </div>
+                            {order.paidWith.type === "Card" && (
+                              <div className="mastercard-logo">
+                                <svg
+                                  width="24"
+                                  height="16"
+                                  viewBox="0 0 24 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <rect width="24" height="16" rx="2" fill="#1A1F71" />
+                                  <circle cx="10" cy="8" r="4.5" fill="#EB001B" />
+                                  <circle cx="14" cy="8" r="4.5" fill="#F79E1B" />
+                                </svg>
+                              </div>
+                            )}
                             <span className="payment-last-four">
-                              ... {order.paidWith.lastFour}
+                              {order.paidWith.type === "Card"
+                                ? `Card ${order.paidWith.lastFour ? `... ${order.paidWith.lastFour}` : ""}`
+                                : order.paidWith.type}
                             </span>
                           </div>
                         </td>
@@ -320,14 +324,20 @@ export default function OrderHistory({
             <div className="order-modal-row">
               <span className="order-modal-label">Payment method</span>
               <span className="order-modal-value payment-method">
-                <div className="mastercard-logo">
-                  <svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="24" height="16" rx="2" fill="#1A1F71"/>
-                    <circle cx="10" cy="8" r="4.5" fill="#EB001B"/>
-                    <circle cx="14" cy="8" r="4.5" fill="#F79E1B"/>
-                  </svg>
-                </div>
-                <span className="payment-last-four">... {selectedOrder.paidWith.lastFour}</span>
+                {selectedOrder.paidWith.type === "Card" && (
+                  <div className="mastercard-logo">
+                    <svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="24" height="16" rx="2" fill="#1A1F71"/>
+                      <circle cx="10" cy="8" r="4.5" fill="#EB001B"/>
+                      <circle cx="14" cy="8" r="4.5" fill="#F79E1B"/>
+                    </svg>
+                  </div>
+                )}
+                <span className="payment-last-four">
+                  {selectedOrder.paidWith.type === "Card"
+                    ? `Card ${selectedOrder.paidWith.lastFour ? `... ${selectedOrder.paidWith.lastFour}` : ""}`
+                    : selectedOrder.paidWith.type}
+                </span>
               </span>
             </div>
 
