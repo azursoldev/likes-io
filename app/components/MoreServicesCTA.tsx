@@ -1,6 +1,7 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { iconMap as sharedIconMap } from "./IconMap";
 import { faUser, faEye, faHeart, faStar, faComment, faShareSquare, faPlayCircle, faImage } from "@fortawesome/free-regular-svg-icons";
 import { faAngleRight, faHashtag, faBolt } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
@@ -58,8 +59,13 @@ export default function MoreServicesCTA({
   const displayButtons = buttons || defaultButtons;
 
   const getIcon = (btn: CTAButton) => {
-    if (btn.iconName && iconMap[btn.iconName]) {
-      return iconMap[btn.iconName];
+    if (btn.iconName) {
+      if (sharedIconMap[btn.iconName]) {
+        return sharedIconMap[btn.iconName];
+      }
+      if (iconMap[btn.iconName]) {
+        return iconMap[btn.iconName];
+      }
     }
     return btn.icon ?? faUser;
   };

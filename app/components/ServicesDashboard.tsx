@@ -6,6 +6,7 @@ import AdminSidebar from "./AdminSidebar";
 import { getServiceMapping } from "@/lib/service-utils";
 import { getDefaultMoreServicesButtons } from "../utils/serviceDefaults";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { iconMap } from "./IconMap";
 import {
   faInstagram,
   faTiktok,
@@ -23,7 +24,18 @@ import {
   faSearch,
   faBell,
   faSave,
+  faImage,
+  faUpload,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
+
+type AvailableIcon = {
+  id: string;
+  name: string;
+  url?: string;
+  category?: string;
+  alt?: string;
+};
 
 type Service = {
   id: number;
@@ -62,6 +74,10 @@ const BENEFIT_ICONS = [
   { value: "/heart-3.svg", label: "Heart / Likes" },
   { value: "/eye-2.svg", label: "Eye / Views" },
   { value: "/alarm-2.svg", label: "Alarm / Speed" },
+  ...Object.keys(iconMap).map(key => ({
+    value: key,
+    label: key.replace(/([A-Z])/g, ' $1').trim()
+  }))
 ];
 
 const CTA_ICONS = [
@@ -75,6 +91,10 @@ const CTA_ICONS = [
   { value: "image", label: "Image" },
   { value: "hashtag", label: "Hashtag" },
   { value: "bolt", label: "Bolt" },
+  ...Object.keys(iconMap).map(key => ({
+    value: key,
+    label: key.replace(/([A-Z])/g, ' $1').trim()
+  }))
 ];
 
 export default function ServicesDashboard() {
@@ -111,6 +131,43 @@ export default function ServicesDashboard() {
   const [steps, setSteps] = useState<Array<{ id: number; title: string; description: string; icon: string }>>([]);
   const [faqItems, setFaqItems] = useState<Array<{ id: number; question: string; answer: string }>>([]);
   
+  // Icon Selector State
+  const [availableIcons, setAvailableIcons] = useState<AvailableIcon[]>([]);
+  const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
+  const [currentBenefitId, setCurrentBenefitId] = useState<number | null>(null);
+
+  // Fetch icons for selector
+  useEffect(() => {
+    fetchIcons();
+  }, []);
+
+  const fetchIcons = async () => {
+    try {
+      const res = await fetch("/api/cms/icons");
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableIcons(data.icons || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch icons:", err);
+    }
+  };
+
+  const handleOpenIconSelector = (benefitId: number) => {
+    setCurrentBenefitId(benefitId);
+    setIsIconSelectorOpen(true);
+  };
+
+  const handleSelectIcon = (icon: AvailableIcon) => {
+    if (currentBenefitId !== null) {
+      // Use URL if available, otherwise use icon name (for system icons)
+      const iconValue = icon.url || icon.name;
+      handleBenefitItemChange(currentBenefitId, 'icon', iconValue);
+      setIsIconSelectorOpen(false);
+      setCurrentBenefitId(null);
+    }
+  };
+  
   // Package Titles State
   const [highQualityTitle, setHighQualityTitle] = useState("High-Quality Likes Packages");
   const [premiumTitle, setPremiumTitle] = useState("Premium Packages");
@@ -127,12 +184,9 @@ export default function ServicesDashboard() {
   const [moreServicesBody, setMoreServicesBody] = useState("");
   const [moreServicesButtons, setMoreServicesButtons] = useState<Array<{ platform?: string; serviceType?: string; label: string; iconName?: string; href?: string }>>([]);
 
-  // Custom Quantity Settings State
-  const [customEnabled, setCustomEnabled] = useState(false);
-  const [customMinQuantity, setCustomMinQuantity] = useState("");
-  const [customMaxQuantity, setCustomMaxQuantity] = useState("");
-  const [customStep, setCustomStep] = useState("");
-  const [customRoundToStep, setCustomRoundToStep] = useState(false);
+  // Custom Quantity Settings State - Per Service Tier
+  const [highQualityCustom, setHighQualityCustom] = useState({ enabled: false, min: "", max: "", step: "", round: false });
+  const [premiumCustom, setPremiumCustom] = useState({ enabled: false, min: "", max: "", step: "", round: false });
 
   const sectionRefs = {
     configuration: useRef<HTMLDivElement>(null),
@@ -225,6 +279,9 @@ export default function ServicesDashboard() {
       { id: 104, name: "No Password Needed" },
       { id: 105, name: "Priority Support" }
     ]);
+
+    setHighQualityCustom({ enabled: false, min: "", max: "", step: "", round: false });
+    setPremiumCustom({ enabled: false, min: "", max: "", step: "", round: false });
     
     // Sync to Quality Compare
     setQualityCompareColumns([
@@ -252,11 +309,8 @@ export default function ServicesDashboard() {
     setMoreServicesBody("Boost your presence with our other premium services.");
     setMoreServicesButtons([]);
     
-    setCustomEnabled(false);
-    setCustomMinQuantity("");
-    setCustomMaxQuantity("");
-    setCustomStep("");
-    setCustomRoundToStep(false);
+    setHighQualityCustom({ enabled: false, min: "", max: "", step: "", round: false });
+    setPremiumCustom({ enabled: false, min: "", max: "", step: "", round: false });
 
     setShowAddServiceModal(true);
   };
@@ -295,11 +349,8 @@ export default function ServicesDashboard() {
     setMoreServicesHighlight("");
     setMoreServicesBody("");
     setMoreServicesButtons([]);
-    setCustomEnabled(false);
-    setCustomMinQuantity("");
-    setCustomMaxQuantity("");
-    setCustomStep("");
-    setCustomRoundToStep(false);
+    setHighQualityCustom({ enabled: false, min: "", max: "", step: "", round: false });
+    setPremiumCustom({ enabled: false, min: "", max: "", step: "", round: false });
     
     const mapping = getServiceMapping(service.name);
     if (!mapping) {
@@ -337,11 +388,6 @@ export default function ServicesDashboard() {
       setLearnMoreText(data.learnMoreText || "");
       setLearnMoreModalContent(data.learnMoreModalContent || "");
       setServiceSlug(data.slug || service.name.toLowerCase().replace(/\s+/g, '-'));
-      setCustomEnabled(data.customEnabled || false);
-      setCustomMinQuantity(data.customMinQuantity !== undefined && data.customMinQuantity !== null ? String(data.customMinQuantity) : "");
-      setCustomMaxQuantity(data.customMaxQuantity !== undefined && data.customMaxQuantity !== null ? String(data.customMaxQuantity) : "");
-      setCustomStep(data.customStep !== undefined && data.customStep !== null ? String(data.customStep) : "");
-      setCustomRoundToStep(data.customRoundToStep || false);
       
       if (data.howItWorks) {
         setHowItWorksTitle(data.howItWorks.title || "");
@@ -406,6 +452,18 @@ export default function ServicesDashboard() {
           setPremiumTitle(premiumTab.label);
         }
         
+        // Load Custom Quantity Settings
+        const parseCustomSettings = (settings: any) => ({
+          enabled: settings?.enabled || false,
+          min: settings?.min ? String(settings.min) : "",
+          max: settings?.max ? String(settings.max) : "",
+          step: settings?.step ? String(settings.step) : "",
+          round: settings?.round || false
+        });
+
+        setHighQualityCustom(parseCustomSettings(highQualityTab?.customSettings));
+        setPremiumCustom(parseCustomSettings(premiumTab?.customSettings));
+
         if (highQualityTab && highQualityTab.packages && Array.isArray(highQualityTab.packages) && highQualityTab.packages.length > 0) {
           setHighQualityPriceOptions(highQualityTab.packages.map((pkg: any, idx: number) => ({
             id: Date.now() + idx,
@@ -613,6 +671,13 @@ export default function ServicesDashboard() {
       packages.push({
         id: "high",
         label: highQualityTitle,
+        customSettings: {
+          enabled: highQualityCustom.enabled,
+          min: highQualityCustom.min ? Number(highQualityCustom.min) : null,
+          max: highQualityCustom.max ? Number(highQualityCustom.max) : null,
+          step: highQualityCustom.step ? Number(highQualityCustom.step) : null,
+          round: highQualityCustom.round
+        },
         packages: highQualityPriceOptions.length > 0 ? highQualityPriceOptions.map(opt => {
           const qty = parseQty(opt.item);
           return {
@@ -631,6 +696,13 @@ export default function ServicesDashboard() {
       packages.push({
         id: "premium",
         label: premiumTitle,
+        customSettings: {
+          enabled: premiumCustom.enabled,
+          min: premiumCustom.min ? Number(premiumCustom.min) : null,
+          max: premiumCustom.max ? Number(premiumCustom.max) : null,
+          step: premiumCustom.step ? Number(premiumCustom.step) : null,
+          round: premiumCustom.round
+        },
         packages: premiumPriceOptions.length > 0 ? premiumPriceOptions.map(opt => {
           const qty = parseQty(opt.item);
           return {
@@ -806,11 +878,6 @@ export default function ServicesDashboard() {
           moreServicesHighlight,
           moreServicesBody,
           moreServicesButtons,
-          customEnabled,
-          customMinQuantity: customMinQuantity ? parseInt(customMinQuantity) : null,
-          customMaxQuantity: customMaxQuantity ? parseInt(customMaxQuantity) : null,
-          customStep: customStep ? parseInt(customStep) : null,
-          customRoundToStep,
           isActive: true
         })
       });
@@ -942,6 +1009,33 @@ export default function ServicesDashboard() {
     setBenefitsItems(benefitsItems.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));
+  };
+
+  const handleBenefitIconUpload = async (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload icon');
+      }
+
+      const uploadData = await uploadResponse.json();
+      const iconUrl = uploadData.publicUrl || uploadData.url;
+      
+      handleBenefitItemChange(id, 'icon', iconUrl);
+    } catch (error) {
+      console.error('Failed to upload benefit icon:', error);
+      alert('Failed to upload icon. Please try again.');
+    }
   };
 
   const handleAddFaqItem = () => {
@@ -1360,74 +1454,7 @@ export default function ServicesDashboard() {
                     <p className="add-service-helper">This will be used in the URL. Must be unique, lowercase, with no spaces.</p>
                   </div>
                   
-                  <div className="add-service-form-group" style={{ marginTop: "24px", borderTop: "1px solid #eee", paddingTop: "16px" }}>
-                    <h4 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "16px", color: "#333" }}>Custom Quantity Settings</h4>
-                    
-                    <div className="add-service-form-group">
-                      <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", cursor: "pointer" }}>
-                        <div className="toggle-switch">
-                          <input 
-                            type="checkbox" 
-                            checked={customEnabled} 
-                            onChange={(e) => setCustomEnabled(e.target.checked)} 
-                          />
-                          <span className="toggle-slider" />
-                        </div>
-                        <span style={{ fontSize: "14px", fontWeight: 500 }}>Enable Custom Quantity Input</span>
-                      </label>
-                    </div>
 
-                    {customEnabled && (
-                      <div className="add-service-two-columns">
-                        <div className="add-service-form-group">
-                          <label htmlFor="custom-min-qty">Min Quantity</label>
-                          <input
-                            type="number"
-                            id="custom-min-qty"
-                            className="add-service-input"
-                            placeholder="e.g. 100"
-                            value={customMinQuantity}
-                            onChange={(e) => setCustomMinQuantity(e.target.value)}
-                          />
-                        </div>
-                        <div className="add-service-form-group">
-                          <label htmlFor="custom-max-qty">Max Quantity</label>
-                          <input
-                            type="number"
-                            id="custom-max-qty"
-                            className="add-service-input"
-                            placeholder="e.g. 10000"
-                            value={customMaxQuantity}
-                            onChange={(e) => setCustomMaxQuantity(e.target.value)}
-                          />
-                        </div>
-                        <div className="add-service-form-group">
-                          <label htmlFor="custom-step">Step (Increment)</label>
-                          <input
-                            type="number"
-                            id="custom-step"
-                            className="add-service-input"
-                            placeholder="e.g. 100"
-                            value={customStep}
-                            onChange={(e) => setCustomStep(e.target.value)}
-                          />
-                        </div>
-                        <div className="add-service-form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "10px" }}>
-                          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-                            <div className="toggle-switch">
-                              <input 
-                                type="checkbox" 
-                                checked={customRoundToStep} 
-                                onChange={(e) => setCustomRoundToStep(e.target.checked)} 
-                              />
-                              <span className="toggle-slider" />
-                            </div>
-                            <span style={{ fontSize: "14px", fontWeight: 500 }}>Round to nearest step</span>
-                          </label>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
 
                 <div className="add-service-section" ref={sectionRefs.meta}>
@@ -1603,6 +1630,69 @@ export default function ServicesDashboard() {
                         <FontAwesomeIcon icon={faPlus} />
                         <span>Add Price Option</span>
                       </button>
+
+                      <div className="add-service-form-group" style={{ marginTop: "16px", borderTop: "1px solid #eee", paddingTop: "16px" }}>
+                        <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}>Custom Quantity</h5>
+                        <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", cursor: "pointer" }}>
+                          <div className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={highQualityCustom.enabled} 
+                              onChange={(e) => setHighQualityCustom({ ...highQualityCustom, enabled: e.target.checked })} 
+                            />
+                            <span className="toggle-slider" />
+                          </div>
+                          <span style={{ fontSize: "14px", fontWeight: 500 }}>Enable Custom Quantity</span>
+                        </label>
+
+                        {highQualityCustom.enabled && (
+                          <div className="add-service-two-columns">
+                            <div className="add-service-form-group">
+                              <label>Min Qty</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="100"
+                                value={highQualityCustom.min}
+                                onChange={(e) => setHighQualityCustom({ ...highQualityCustom, min: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group">
+                              <label>Max Qty</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="10000"
+                                value={highQualityCustom.max}
+                                onChange={(e) => setHighQualityCustom({ ...highQualityCustom, max: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group">
+                              <label>Step</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="100"
+                                value={highQualityCustom.step}
+                                onChange={(e) => setHighQualityCustom({ ...highQualityCustom, step: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "10px" }}>
+                              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                                <div className="toggle-switch">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={highQualityCustom.round} 
+                                    onChange={(e) => setHighQualityCustom({ ...highQualityCustom, round: e.target.checked })} 
+                                  />
+                                  <span className="toggle-slider" />
+                                </div>
+                                <span style={{ fontSize: "14px", fontWeight: 500 }}>Round to Step</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       
                       <h5 className="pricing-card-subtitle">Features</h5>
                       
@@ -1714,6 +1804,69 @@ export default function ServicesDashboard() {
                         <FontAwesomeIcon icon={faPlus} />
                         <span>Add Price Option</span>
                       </button>
+
+                      <div className="add-service-form-group" style={{ marginTop: "16px", borderTop: "1px solid #eee", paddingTop: "16px" }}>
+                        <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}>Custom Quantity</h5>
+                        <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", cursor: "pointer" }}>
+                          <div className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={premiumCustom.enabled} 
+                              onChange={(e) => setPremiumCustom({ ...premiumCustom, enabled: e.target.checked })} 
+                            />
+                            <span className="toggle-slider" />
+                          </div>
+                          <span style={{ fontSize: "14px", fontWeight: 500 }}>Enable Custom Quantity</span>
+                        </label>
+
+                        {premiumCustom.enabled && (
+                          <div className="add-service-two-columns">
+                            <div className="add-service-form-group">
+                              <label>Min Qty</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="100"
+                                value={premiumCustom.min}
+                                onChange={(e) => setPremiumCustom({ ...premiumCustom, min: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group">
+                              <label>Max Qty</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="10000"
+                                value={premiumCustom.max}
+                                onChange={(e) => setPremiumCustom({ ...premiumCustom, max: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group">
+                              <label>Step</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="100"
+                                value={premiumCustom.step}
+                                onChange={(e) => setPremiumCustom({ ...premiumCustom, step: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "10px" }}>
+                              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                                <div className="toggle-switch">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={premiumCustom.round} 
+                                    onChange={(e) => setPremiumCustom({ ...premiumCustom, round: e.target.checked })} 
+                                  />
+                                  <span className="toggle-slider" />
+                                </div>
+                                <span style={{ fontSize: "12px" }}>Round to step</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       
                       <h5 className="pricing-card-subtitle">Features</h5>
                       
@@ -1802,6 +1955,11 @@ export default function ServicesDashboard() {
                               <option value="User">User</option>
                               <option value="Star">Star</option>
                               <option value="Heart">Heart</option>
+                              {Object.keys(iconMap).map((key) => (
+                                <option key={key} value={key}>
+                                  {key.replace(/([A-Z])/g, " $1").trim()}
+                                </option>
+                              ))}
                             </select>
                             <FontAwesomeIcon icon={faChevronDown} className="step-select-arrow" />
                           </div>
@@ -1914,75 +2072,6 @@ export default function ServicesDashboard() {
                       onChange={(e) => setServiceSlug(e.target.value)}
                     />
                     <p className="add-service-helper">This will be used in the URL. Must be unique, lowercase, with no spaces.</p>
-                  </div>
-
-                  <div className="add-service-form-group" style={{ marginTop: "24px", borderTop: "1px solid #eee", paddingTop: "16px" }}>
-                    <h4 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "16px", color: "#333" }}>Custom Quantity Settings</h4>
-                    
-                    <div className="add-service-form-group">
-                      <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", cursor: "pointer" }}>
-                        <div className="toggle-switch">
-                          <input 
-                            type="checkbox" 
-                            checked={customEnabled} 
-                            onChange={(e) => setCustomEnabled(e.target.checked)} 
-                          />
-                          <span className="toggle-slider" />
-                        </div>
-                        <span style={{ fontSize: "14px", fontWeight: 500 }}>Enable Custom Quantity Input</span>
-                      </label>
-                    </div>
-
-                    {customEnabled && (
-                      <div className="add-service-two-columns">
-                        <div className="add-service-form-group">
-                          <label htmlFor="edit-custom-min-qty">Min Quantity</label>
-                          <input
-                            type="number"
-                            id="edit-custom-min-qty"
-                            className="add-service-input"
-                            placeholder="e.g. 100"
-                            value={customMinQuantity}
-                            onChange={(e) => setCustomMinQuantity(e.target.value)}
-                          />
-                        </div>
-                        <div className="add-service-form-group">
-                          <label htmlFor="edit-custom-max-qty">Max Quantity</label>
-                          <input
-                            type="number"
-                            id="edit-custom-max-qty"
-                            className="add-service-input"
-                            placeholder="e.g. 10000"
-                            value={customMaxQuantity}
-                            onChange={(e) => setCustomMaxQuantity(e.target.value)}
-                          />
-                        </div>
-                        <div className="add-service-form-group">
-                          <label htmlFor="edit-custom-step">Step (Increment)</label>
-                          <input
-                            type="number"
-                            id="edit-custom-step"
-                            className="add-service-input"
-                            placeholder="e.g. 100"
-                            value={customStep}
-                            onChange={(e) => setCustomStep(e.target.value)}
-                          />
-                        </div>
-                        <div className="add-service-form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "10px" }}>
-                          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-                            <div className="toggle-switch">
-                              <input 
-                                type="checkbox" 
-                                checked={customRoundToStep} 
-                                onChange={(e) => setCustomRoundToStep(e.target.checked)} 
-                              />
-                              <span className="toggle-slider" />
-                            </div>
-                            <span style={{ fontSize: "14px", fontWeight: 500 }}>Round to nearest step</span>
-                          </label>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -2147,15 +2236,78 @@ export default function ServicesDashboard() {
                                             style={{flex: 1}}
                                         >
                                           <option value="">Select Icon</option>
+                                          {item.icon && !BENEFIT_ICONS.find(i => i.value === item.icon) && (
+                                            <option value={item.icon}>Custom Uploaded Icon</option>
+                                          )}
                                           {BENEFIT_ICONS.map((icon) => (
                                             <option key={icon.value} value={icon.value}>
                                               {icon.label}
                                             </option>
                                           ))}
+                                          {availableIcons.length > 0 && (
+                                            <optgroup label="Library Icons">
+                                              {availableIcons.map((icon) => (
+                                                <option key={icon.id} value={icon.url || icon.name}>
+                                                  {icon.name}
+                                                </option>
+                                              ))}
+                                            </optgroup>
+                                          )}
                                         </select>
+                                        <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px'}}>
+                                          <div style={{display: 'flex', gap: '4px'}}>
+                                            <label 
+                                              htmlFor={`benefit-icon-upload-${item.id}`} 
+                                              style={{
+                                                cursor: 'pointer', 
+                                                color: '#0066cc', 
+                                                fontSize: '14px',
+                                                padding: '4px 8px',
+                                                border: '1px solid #0066cc',
+                                                borderRadius: '4px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                              }}
+                                              title="Upload Custom Icon"
+                                            >
+                                              <FontAwesomeIcon icon={faUpload} />
+                                            </label>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleOpenIconSelector(item.id)}
+                                              style={{
+                                                cursor: 'pointer', 
+                                                color: '#0066cc', 
+                                                background: 'transparent',
+                                                fontSize: '14px',
+                                                padding: '4px 8px',
+                                                border: '1px solid #0066cc',
+                                                borderRadius: '4px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                              }}
+                                              title="Select from Library"
+                                            >
+                                              <FontAwesomeIcon icon={faImage} />
+                                            </button>
+                                          </div>
+                                          <input 
+                                            type="file" 
+                                            id={`benefit-icon-upload-${item.id}`}
+                                            accept=".svg,image/svg+xml,image/png,image/jpeg"
+                                            style={{display: 'none'}}
+                                            onChange={(e) => handleBenefitIconUpload(item.id, e)}
+                                          />
+                                        </div>
                                         {item.icon && (
                                           <div style={{width: '32px', height: '32px', background: '#f0f2f5', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px'}}>
-                                            <img src={item.icon} alt="" style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+                                            {(item.icon.startsWith('/') || item.icon.startsWith('http')) ? (
+                                                <img src={item.icon} alt="" style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+                                            ) : (
+                                                <FontAwesomeIcon icon={iconMap[item.icon] || faImage} style={{ width: '20px', height: '20px', color: '#6b7280' }} />
+                                            )}
                                           </div>
                                         )}
                                       </div>
@@ -2279,6 +2431,69 @@ export default function ServicesDashboard() {
                         <FontAwesomeIcon icon={faPlus} />
                         <span>Add Price Option</span>
                       </button>
+
+                      <div className="add-service-form-group" style={{ marginTop: "16px", borderTop: "1px solid #eee", paddingTop: "16px" }}>
+                        <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}>Custom Quantity</h5>
+                        <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", cursor: "pointer" }}>
+                          <div className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={highQualityCustom.enabled} 
+                              onChange={(e) => setHighQualityCustom({ ...highQualityCustom, enabled: e.target.checked })} 
+                            />
+                            <span className="toggle-slider" />
+                          </div>
+                          <span style={{ fontSize: "14px", fontWeight: 500 }}>Enable Custom Quantity</span>
+                        </label>
+
+                        {highQualityCustom.enabled && (
+                          <div className="add-service-two-columns">
+                            <div className="add-service-form-group">
+                              <label>Min Qty</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="100"
+                                value={highQualityCustom.min}
+                                onChange={(e) => setHighQualityCustom({ ...highQualityCustom, min: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group">
+                              <label>Max Qty</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="10000"
+                                value={highQualityCustom.max}
+                                onChange={(e) => setHighQualityCustom({ ...highQualityCustom, max: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group">
+                              <label>Step</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="100"
+                                value={highQualityCustom.step}
+                                onChange={(e) => setHighQualityCustom({ ...highQualityCustom, step: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "10px" }}>
+                              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                                <div className="toggle-switch">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={highQualityCustom.round} 
+                                    onChange={(e) => setHighQualityCustom({ ...highQualityCustom, round: e.target.checked })} 
+                                  />
+                                  <span className="toggle-slider" />
+                                </div>
+                                <span style={{ fontSize: "14px", fontWeight: 500 }}>Round to Step</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       
                       <h5 className="pricing-card-subtitle">Features</h5>
                       
@@ -2390,6 +2605,69 @@ export default function ServicesDashboard() {
                         <FontAwesomeIcon icon={faPlus} />
                         <span>Add Price Option</span>
                       </button>
+
+                      <div className="add-service-form-group" style={{ marginTop: "16px", borderTop: "1px solid #eee", paddingTop: "16px" }}>
+                        <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}>Custom Quantity</h5>
+                        <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", cursor: "pointer" }}>
+                          <div className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={premiumCustom.enabled} 
+                              onChange={(e) => setPremiumCustom({ ...premiumCustom, enabled: e.target.checked })} 
+                            />
+                            <span className="toggle-slider" />
+                          </div>
+                          <span style={{ fontSize: "14px", fontWeight: 500 }}>Enable Custom Quantity</span>
+                        </label>
+
+                        {premiumCustom.enabled && (
+                          <div className="add-service-two-columns">
+                            <div className="add-service-form-group">
+                              <label>Min Qty</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="100"
+                                value={premiumCustom.min}
+                                onChange={(e) => setPremiumCustom({ ...premiumCustom, min: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group">
+                              <label>Max Qty</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="10000"
+                                value={premiumCustom.max}
+                                onChange={(e) => setPremiumCustom({ ...premiumCustom, max: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group">
+                              <label>Step</label>
+                              <input
+                                type="number"
+                                className="add-service-input"
+                                placeholder="100"
+                                value={premiumCustom.step}
+                                onChange={(e) => setPremiumCustom({ ...premiumCustom, step: e.target.value })}
+                              />
+                            </div>
+                            <div className="add-service-form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "10px" }}>
+                              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                                <div className="toggle-switch">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={premiumCustom.round} 
+                                    onChange={(e) => setPremiumCustom({ ...premiumCustom, round: e.target.checked })} 
+                                  />
+                                  <span className="toggle-slider" />
+                                </div>
+                                <span style={{ fontSize: "14px", fontWeight: 500 }}>Round to Step</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       
                       <h5 className="pricing-card-subtitle">Features</h5>
                       
@@ -2581,6 +2859,11 @@ export default function ServicesDashboard() {
                             <option value="CheckCircle">Check Circle</option>
                             <option value="User">User</option>
                             <option value="Star">Star</option>
+                            {Object.keys(iconMap).map((key) => (
+                              <option key={key} value={key}>
+                                {key.replace(/([A-Z])/g, " $1").trim()}
+                              </option>
+                            ))}
                           </select>
                           <button
                             className="step-delete-btn"
@@ -2753,6 +3036,65 @@ export default function ServicesDashboard() {
               </button>
               <button className="add-service-btn save" onClick={handleSaveEditChanges} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isIconSelectorOpen && (
+        <div className="icon-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+          <div className="icon-modal-content" style={{ background: 'white', padding: '2rem', borderRadius: '8px', width: '80%', maxWidth: '800px', maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Select Icon</h2>
+              <button onClick={() => setIsIconSelectorOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '1rem', overflowY: 'auto', padding: '1rem' }}>
+              {availableIcons.map((icon) => (
+                <div 
+                    key={icon.id} 
+                    onClick={() => handleSelectIcon(icon)}
+                    style={{ 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '8px', 
+                        padding: '1rem', 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        transition: 'all 0.2s',
+                        background: '#fff'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                >
+                  <div style={{ width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      {icon.url ? (
+                        <img src={icon.url} alt={icon.alt || icon.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                      ) : (
+                         iconMap[icon.name] ? <FontAwesomeIcon icon={iconMap[icon.name]} style={{ fontSize: '24px' }} /> : <span>?</span>
+                      )}
+                  </div>
+                  <span style={{ fontSize: '0.8rem', textAlign: 'center', wordBreak: 'break-word' }}>{icon.name}</span>
+                </div>
+              ))}
+              
+              {availableIcons.length === 0 && (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                    No icons found. Please upload icons in the Icon Management page.
+                </div>
+              )}
+            </div>
+            
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setIsIconSelectorOpen(false)}
+                style={{ padding: '0.5rem 1rem', background: '#e5e7eb', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Cancel
               </button>
             </div>
           </div>

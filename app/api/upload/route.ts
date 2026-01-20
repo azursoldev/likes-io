@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filepath, buffer);
 
-    const url = `/api/uploads/${filename}`;
+    const url = `/uploads/${filename}`;
     const proto = request.headers.get('x-forwarded-proto') || 'http';
     const host = request.headers.get('host') || '';
     const publicUrl = host ? `${proto}://${host}${url}` : url;

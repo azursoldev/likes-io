@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import { useNavigation } from "@/app/hooks/useNavigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { iconMap } from "./IconMap";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
 
 export default function QuickStartSection() {
   const { getLink, loading: navLoading } = useNavigation();
@@ -14,6 +17,9 @@ export default function QuickStartSection() {
   });
 
   const getIconPath = (icon: string) => {
+    if (icon?.startsWith('/') || icon?.startsWith('http')) {
+        return icon;
+    }
     switch (icon?.toLowerCase()) {
       case 'instagram': return '/instagram-11.png';
       case 'tiktok': return '/tiktok-9.png';
@@ -102,7 +108,11 @@ export default function QuickStartSection() {
                 return (
                   <a key={btn.id} href={href} className={`qs-btn ${btn.gradientClass}`}>
                     <span className="qs-icon">
-                      <img src={getIconPath(btn.icon)} alt={btn.icon} width={18} height={18} />
+                       {(btn.icon?.startsWith('/') || btn.icon?.startsWith('http') || ['instagram', 'tiktok', 'youtube'].includes(btn.icon?.toLowerCase())) ? (
+                          <img src={getIconPath(btn.icon)} alt={btn.icon} width={18} height={18} />
+                       ) : (
+                          <FontAwesomeIcon icon={iconMap[btn.icon] || faImage} style={{ width: '18px', height: '18px' }} />
+                       )}
                     </span>
                     <span className="qs-label">{btn.label}</span>
                     <span className="arrow" aria-hidden="true"></span>

@@ -2,6 +2,9 @@
 
 import React from "react";
 import { useNavigation } from "@/app/hooks/useNavigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { iconMap } from "./IconMap";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
 
 type PlatformCard = {
   key: string;
@@ -10,6 +13,9 @@ type PlatformCard = {
   tags: string[];
   cta: string;
   serviceType: string;
+  rating?: string;
+  reviews?: string;
+  icon?: string;
 };
 
 export default function PlatformSection() {
@@ -116,7 +122,15 @@ export default function PlatformSection() {
             <article key={p.key} className="p-card">
               <div className="p-top">
                 <div className={`p-icon ${p.key}`}>
-                  <Icon name={p.key} />
+                  {p.icon ? (
+                    p.icon.startsWith('/') || p.icon.startsWith('http') ? (
+                        <img src={p.icon} alt={p.name} width={24} height={24} />
+                    ) : (
+                        <FontAwesomeIcon icon={iconMap[p.icon] || faImage} style={{ width: '24px', height: '24px' }} />
+                    )
+                  ) : (
+                    <Icon name={p.key} />
+                  )}
                 </div>
                 <div className="p-name">{p.name}</div>
                 <div className="rating-pill">

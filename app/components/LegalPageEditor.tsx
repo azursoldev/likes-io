@@ -27,6 +27,7 @@ import AdminToolbar from "./AdminToolbar";
 import AdminSidebar from "./AdminSidebar";
 import PromoBar from "./PromoBar";
 import { TERMS_DEFAULT_SECTIONS, PRIVACY_DEFAULT_SECTIONS } from "@/lib/legal-defaults";
+import { iconMap } from "./IconMap";
 
 type Section = {
   id: string;
@@ -145,6 +146,7 @@ export default function LegalPageEditor({ slug }: { slug: string }) {
   };
 
   const getIconObject = (iconName: string) => {
+    if (iconMap[iconName]) return iconMap[iconName];
     return AVAILABLE_ICONS.find((i) => i.value === iconName)?.icon || faCheck;
   };
 
@@ -266,6 +268,11 @@ export default function LegalPageEditor({ slug }: { slug: string }) {
                               value={section.icon}
                               onChange={(e) => updateSection(index, "icon", e.target.value)}
                             >
+                              {Object.keys(iconMap).map((key) => (
+                                <option key={key} value={key}>
+                                  {key.replace(/([A-Z])/g, " $1").trim()}
+                                </option>
+                              ))}
                               {AVAILABLE_ICONS.map((icon) => (
                                 <option key={icon.value} value={icon.value}>
                                   {icon.label}
