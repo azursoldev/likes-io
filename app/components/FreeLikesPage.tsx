@@ -66,7 +66,7 @@ const freeLikesFAQs = [
   },
 ];
 
-export default function FreeLikesPage({ content }: { content?: { heroTitle: string; heroDescription: string; rating: string; reviewCount: string } }) {
+export default function FreeLikesPage({ content }: { content?: { heroTitle: string; heroDescription: string; rating: string; reviewCount: string; assurance1?: string | null; assurance2?: string | null; assurance3?: string | null } }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [username, setUsername] = useState("");
   const [selectedPost, setSelectedPost] = useState<number | null>(null);

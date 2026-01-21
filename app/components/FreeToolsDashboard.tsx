@@ -11,6 +11,18 @@ type FreeToolContent = {
   heroDescription: string;
   rating: string;
   reviewCount: string;
+  step1Title?: string | null;
+  step1Description?: string | null;
+  step2Title?: string | null;
+  step2Description?: string | null;
+  step3Title?: string | null;
+  step3Description?: string | null;
+  inputLabel?: string | null;
+  inputPlaceholder?: string | null;
+  buttonText?: string | null;
+  assurance1?: string | null;
+  assurance2?: string | null;
+  assurance3?: string | null;
 };
 
 export default function FreeToolsDashboard() {

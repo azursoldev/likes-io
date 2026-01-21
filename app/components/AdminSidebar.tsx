@@ -74,7 +74,8 @@ type AdminSidebarProps = {
   | "terms"
     | "privacy"
     | "coupons"
-    | "upsells";
+    | "upsells"
+    | "freeTools";
 };
 
 export default function AdminSidebar({ activePage }: AdminSidebarProps) {
