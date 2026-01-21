@@ -14,6 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { signOut } from "next-auth/react";
 import { useCurrency } from "../contexts/CurrencyContext";
+import { useSettings } from "../contexts/SettingsContext";
 
 type SidebarProps =
   | "dashboard"
@@ -24,6 +25,7 @@ type SidebarProps =
 
 export default function UserSidebar({ active = "dashboard" as SidebarProps }) {
   const { formatPrice } = useCurrency();
+  const { headerLogoUrl } = useSettings();
   const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
@@ -52,8 +54,14 @@ export default function UserSidebar({ active = "dashboard" as SidebarProps }) {
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-brand">
         <a href="/" className="brand-logo">
-          <span className="logo-text">Likes</span>
-          <span className="logo-dot">.io</span>
+          {headerLogoUrl ? (
+            <img src={headerLogoUrl} alt="Likes.io" style={{ maxHeight: '40px' }} />
+          ) : (
+            <>
+              <span className="logo-text">Likes</span>
+              <span className="logo-dot">.io</span>
+            </>
+          )}
         </a>
       </div>
       

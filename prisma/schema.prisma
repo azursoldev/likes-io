@@ -277,6 +277,8 @@ model HomepageContent {
   influenceSteps         Json?
   quickStartButtons      Json?
   getStartedMainHeading  String?
+  serviceIcons           Json?
+  getStartedPlatformIcons Json?
   socialProofLabel       String?  @default("just purchased")
 
   @@map("homepage_content")
@@ -628,6 +630,36 @@ model CouponRedemption {
   @@index([couponId])
   @@index([userId])
   @@map("coupon_redemptions")
+}
+
+model FreeToolPageContent {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  heroTitle       String
+  heroDescription String
+  rating          String
+  reviewCount     String
+  
+  // Form Section
+  step1Title       String?
+  step1Description String?
+  step2Title       String?
+  step2Description String?
+  step3Title       String?
+  step3Description String?
+  
+  inputLabel       String?
+  inputPlaceholder String?
+  
+  buttonText       String?
+  
+  assurance1       String?
+  assurance2       String?
+  assurance3       String?
+  
+  updatedAt       DateTime @updatedAt
+  
+  @@map("free_tool_page_content")
 }
 
 enum CouponType {

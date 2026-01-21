@@ -65,6 +65,8 @@ export async function PATCH(request: NextRequest) {
       influenceTitle, influenceSubtitle, influenceSteps, influenceImage,
       quickStartTitle, quickStartDescription1, quickStartDescription2, quickStartButtons,
       getStartedMainHeading,
+      serviceIcons,
+      getStartedPlatformIcons,
       socialProofLabel,
       isActive 
     } = body;
@@ -121,6 +123,8 @@ export async function PATCH(request: NextRequest) {
           quickStartDescription2: quickStartDescription2 || null,
           quickStartButtons: quickStartButtons ? JSON.parse(JSON.stringify(quickStartButtons)) : null,
           getStartedMainHeading: getStartedMainHeading || null,
+          serviceIcons: serviceIcons ? JSON.parse(JSON.stringify(serviceIcons)) : null,
+          getStartedPlatformIcons: getStartedPlatformIcons ? JSON.parse(JSON.stringify(getStartedPlatformIcons)) : null,
           socialProofLabel: socialProofLabel || null,
           isActive: isActive !== undefined ? isActive : true,
         },
@@ -156,6 +160,8 @@ export async function PATCH(request: NextRequest) {
           quickStartDescription2: quickStartDescription2 || null,
           quickStartButtons: quickStartButtons ? JSON.parse(JSON.stringify(quickStartButtons)) : null,
           getStartedMainHeading: getStartedMainHeading || null,
+          serviceIcons: serviceIcons ? JSON.parse(JSON.stringify(serviceIcons)) : null,
+          getStartedPlatformIcons: getStartedPlatformIcons ? JSON.parse(JSON.stringify(getStartedPlatformIcons)) : null,
           socialProofLabel: socialProofLabel || null,
           isActive: isActive !== undefined ? isActive : true,
         },

@@ -66,11 +66,16 @@ const freeFollowersFAQs = [
   },
 ];
 
-export default function FreeFollowersPage() {
+export default function FreeFollowersPage({ content }: { content?: { heroTitle: string; heroDescription: string; rating: string; reviewCount: string } }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const heroTitle = content?.heroTitle || "Get 25 Free Instagram Followers";
+  const heroDescription = content?.heroDescription || "Experience our high-quality service for free. No password required. See real results in minutes and understand why thousands trust us for their growth.";
+  const rating = content?.rating || "4.9/5";
+  const reviewCount = content?.reviewCount || "512+";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,9 +107,9 @@ export default function FreeFollowersPage() {
       {/* Hero Section */}
       <div className="free-likes-hero">
         <div className="container">
-          <h1 className="free-likes-title">Get 25 Free Instagram Followers</h1>
+          <h1 className="free-likes-title">{heroTitle}</h1>
           <p className="free-likes-description">
-            Experience our high-quality service for free. No password required. See real results in minutes and understand why thousands trust us for their growth.
+            {heroDescription}
           </p>
           
           {/* Rating Display */}
@@ -114,7 +119,7 @@ export default function FreeFollowersPage() {
                 <FontAwesomeIcon key={i} icon={faStar} className="star-icon" />
               ))}
             </div>
-            <span className="free-likes-rating-text">4.9/5 based on 512+ reviews</span>
+            <span className="free-likes-rating-text">{rating} based on {reviewCount} reviews</span>
           </div>
 
           
@@ -250,15 +255,15 @@ export default function FreeFollowersPage() {
             <div className="free-likes-trust-badges">
               <div className="trust-badge">
                 <FontAwesomeIcon icon={faLock} className="trust-icon" />
-                <span>No Password Required</span>
+                <span>{content?.assurance1 || "No Password Required"}</span>
               </div>
               <div className="trust-badge">
                 <FontAwesomeIcon icon={faCheckCircle} className="trust-icon" />
-                <span>100% Free & Safe</span>
+                <span>{content?.assurance2 || "100% Free & Safe"}</span>
               </div>
               <div className="trust-badge">
                 <FontAwesomeIcon icon={faBolt} className="trust-icon" />
-                <span>Instant Delivery</span>
+                <span>{content?.assurance3 || "Instant Delivery"}</span>
               </div>
             </div>
           </div>

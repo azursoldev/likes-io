@@ -118,12 +118,14 @@ export default function SMMPanelDashboard() {
   };
 
   const filteredServices = services.filter((service) => {
-    const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || service.category === selectedCategory;
+    const serviceName = service.name || "";
+    const matchesSearch = serviceName.toLowerCase().includes(searchTerm.toLowerCase());
+    const serviceCategory = service.category || "Uncategorized";
+    const matchesCategory = selectedCategory === "all" || serviceCategory === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const categories = Array.from(new Set(services.map((s) => s.category)));
+  const categories = Array.from(new Set(services.map((s) => s.category || "Uncategorized"))).sort();
 
   const statusText =
     status === "connected"
@@ -367,12 +369,12 @@ export default function SMMPanelDashboard() {
                               filteredServices.map((service) => (
                                 <tr key={service.service} style={{ borderBottom: "1px solid #eee" }}>
                                   <td style={{ padding: "0.75rem", fontWeight: "bold" }}>{service.service}</td>
-                                  <td style={{ padding: "0.75rem" }}>{service.name}</td>
-                                  <td style={{ padding: "0.75rem" }}>{service.category}</td>
-                                  <td style={{ padding: "0.75rem" }}>{service.type}</td>
-                                  <td style={{ padding: "0.75rem" }}>${service.rate}</td>
+                                  <td style={{ padding: "0.75rem" }}>{service.name || <span style={{ fontStyle: "italic", color: "#999" }}>(No Name)</span>}</td>
+                                  <td style={{ padding: "0.75rem" }}>{service.category || "Uncategorized"}</td>
+                                  <td style={{ padding: "0.75rem" }}>{service.type || "-"}</td>
+                                  <td style={{ padding: "0.75rem" }}>${service.rate ?? "0.00"}</td>
                                   <td style={{ padding: "0.75rem" }}>
-                                    {service.min} - {service.max === 0 ? "∞" : service.max}
+                                    {service.min ?? 0} - {service.max === 0 ? "∞" : (service.max ?? "∞")}
                                   </td>
                                   <td style={{ padding: "0.75rem", textAlign: "center" }}>
                                     <button

@@ -2,15 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faRocket, 
-  faAward, 
-  faShieldHalved, 
-  faHeadset, 
-  faStar, 
-  faCheckCircle,
-  IconDefinition
-} from "@fortawesome/free-solid-svg-icons";
+import { iconMap } from "./IconMap";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
 
 interface BenefitItem {
   icon: string;
@@ -24,15 +17,6 @@ interface AdvantageSectionProps {
   items?: BenefitItem[];
   fetchHomepageData?: boolean;
 }
-
-const ICON_MAPPING: Record<string, IconDefinition> = {
-  RocketLaunchIcon: faRocket,
-  AwardIcon: faAward,
-  ShieldCheckIcon: faShieldHalved,
-  HeadsetIcon: faHeadset,
-  StarIcon: faStar,
-  CheckCircleIcon: faCheckCircle,
-};
 
 export default function AdvantageSection({ title, subtitle, items, fetchHomepageData = false }: AdvantageSectionProps) {
   const [content, setContent] = useState<{
@@ -79,20 +63,20 @@ export default function AdvantageSection({ title, subtitle, items, fetchHomepage
   if (!displayTitle && displayItems.length === 0) return null;
 
   const renderIcon = (iconStr: string) => {
-    // Check if it's a mapped FontAwesome icon
-    if (ICON_MAPPING[iconStr]) {
+    if (iconStr?.startsWith('/') || iconStr?.startsWith('http')) {
+        return <img src={iconStr} alt="" style={{ width: '28px', height: '28px' }} />;
+    }
+    
+    if (iconMap[iconStr]) {
       return (
         <FontAwesomeIcon 
-          icon={ICON_MAPPING[iconStr]} 
+          icon={iconMap[iconStr]} 
           style={{ width: '28px', height: '28px', color: '#f97316' }} 
         />
       );
     }
     
-    // Fallback to image if it's a path or not in mapping
-    // If it's a heroicon name but not in our mapping, we might want a default or try to match?
-    // For now, assume paths start with / or are filenames
-    return <img src={iconStr} alt="" style={{ width: '28px', height: '28px' }} />;
+    return <FontAwesomeIcon icon={faImage} style={{ width: '28px', height: '28px', color: '#ccc' }} />;
   };
 
   return (

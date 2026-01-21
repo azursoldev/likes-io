@@ -4,8 +4,67 @@ import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faXmark, faImage, faSave } from "@fortawesome/free-solid-svg-icons";
+import { 
+  faPlus, 
+  faXmark, 
+  faImage, 
+  faSave, 
+  faBars,
+  faChevronDown,
+  faChevronRight,
+  faChevronUp,
+  faHeart,
+  faUser,
+  faComment,
+  faEye,
+  faEyeSlash,
+  faCircleInfo,
+  faStar,
+  faBookOpen,
+  faBell,
+  faCheckCircle,
+  faFire,
+  faShield,
+  faAward,
+  faLifeRing,
+  faQuestionCircle,
+  faCheck,
+  faClock,
+  faPaperPlane,
+  faArrowLeft,
+  faArrowRight,
+  faArrowUp,
+  faMinus,
+  faSearch,
+  faShare,
+  faEnvelope,
+  faLink,
+  faSun,
+  faMoon,
+  faHome,
+  faPlayCircle,
+  faHeadphones,
+  faThumbsUp,
+  faRotate,
+  faLock,
+  faCreditCard,
+  faBitcoinSign,
+  faGauge,
+  faList,
+  faGear,
+  faArrowRightFromBracket,
+  faFilter,
+  faUserCircle,
+  faTag,
+  faClipboardList,
+  faCube,
+  faChartBar,
+  faDollarSign,
+  faTrash
+} from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
+
+import { iconMap } from "./IconMap";
 
 type Benefit = {
   id: number;
@@ -35,6 +94,8 @@ type PlatformCard = {
   serviceType: string;
   rating?: string;
   reviews?: string;
+  icon?: string;
+  iconFile?: File; // For upload only
 };
 
 type InfluenceSubpoint = {
@@ -63,11 +124,24 @@ const initialQuickStartButtons: QuickStartButton[] = [];
 
 const initialPlatformCards: PlatformCard[] = [];
 
+type AvailableIcon = {
+  id: string;
+  name: string;
+  url?: string;
+  category?: string;
+  alt?: string;
+};
+
 export default function HomepageContentDashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Icon Selector State
+  const [availableIcons, setAvailableIcons] = useState<AvailableIcon[]>([]);
+  const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
+  const [currentIconSelectorIndex, setCurrentIconSelectorIndex] = useState<number | null>(null);
   
   const [heroTitle, setHeroTitle] = useState(DEFAULT_HERO_TITLE);
   const [heroSubtitle, setHeroSubtitle] = useState(DEFAULT_HERO_SUBTITLE);
@@ -120,10 +194,43 @@ export default function HomepageContentDashboard() {
   const [gsSaving, setGsSaving] = useState(false);
   const [gsMessage, setGsMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
+  // Service Icons State
+  const [serviceIcons, setServiceIcons] = useState<Record<string, { icon: string, label: string }>>({
+    likes: { icon: '', label: 'Likes' },
+    followers: { icon: '', label: 'Followers' },
+    views: { icon: '', label: 'Views' },
+    subscribers: { icon: '', label: 'Subscribers' }
+  });
+  // Platform Icons State
+  const [getStartedPlatformIcons, setGetStartedPlatformIcons] = useState<Record<string, { icon: string, label: string }>>({
+    instagram: { icon: '', label: 'Instagram' },
+    tiktok: { icon: '', label: 'TikTok' },
+    youtube: { icon: '', label: 'YouTube' }
+  });
+  const [currentIconSelectorContext, setCurrentIconSelectorContext] = useState<'platformCard' | 'serviceIcon' | 'gsPlatformIcon' | 'quickStartButton' | 'benefit'>('platformCard');
+  const [currentServiceIconKey, setCurrentServiceIconKey] = useState<string | null>(null);
+  const [currentGsPlatformIconKey, setCurrentGsPlatformIconKey] = useState<string | null>(null);
+  const [currentQuickStartButtonId, setCurrentQuickStartButtonId] = useState<number | null>(null);
+  const [currentBenefitId, setCurrentBenefitId] = useState<number | null>(null);
+
   // Fetch homepage content on mount
   useEffect(() => {
     fetchHomepageContent();
+    fetchIcons();
   }, []);
+
+  // Fetch icons for selector
+  const fetchIcons = async () => {
+    try {
+      const res = await fetch("/api/cms/icons");
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableIcons(data.icons || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch icons:", err);
+    }
+  };
 
   // Fetch Get Started content when selection changes
   useEffect(() => {
@@ -245,6 +352,15 @@ export default function HomepageContentDashboard() {
     }
     
     setGetStartedMainHeading(content.getStartedMainHeading || "Get Started Instantly");
+
+    if (content.serviceIcons) {
+      // Ensure all keys exist even if partial data is returned
+      setServiceIcons(prev => ({ ...prev, ...content.serviceIcons }));
+    }
+
+    if (content.getStartedPlatformIcons) {
+      setGetStartedPlatformIcons(prev => ({ ...prev, ...content.getStartedPlatformIcons }));
+    }
     
     if (content.benefits) {
       setBenefits(content.benefits);
@@ -347,6 +463,36 @@ export default function HomepageContentDashboard() {
         setInfluenceImage(influenceImageUrl);
       }
 
+      // Handle Platform Card Icon Uploads
+      const updatedPlatformCards = await Promise.all(platformCards.map(async (card) => {
+        if (card.iconFile) {
+          const formData = new FormData();
+          formData.append('file', card.iconFile);
+          
+          try {
+            const uploadResponse = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData,
+            });
+            
+            if (uploadResponse.ok) {
+              const uploadData = await uploadResponse.json();
+              // Return new object with updated icon URL and without iconFile
+              const { iconFile, ...rest } = card;
+              return {
+                ...rest,
+                icon: uploadData.publicUrl || uploadData.url
+              };
+            }
+          } catch (error) {
+            console.error('Failed to upload platform icon:', error);
+          }
+        }
+        // Remove iconFile if it exists but wasn't uploaded (or if it was already undefined)
+        const { iconFile, ...rest } = card;
+        return rest;
+      }));
+
       const payload = {
           heroTitle,
           heroSubtitle,
@@ -361,7 +507,7 @@ export default function HomepageContentDashboard() {
           heroProfileImage: imageUrl,
           platformTitle,
           platformSubtitle,
-          platformCards,
+          platformCards: updatedPlatformCards,
           whyChooseTitle,
           whyChooseSubtitle,
           benefits,
@@ -374,6 +520,8 @@ export default function HomepageContentDashboard() {
           quickStartDescription2,
           quickStartButtons,
           getStartedMainHeading,
+          serviceIcons,
+          getStartedPlatformIcons,
           isActive: true,
       };
       
@@ -454,6 +602,87 @@ export default function HomepageContentDashboard() {
     if (file) {
       setHeroImage(file);
       setHeroImageName(file.name);
+    }
+  };
+
+  const handlePlatformIconUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const newCards = [...platformCards];
+      newCards[index].iconFile = file;
+      // Create a temporary preview URL
+      newCards[index].icon = URL.createObjectURL(file);
+      setPlatformCards(newCards);
+    }
+  };
+
+  const openIconSelector = (index: number) => {
+    setCurrentIconSelectorContext('platformCard');
+    setCurrentIconSelectorIndex(index);
+    setIsIconSelectorOpen(true);
+  };
+  
+  const openServiceIconSelector = (key: string) => {
+    setCurrentIconSelectorContext('serviceIcon');
+    setCurrentServiceIconKey(key);
+    setIsIconSelectorOpen(true);
+  };
+
+  const openGsPlatformIconSelector = (key: string) => {
+    setCurrentIconSelectorContext('gsPlatformIcon');
+    setCurrentGsPlatformIconKey(key);
+    setIsIconSelectorOpen(true);
+  };
+
+  const openQuickStartIconSelector = (id: number) => {
+    setCurrentIconSelectorContext('quickStartButton');
+    setCurrentQuickStartButtonId(id);
+    setIsIconSelectorOpen(true);
+  };
+
+  const openBenefitIconSelector = (id: number) => {
+    setCurrentIconSelectorContext('benefit');
+    setCurrentBenefitId(id);
+    setIsIconSelectorOpen(true);
+  };
+
+  const handleSelectIcon = (icon: AvailableIcon) => {
+    const iconValue = icon.url || icon.name;
+
+    if (currentIconSelectorContext === 'platformCard' && currentIconSelectorIndex !== null) {
+      const newCards = [...platformCards];
+      newCards[currentIconSelectorIndex].icon = iconValue;
+      newCards[currentIconSelectorIndex].iconFile = undefined; // Clear any pending file upload
+      
+      setPlatformCards(newCards);
+      setIsIconSelectorOpen(false);
+      setCurrentIconSelectorIndex(null);
+    } else if (currentIconSelectorContext === 'serviceIcon' && currentServiceIconKey) {
+        setServiceIcons(prev => ({
+            ...prev,
+            [currentServiceIconKey]: { ...prev[currentServiceIconKey], icon: iconValue }
+        }));
+        setIsIconSelectorOpen(false);
+        setCurrentServiceIconKey(null);
+    } else if (currentIconSelectorContext === 'gsPlatformIcon' && currentGsPlatformIconKey) {
+        setGetStartedPlatformIcons(prev => ({
+            ...prev,
+            [currentGsPlatformIconKey]: { ...prev[currentGsPlatformIconKey], icon: iconValue }
+        }));
+        setIsIconSelectorOpen(false);
+        setCurrentGsPlatformIconKey(null);
+    } else if (currentIconSelectorContext === 'quickStartButton' && currentQuickStartButtonId) {
+        setQuickStartButtons(prev => prev.map(btn => 
+            btn.id === currentQuickStartButtonId ? { ...btn, icon: iconValue } : btn
+        ));
+        setIsIconSelectorOpen(false);
+        setCurrentQuickStartButtonId(null);
+    } else if (currentIconSelectorContext === 'benefit' && currentBenefitId) {
+        setBenefits(prev => prev.map(b => 
+            b.id === currentBenefitId ? { ...b, icon: iconValue } : b
+        ));
+        setIsIconSelectorOpen(false);
+        setCurrentBenefitId(null);
     }
   };
 
@@ -830,13 +1059,61 @@ export default function HomepageContentDashboard() {
                   <div key={index} className="homepage-benefit-card">
                     <div className="homepage-benefit-header">
                       <span className="homepage-benefit-icon-preview">
-                        {card.key === 'instagram' && <img src="/instagram.svg" alt="Instagram" width={24} height={24} />}
-                        {card.key === 'tiktok' && <img src="/tiktok-10.svg" alt="TikTok" width={24} height={24} />}
-                        {card.key === 'youtube' && <img src="/youtube-9.svg" alt="YouTube" width={24} height={24} />}
+                        {card.icon ? (
+                           card.icon.startsWith('/') || card.icon.startsWith('http') ? (
+                               <img src={card.icon} alt={card.name} width={24} height={24} style={{ borderRadius: '4px' }} />
+                           ) : (
+                               <FontAwesomeIcon icon={iconMap[card.icon] || faImage} style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+                           )
+                        ) : (
+                          <>
+                            {card.key === 'instagram' && <img src="/instagram.svg" alt="Instagram" width={24} height={24} />}
+                            {card.key === 'tiktok' && <img src="/tiktok-10.svg" alt="TikTok" width={24} height={24} />}
+                            {card.key === 'youtube' && <img src="/youtube-9.svg" alt="YouTube" width={24} height={24} />}
+                          </>
+                        )}
                       </span>
                       <span className="homepage-benefit-title">{card.name}</span>
                     </div>
                     <div className="homepage-form-grid">
+                      <label className="homepage-label">
+                        Icon
+                        <div style={{ marginTop: '0.5rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => openIconSelector(index)}
+                              className="homepage-upload-btn"
+                              style={{ width: '100%', marginBottom: '0.5rem', textAlign: 'center', justifyContent: 'center' }}
+                            >
+                              <FontAwesomeIcon icon={faImage} style={{ marginRight: '8px' }} />
+                              Select from Library
+                            </button>
+                            
+                            {card.icon && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{ width: '40px', height: '40px', border: '1px solid #ddd', padding: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f9fafb' }}>
+                                        {card.icon.startsWith('/') || card.icon.startsWith('http') ? (
+                                            <img src={card.icon} alt="Icon Preview" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                                        ) : (
+                                            <FontAwesomeIcon icon={iconMap[card.icon] || faImage} style={{ maxWidth: '100%', maxHeight: '100%', color: '#6b7280' }} />
+                                        )}
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            const newCards = [...platformCards];
+                                            newCards[index].icon = undefined;
+                                            newCards[index].iconFile = undefined;
+                                            setPlatformCards(newCards);
+                                        }}
+                                        style={{ fontSize: '0.8rem', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                                    >
+                                        Remove Icon
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                      </label>
                       <div className="homepage-two-col">
                         <label className="homepage-label">
                           Platform Key (Icon)
@@ -1010,18 +1287,35 @@ export default function HomepageContentDashboard() {
                     <div className="homepage-benefit-fields">
                       <label className="homepage-label-small">
                         Icon
-                        <select
-                          className="homepage-input-small"
-                          value={benefit.icon}
-                          onChange={(e) => handleUpdateBenefit(benefit.id, "icon", e.target.value)}
-                        >
-                          <option>RocketLaunchIcon</option>
-                          <option>AwardIcon</option>
-                          <option>ShieldCheckIcon</option>
-                          <option>HeadsetIcon</option>
-                          <option>StarIcon</option>
-                          <option>CheckCircleIcon</option>
-                        </select>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                             <div style={{ width: '40px', height: '40px', border: '1px solid #ddd', padding: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f9fafb' }}>
+                                {benefit.icon ? (
+                                    benefit.icon.startsWith('/') || benefit.icon.startsWith('http') ? (
+                                        <img 
+                                          src={benefit.icon} 
+                                          alt={benefit.title} 
+                                          style={{ maxWidth: '100%', maxHeight: '100%' }} 
+                                        />
+                                    ) : (
+                                        iconMap[benefit.icon] ? (
+                                            <FontAwesomeIcon icon={iconMap[benefit.icon]} style={{ maxWidth: '100%', maxHeight: '100%', color: '#6b7280' }} />
+                                        ) : (
+                                            <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{benefit.icon}</span>
+                                        )
+                                    )
+                                ) : (
+                                    <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Def</span>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => openBenefitIconSelector(benefit.id)}
+                                className="homepage-upload-btn"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                            >
+                                <FontAwesomeIcon icon={faImage} /> Select
+                            </button>
+                        </div>
                       </label>
                       <label className="homepage-label-small">
                         Title
@@ -1250,15 +1544,34 @@ export default function HomepageContentDashboard() {
                       <div className="homepage-two-col">
                         <label className="homepage-label">
                           Icon
-                          <select
-                            className="homepage-input"
-                            value={btn.icon}
-                            onChange={(e) => handleUpdateQuickStartButton(index, 'icon', e.target.value)}
-                          >
-                            <option value="instagram">Instagram</option>
-                            <option value="tiktok">TikTok</option>
-                            <option value="youtube">YouTube</option>
-                          </select>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                             <div style={{ width: '40px', height: '40px', border: '1px solid #ddd', padding: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f9fafb' }}>
+                                {btn.icon ? (
+                                    btn.icon.startsWith('/') || btn.icon.startsWith('http') ? (
+                                        <img 
+                                          src={btn.icon} 
+                                          alt={btn.label} 
+                                          style={{ maxWidth: '100%', maxHeight: '100%' }} 
+                                        />
+                                    ) : (
+                                        btn.icon === 'instagram' ? <img src="/instagram-11.png" alt="Instagram" style={{ maxWidth: '100%', maxHeight: '100%' }} /> :
+                                        btn.icon === 'tiktok' ? <img src="/tiktok-9.png" alt="TikTok" style={{ maxWidth: '100%', maxHeight: '100%' }} /> :
+                                        btn.icon === 'youtube' ? <img src="/youtube-7.png" alt="YouTube" style={{ maxWidth: '100%', maxHeight: '100%' }} /> :
+                                        <FontAwesomeIcon icon={iconMap[btn.icon] || faImage} style={{ maxWidth: '100%', maxHeight: '100%', color: '#6b7280' }} />
+                                    )
+                                ) : (
+                                    <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Def</span>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => openQuickStartIconSelector(btn.id)}
+                                className="homepage-upload-btn"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                            >
+                                <FontAwesomeIcon icon={faImage} /> Select
+                            </button>
+                        </div>
                         </label>
                         <label className="homepage-label">
                           Gradient
@@ -1324,6 +1637,82 @@ export default function HomepageContentDashboard() {
                     This is the main heading displayed above the section.
                   </span>
                 </label>
+              </div>
+
+              <h3 className="section-subtitle" style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>Platform Icons</h3>
+              <div className="homepage-form-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                {Object.keys(getStartedPlatformIcons).map((key) => (
+                    <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label className="homepage-label" style={{ textTransform: 'capitalize' }}>{key}</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                             <div style={{ width: '40px', height: '40px', border: '1px solid #ddd', padding: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f9fafb' }}>
+                                {getStartedPlatformIcons[key].icon ? (
+                                    getStartedPlatformIcons[key].icon.startsWith('/') || getStartedPlatformIcons[key].icon.startsWith('http') ? (
+                                        <img src={getStartedPlatformIcons[key].icon} alt={key} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                                    ) : (
+                                        <FontAwesomeIcon icon={iconMap[getStartedPlatformIcons[key].icon] || faImage} style={{ maxWidth: '100%', maxHeight: '100%', color: '#6b7280' }} />
+                                    )
+                                ) : (
+                                    <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Def</span>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => openGsPlatformIconSelector(key)}
+                                className="homepage-upload-btn"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                            >
+                                <FontAwesomeIcon icon={faImage} /> Select
+                            </button>
+                        </div>
+                         <input
+                            type="text"
+                            className="homepage-input"
+                            value={getStartedPlatformIcons[key].label}
+                            onChange={(e) => setGetStartedPlatformIcons({...getStartedPlatformIcons, [key]: {...getStartedPlatformIcons[key], label: e.target.value}})}
+                            placeholder="Label"
+                            style={{ fontSize: '0.85rem', padding: '0.4rem' }}
+                        />
+                    </div>
+                ))}
+              </div>
+
+              <h3 className="section-subtitle" style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>Service Type Icons</h3>
+              <div className="homepage-form-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                {Object.keys(serviceIcons).map((key) => (
+                    <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label className="homepage-label" style={{ textTransform: 'capitalize' }}>{key}</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                             <div style={{ width: '40px', height: '40px', border: '1px solid #ddd', padding: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f9fafb' }}>
+                                {serviceIcons[key].icon ? (
+                                    serviceIcons[key].icon.startsWith('/') || serviceIcons[key].icon.startsWith('http') ? (
+                                        <img src={serviceIcons[key].icon} alt={key} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                                    ) : (
+                                        <FontAwesomeIcon icon={iconMap[serviceIcons[key].icon] || faImage} style={{ maxWidth: '100%', maxHeight: '100%', color: '#6b7280' }} />
+                                    )
+                                ) : (
+                                    <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Def</span>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => openServiceIconSelector(key)}
+                                className="homepage-upload-btn"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                            >
+                                <FontAwesomeIcon icon={faImage} /> Select
+                            </button>
+                        </div>
+                         <input
+                            type="text"
+                            className="homepage-input"
+                            value={serviceIcons[key].label}
+                            onChange={(e) => setServiceIcons({...serviceIcons, [key]: {...serviceIcons[key], label: e.target.value}})}
+                            placeholder="Label"
+                            style={{ fontSize: '0.85rem', padding: '0.4rem' }}
+                        />
+                    </div>
+                ))}
               </div>
 
               <h3 className="section-subtitle" style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>Dynamic Content (Per Platform)</h3>
@@ -1457,6 +1846,66 @@ export default function HomepageContentDashboard() {
           </div>
         </main>
       </div>
+
+      {isIconSelectorOpen && (
+        <div className="icon-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div className="icon-modal-content" style={{ background: 'white', padding: '2rem', borderRadius: '8px', width: '80%', maxWidth: '800px', maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Select Icon</h2>
+              <button onClick={() => setIsIconSelectorOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '1rem', overflowY: 'auto', padding: '1rem' }}>
+              {availableIcons.map((icon) => (
+                <div 
+                    key={icon.id} 
+                    onClick={() => handleSelectIcon(icon)}
+                    style={{ 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '8px', 
+                        padding: '1rem', 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        transition: 'all 0.2s',
+                        background: '#fff'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                >
+                  <div style={{ width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      {icon.url ? (
+                        <img src={icon.url} alt={icon.alt || icon.name} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                      ) : (
+                         iconMap[icon.name] ? <FontAwesomeIcon icon={iconMap[icon.name]} style={{ fontSize: '24px' }} /> : <span>?</span>
+                      )}
+                  </div>
+                  <span style={{ fontSize: '0.8rem', textAlign: 'center', wordBreak: 'break-word' }}>{icon.name}</span>
+                </div>
+              ))}
+              
+              {availableIcons.length === 0 && (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                    No icons found. Please upload icons in the Icon Management page.
+                </div>
+              )}
+            </div>
+            
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setIsIconSelectorOpen(false)}
+                style={{ padding: '0.5rem 1rem', background: '#e5e7eb', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,6 +2,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useRouter } from "next/navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { iconMap } from "./IconMap";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
 
 type PackType = "likes" | "followers" | "views" | "subscribers";
 type Platform = "instagram" | "tiktok" | "youtube";
@@ -68,6 +71,8 @@ export default function GetStarted() {
   const [sliderIndex, setSliderIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [mainHeading, setMainHeading] = useState("Get Started Instantly");
+  const [serviceIcons, setServiceIcons] = useState<Record<string, { icon: string, label: string }>>({});
+  const [getStartedPlatformIcons, setGetStartedPlatformIcons] = useState<Record<string, { icon: string, label: string }>>({});
 
   // Fetch global homepage content (for main heading)
   useEffect(() => {
@@ -76,8 +81,16 @@ export default function GetStarted() {
         const res = await fetch(`/api/cms/homepage`);
         if (res.ok) {
           const data = await res.json();
-          if (data.content && data.content.getStartedMainHeading) {
-            setMainHeading(data.content.getStartedMainHeading);
+          if (data.content) {
+             if (data.content.getStartedMainHeading) {
+               setMainHeading(data.content.getStartedMainHeading);
+             }
+             if (data.content.serviceIcons) {
+               setServiceIcons(data.content.serviceIcons);
+             }
+             if (data.content.getStartedPlatformIcons) {
+               setGetStartedPlatformIcons(data.content.getStartedPlatformIcons);
+             }
           }
         }
       } catch (error) {
@@ -338,18 +351,32 @@ export default function GetStarted() {
         <div className="gs-header">
           <h3 className="font-heading">{mainHeading}</h3>
           <div className="gs-platforms">
-            <button className={`pill ${platform === "instagram" ? "active" : ""}`} onClick={() => setPlatform("instagram")}>
-              <span className="pill-icon"><img src="/instagram-11.png" alt="Instagram" width={12} height={12} /></span>
-              Instagram
-            </button>
-            <button className={`pill ${platform === "tiktok" ? "active" : ""}`} onClick={() => setPlatform("tiktok")}>
-              <span className="pill-icon"><img src="/tiktok-9.png" alt="Tiktok" width={12} height={12} /></span>
-              TikTok
-            </button>
-            <button className={`pill ${platform === "youtube" ? "active" : ""}`} onClick={() => setPlatform("youtube")}>
-              <span className="pill-icon"><img src="/youtube-7.png" alt="Youtube" width={12} height={12} /></span>
-              YouTube
-            </button>
+            {['instagram', 'tiktok', 'youtube'].map((p) => {
+                const key = p as Platform;
+                const customIcon = getStartedPlatformIcons[key]?.icon;
+                const customLabel = getStartedPlatformIcons[key]?.label;
+                const defaultIcon = key === "instagram" ? "/instagram-11.png" : key === "tiktok" ? "/tiktok-9.png" : "/youtube-7.png";
+                const defaultLabel = key === "instagram" ? "Instagram" : key === "tiktok" ? "TikTok" : "YouTube";
+                const iconToUse = customIcon || defaultIcon;
+
+                return (
+                    <button key={key} className={`pill ${platform === key ? "active" : ""}`} onClick={() => setPlatform(key)}>
+                    <span className="pill-icon">
+                        {(iconToUse.startsWith('/') || iconToUse.startsWith('http')) ? (
+                            <img 
+                                src={iconToUse} 
+                                alt={customLabel || defaultLabel} 
+                                width={12} 
+                                height={12} 
+                            />
+                        ) : (
+                            <FontAwesomeIcon icon={iconMap[iconToUse] || faImage} style={{ width: '12px', height: '12px' }} />
+                        )}
+                    </span>
+                    {customLabel || defaultLabel}
+                    </button>
+                );
+            })}
           </div>
         </div>
 
@@ -357,19 +384,30 @@ export default function GetStarted() {
           {/* Left card */}
           <div className="gs-left card-lg boxgray">
             <div className="gs-tabs">
-              {PLATFORM_TABS[platform].map((tab) => (
+              {PLATFORM_TABS[platform].map((tab) => {
+                const customIcon = serviceIcons[tab]?.icon;
+                const customLabel = serviceIcons[tab]?.label;
+                const defaultIcon = tab === "likes" ? "/heart-3.svg" : tab === "followers" ? "/avatar.svg" : tab === "subscribers" ? "/avatar.svg" : "/eye-2.svg";
+                const defaultLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
+                const iconToUse = customIcon || defaultIcon;
+
+                return (
                 <button key={tab} className={`gs-tab ${packType === tab ? "active" : ""}`} onClick={() => setPackType(tab)}>
                   <span className="icon">
-                    <img
-                      src={tab === "likes" ? "/heart-3.svg" : tab === "followers" ? "/avatar.svg" : tab === "subscribers" ? "/avatar.svg" : "/eye-2.svg"}
-                      alt={tab === "likes" ? "Likes" : tab === "followers" ? "Followers" : tab === "subscribers" ? "Subscribers" : "Views"}
-                      width={16}
-                      height={16}
-                    />
+                    {(iconToUse.startsWith('/') || iconToUse.startsWith('http')) ? (
+                        <img
+                          src={iconToUse}
+                          alt={customLabel || defaultLabel}
+                          width={16}
+                          height={16}
+                        />
+                    ) : (
+                        <FontAwesomeIcon icon={iconMap[iconToUse] || faImage} style={{ width: '16px', height: '16px' }} />
+                    )}
                   </span>
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {customLabel || defaultLabel}
                 </button>
-              ))}
+              )})}
             </div>
 
             <div className="gs-quality">
