@@ -285,6 +285,16 @@ html.dark .shimmer-bg {
   background-size: 200% 100%;
 }
 
+/* Remove default spinner for custom quantity input */
+.custom-qty-input::-webkit-outer-spin-button,
+.custom-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.custom-qty-input[type=number] {
+  -moz-appearance: textfield;
+}
+
 /* Scroll to top button */
   .scroll-top { position: fixed; right: 24px; bottom: 24px; width: 48px; height: 48px; border-radius: 9999px; background: rgb(var(--color-brand)); color: #fff; border: none; display: grid; place-items: center; box-shadow: 0 20px 40px rgba(17,24,39,0.18); cursor: pointer; z-index: 1000; opacity: 0; transform: translateY(10px); transition: opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease, filter 180ms ease; }
   .scroll-top.show { opacity: 1; transform: translateY(0); }

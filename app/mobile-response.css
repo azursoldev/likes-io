@@ -757,6 +757,29 @@ html.dark .mobile-dropdown {
   .packages button.pkg-item:last-child {
     width: 100% !important;
   }
+
+  /* Custom Quantity Mobile Response */
+  .pkg-item.custom .pkg-plus, 
+  .pkg-item.custom .pkg-minus {
+    width: 30px !important;
+    height: 30px !important;
+    opacity: 1 !important; /* Ensure visible */
+    visibility: visible !important;
+  }
+  
+  .pkg-item.custom .pkg-minus {
+    left: 8px !important;
+  }
+  
+  .pkg-item.custom .pkg-plus {
+    right: 8px !important;
+  }
+  
+  .custom-qty-input {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+    height: 30px !important;
+    margin-bottom: 2px !important;
+  }
   
   .pkg-bottom {
     display: flex !important;

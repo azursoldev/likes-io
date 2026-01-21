@@ -174,6 +174,7 @@ const dbIconToIconItem = (dbIcon: any): IconItem => {
 export default function IconManagementDashboard() {
   const [icons, setIcons] = useState<IconItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newIconData, setNewIconData] = useState({
@@ -211,28 +212,43 @@ export default function IconManagementDashboard() {
 
   const handleFileUpload = async (dbId: string, file: File) => {
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-        const dataUrl = base64;
+      setUploading(true);
+      
+      // Upload file to /api/upload
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-        const res = await fetch(`/api/cms/icons?id=${dbId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: dataUrl }),
-        });
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload file');
+      }
 
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "Failed to update icon");
-        }
+      const uploadData = await uploadRes.json();
+      const fileUrl = uploadData.publicUrl || uploadData.url;
 
-        await loadIcons();
-      };
-      reader.readAsDataURL(file);
+      // Update icon with new URL
+      const res = await fetch(`/api/cms/icons?id=${dbId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fileUrl }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update icon");
+      }
+
+      await loadIcons();
     } catch (err: any) {
       console.error("Upload error", err);
       alert(err.message || "Failed to upload icon");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -427,14 +443,30 @@ export default function IconManagementDashboard() {
                 className="icon-form-input"
                 type="file" 
                 accept=".svg,.png,.jpg,.jpeg,.webp"
-                onChange={(e) => {
+                disabled={uploading}
+                onChange={async (e) => {
                   if (e.target.files && e.target.files[0]) {
                     const file = e.target.files[0];
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                      setNewIconData({...newIconData, url: ev.target?.result as string});
-                    };
-                    reader.readAsDataURL(file);
+                    try {
+                      setUploading(true);
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      
+                      const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
+                      });
+                      
+                      if (!res.ok) throw new Error('Upload failed');
+                      
+                      const data = await res.json();
+                      setNewIconData({...newIconData, url: data.publicUrl || data.url});
+                    } catch (err) {
+                      console.error(err);
+                      alert('Failed to upload file');
+                    } finally {
+                      setUploading(false);
+                    }
                   }
                 }}
               />
@@ -475,14 +507,16 @@ export default function IconManagementDashboard() {
               <button 
                 className="icon-btn-secondary"
                 onClick={() => setIsAddModalOpen(false)}
+                disabled={uploading}
               >
                 Cancel
               </button>
               <button 
                 className="icon-btn-primary"
                 onClick={handleAddIcon}
+                disabled={uploading}
               >
-                Save
+                {uploading ? 'Uploading...' : 'Save'}
               </button>
             </div>
           </div>

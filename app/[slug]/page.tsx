@@ -101,6 +101,11 @@ async function getServiceContent(slug: string): Promise<ServicePageContentData |
     platform: content.platform,
     serviceType: content.serviceType,
     slug: content.slug,
+    customEnabled: content.customEnabled,
+    customMinQuantity: content.customMinQuantity,
+    customMaxQuantity: content.customMaxQuantity,
+    customStep: content.customStep,
+    customRoundToStep: content.customRoundToStep,
   } as ServicePageContentData;
 }
 

@@ -68,6 +68,7 @@ export default function GetStarted() {
   const [dynamicHeading, setDynamicHeading] = useState("");
   const [dynamicExplanationTitle, setDynamicExplanationTitle] = useState("");
   const [availablePackages, setAvailablePackages] = useState<any[]>([]);
+  const [customSettings, setCustomSettings] = useState<any>(null);
   const [sliderIndex, setSliderIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [mainHeading, setMainHeading] = useState("Get Started Instantly");
@@ -189,23 +190,39 @@ export default function GetStarted() {
               t.label?.toLowerCase().includes(targetTabId === "high" ? "high" : "premium")
             );
 
-            if (tab && tab.packages && Array.isArray(tab.packages)) {
-              const parsedPackages = tab.packages.map((pkg: any) => ({
-                ...pkg,
-                // Parse numbers for logic but keep originals if needed
-                quantity: typeof pkg.qty === 'string' ? parseInt(pkg.qty.replace(/,/g, ''), 10) : pkg.qty,
-                priceVal: typeof pkg.price === 'string' ? parseFloat(pkg.price.replace(/[^0-9.]/g, '')) : pkg.price,
-                oldPriceVal: typeof pkg.strike === 'string' ? parseFloat(pkg.strike.replace(/[^0-9.]/g, '')) : pkg.strike,
-              })).sort((a: any, b: any) => a.quantity - b.quantity);
+            if (tab) {
+              if (tab.customSettings) {
+                setCustomSettings(tab.customSettings);
+                // If custom settings are enabled and we are in custom mode (no packages), set initial qty
+                if (tab.customSettings.enabled && (!tab.packages || tab.packages.length === 0)) {
+                  setQty(tab.customSettings.min || 100);
+                }
+              } else {
+                setCustomSettings(null);
+              }
 
-              setAvailablePackages(parsedPackages);
-              // Set slider to middle or start
-              setSliderIndex(0);
+              if (tab.packages && Array.isArray(tab.packages)) {
+                const parsedPackages = tab.packages.map((pkg: any) => ({
+                  ...pkg,
+                  // Parse numbers for logic but keep originals if needed
+                  quantity: typeof pkg.qty === 'string' ? parseInt(pkg.qty.replace(/,/g, ''), 10) : pkg.qty,
+                  priceVal: typeof pkg.price === 'string' ? parseFloat(pkg.price.replace(/[^0-9.]/g, '')) : pkg.price,
+                  oldPriceVal: typeof pkg.strike === 'string' ? parseFloat(pkg.strike.replace(/[^0-9.]/g, '')) : pkg.strike,
+                })).sort((a: any, b: any) => a.quantity - b.quantity);
+
+                setAvailablePackages(parsedPackages);
+                // Set slider to middle or start
+                setSliderIndex(0);
+              } else {
+                setAvailablePackages([]);
+              }
             } else {
               setAvailablePackages([]);
+              setCustomSettings(null);
             }
           } else {
             setAvailablePackages([]);
+            setCustomSettings(null);
           }
         }
       } catch (error) {
@@ -432,7 +449,7 @@ export default function GetStarted() {
                 </div>
               </div>
               
-              {availablePackages.length > 0 ? (
+              {!customSettings?.enabled && availablePackages.length > 0 ? (
                 <input
                   className="range"
                   type="range"
@@ -443,15 +460,70 @@ export default function GetStarted() {
                   onChange={(e) => setSliderIndex(parseInt(e.target.value, 10))}
                 />
               ) : (
-                <input
-                  className="range"
-                  type="range"
-                  min={50}
-                  max={5000}
-                  step={50}
-                  value={qty}
-                  onChange={(e) => setQty(parseInt(e.target.value, 10))}
-                />
+                <div className="custom-qty-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+                   <button 
+                      type="button"
+                      className="qty-btn"
+                      onClick={() => {
+                        const step = customSettings?.step || 50;
+                        const min = customSettings?.min || 50;
+                        const newQty = Math.max(min, qty - step);
+                        setQty(newQty);
+                      }}
+                      style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '50%', 
+                        border: '1px solid #e2e8f0',
+                        background: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '18px',
+                        color: '#64748b',
+                        flexShrink: 0
+                      }}
+                   >
+                     −
+                   </button>
+                   <input
+                    className="range"
+                    type="range"
+                    min={customSettings?.min || 50}
+                    max={customSettings?.max || 5000}
+                    step={customSettings?.step || 50}
+                    value={qty}
+                    onChange={(e) => setQty(parseInt(e.target.value, 10))}
+                    style={{ flex: 1 }}
+                  />
+                  <button 
+                      type="button"
+                      className="qty-btn"
+                      onClick={() => {
+                        const step = customSettings?.step || 50;
+                        const max = customSettings?.max || 5000;
+                        const newQty = Math.min(max, qty + step);
+                        setQty(newQty);
+                      }}
+                      style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '50%', 
+                        border: '1px solid #e2e8f0',
+                        background: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '18px',
+                        color: '#64748b',
+                        flexShrink: 0
+                      }}
+                   >
+                     +
+                   </button>
+                </div>
               )}
             </div>
 
