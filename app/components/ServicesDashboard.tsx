@@ -2229,31 +2229,56 @@ export default function ServicesDashboard() {
                               <div key={item.id} className="feature-input-row" style={{marginBottom: '10px', flexDirection: 'column', alignItems: 'flex-start', border: '1px solid #eee', padding: '10px', borderRadius: '8px'}}>
                                   <div style={{display: 'flex', width: '100%', marginBottom: '5px', gap: '10px'}}>
                                       <div style={{flex: 1, display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                        <select
-                                            className="add-service-input"
-                                            value={item.icon}
-                                            onChange={(e) => handleBenefitItemChange(item.id, 'icon', e.target.value)}
-                                            style={{flex: 1}}
-                                        >
-                                          <option value="">Select Icon</option>
-                                          {item.icon && !BENEFIT_ICONS.find(i => i.value === item.icon) && (
-                                            <option value={item.icon}>Custom Uploaded Icon</option>
-                                          )}
-                                          {BENEFIT_ICONS.map((icon) => (
-                                            <option key={icon.value} value={icon.value}>
-                                              {icon.label}
-                                            </option>
-                                          ))}
-                                          {availableIcons.length > 0 && (
-                                            <optgroup label="Library Icons">
-                                              {availableIcons.map((icon) => (
-                                                <option key={icon.id} value={icon.url || icon.name}>
-                                                  {icon.name}
-                                                </option>
-                                              ))}
-                                            </optgroup>
-                                          )}
-                                        </select>
+                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                          <select
+                                              className="add-service-input"
+                                              value={item.icon}
+                                              onChange={(e) => handleBenefitItemChange(item.id, 'icon', e.target.value)}
+                                              style={{flex: 1}}
+                                          >
+                                            <option value="">Select Icon</option>
+                                            {item.icon && 
+                                             !BENEFIT_ICONS.find(i => i.value === item.icon) && 
+                                             !availableIcons.find(i => (i.url || i.name) === item.icon) && (
+                                              <option value={item.icon}>Custom Uploaded Icon</option>
+                                            )}
+                                            {BENEFIT_ICONS.map((icon) => (
+                                              <option key={icon.value} value={icon.value}>
+                                                {icon.label}
+                                              </option>
+                                            ))}
+                                             {availableIcons.length > 0 && (
+                                              <optgroup label="Library Icons">
+                                                {availableIcons.map((icon) => (
+                                                  <option key={icon.id} value={icon.url || icon.name}>
+                                                    {icon.name}
+                                                  </option>
+                                                ))}
+                                              </optgroup>
+                                            )}
+                                          </select>
+                                          <div style={{ 
+                                            width: '32px', 
+                                            height: '32px', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', 
+                                            border: '1px solid #ddd', 
+                                            borderRadius: '4px', 
+                                            background: '#f9fafb',
+                                            flexShrink: 0
+                                          }}>
+                                            {item.icon ? (
+                                              item.icon.includes('/') || item.icon.includes('http') ? (
+                                                <img src={item.icon} alt="Icon" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                                              ) : (
+                                                <FontAwesomeIcon icon={iconMap[item.icon] || faImage} style={{ width: '16px', height: '16px', color: '#555' }} />
+                                              )
+                                            ) : (
+                                              <FontAwesomeIcon icon={faImage} style={{ width: '16px', height: '16px', color: '#ccc' }} />
+                                            )}
+                                          </div>
+                                        </div>
                                         <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px'}}>
                                           <div style={{display: 'flex', gap: '4px'}}>
                                             <label 

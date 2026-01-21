@@ -609,9 +609,11 @@ export default function HomepageContentDashboard() {
     const file = e.target.files?.[0];
     if (file) {
       const newCards = [...platformCards];
-      newCards[index].iconFile = file;
-      // Create a temporary preview URL
-      newCards[index].icon = URL.createObjectURL(file);
+      newCards[index] = {
+        ...newCards[index],
+        iconFile: file,
+        icon: URL.createObjectURL(file)
+      };
       setPlatformCards(newCards);
     }
   };
@@ -651,8 +653,11 @@ export default function HomepageContentDashboard() {
 
     if (currentIconSelectorContext === 'platformCard' && currentIconSelectorIndex !== null) {
       const newCards = [...platformCards];
-      newCards[currentIconSelectorIndex].icon = iconValue;
-      newCards[currentIconSelectorIndex].iconFile = undefined; // Clear any pending file upload
+      newCards[currentIconSelectorIndex] = {
+        ...newCards[currentIconSelectorIndex],
+        icon: iconValue,
+        iconFile: undefined
+      };
       
       setPlatformCards(newCards);
       setIsIconSelectorOpen(false);
@@ -1102,8 +1107,11 @@ export default function HomepageContentDashboard() {
                                         type="button"
                                         onClick={() => {
                                             const newCards = [...platformCards];
-                                            newCards[index].icon = undefined;
-                                            newCards[index].iconFile = undefined;
+                                            newCards[index] = {
+                                              ...newCards[index],
+                                              icon: undefined,
+                                              iconFile: undefined
+                                            };
                                             setPlatformCards(newCards);
                                         }}
                                         style={{ fontSize: '0.8rem', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
@@ -1122,7 +1130,7 @@ export default function HomepageContentDashboard() {
                             value={card.key}
                             onChange={(e) => {
                               const newCards = [...platformCards];
-                              newCards[index].key = e.target.value;
+                              newCards[index] = { ...newCards[index], key: e.target.value };
                               setPlatformCards(newCards);
                             }}
                           >
@@ -1139,7 +1147,7 @@ export default function HomepageContentDashboard() {
                             value={card.serviceType}
                             onChange={(e) => {
                               const newCards = [...platformCards];
-                              newCards[index].serviceType = e.target.value;
+                              newCards[index] = { ...newCards[index], serviceType: e.target.value };
                               setPlatformCards(newCards);
                             }}
                           />
@@ -1154,7 +1162,7 @@ export default function HomepageContentDashboard() {
                             value={card.rating || ""}
                             onChange={(e) => {
                               const newCards = [...platformCards];
-                              newCards[index].rating = e.target.value;
+                              newCards[index] = { ...newCards[index], rating: e.target.value };
                               setPlatformCards(newCards);
                             }}
                             placeholder="5.0"
@@ -1168,7 +1176,7 @@ export default function HomepageContentDashboard() {
                             value={card.reviews || ""}
                             onChange={(e) => {
                               const newCards = [...platformCards];
-                              newCards[index].reviews = e.target.value;
+                              newCards[index] = { ...newCards[index], reviews: e.target.value };
                               setPlatformCards(newCards);
                             }}
                             placeholder="4,500+"
@@ -1183,7 +1191,7 @@ export default function HomepageContentDashboard() {
                           value={card.name}
                           onChange={(e) => {
                             const newCards = [...platformCards];
-                            newCards[index].name = e.target.value;
+                            newCards[index] = { ...newCards[index], name: e.target.value };
                             setPlatformCards(newCards);
                           }}
                         />
@@ -1195,7 +1203,7 @@ export default function HomepageContentDashboard() {
                           value={card.desc}
                           onChange={(e) => {
                             const newCards = [...platformCards];
-                            newCards[index].desc = e.target.value;
+                            newCards[index] = { ...newCards[index], desc: e.target.value };
                             setPlatformCards(newCards);
                           }}
                           rows={2}
@@ -1209,7 +1217,7 @@ export default function HomepageContentDashboard() {
                           value={card.tags.join(", ")}
                           onChange={(e) => {
                             const newCards = [...platformCards];
-                            newCards[index].tags = e.target.value.split(",").map(t => t.trim());
+                            newCards[index] = { ...newCards[index], tags: e.target.value.split(",").map(t => t.trim()) };
                             setPlatformCards(newCards);
                           }}
                         />

@@ -19,6 +19,13 @@ export type PackageTabConfig = {
   id: string;
   label: string;
   packages: PackageOption[];
+  customSettings?: {
+    enabled?: boolean;
+    min?: number;
+    max?: number;
+    step?: number;
+    round?: boolean;
+  };
 };
 
 type PackagesSelectorProps = {
@@ -141,6 +148,14 @@ export default function PackagesSelector({
     ? activeTabData.packages 
     : [];
 
+  // Determine effective custom settings (prefer tab-specific, fallback to global props)
+  const activeCustomSettings = activeTabData.customSettings || {};
+  const effCustomEnabled = activeCustomSettings.enabled ?? customEnabled;
+  const effCustomMin = activeCustomSettings.min ?? customMinQuantity;
+  const effCustomMax = activeCustomSettings.max ?? customMaxQuantity;
+  const effCustomStep = activeCustomSettings.step ?? customStep;
+  const effCustomRound = activeCustomSettings.round ?? customRoundToStep;
+
   const defaultIndex = useMemo(() => {
     if (!visiblePackages.length) return 0;
     if (typeof defaultQtyTarget === "undefined") return 0;
@@ -151,8 +166,9 @@ export default function PackagesSelector({
   const [selectedIndex, setSelectedIndex] = useState(0);
   
   // Helper to parse initial quantity from custom package (e.g., "10K+" → 10000, "25K+" → 25000)
-  const parseInitialQty = (qtyStr: string): number => {
-    const cleaned = qtyStr.replace(/[+,]/g, "").trim();
+  const parseInitialQty = (qty: string | number): number => {
+    if (typeof qty === "number") return qty;
+    const cleaned = qty.replace(/[+,]/g, "").trim();
     if (cleaned.includes("K")) {
       const num = parseFloat(cleaned.replace("K", ""));
       return Math.round(num * 1000);
@@ -165,15 +181,37 @@ export default function PackagesSelector({
   const isCustomQty = (qty: string | number): qty is string => {
     return typeof qty === "string" && qty.includes("+");
   };
+
+  // Helper to determine if we should show custom UI for a package
+  const shouldShowCustomUI = (p: PackageOption, index: number) => {
+    if (typeof p.qty === "string" && p.qty.includes("+")) return true;
+    // Check if explicitly marked as custom via offText
+    if (p.offText && p.offText.toLowerCase() === "custom") return true;
+    // Check if it matches custom min quantity
+    if (effCustomEnabled && effCustomMin && parseInitialQty(p.qty) === effCustomMin) return true;
+    // Check if package quantity is exactly 10000 (common starting point for custom packages)
+    if (parseInitialQty(p.qty) === 10000) return true;
+    // Fallback: if custom enabled and it's the last package
+    if (effCustomEnabled && index === visiblePackages.length - 1) return true;
+    return false;
+  };
   
   const getInitialCustomQty = (): number => {
-    if (customEnabled && customMinQuantity) {
-      return customMinQuantity;
+    if (effCustomEnabled && effCustomMin) {
+      return effCustomMin;
     }
     for (const pkg of visiblePackages) {
       if (typeof pkg.qty === "string" && pkg.qty.includes("+")) {
         return parseInitialQty(pkg.qty);
       }
+      // Check if package quantity is exactly 10000
+      if (parseInitialQty(pkg.qty) === 10000) {
+        return 10000;
+      }
+    }
+    // If no explicit custom package, but custom enabled, use the last package's qty
+    if (effCustomEnabled && visiblePackages.length > 0) {
+      return parseInitialQty(visiblePackages[visiblePackages.length - 1].qty);
     }
     return 10000;
   };
@@ -184,17 +222,17 @@ export default function PackagesSelector({
     setSelectedIndex(defaultIndex);
     // Update custom quantity if switching to a custom package
     const newSelected = visiblePackages[defaultIndex];
-    if (newSelected && isCustomQty(newSelected.qty)) {
-      if (customEnabled && customMinQuantity) {
-        setCustomQty(customMinQuantity);
+    if (newSelected && shouldShowCustomUI(newSelected, defaultIndex)) {
+      if (effCustomEnabled && effCustomMin) {
+        setCustomQty(effCustomMin);
       } else {
         setCustomQty(parseInitialQty(newSelected.qty));
       }
     }
-  }, [defaultIndex, visiblePackages, customEnabled, customMinQuantity]);
+  }, [defaultIndex, visiblePackages, effCustomEnabled, effCustomMin]);
 
   const selected = visiblePackages[selectedIndex] ?? visiblePackages[defaultIndex];
-  const isCustomSelected = typeof selected?.qty === "string" && selected.qty.includes("+");
+  const isCustomSelected = selected && shouldShowCustomUI(selected, selectedIndex);
   
   // Calculate price for custom quantity
   const getCustomPrice = () => {
@@ -281,55 +319,20 @@ export default function PackagesSelector({
 
   const handleCustomIncrement = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const step = customStep || 1000;
-    const max = customMaxQuantity || 1000000;
+    const step = effCustomStep || 1000;
+    const max = effCustomMax || 1000000;
     setCustomQty((prev) => Math.min(prev + step, max));
   };
 
   const handleCustomDecrement = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const step = customStep || 1000;
-    const min = customMinQuantity || (selected && isCustomQty(selected.qty)
+    const step = effCustomStep || 1000;
+    const min = effCustomMin || (selected && shouldShowCustomUI(selected, selectedIndex)
       ? parseInitialQty(selected.qty)
       : 10000);
     setCustomQty((prev) => Math.max(prev - step, min));
   };
 
-  const handleCustomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (val === "") {
-      // Handle empty input temporarily if needed, or just let it stay 0
-      // We might need a separate display state if we want to allow empty input
-      setCustomQty(0);
-      return;
-    }
-    const num = parseInt(val, 10);
-    if (!isNaN(num)) {
-      setCustomQty(num);
-    }
-  };
-
-  const handleCustomInputBlur = () => {
-    let newVal = customQty;
-    // Handle 0 or empty by resetting to min
-    if (newVal === 0) {
-       newVal = customMinQuantity || (selected && isCustomQty(selected.qty) ? parseInitialQty(selected.qty) : 10000);
-    }
-    
-    const min = customMinQuantity || (selected && isCustomQty(selected.qty) ? parseInitialQty(selected.qty) : 10000);
-    const max = customMaxQuantity || 1000000;
-
-    if (newVal < min) newVal = min;
-    if (newVal > max) newVal = max;
-
-    if (customRoundToStep && customStep) {
-        newVal = Math.round(newVal / customStep) * customStep;
-        if (newVal < min) newVal = min;
-        if (newVal > max) newVal = max;
-    }
-    
-    setCustomQty(newVal);
-  };
 
   const displayQty = isCustomSelected ? customQty.toLocaleString() + "+" : String(selected?.qty ?? "");
   const customPriceData = isCustomSelected ? getCustomPrice() : null;
@@ -396,13 +399,13 @@ export default function PackagesSelector({
               <button
                 key={`${activeTab}-${p.qty}-${i}`}
                 className={`pkg-item ${i === selectedIndex ? "active" : ""} ${
-                  typeof p.qty === "string" && p.qty.includes("+") ? "custom" : ""
+                  shouldShowCustomUI(p, i) ? "custom" : ""
                 }`}
                 onClick={() => {
                   setSelectedIndex(i);
                   const pkg = visiblePackages[i];
                   // Set custom quantity based on package base quantity
-                  if (pkg && isCustomQty(pkg.qty)) {
+                  if (pkg && shouldShowCustomUI(pkg, i)) {
                     setCustomQty(parseInitialQty(pkg.qty));
                   } else {
                     // Reset to default when switching to non-custom package
@@ -417,42 +420,35 @@ export default function PackagesSelector({
                   </span>
                 )}
                 <div className="pkg-val">
-                  {i === selectedIndex && typeof p.qty === "string" && p.qty.includes("+")
-                    ? (customEnabled ? (
-                        <div onClick={(e) => e.stopPropagation()} style={{ width: '100%' }}>
-                          <input
-                            type="number"
-                            value={customQty === 0 ? "" : customQty}
-                            onChange={handleCustomInputChange}
-                            onBlur={handleCustomInputBlur}
-                            className="custom-qty-input"
+                  {i === selectedIndex && shouldShowCustomUI(p, i)
+                    ? (
+                        <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', cursor: 'default' }}>
+                          <div
+                            className="custom-qty-display"
                             style={{ 
                                 width: '100%', 
                                 textAlign: 'center', 
-                                fontSize: '18px', 
+                                fontSize: '20px', 
                                 fontWeight: 'bold',
-                                border: '1px solid #ddd',
-                                borderRadius: '4px',
                                 padding: '4px',
-                                background: '#fff',
                                 color: '#333',
                                 marginBottom: '4px'
                             }}
-                          />
-                          {(customMinQuantity || customMaxQuantity) && (
+                          >
+                            {customQty.toLocaleString()}
+                          </div>
+                          {(effCustomMin || effCustomMax) && (
                             <div style={{ fontSize: '11px', color: '#666', fontWeight: 'normal', lineHeight: 1.2 }}>
-                              Min {customMinQuantity?.toLocaleString() ?? "10k"} — Max {customMaxQuantity?.toLocaleString() ?? "1M"}
+                              Min {effCustomMin?.toLocaleString() ?? "10k"} — Max {effCustomMax?.toLocaleString() ?? "1M"}
                             </div>
                           )}
                         </div>
-                      ) : (
-                        customQty.toLocaleString() + "+"
-                      ))
+                      )
                     : p.qty}
                 </div>
 
                 {p.offText && <div className="pkg-off">{p.offText}</div>}
-                {typeof p.qty === "string" && p.qty.includes("+") && (
+                {shouldShowCustomUI(p, i) && (
                   <>
                     <div
                       className="pkg-minus"
