@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Platform, ServiceType } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 interface JAPService {
   service?: number; // Service ID (primary field)
@@ -44,10 +45,33 @@ export class JAPAPI {
   }
 
   /**
+   * Ensure we have the latest credentials from DB or Env
+   */
+  private async ensureCredentials() {
+    try {
+      const settings = await prisma.adminSettings.findFirst();
+      const dbApiUrl = settings?.japApiUrl;
+      const dbApiKey = settings?.japApiKey;
+      
+      const envApiUrl = process.env.JAP_API_URL || '';
+      const envApiKey = process.env.JAP_API_KEY || '';
+      
+      this.apiUrl = dbApiUrl || envApiUrl;
+      this.apiKey = dbApiKey || envApiKey;
+    } catch (error) {
+      // If DB fetch fails, fallback to env (silent fail to allow env usage)
+      if (!this.apiUrl) this.apiUrl = process.env.JAP_API_URL || '';
+      if (!this.apiKey) this.apiKey = process.env.JAP_API_KEY || '';
+    }
+  }
+
+  /**
    * Connect to JAP API using form-encoded POST requests
    * Matches the PHP implementation format
    */
   private async connect(postData: Record<string, any>): Promise<any> {
+    await this.ensureCredentials();
+
     if (!this.apiUrl || !this.apiKey) {
       throw new Error('JAP API credentials not configured');
     }

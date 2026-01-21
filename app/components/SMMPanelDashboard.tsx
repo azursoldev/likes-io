@@ -4,7 +4,7 @@ import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLink, faCircleInfo, faSync, faCopy, faCheck, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faLink, faCircleInfo, faSync, faCopy, faCheck, faSearch, faSave } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
 
 type SMMPanelStatus = "connected" | "partial" | "not_configured";
@@ -26,6 +26,7 @@ export default function SMMPanelDashboard() {
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState<JAPService[]>([]);
   const [syncing, setSyncing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -39,8 +40,10 @@ export default function SMMPanelDashboard() {
         }
         const data = await res.json();
 
-        // Show preview values from env so the page reflects real config
-        if (data.apiUrlConfigured && data.apiUrlPreview) {
+        // Show real values if available (from DB), or preview from env
+        if (data.rawUrl) {
+          setApiUrl(data.rawUrl);
+        } else if (data.apiUrlConfigured && data.apiUrlPreview) {
           setApiUrl(data.apiUrlPreview);
         } else {
           setApiUrl("https://justanotherpanel.com/api/v2");
@@ -49,7 +52,7 @@ export default function SMMPanelDashboard() {
         if (data.apiKeyConfigured && data.maskedKey) {
           setApiKey(data.maskedKey);
         } else {
-          setApiKey("************");
+          setApiKey("");
         }
 
         setStatus(data.status as SMMPanelStatus);
@@ -57,7 +60,7 @@ export default function SMMPanelDashboard() {
         console.error(e);
         setStatus("not_configured");
         setApiUrl("https://justanotherpanel.com/api/v2");
-        setApiKey("************");
+        setApiKey("");
       } finally {
         setLoading(false);
       }
@@ -65,6 +68,35 @@ export default function SMMPanelDashboard() {
 
     fetchConfig();
   }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Don't save if key is still masked
+      const keyToSave = apiKey.includes("****") ? undefined : apiKey;
+      
+      const res = await fetch("/api/smm-panel/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          japApiUrl: apiUrl,
+          japApiKey: keyToSave, 
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save settings");
+      }
+
+      // Reload to confirm connection
+      window.location.reload();
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      alert("Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const syncServices = async () => {
     setSyncing(true);
@@ -129,10 +161,10 @@ export default function SMMPanelDashboard() {
 
   const statusText =
     status === "connected"
-      ? "Connected (JAP credentials found in environment)"
+      ? "Connected (Credentials configured)"
       : status === "partial"
-      ? "Partially Configured (missing URL or Key in environment)"
-      : "Not Configured (set JAP_API_URL and JAP_API_KEY in your .env.local file)";
+      ? "Partially Configured (missing URL or Key)"
+      : "Not Configured (enter API URL and Key above)";
 
   const statusClassName =
     status === "connected"
@@ -162,7 +194,6 @@ export default function SMMPanelDashboard() {
                 <div className="smm-panel-form-group">
                   <label className="smm-panel-label">
                     API URL
-                    {/* This field is informational – real value comes from JAP_API_URL */}
                     <input
                       type="text"
                       className="smm-panel-input"
@@ -170,13 +201,11 @@ export default function SMMPanelDashboard() {
                       onChange={(e) => setApiUrl(e.target.value)}
                     />
                     <span className="smm-panel-hint">
-                      Current value is read from <code>JAP_API_URL</code>. To change it, update your <code>.env.local</code> file
-                      (e.g. <code>JAP_API_URL={`https://justanotherpanel.com/api/v2`}</code>) and restart the server.
+                      Enter the API URL (e.g., <code>https://justanotherpanel.com/api/v2</code>). Values saved here override environment variables.
                     </span>
                   </label>
                   <label className="smm-panel-label">
                     API Key
-                    {/* Masked for security – real value comes from JAP_API_KEY */}
                     <input
                       type="password"
                       className="smm-panel-input"
@@ -184,10 +213,33 @@ export default function SMMPanelDashboard() {
                       onChange={(e) => setApiKey(e.target.value)}
                     />
                     <span className="smm-panel-hint">
-                      Stored securely in <code>JAP_API_KEY</code>. Paste your key into <code>.env.local</code> and restart the server; this field will
-                      show a masked preview.
+                      Paste your API Key here. Values saved here override environment variables.
                     </span>
                   </label>
+                  
+                  <div style={{ marginTop: "1rem" }}>
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        background: saving ? "#ccc" : "#2563eb",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: saving ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        fontSize: "14px",
+                        fontWeight: "500"
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faSave} spin={saving} />
+                      {saving ? "Saving..." : "Save Settings"}
+                    </button>
+                  </div>
+
                   <div className="smm-panel-connection-status">
                     <label className="smm-panel-label">Connection Status</label>
                     <div className="smm-panel-status-indicator">
