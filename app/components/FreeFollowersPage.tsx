@@ -66,7 +66,24 @@ const freeFollowersFAQs = [
   },
 ];
 
-export default function FreeFollowersPage({ content }: { content?: { heroTitle: string; heroDescription: string; rating: string; reviewCount: string; assurance1?: string | null; assurance2?: string | null; assurance3?: string | null } }) {
+export default function FreeFollowersPage({ content }: { content?: { 
+  heroTitle: string; 
+  heroDescription: string; 
+  rating: string; 
+  reviewCount: string; 
+  step1Title?: string | null;
+  step1Description?: string | null;
+  step2Title?: string | null;
+  step2Description?: string | null;
+  step3Title?: string | null;
+  step3Description?: string | null;
+  inputLabel?: string | null;
+  inputPlaceholder?: string | null;
+  buttonText?: string | null;
+  assurance1?: string | null;
+  assurance2?: string | null;
+  assurance3?: string | null;
+} }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -76,6 +93,21 @@ export default function FreeFollowersPage({ content }: { content?: { heroTitle: 
   const heroDescription = content?.heroDescription || "Experience our high-quality service for free. No password required. See real results in minutes and understand why thousands trust us for their growth.";
   const rating = content?.rating || "4.9/5";
   const reviewCount = content?.reviewCount || "512+";
+
+  const step1Title = content?.step1Title || "1. Enter Your Username";
+  const step1Description = content?.step1Description || "Just type in your public Instagram username. We will never, ever ask for your password.";
+  const step2Title = content?.step2Title || "2. Activate Your Trial";
+  const step2Description = content?.step2Description || "Confirm your account and provide an email for verification. It's that easy.";
+  const step3Title = content?.step3Title || "3. Receive Free Followers";
+  const step3Description = content?.step3Description || "Watch as 25 new followers are added to your account instantly. No strings attached!";
+  
+  const inputLabel = content?.inputLabel || "Enter Your Instagram Username";
+  const inputPlaceholder = content?.inputPlaceholder || "@yourusername";
+  const buttonText = content?.buttonText || "Continue →";
+  
+  const assurance1 = content?.assurance1 || "No Password Required";
+  const assurance2 = content?.assurance2 || "Secure & Safe";
+  const assurance3 = content?.assurance3 || "Instant Delivery";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,21 +166,21 @@ export default function FreeFollowersPage({ content }: { content?: { heroTitle: 
                 <div className="progress-step-circle">
                   {currentStep > 1 || isSuccess ? '✓' : '1'}
                 </div>
-                <span className="progress-step-label">Username</span>
+                <span className="progress-step-label">{step1Title.split('.')[1]?.trim() || "Username"}</span>
               </div>
               <div className={`progress-line ${currentStep >= 2 || isSuccess ? 'active' : ''}`}></div>
               <div className={`progress-step ${currentStep >= 2 || isSuccess ? 'active' : ''} ${isSuccess ? 'completed' : ''}`}>
                 <div className="progress-step-circle">
                   {isSuccess ? '✓' : '2'}
                 </div>
-                <span className="progress-step-label">Activate</span>
+                <span className="progress-step-label">{step2Title.split('.')[1]?.trim() || "Activate"}</span>
               </div>
               <div className={`progress-line ${isSuccess ? 'active' : ''}`}></div>
               <div className={`progress-step ${isSuccess ? 'active' : ''} ${isSuccess ? 'completed' : ''}`}>
                 <div className="progress-step-circle">
                   {isSuccess ? '✓' : '3'}
                 </div>
-                <span className="progress-step-label">Receive</span>
+                <span className="progress-step-label">{step3Title.split('.')[1]?.trim() || "Receive"}</span>
               </div>
             </div>
 
@@ -156,7 +188,7 @@ export default function FreeFollowersPage({ content }: { content?: { heroTitle: 
             {currentStep === 1 && (
               <form className="free-likes-form" onSubmit={handleSubmit}>
                 <label htmlFor="username" className="free-likes-form-label">
-                  Enter Your Instagram Username
+                  {inputLabel}
                 </label>
                 <div className="free-likes-input-wrapper">
                   <FontAwesomeIcon icon={faUser} className="input-icon" />
@@ -164,14 +196,14 @@ export default function FreeFollowersPage({ content }: { content?: { heroTitle: 
                     type="text"
                     id="username"
                     className="free-likes-input"
-                    placeholder="@yourusername"
+                    placeholder={inputPlaceholder}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>
                 <button type="submit" className="free-likes-continue-btn">
-                  Continue →
+                  {buttonText}
                 </button>
               </form>
             )}

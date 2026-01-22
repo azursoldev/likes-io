@@ -2,6 +2,7 @@
 import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
+import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faSave } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
@@ -64,6 +65,18 @@ export default function FreeToolsDashboard() {
           heroDescription: content.heroDescription,
           rating: content.rating,
           reviewCount: content.reviewCount,
+          step1Title: content.step1Title,
+          step1Description: content.step1Description,
+          step2Title: content.step2Title,
+          step2Description: content.step2Description,
+          step3Title: content.step3Title,
+          step3Description: content.step3Description,
+          inputLabel: content.inputLabel,
+          inputPlaceholder: content.inputPlaceholder,
+          buttonText: content.buttonText,
+          assurance1: content.assurance1,
+          assurance2: content.assurance2,
+          assurance3: content.assurance3,
         }),
       });
 
@@ -87,40 +100,43 @@ export default function FreeToolsDashboard() {
         <AdminSidebar activePage="freeTools" />
         
         <main className="admin-main">
-          <div className="admin-toolbar-wrapper">
-            <div className="admin-toolbar-container">
-              <div className="admin-toolbar">
-                <div className="admin-toolbar-left">
-                  <h1>Free Tools</h1>
-                </div>
-                <div className="admin-toolbar-right">
-                  <button 
-                    className="settings-btn"
-                    onClick={handleSave}
-                    disabled={saving || loading}
-                    style={{
-                      padding: "10px 24px",
-                      background: "#2563eb",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: saving || loading ? "not-allowed" : "pointer",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px"
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faSave} />
-                    <span>{saving ? "Saving..." : "Save Changes"}</span>
-                  </button>
-                </div>
+          <AdminToolbar title="Free Tools" />
+
+          <div className="admin-content">
+            <div className="users-hero">
+              <div className="users-hero-left">
+                <h2>Free Tools</h2>
+                <p>Manage free tools content and settings.</p>
+              </div>
+              <div className="users-hero-right">
+                           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
+              <button 
+                className="settings-btn"
+                onClick={handleSave}
+                disabled={saving || loading}
+                style={{
+                  padding: "10px 24px",
+                  background: "#2563eb",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: saving || loading ? "not-allowed" : "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px"
+                }}
+              >
+                <FontAwesomeIcon icon={faSave} />
+                <span>{saving ? "Saving..." : "Save Changes"}</span>
+              </button>
+            </div>
               </div>
             </div>
-          </div>
 
-          <div className="admin-content-area">
+ 
+
             {message && (
               <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: '1rem' }}>
                 {message.text}

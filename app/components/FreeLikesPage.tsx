@@ -66,7 +66,24 @@ const freeLikesFAQs = [
   },
 ];
 
-export default function FreeLikesPage({ content }: { content?: { heroTitle: string; heroDescription: string; rating: string; reviewCount: string; assurance1?: string | null; assurance2?: string | null; assurance3?: string | null } }) {
+export default function FreeLikesPage({ content }: { content?: { 
+  heroTitle: string; 
+  heroDescription: string; 
+  rating: string; 
+  reviewCount: string; 
+  step1Title?: string | null;
+  step1Description?: string | null;
+  step2Title?: string | null;
+  step2Description?: string | null;
+  step3Title?: string | null;
+  step3Description?: string | null;
+  inputLabel?: string | null;
+  inputPlaceholder?: string | null;
+  buttonText?: string | null;
+  assurance1?: string | null;
+  assurance2?: string | null;
+  assurance3?: string | null;
+} }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [username, setUsername] = useState("");
   const [selectedPost, setSelectedPost] = useState<number | null>(null);
@@ -77,6 +94,21 @@ export default function FreeLikesPage({ content }: { content?: { heroTitle: stri
   const heroDescription = content?.heroDescription || "Experience our high-quality service for free. No password required. See real results in minutes and understand why thousands trust us for their growth.";
   const rating = content?.rating || "4.9/5";
   const reviewCount = content?.reviewCount || "451+";
+
+  const step1Title = content?.step1Title || "1. Enter Your Username";
+  const step1Description = content?.step1Description || "Just type in your public Instagram username. We will never, ever ask for your password.";
+  const step2Title = content?.step2Title || "2. Select Your Post";
+  const step2Description = content?.step2Description || "Choose the photo or video you want to boost. We'll show you your recent posts to make it easy.";
+  const step3Title = content?.step3Title || "3. Receive Free Likes";
+  const step3Description = content?.step3Description || "Confirm your selection and watch the likes arrive instantly. It's that simple!";
+  
+  const inputLabel = content?.inputLabel || "Enter Your Instagram Username";
+  const inputPlaceholder = content?.inputPlaceholder || "@yourusername";
+  const buttonText = content?.buttonText || "Continue →";
+  
+  const assurance1 = content?.assurance1 || "No Password Required";
+  const assurance2 = content?.assurance2 || "Secure & Safe";
+  const assurance3 = content?.assurance3 || "Instant Delivery";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,21 +178,21 @@ export default function FreeLikesPage({ content }: { content?: { heroTitle: stri
                 <div className="progress-step-circle">
                   {currentStep > 1 || isSuccess ? '✓' : '1'}
                 </div>
-                <span className="progress-step-label">Username</span>
+                <span className="progress-step-label">{step1Title.split('.')[1]?.trim() || "Username"}</span>
               </div>
               <div className={`progress-line ${currentStep >= 2 || isSuccess ? 'active' : ''}`}></div>
               <div className={`progress-step ${currentStep >= 2 || isSuccess ? 'active' : ''} ${currentStep > 2 || isSuccess ? 'completed' : ''}`}>
                 <div className="progress-step-circle">
                   {currentStep > 2 || isSuccess ? '✓' : '2'}
                 </div>
-                <span className="progress-step-label">Select Post</span>
+                <span className="progress-step-label">{step2Title.split('.')[1]?.trim() || "Select Post"}</span>
               </div>
               <div className={`progress-line ${currentStep >= 3 || isSuccess ? 'active' : ''}`}></div>
               <div className={`progress-step ${currentStep >= 3 || isSuccess ? 'active' : ''} ${isSuccess ? 'completed' : ''}`}>
                 <div className="progress-step-circle">
                   {isSuccess ? '✓' : '3'}
                 </div>
-                <span className="progress-step-label">Activate</span>
+                <span className="progress-step-label">{step3Title.split('.')[1]?.trim() || "Activate"}</span>
               </div>
             </div>
 
@@ -168,7 +200,7 @@ export default function FreeLikesPage({ content }: { content?: { heroTitle: stri
             {currentStep === 1 && (
               <form className="free-likes-form" onSubmit={handleSubmit}>
                 <label htmlFor="username" className="free-likes-form-label">
-                  Enter Your Instagram Username
+                  {inputLabel}
                 </label>
                 <div className="free-likes-input-wrapper">
                   <FontAwesomeIcon icon={faUser} className="input-icon" />
@@ -176,14 +208,14 @@ export default function FreeLikesPage({ content }: { content?: { heroTitle: stri
                     type="text"
                     id="username"
                     className="free-likes-input"
-                    placeholder="@yourusername"
+                    placeholder={inputPlaceholder}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>
                 <button type="submit" className="free-likes-continue-btn">
-                  Continue →
+                  {buttonText}
                 </button>
               </form>
             )}
@@ -299,15 +331,15 @@ export default function FreeLikesPage({ content }: { content?: { heroTitle: stri
             <div className="free-likes-trust-badges">
               <div className="trust-badge">
                 <FontAwesomeIcon icon={faLock} className="trust-icon" />
-                <span>{content?.assurance1 || "No Password Required"}</span>
+                <span>{assurance1}</span>
               </div>
               <div className="trust-badge">
                 <FontAwesomeIcon icon={faShield} className="trust-icon" />
-                <span>{content?.assurance2 || "100% Free & Safe"}</span>
+                <span>{assurance2}</span>
               </div>
               <div className="trust-badge">
                 <FontAwesomeIcon icon={faBolt} className="trust-icon" />
-                <span>{content?.assurance3 || "Instant Delivery"}</span>
+                <span>{assurance3}</span>
               </div>
             </div>
           </div>

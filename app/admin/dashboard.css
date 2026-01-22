@@ -4394,17 +4394,14 @@
 }
 
 .admin-input, .admin-textarea {
-  display: block;
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #1f2937;
-  background-color: #fff;
-  background-clip: padding-box;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111827;
+    background: #fff;
+    box-sizing: border-box;
 }
 
 .admin-input:focus, .admin-textarea:focus {

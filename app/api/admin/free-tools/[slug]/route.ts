@@ -18,30 +18,7 @@ export async function GET(
     });
 
     if (!content) {
-      // Return default content if not found
-      if (slug === 'free-instagram-likes') {
-        content = await prisma.freeToolPageContent.create({
-          data: {
-            slug,
-            heroTitle: "Get 50 Free Instagram Likes",
-            heroDescription: "Experience our high-quality service for free. No password required. See real results in minutes and understand why thousands trust us for their growth.",
-            rating: "4.9/5",
-            reviewCount: "451+",
-          },
-        });
-      } else if (slug === 'free-instagram-followers') {
-        content = await prisma.freeToolPageContent.create({
-          data: {
-            slug,
-            heroTitle: "Get 25 Free Instagram Followers",
-            heroDescription: "Experience our high-quality service for free. No password required. See real results in minutes and understand why thousands trust us for their growth.",
-            rating: "4.9/5",
-            reviewCount: "512+",
-          },
-        });
-      } else {
-        return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
-      }
+      return NextResponse.json({ error: 'Content not found' }, { status: 404 });
     }
 
     return NextResponse.json(content);

@@ -6,9 +6,10 @@ import { signOut, useSession } from "next-auth/react";
 
 type AdminToolbarProps = {
   title: string;
+  children?: React.ReactNode;
 };
 
-export default function AdminToolbar({ title }: AdminToolbarProps) {
+export default function AdminToolbar({ title, children }: AdminToolbarProps) {
   const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -86,6 +87,7 @@ export default function AdminToolbar({ title }: AdminToolbarProps) {
             <h1>{title}</h1>
           </div>
           <div className="admin-toolbar-right">
+            {children}
             <div className="admin-search-pill">
               <FontAwesomeIcon icon={faMagnifyingGlass} className="search-icon" />
               <input placeholder="Search..." aria-label="Search" />
