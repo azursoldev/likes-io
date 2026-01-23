@@ -179,8 +179,16 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
               {/* Author and Share */}
               <div className="blog-post-author-share">
                 <div className="blog-post-author-info">
-                  <div className="blog-post-author-avatar">
-                    {post.authorAvatar || post.author.charAt(0)}
+                  <div className="blog-post-author-avatar" style={{ overflow: "hidden" }}>
+                    {post.authorAvatar && (post.authorAvatar.startsWith('/') || post.authorAvatar.startsWith('http')) ? (
+                        <img 
+                          src={post.authorAvatar} 
+                          alt={post.author} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                    ) : (
+                        post.authorAvatar || post.author.charAt(0)
+                    )}
                   </div>
                   <div className="blog-post-author-details">
                     <div className="blog-post-author-name">By {post.author}</div>

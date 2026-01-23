@@ -6,6 +6,8 @@ import HowItWorksSection from "./HowItWorksSection";
 import ReviewsSection from "./ReviewsSection";
 import FAQSection from "./FAQSection";
 
+import { freeLikesFAQs, freeLikesReviews } from "../lib/free-tool-defaults";
+
 const freeLikesSteps = [
   {
     title: "1. Enter Your Username",
@@ -21,52 +23,19 @@ const freeLikesSteps = [
   },
 ];
 
-const freeLikesReviews = [
-  {
-    handle: "@trial_user_1",
-    role: "Verified Buyer",
-    text: "Wow, it actually works! Got 50 likes in a minute. Great way to test the service.",
-  },
-  {
-    handle: "@skeptic_sam",
-    role: "Verified Buyer",
-    text: "I was skeptical because it was free, but the likes came through instantly. Super impressed.",
-  },
-  {
-    handle: "@new_post_boost",
-    role: "Verified Buyer",
-    text: "Perfect for giving my new post a little boost to get started. Thank you Likes.io!",
-  },
-];
 
-const freeLikesFAQs = [
-  {
-    q: "Is the free Instagram likes trial really free?",
-    a: "Yes, absolutely! Our free trial offers 50 Instagram likes completely free with no hidden charges, credit card required, or subscription fees. It's our way of letting you experience the quality of our service.",
-  },
-  {
-    q: "Do I need to give you my Instagram password?",
-    a: "No, never! We will never ask for your Instagram password. We only need your public Instagram username to deliver the likes. Your account security is our top priority.",
-  },
-  {
-    q: "How many free likes can I get with the trial?",
-    a: "The free trial includes 50 Instagram likes. This is a one-time offer per account to let you experience our service quality before making a purchase.",
-  },
-  {
-    q: "Why do you offer Instagram likes for free?",
-    a: "We believe in transparency and want you to see the quality of our service firsthand. The free trial lets you experience our high-quality likes, instant delivery, and reliable service without any commitment.",
-  },
-  {
-    q: "How long does it take to receive the free likes?",
-    a: "Free likes are delivered instantly! Once you complete the simple process and confirm your post selection, the likes will start appearing on your post within minutes.",
-  },
-  {
-    q: "Can I use the free likes trial more than once?",
-    a: "The free trial is a one-time offer per Instagram account. However, if you're satisfied with the trial, you can purchase additional likes packages at any time.",
-  },
-];
+type FAQ = {
+  q: string;
+  a: string;
+};
 
-export default function FreeLikesPage({ content }: { content?: { 
+type Review = {
+  handle: string;
+  role: string;
+  text: string;
+};
+
+export default function FreeLikesPage({ content, testimonials }: { content?: { 
   heroTitle: string; 
   heroDescription: string; 
   rating: string; 
@@ -83,7 +52,9 @@ export default function FreeLikesPage({ content }: { content?: {
   assurance1?: string | null;
   assurance2?: string | null;
   assurance3?: string | null;
-} }) {
+  faqs?: FAQ[] | null;
+  reviews?: Review[] | null;
+}, testimonials?: { handle: string; role: string | null; text: string; }[] }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [username, setUsername] = useState("");
   const [selectedPost, setSelectedPost] = useState<number | null>(null);
@@ -351,18 +322,20 @@ export default function FreeLikesPage({ content }: { content?: {
         steps={freeLikesSteps}
       />
 
-      {/* Reviews Section */}
+      {/* ReviewsSection */}
       <ReviewsSection
         title="Loved by Creators Worldwide"
         subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
-        reviews={freeLikesReviews}
+        reviews={testimonials && testimonials.length > 0 
+          ? testimonials.map(t => ({ ...t, role: t.role || "Verified Buyer" }))
+          : (content?.reviews || freeLikesReviews)}
       />
 
       {/* FAQ Section */}
       <FAQSection
         title="Frequently Asked Questions"
         subtitle="Have questions? We've got answers. If you don't see your question here, feel free to contact us."
-        faqs={freeLikesFAQs}
+        faqs={content?.faqs || freeLikesFAQs}
         pageSize={6}
       />
     </section>

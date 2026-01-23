@@ -18,6 +18,14 @@ export async function GET(
             email: true,
           },
         },
+        teamMember: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            role: true,
+          },
+        },
       },
     });
 

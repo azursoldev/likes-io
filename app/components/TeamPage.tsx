@@ -23,7 +23,17 @@ const TeamMemberCard = ({ member }: { member: TeamMember }) => {
     <div className="team-card">
       <div className="team-avatar" style={{ borderRadius: '50%', overflow: 'hidden', width: '120px', height: '120px', margin: '0 auto 1.5rem' }}>
         {member.avatarUrl ? (
-          <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" style={{ borderRadius: '50%' }} />
+          <img 
+            src={member.avatarUrl} 
+            alt={member.name} 
+            className="w-full h-full object-cover" 
+            style={{ 
+              borderRadius: '50%', 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover' 
+            }} 
+          />
         ) : (
           <div className="team-avatar-placeholder" style={{ borderRadius: '50%' }}></div>
         )}

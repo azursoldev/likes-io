@@ -35,6 +35,8 @@ const SERVICE_OPTIONS = [
   { label: "Instagram Likes", value: "INSTAGRAM-LIKES" },
   { label: "Instagram Followers", value: "INSTAGRAM-FOLLOWERS" },
   { label: "Instagram Views", value: "INSTAGRAM-VIEWS" },
+  { label: "Free Instagram Likes", value: "FREE_INSTAGRAM-LIKES" },
+  { label: "Free Instagram Followers", value: "FREE_INSTAGRAM-FOLLOWERS" },
   { label: "TikTok (General)", value: "TIKTOK" },
   { label: "TikTok Likes", value: "TIKTOK-LIKES" },
   { label: "TikTok Followers", value: "TIKTOK-FOLLOWERS" },

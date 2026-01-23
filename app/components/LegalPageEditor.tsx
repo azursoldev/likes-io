@@ -20,6 +20,7 @@ import {
   faTrash,
   faSave,
   faSpinner,
+  faImages,
 } from "@fortawesome/free-solid-svg-icons";
 import "../admin/dashboard.css";
 import "../admin/legal-editor.css";
@@ -34,6 +35,14 @@ type Section = {
   title: string;
   icon: string;
   content: string;
+};
+
+type IconItem = {
+  id: string;
+  name: string;
+  url?: string;
+  category?: string;
+  alt?: string;
 };
 
 type LegalPageData = {
@@ -68,7 +77,24 @@ export default function LegalPageEditor({ slug }: { slug: string }) {
 
   useEffect(() => {
     fetchData();
+    fetchIcons();
   }, [slug]);
+
+  const [availableIcons, setAvailableIcons] = useState<IconItem[]>([]);
+  const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState<number | null>(null);
+
+  const fetchIcons = async () => {
+    try {
+      const res = await fetch("/api/cms/icons");
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableIcons(data.icons || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch icons:", err);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -143,6 +169,20 @@ export default function LegalPageEditor({ slug }: { slug: string }) {
     if (!data) return;
     const newSections = data.sections.filter((_, i) => i !== index);
     setData({ ...data, sections: newSections });
+  };
+
+  const handleOpenIconSelector = (index: number) => {
+    setCurrentSectionIndex(index);
+    setIsIconSelectorOpen(true);
+  };
+
+  const handleSelectIcon = (icon: IconItem) => {
+    if (currentSectionIndex !== null && data) {
+      const iconValue = icon.url || icon.name;
+      updateSection(currentSectionIndex, "icon", iconValue);
+      setIsIconSelectorOpen(false);
+      setCurrentSectionIndex(null);
+    }
   };
 
   const getIconObject = (iconName: string) => {
@@ -259,26 +299,37 @@ export default function LegalPageEditor({ slug }: { slug: string }) {
                         </div>
                         <div className="form-group form-col-icon">
                           <label>Icon</label>
-                          <div className="icon-select-wrapper">
-                            <div className="icon-preview">
-                              <FontAwesomeIcon icon={getIconObject(section.icon)} />
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <div style={{
+                                width: '42px', height: '42px',
+                                border: '1px solid #e5e7eb', borderRadius: '6px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: '#f9fafb', overflow: 'hidden'
+                            }}>
+                              {(section.icon && (section.icon.startsWith('/') || section.icon.startsWith('http'))) ? (
+                                <img src={section.icon} alt="Icon" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }} />
+                              ) : (
+                                <FontAwesomeIcon icon={getIconObject(section.icon)} style={{ fontSize: '18px', color: '#4b5563' }} />
+                              )}
                             </div>
-                            <select
-                              className="admin-select"
-                              value={section.icon}
-                              onChange={(e) => updateSection(index, "icon", e.target.value)}
+                            
+                            <button
+                              type="button"
+                              onClick={() => handleOpenIconSelector(index)}
+                              style={{
+                                flex: 1,
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                padding: '0 12px', height: '42px',
+                                border: '1px solid #d1d5db', borderRadius: '6px',
+                                background: '#fff', cursor: 'pointer', textAlign: 'left',
+                                transition: 'border-color 0.15s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#9ca3af'}
+                              onMouseLeave={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
                             >
-                              {Object.keys(iconMap).map((key) => (
-                                <option key={key} value={key}>
-                                  {key.replace(/([A-Z])/g, " $1").trim()}
-                                </option>
-                              ))}
-                              {AVAILABLE_ICONS.map((icon) => (
-                                <option key={icon.value} value={icon.value}>
-                                  {icon.label}
-                                </option>
-                              ))}
-                            </select>
+                              <FontAwesomeIcon icon={faImages} style={{ color: '#6b7280' }} />
+                              <span style={{ color: '#374151', fontSize: '14px' }}>Select from Library</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -312,6 +363,64 @@ export default function LegalPageEditor({ slug }: { slug: string }) {
           </div>
         </main>
       </div>
+      
+      {isIconSelectorOpen && (
+        <div className="icon-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+          <div className="icon-modal-content" style={{ background: 'white', padding: '2rem', borderRadius: '8px', width: '80%', maxWidth: '800px', maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Select Icon</h2>
+              <button onClick={() => setIsIconSelectorOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '1rem', overflowY: 'auto', padding: '1rem' }}>
+              {availableIcons.map((icon) => (
+                <div 
+                  key={icon.id} 
+                  onClick={() => handleSelectIcon(icon)}
+                  style={{ 
+                    border: '1px solid #e5e7eb', 
+                    borderRadius: '8px', 
+                    padding: '1rem', 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    gap: '0.5rem',
+                    transition: 'all 0.2s',
+                    background: '#fff'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#6366f1'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                >
+                  <div style={{ width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {icon.url ? (
+                      <img src={icon.url} alt={icon.alt || icon.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    ) : (
+                       iconMap[icon.name] ? <FontAwesomeIcon icon={iconMap[icon.name]} style={{ fontSize: '24px' }} /> : <span>?</span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '0.8rem', textAlign: 'center', wordBreak: 'break-word' }}>{icon.name}</span>
+                </div>
+              ))}
+              
+              {availableIcons.length === 0 && (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                      No icons found. Please upload icons in the Icon Management page.
+                  </div>
+              )}
+            </div>
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setIsIconSelectorOpen(false)}
+                style={{ padding: '0.5rem 1rem', background: '#e5e7eb', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

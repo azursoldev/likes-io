@@ -1029,7 +1029,7 @@ export default function ServicesDashboard() {
       }
 
       const uploadData = await uploadResponse.json();
-      const iconUrl = uploadData.publicUrl || uploadData.url;
+      const iconUrl = uploadData.url || uploadData.publicUrl;
       
       handleBenefitItemChange(id, 'icon', iconUrl);
     } catch (error) {

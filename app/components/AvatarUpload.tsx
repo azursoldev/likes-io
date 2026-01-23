@@ -107,7 +107,7 @@ export default function AvatarUpload({ currentAvatarUrl, onAvatarChange }: Avata
       const formData = new FormData();
       formData.append("file", croppedBlob, "avatar.webp");
 
-      const res = await fetch("/api/upload/team", {
+      const res = await fetch("/api/upload?folder=team", {
         method: "POST",
         body: formData,
       });
@@ -115,7 +115,9 @@ export default function AvatarUpload({ currentAvatarUrl, onAvatarChange }: Avata
       if (!res.ok) throw new Error("Upload failed");
 
       const data = await res.json();
-      onAvatarChange(data.url);
+      // Prefer relative URL to avoid mixed content/localhost issues
+      const finalUrl = data.url || data.publicUrl;
+      onAvatarChange(finalUrl);
       setIsCropping(false);
       setImageSrc(null);
     } catch (e) {

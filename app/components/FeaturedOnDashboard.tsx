@@ -75,7 +75,7 @@ export default function FeaturedOnDashboard() {
   const fetchBrands = async (skipAutoSeed = false) => {
     try {
       setLoading(true);
-      const response = await fetch("/api/cms/featured-on");
+      const response = await fetch("/api/cms/featured-on", { cache: "no-store" });
       if (response.ok) {
         const data = await response.json();
         const brands = (data.brands || []).map((brand: any) => {
@@ -495,10 +495,12 @@ export default function FeaturedOnDashboard() {
                               throw new Error(err.error || "Upload failed");
                             }
                             const data = await res.json();
-                            const finalUrl = data.publicUrl || data.url;
+                            // Prefer relative URL to avoid mixed content/localhost issues
+                            const finalUrl = data.url || data.publicUrl;
                             if (!finalUrl) {
                               throw new Error("Upload did not return a URL");
                             }
+                            console.log('Upload successful, setting logoUrl:', finalUrl);
                             setLogoUrl(finalUrl);
                           } catch (uploadErr: any) {
                             alert(uploadErr.message || "Failed to upload logo");
