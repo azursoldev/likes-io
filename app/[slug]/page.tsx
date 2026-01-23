@@ -124,6 +124,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     return {
       title: (content as any).metaTitle || content.heroTitle, 
       description: (content as any).metaDescription || content.heroSubtitle,
+      alternates: {
+        canonical: `/${params.slug}`,
+      },
     };
   } catch (error) {
     console.error('Error fetching metadata:', error);

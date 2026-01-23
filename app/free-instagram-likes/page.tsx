@@ -7,6 +7,9 @@ import { prisma } from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "Free Instagram Likes - Get 50 Free Likes | Likes.io",
   description: "Get 50 free Instagram likes instantly! No password required. Experience our high-quality service for free and see real results in minutes.",
+  alternates: {
+    canonical: '/free-instagram-likes',
+  },
 };
 
 async function getFreeToolContent() {

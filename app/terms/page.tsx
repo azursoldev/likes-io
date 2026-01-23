@@ -9,6 +9,9 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Terms of Service | Likes.io",
   description: "Read the Terms of Service for Likes.io. Understand your rights and responsibilities when using our social media marketing services.",
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 async function getTermsData() {

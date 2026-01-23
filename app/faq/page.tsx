@@ -6,6 +6,9 @@ import FAQPage from "../components/FAQPage";
 export const metadata: Metadata = {
   title: "Frequently Asked Questions | Likes.io",
   description: "Find answers to common questions about Likes.io services, orders, account safety, and billing.",
+  alternates: {
+    canonical: '/faq',
+  },
 };
 
 export default function Page() {

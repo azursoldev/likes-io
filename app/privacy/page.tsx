@@ -9,6 +9,9 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Privacy Policy | Likes.io",
   description: "Your privacy is our priority. Read our Privacy Policy to understand how we collect, use, and protect your personal information.",
+  alternates: {
+    canonical: '/privacy',
+  },
 };
 
 async function getPrivacyData() {
