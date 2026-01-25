@@ -178,7 +178,8 @@ export async function PUT(request: NextRequest) {
       seoMeta,
       publishedAt,
       metaTitle,
-      metaDescription
+      metaDescription,
+      teamMemberId
     } = body;
 
     // Check if slug exists and belongs to another post
@@ -205,6 +206,7 @@ export async function PUT(request: NextRequest) {
         category,
         metaTitle,
         metaDescription,
+        teamMemberId: teamMemberId || null,
         // tags: tags ? (tags as any) : undefined,
         isPublished,
         publishedAt: typeof publishedAt === 'string' ? new Date(publishedAt) : publishedAt,

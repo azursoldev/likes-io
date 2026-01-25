@@ -51,7 +51,9 @@ export default function TermsPage({ data }: { data?: any }) {
     if (data && data.sections) {
       const mappedSections = data.sections.map((s: any) => ({
         ...s,
-        icon: ICON_MAP[s.icon] || faCheck // Fallback to check icon
+        icon: (s.icon && (s.icon.startsWith('/') || s.icon.startsWith('http'))) 
+          ? s.icon 
+          : (ICON_MAP[s.icon] || faCheck)
       }));
       setSections(mappedSections);
     } else {
@@ -287,7 +289,15 @@ export default function TermsPage({ data }: { data?: any }) {
                 >
                   <div className="terms-section-header">
                     <div className="terms-section-icon">
-                      <FontAwesomeIcon icon={section.icon} />
+                      {(typeof section.icon === 'string' && (section.icon.startsWith('/') || section.icon.startsWith('http'))) ? (
+                        <img 
+                          src={section.icon} 
+                          alt={section.title} 
+                          style={{ width: '24px', height: '24px', objectFit: 'contain' }} 
+                        />
+                      ) : (
+                        <FontAwesomeIcon icon={section.icon} />
+                      )}
                     </div>
                     <h2 className="terms-section-heading">{displayHeading}</h2>
                   </div>

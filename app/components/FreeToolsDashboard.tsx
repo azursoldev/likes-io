@@ -4,8 +4,20 @@ import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faSave } from "@fortawesome/free-solid-svg-icons";
+import { faBell, faSave, faTrash, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
+import { freeLikesFAQs, freeLikesReviews, freeFollowersFAQs, freeFollowersReviews } from "../lib/free-tool-defaults";
+
+type FAQ = {
+  q: string;
+  a: string;
+};
+
+type Review = {
+  handle: string;
+  role: string;
+  text: string;
+};
 
 type FreeToolContent = {
   heroTitle: string;
@@ -24,6 +36,8 @@ type FreeToolContent = {
   assurance1?: string | null;
   assurance2?: string | null;
   assurance3?: string | null;
+  faqs?: FAQ[] | null;
+  reviews?: Review[] | null;
 };
 
 export default function FreeToolsDashboard() {
@@ -43,6 +57,13 @@ export default function FreeToolsDashboard() {
       const res = await fetch(`/api/admin/free-tools/${slug}`, { cache: 'no-store' });
       if (!res.ok) throw new Error("Failed to fetch content");
       const data = await res.json();
+      
+      // Populate defaults if missing (so user can edit existing defaults)
+      if (!data.faqs) {
+        if (slug === "free-instagram-likes") data.faqs = freeLikesFAQs;
+        else if (slug === "free-instagram-followers") data.faqs = freeFollowersFAQs;
+      }
+
       setContent(data);
     } catch (error) {
       console.error(error);
@@ -77,6 +98,8 @@ export default function FreeToolsDashboard() {
           assurance1: content.assurance1,
           assurance2: content.assurance2,
           assurance3: content.assurance3,
+          faqs: content.faqs,
+          // reviews: content.reviews, // Removing reviews from admin interface
         }),
       });
 
@@ -91,6 +114,28 @@ export default function FreeToolsDashboard() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleFAQChange = (index: number, field: 'q' | 'a', value: string) => {
+    if (!content) return;
+    const newFAQs = [...(content.faqs || [])];
+    newFAQs[index] = { ...newFAQs[index], [field]: value };
+    setContent({ ...content, faqs: newFAQs });
+  };
+
+  const addFAQ = () => {
+    if (!content) return;
+    setContent({
+      ...content,
+      faqs: [...(content.faqs || []), { q: "", a: "" }]
+    });
+  };
+
+  const removeFAQ = (index: number) => {
+    if (!content) return;
+    const newFAQs = [...(content.faqs || [])];
+    newFAQs.splice(index, 1);
+    setContent({ ...content, faqs: newFAQs });
   };
 
   return (
@@ -365,6 +410,76 @@ export default function FreeToolsDashboard() {
                         placeholder="Instant Delivery"
                       />
                     </div>
+                  </div>
+                ) : (
+                  <p>No content loaded</p>
+                )}
+              </div>
+            </div>
+
+            <div className="admin-card" style={{ marginTop: '24px' }}>
+              <div className="admin-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2>FAQs</h2>
+                <button 
+                  onClick={addFAQ}
+                  style={{
+                    padding: "6px 12px",
+                    background: "#2563eb",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px"
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPlus} /> Add FAQ
+                </button>
+              </div>
+              <div className="admin-card-body">
+                {loading ? (
+                  <p>Loading...</p>
+                ) : content ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {(content.faqs || []).map((faq, index) => (
+                      <div key={index} style={{ padding: '16px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb', position: 'relative' }}>
+                        <button 
+                          onClick={() => removeFAQ(index)}
+                          style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: 'none',
+                            border: 'none',
+                            color: '#ef4444',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                        <div className="form-group full">
+                          <label>Question</label>
+                          <input 
+                            type="text" 
+                            className="admin-input"
+                            value={faq.q}
+                            onChange={(e) => handleFAQChange(index, 'q', e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group full" style={{ marginTop: '10px' }}>
+                          <label>Answer</label>
+                          <textarea 
+                            className="admin-textarea"
+                            rows={3}
+                            value={faq.a}
+                            onChange={(e) => handleFAQChange(index, 'a', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {(content.faqs || []).length === 0 && <p>No FAQs added yet.</p>}
                   </div>
                 ) : (
                   <p>No content loaded</p>

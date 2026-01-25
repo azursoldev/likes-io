@@ -229,7 +229,7 @@ export default function IconManagementDashboard() {
       }
 
       const uploadData = await uploadRes.json();
-      const fileUrl = uploadData.publicUrl || uploadData.url;
+      const fileUrl = uploadData.url || uploadData.publicUrl;
 
       // Update icon with new URL
       const res = await fetch(`/api/cms/icons?id=${dbId}`, {

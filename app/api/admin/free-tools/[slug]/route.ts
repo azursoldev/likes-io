@@ -50,7 +50,8 @@ export async function PUT(
       step3Title, step3Description,
       inputLabel, inputPlaceholder,
       buttonText,
-      assurance1, assurance2, assurance3
+      assurance1, assurance2, assurance3,
+      faqs, reviews
     } = body;
 
     const content = await prisma.freeToolPageContent.upsert({
@@ -65,7 +66,9 @@ export async function PUT(
         step3Title, step3Description,
         inputLabel, inputPlaceholder,
         buttonText,
-        assurance1, assurance2, assurance3
+        assurance1, assurance2, assurance3,
+        faqs,
+        reviews
       },
       create: {
         slug,
@@ -78,7 +81,9 @@ export async function PUT(
         step3Title, step3Description,
         inputLabel, inputPlaceholder,
         buttonText,
-        assurance1, assurance2, assurance3
+        assurance1, assurance2, assurance3,
+        faqs,
+        reviews
       },
     });
 

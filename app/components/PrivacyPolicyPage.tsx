@@ -51,7 +51,9 @@ export default function PrivacyPolicyPage({ data }: { data?: any }) {
     if (data && data.sections) {
       const mappedSections = data.sections.map((s: any) => ({
         ...s,
-        icon: ICON_MAP[s.icon] || faCheck // Fallback to check icon
+        icon: (s.icon && (s.icon.startsWith('/') || s.icon.startsWith('http'))) 
+          ? s.icon 
+          : (ICON_MAP[s.icon] || faCheck)
       }));
       setSections(mappedSections);
     } else {
@@ -317,7 +319,15 @@ export default function PrivacyPolicyPage({ data }: { data?: any }) {
               >
                 <div className="privacy-section-header">
                   <div className="privacy-section-icon">
-                    <FontAwesomeIcon icon={section.icon} />
+                    {(typeof section.icon === 'string' && (section.icon.startsWith('/') || section.icon.startsWith('http'))) ? (
+                      <img 
+                        src={section.icon} 
+                        alt={section.title} 
+                        style={{ width: '24px', height: '24px', objectFit: 'contain' }} 
+                      />
+                    ) : (
+                      <FontAwesomeIcon icon={section.icon} />
+                    )}
                   </div>
                   <h2 className="privacy-section-heading">
                     {displayHeading}

@@ -296,6 +296,7 @@ model TeamMember {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  blogPosts    BlogPost[]
 
   @@index([displayOrder])
   @@map("team_members")
@@ -521,6 +522,10 @@ model BlogPost {
   excerpt     String?
   coverImage  String?
   authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  teamMemberId String?
+  teamMember   TeamMember? @relation(fields: [teamMemberId], references: [id])
+
   category    String?
   metaTitle       String?
   metaDescription String?
@@ -528,7 +533,6 @@ model BlogPost {
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  author      User      @relation(fields: [authorId], references: [id])
 
   @@index([slug])
   @@index([isPublished])
@@ -657,6 +661,9 @@ model FreeToolPageContent {
   assurance2       String?
   assurance3       String?
   
+  faqs             Json?
+  reviews          Json?
+
   updatedAt       DateTime @updatedAt
   
   @@map("free_tool_page_content")
@@ -682,6 +689,7 @@ enum Platform {
   TIKTOK
   YOUTUBE
   REVIEWS
+  FREE_INSTAGRAM
 }
 
 enum ServiceType {

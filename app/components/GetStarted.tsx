@@ -237,11 +237,15 @@ export default function GetStarted() {
   }, [platform, packType, quality]);
 
   const selectedPackage = useMemo(() => {
+    // If custom settings are enabled, we rely on the manual qty state, not a selected package
+    if (customSettings?.enabled) {
+      return null;
+    }
     if (availablePackages.length > 0 && availablePackages[sliderIndex]) {
       return availablePackages[sliderIndex];
     }
     return null;
-  }, [availablePackages, sliderIndex]);
+  }, [availablePackages, sliderIndex, customSettings]);
 
   // Derived values for display
   const displayQty = selectedPackage ? selectedPackage.quantity : qty;

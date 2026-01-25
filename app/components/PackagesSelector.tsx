@@ -240,6 +240,54 @@ export default function PackagesSelector({
       const symbol = getCurrencySymbol();
       return { price: `${symbol}—`, strike: undefined, save: undefined };
     }
+
+    // NEW: Check if the custom package itself has a configured price.
+    // If so, use it as the source of truth for the unit rate.
+    const configuredPrice = parsePrice(selected.price);
+    const configuredBaseQty = parseInitialQty(selected.qty);
+
+    // If we have a valid configured price (e.g., $26.99 for 10,000)
+    if (configuredPrice > 0 && configuredBaseQty > 0) {
+      // Calculate unit price based on admin configuration
+      const unitPrice = configuredPrice / configuredBaseQty;
+      
+      // Calculate final price based on current quantity
+      const calculatedPrice = customQty * unitPrice;
+      
+      // Calculate strike price
+      // If strike is configured, use its unit rate; otherwise use 1.5x of price
+      const configuredStrike = selected.strike ? parsePrice(selected.strike) : 0;
+      let calculatedStrike = 0;
+      
+      if (configuredStrike > 0) {
+         const strikeUnitPrice = configuredStrike / configuredBaseQty;
+         calculatedStrike = customQty * strikeUnitPrice;
+      } else {
+         // Default markup if no strike price set
+         calculatedStrike = calculatedPrice * 1.5; 
+      }
+
+      // Round to cents
+      const totalPriceCents = Math.round(calculatedPrice * 100);
+      const totalPrice = totalPriceCents / 100;
+      const formattedPrice = formatPrice(totalPrice);
+
+      const totalStrikeCents = Math.round(calculatedStrike * 100);
+      const totalStrike = totalStrikeCents / 100;
+      const strikePrice = formatPrice(totalStrike);
+
+      // Calculate Savings
+      const saveCents = totalStrikeCents - totalPriceCents;
+      const save = saveCents / 100;
+
+      let saveAmount: string | undefined;
+      if (save > 0) {
+        const symbol = getCurrencySymbol();
+        saveAmount = `You Save ${symbol}${save.toFixed(2)}`;
+      }
+
+      return { price: formattedPrice, strike: strikePrice, save: saveAmount };
+    }
     
     // 1. Get all fixed packages sorted by quantity
     const fixedPackages = visiblePackages

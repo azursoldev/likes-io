@@ -37,13 +37,38 @@ async function getFreeToolContent() {
   }
 }
 
+async function getTestimonials() {
+  try {
+    // @ts-ignore
+    return await prisma.testimonial.findMany({
+      where: {
+        isApproved: true,
+        platform: "FREE_INSTAGRAM",
+        serviceType: "FOLLOWERS",
+      },
+      orderBy: {
+        displayOrder: "asc",
+      },
+      select: {
+        handle: true,
+        role: true,
+        text: true,
+      }
+    });
+  } catch (error) {
+    console.error("Failed to fetch testimonials:", error);
+    return [];
+  }
+}
+
 export default async function Page() {
   const content = await getFreeToolContent();
+  const testimonials = await getTestimonials();
   
   return (
     <>
       <Header />
-      <FreeFollowersPage content={content || undefined} />
+      <FreeFollowersPage content={content || undefined} testimonials={testimonials} />
       <Footer />
     </>
   );

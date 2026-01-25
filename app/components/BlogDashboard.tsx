@@ -24,8 +24,14 @@ type BlogRow = {
   status: boolean;
 };
 
+type TeamMember = {
+  id: string;
+  name: string;
+};
+
 export default function BlogDashboard() {
   const [posts, setPosts] = useState<BlogRow[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +57,16 @@ export default function BlogDashboard() {
     try {
       setLoading(true);
       setError(null);
+      
+      // Load team members if not already loaded
+      if (teamMembers.length === 0) {
+        const teamRes = await fetch("/api/cms/team");
+        if (teamRes.ok) {
+          const members = await teamRes.json();
+          setTeamMembers(members);
+        }
+      }
+
       const res = await fetch("/api/cms/blog");
       if (!res.ok) throw new Error("Failed to load blog posts");
       const data = await res.json();
@@ -58,7 +74,7 @@ export default function BlogDashboard() {
         id: p.id,
         title: p.title,
         description: p.excerpt || "",
-        author: p.author?.name || p.author?.email || "Unknown",
+        author: p.teamMember?.name || p.author?.name || p.author?.email || "Unknown",
         category: p.category || "General",
         date: p.publishedAt || p.createdAt || new Date().toISOString(),
         status: !!p.isPublished,
@@ -185,6 +201,7 @@ export default function BlogDashboard() {
             published: fullPost.isPublished,
             metaTitle: fullPost.metaTitle || "",
             metaDescription: fullPost.metaDescription || "",
+            teamMemberId: fullPost.teamMemberId || "",
           });
           setFeaturedImageFile(null);
           setShowEditModal(true);
@@ -203,6 +220,7 @@ export default function BlogDashboard() {
           published: post.status,
           metaTitle: "",
           metaDescription: "",
+          teamMemberId: "",
         });
         setShowEditModal(true);
       }
@@ -223,6 +241,7 @@ export default function BlogDashboard() {
       published: false,
       metaTitle: "",
       metaDescription: "",
+      teamMemberId: "",
     });
     setFeaturedImageFile(null);
   };
@@ -421,6 +440,7 @@ export default function BlogDashboard() {
                       published: false,
                       metaTitle: "",
                       metaDescription: "",
+                      teamMemberId: "",
                     });
                     setShowEditModal(true);
                   }}
@@ -544,6 +564,25 @@ export default function BlogDashboard() {
                   value={editForm.excerpt}
                   onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })}
                 />
+              </div>
+
+              <div className="blog-edit-form-group">
+                <label htmlFor="edit-author">Author</label>
+                <select
+                  id="edit-author"
+                  className="blog-edit-input"
+                  value={editForm.teamMemberId}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, teamMemberId: e.target.value })
+                  }
+                >
+                  <option value="">Admin (Default)</option>
+                  {teamMembers.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="blog-edit-form-group">

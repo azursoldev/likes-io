@@ -29,6 +29,18 @@ export async function POST(request: NextRequest) {
     const maxBytes = 5 * 1024 * 1024; // 5MB
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    
+    // Basic SVG sanitization
+    if (ext === '.svg') {
+      const text = buffer.toString('utf-8');
+      if (text.toLowerCase().includes('<script') || text.toLowerCase().includes('javascript:') || text.toLowerCase().includes('onmouseover') || text.toLowerCase().includes('onclick')) {
+        return NextResponse.json(
+          { error: 'SVG contains potentially malicious content (scripts/handlers)' },
+          { status: 400 }
+        );
+      }
+    }
+
     if (buffer.length > maxBytes) {
       return NextResponse.json(
         { error: 'File too large (max 5MB)' },
@@ -38,7 +50,15 @@ export async function POST(request: NextRequest) {
 
     // Create unique filename
     const filename = `${uuidv4()}${path.extname(file.name)}`;
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    
+    // Get optional folder param
+    const folder = request.nextUrl.searchParams.get('folder') || '';
+    // Sanitize folder name to prevent directory traversal
+    const safeFolder = folder.replace(/[^a-zA-Z0-9-_]/g, '');
+    
+    const uploadDir = safeFolder 
+      ? path.join(process.cwd(), 'public', 'uploads', safeFolder)
+      : path.join(process.cwd(), 'public', 'uploads');
     
     // Ensure directory exists
     try {
@@ -52,14 +72,15 @@ export async function POST(request: NextRequest) {
     // Debug logging
     try {
       const logMsg = `${new Date().toISOString()} - Uploading: ${filename} (${file.name}, ${buffer.length} bytes) to ${filepath}\n`;
-      await writeFile(path.join(uploadDir, 'upload-debug.log'), logMsg, { flag: 'a' });
+      await writeFile(path.join(process.cwd(), 'public', 'uploads', 'upload-debug.log'), logMsg, { flag: 'a' });
     } catch (logErr) {
       console.error('Failed to write debug log', logErr);
     }
 
     await writeFile(filepath, buffer);
 
-    const url = `/uploads/${filename}`;
+    const urlPath = safeFolder ? `/uploads/${safeFolder}/${filename}` : `/uploads/${filename}`;
+    const url = urlPath;
     const proto = request.headers.get('x-forwarded-proto') || 'http';
     const host = request.headers.get('host') || '';
     const publicUrl = host ? `${proto}://${host}${url}` : url;

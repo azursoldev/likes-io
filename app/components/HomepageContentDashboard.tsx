@@ -459,7 +459,7 @@ export default function HomepageContentDashboard() {
         }
 
         const uploadData = await uploadResponse.json();
-        influenceImageUrl = uploadData.publicUrl || uploadData.url;
+        influenceImageUrl = uploadData.url || uploadData.publicUrl;
         setInfluenceImage(influenceImageUrl);
       }
 
@@ -481,7 +481,7 @@ export default function HomepageContentDashboard() {
               const { iconFile, ...rest } = card;
               return {
                 ...rest,
-                icon: uploadData.publicUrl || uploadData.url
+                icon: uploadData.url || uploadData.publicUrl
               };
             }
           } catch (error) {
