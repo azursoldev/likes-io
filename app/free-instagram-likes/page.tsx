@@ -68,7 +68,14 @@ export default async function Page() {
   return (
     <>
       <Header />
-      <FreeLikesPage content={content || undefined} testimonials={testimonials} />
+      <FreeLikesPage 
+        content={content ? {
+          ...content,
+          faqs: Array.isArray(content.faqs) ? content.faqs as any : null,
+          reviews: Array.isArray(content.reviews) ? content.reviews as any : null
+        } : undefined} 
+        testimonials={testimonials} 
+      />
       <Footer />
     </>
   );

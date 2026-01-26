@@ -115,7 +115,7 @@ export class JAPAPI {
   }
 
   private mapPlatformToJAPCategory(platform: Platform): string {
-    const mapping: Record<Platform, string> = {
+    const mapping: Record<string, string> = {
       INSTAGRAM: 'Instagram',
       TIKTOK: 'TikTok',
       YOUTUBE: 'YouTube',
@@ -125,7 +125,7 @@ export class JAPAPI {
   }
 
   private mapServiceTypeToJAPType(serviceType: ServiceType): string {
-    const mapping: Record<ServiceType, string> = {
+    const mapping: Record<string, string> = {
       LIKES: 'Likes',
       FOLLOWERS: 'Followers',
       VIEWS: 'Views',

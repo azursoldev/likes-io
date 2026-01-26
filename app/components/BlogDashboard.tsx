@@ -49,6 +49,7 @@ export default function BlogDashboard() {
     published: false,
     metaTitle: "",
     metaDescription: "",
+    teamMemberId: "",
   });
   const quillEditorRef = useRef<HTMLDivElement | null>(null);
   const quillInstanceRef = useRef<any>(null);
