@@ -290,6 +290,7 @@ export default function BlogDashboard() {
             seoMeta: null,
             metaTitle: editForm.metaTitle,
             metaDescription: editForm.metaDescription,
+            teamMemberId: editForm.teamMemberId || null,
           }),
         });
 
@@ -320,6 +321,7 @@ export default function BlogDashboard() {
           seoMeta: null,
           metaTitle: editForm.metaTitle,
           metaDescription: editForm.metaDescription,
+          teamMemberId: editForm.teamMemberId || null,
         }),
       });
 
