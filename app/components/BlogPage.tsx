@@ -47,15 +47,27 @@ export default function BlogPage() {
         const data = await res.json();
         const mapped: UiBlogPost[] = (data.posts || []).map((p: any) => {
           const dt = p.publishedAt ? new Date(p.publishedAt) : new Date();
-          const authorBase = p.author?.name || p.author?.email || "L";
+          const authorName = p.teamMember?.name || p.author?.name || p.author?.email || "Likes.io Team";
+          
+          let authorAvatarUrl = "";
+          let authorInitial = "L";
+          
+          if (p.teamMember?.avatarUrl) {
+            authorAvatarUrl = p.teamMember.avatarUrl;
+          } else if (p.author?.avatarUrl) {
+            authorAvatarUrl = p.author.avatarUrl;
+          } else {
+            authorInitial = (authorName || "L").charAt(0).toUpperCase();
+          }
+
           return {
             id: String(p.id),
             slug: p.slug,
             category: p.category || "Blog",
             title: p.title,
             description: p.excerpt || "",
-            author: p.author?.name || p.author?.email || "Likes.io Team",
-            authorAvatar: authorBase.charAt(0).toUpperCase(),
+            author: authorName,
+            authorAvatar: authorAvatarUrl || authorInitial,
             date: dt.toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
@@ -129,7 +141,8 @@ export default function BlogPage() {
                         left: 0,
                         width: '100%', 
                         height: '100%', 
-                        objectFit: 'cover' 
+                        objectFit: 'contain',
+                        objectPosition: 'center'
                       }} 
                     />
                   ) : (
@@ -157,9 +170,16 @@ export default function BlogPage() {
                     {featuredPost.description}
                   </p>
                   <div className="blog-author">
-                    <div className="blog-author-avatar">
-                      {featuredPost.authorAvatar ||
-                        featuredPost.author.charAt(0)}
+                    <div className="blog-author-avatar" style={{ overflow: "hidden" }}>
+                      {featuredPost.authorAvatar && (featuredPost.authorAvatar.startsWith('/') || featuredPost.authorAvatar.startsWith('http')) ? (
+                          <img 
+                            src={featuredPost.authorAvatar} 
+                            alt={featuredPost.author} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
+                      ) : (
+                          featuredPost.authorAvatar || featuredPost.author.charAt(0)
+                      )}
                     </div>
                     <div className="blog-author-info">
                       <div className="blog-author-name">
@@ -227,7 +247,8 @@ export default function BlogPage() {
                           left: 0,
                           width: '100%', 
                           height: '100%', 
-                          objectFit: 'cover' 
+                          objectFit: 'contain',
+                          objectPosition: 'center'
                         }} 
                       />
                     ) : (
@@ -241,8 +262,16 @@ export default function BlogPage() {
                     <h3 className="blog-post-title">{post.title}</h3>
                     <p className="blog-post-description">{post.description}</p>
                     <div className="blog-author">
-                      <div className="blog-author-avatar">
-                        {post.authorAvatar || post.author.charAt(0)}
+                      <div className="blog-author-avatar" style={{ overflow: "hidden" }}>
+                        {post.authorAvatar && (post.authorAvatar.startsWith('/') || post.authorAvatar.startsWith('http')) ? (
+                            <img 
+                              src={post.authorAvatar} 
+                              alt={post.author} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
+                        ) : (
+                            post.authorAvatar || post.author.charAt(0)
+                        )}
                       </div>
                       <div className="blog-author-info">
                         <div className="blog-author-name">{post.author}</div>

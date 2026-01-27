@@ -33,6 +33,7 @@ import {
   faGift,
 } from "@fortawesome/free-solid-svg-icons";
 import { getAdminUrl } from "@/lib/url-utils";
+import { useSettings } from "../contexts/SettingsContext";
 
 type NavItem = {
   label: string;
@@ -80,6 +81,7 @@ type AdminSidebarProps = {
 
 export default function AdminSidebar({ activePage }: AdminSidebarProps) {
   const router = useRouter();
+  const { headerLogoUrl } = useSettings() as any;
 
   const handleLogout = async () => {
     try {
@@ -145,7 +147,15 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
   return (
     <aside className="admin-sidebar">
       <div className="admin-logo-block">
-        <span className="logo-text-full">likes.io</span>
+        {headerLogoUrl ? (
+          <img 
+            src={headerLogoUrl} 
+            alt="Likes.io" 
+            style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain' }} 
+          />
+        ) : (
+          <span className="logo-text-full">likes.io</span>
+        )}
       </div>
       <nav>
         {navSections.map((section) => (

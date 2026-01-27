@@ -46,6 +46,14 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
+        teamMember: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            role: true,
+          },
+        },
       },
       orderBy: { publishedAt: 'desc' },
       take: 50,

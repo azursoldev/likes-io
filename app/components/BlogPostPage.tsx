@@ -44,15 +44,26 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
         const data = await res.json();
         const p = data.post;
         const dt = p.publishedAt ? new Date(p.publishedAt) : new Date();
-        const authorBase = p.author?.name || p.author?.email || "L";
+        const authorName = p.teamMember?.name || p.author?.name || p.author?.email || "Likes.io Team";
+        
+        let authorAvatarUrl = "";
+        let authorInitial = "L";
+        
+        if (p.teamMember?.avatarUrl) {
+          authorAvatarUrl = p.teamMember.avatarUrl;
+        } else if (p.author?.avatarUrl) {
+          authorAvatarUrl = p.author.avatarUrl;
+        } else {
+          authorInitial = (authorName || "L").charAt(0).toUpperCase();
+        }
 
         const mapped: UiPost = {
           title: p.title,
           description: p.excerpt || "",
           content: p.content || "",
-          author: p.author?.name || p.author?.email || "Likes.io Team",
-          authorAvatar: authorBase.charAt(0).toUpperCase(),
-          authorBio: "",
+          author: authorName,
+          authorAvatar: authorAvatarUrl || authorInitial,
+          authorBio: p.teamMember?.role || "", // Use role as bio if available
           date: dt.toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
@@ -201,8 +212,19 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
               </div>
 
               {post.image && (
-                <div className="blog-post-featured-image" style={{ marginTop: '30px', borderRadius: '12px', overflow: 'hidden' }}>
-                  <img src={post.image} alt={post.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
+                <div className="blog-post-featured-image" style={{ marginTop: '30px', borderRadius: '12px', overflow: 'hidden', textAlign: 'center' }}>
+                  <img 
+                    src={post.image} 
+                    alt={post.title} 
+                    style={{ 
+                      maxWidth: '100%', 
+                      height: 'auto', 
+                      display: 'inline-block',
+                      maxHeight: '600px',
+                      objectFit: 'contain',
+                      objectPosition: 'center'
+                    }} 
+                  />
                 </div>
               )}
             </header>
