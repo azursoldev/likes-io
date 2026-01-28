@@ -43,6 +43,9 @@ export async function generateMetadata(): Promise<Metadata> {
         'max-snippet': -1,
       },
     },
+    other: {
+      cryptomus: 'e8c0a90f',
+    },
   };
 }
 

@@ -284,8 +284,19 @@ export async function POST(request: NextRequest) {
         where: { id: serviceId },
       });
     }
+
+    // If packageServiceId is provided, try to find a service with that specific JAP ID first
+    if (!service && packageServiceId) {
+      service = await prisma.service.findFirst({
+        where: {
+          platform: platform.toUpperCase() as Platform,
+          serviceType: serviceType.toUpperCase() as ServiceType,
+          japServiceId: packageServiceId,
+        }
+      });
+    }
     
-    // If not found by serviceId, find by platform/serviceType
+    // If not found by serviceId or japServiceId, find any active service by platform/serviceType
     if (!service) {
       service = await prisma.service.findFirst({
         where: {
