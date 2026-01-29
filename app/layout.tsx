@@ -44,7 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     },
     other: {
-      cryptomus: 'e8c0a90f',
+      cryptomus: 'c5884808',
     },
   };
 }
