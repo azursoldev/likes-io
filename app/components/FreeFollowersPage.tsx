@@ -54,6 +54,8 @@ export default function FreeFollowersPage({ content, testimonials }: { content?:
   assurance3?: string | null;
   faqs?: FAQ[] | null;
   reviews?: Review[] | null;
+  reviewsTitle?: string | null;
+  reviewsSubtitle?: string | null;
 }, testimonials?: { handle: string; role: string | null; text: string; }[] }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [username, setUsername] = useState("");
@@ -280,8 +282,8 @@ export default function FreeFollowersPage({ content, testimonials }: { content?:
 
       {/* Reviews Section */}
       <ReviewsSection
-        title="Loved by Creators Worldwide"
-        subtitle="Real reviews from creators and brands who've seen incredible growth with our service."
+        title={content?.reviewsTitle || "Loved by Creators Worldwide"}
+        subtitle={content?.reviewsSubtitle || "Real reviews from creators and brands who've seen incredible growth with our service."}
         reviews={testimonials && testimonials.length > 0 
           ? testimonials.map(t => ({ ...t, role: t.role || "Verified Buyer" }))
           : (content?.reviews || freeFollowersReviews)}

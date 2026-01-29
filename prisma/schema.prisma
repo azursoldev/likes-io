@@ -664,6 +664,9 @@ model FreeToolPageContent {
   faqs             Json?
   reviews          Json?
 
+  reviewsTitle     String?
+  reviewsSubtitle  String?
+
   updatedAt       DateTime @updatedAt
   
   @@map("free_tool_page_content")

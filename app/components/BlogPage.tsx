@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 type UiBlogPost = {
   id: string;
@@ -29,22 +29,57 @@ const CATEGORIES = [
 
 export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Posts");
   const [posts, setPosts] = useState<UiBlogPost[]>([]);
   const [featuredPost, setFeaturedPost] = useState<UiBlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== debouncedSearch) {
+        setDebouncedSearch(searchQuery);
+        setCurrentPage(1);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, debouncedSearch]);
+
+  const handleCategoryChange = (category: string) => {
+    if (activeCategory !== category) {
+      setActiveCategory(category);
+      setCurrentPage(1);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch("/api/cms/blog?published=true");
+        
+        const params = new URLSearchParams();
+        params.append("published", "true");
+        params.append("page", currentPage.toString());
+        params.append("limit", "6");
+        
+        if (activeCategory !== "All Posts") {
+          params.append("category", activeCategory);
+        }
+        if (debouncedSearch) {
+          params.append("search", debouncedSearch);
+        }
+
+        const res = await fetch(`/api/cms/blog?${params.toString()}`);
         if (!res.ok) {
           throw new Error("Failed to load blog posts");
         }
         const data = await res.json();
+        
         const mapped: UiBlogPost[] = (data.posts || []).map((p: any) => {
           const dt = p.publishedAt ? new Date(p.publishedAt) : new Date();
           const authorName = p.teamMember?.name || p.author?.name || p.author?.email || "Likes.io Team";
@@ -77,8 +112,12 @@ export default function BlogPage() {
             image: p.coverImage || "",
           };
         });
+        
         setPosts(mapped);
         setFeaturedPost(mapped[0] ?? null);
+        if (data.pagination) {
+            setTotalPages(data.pagination.totalPages);
+        }
       } catch (err: any) {
         console.error("Blog page load error", err);
         setError(err.message || "Failed to load blog posts");
@@ -88,28 +127,14 @@ export default function BlogPage() {
     };
 
     void load();
-  }, []);
+  }, [currentPage, activeCategory, debouncedSearch]);
 
-  const filteredPosts = useMemo(() => {
-    let list = posts;
-
-    // Filter by category tabs
-    if (activeCategory !== "All Posts") {
-      list = list.filter((post) => post.category === activeCategory);
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
-    // Filter by search query
-    const query = searchQuery.trim().toLowerCase();
-    if (query) {
-      list = list.filter(
-        (post) =>
-          post.title.toLowerCase().includes(query) ||
-          post.description.toLowerCase().includes(query)
-      );
-    }
-
-    return list;
-  }, [posts, activeCategory, searchQuery]);
+  };
 
   return (
     <div className="blog-page">
@@ -215,7 +240,7 @@ export default function BlogPage() {
                 <button
                   key={category}
                   className={`blog-filter-btn ${activeCategory === category ? "active" : ""}`}
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => handleCategoryChange(category)}
                 >
                   {category}
                 </button>
@@ -233,7 +258,7 @@ export default function BlogPage() {
             )}
             {!loading &&
               !error &&
-              filteredPosts.map((post) => (
+              posts.map((post) => (
               <Link key={post.id} href={`/blog/${post.slug}`} className="blog-post-card-link">
                 <article className="blog-post-card">
                   <div className="blog-post-image">
@@ -284,10 +309,58 @@ export default function BlogPage() {
                 </article>
               </Link>
             ))}
+
+            {/* Pagination */}
+            {!loading && !error && totalPages > 1 && (
+              <div className="blog-pagination" style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center", gap: "10px", marginTop: "40px", alignItems: "center" }}>
+                <button 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="pagination-btn"
+                  style={{ 
+                    padding: "10px 15px", 
+                    borderRadius: "8px", 
+                    border: "1px solid #e5e7eb",
+                    background: currentPage === 1 ? "#f3f4f6" : "#fff",
+                    cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                    color: currentPage === 1 ? "#9ca3af" : "#111827",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontWeight: "500"
+                  }}
+                >
+                  <FontAwesomeIcon icon={faChevronLeft} /> Previous
+                </button>
+                
+                <span style={{ margin: "0 10px", fontWeight: "600", color: "#374151" }}>
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn"
+                   style={{ 
+                    padding: "10px 15px", 
+                    borderRadius: "8px", 
+                    border: "1px solid #e5e7eb",
+                    background: currentPage === totalPages ? "#f3f4f6" : "#fff",
+                    cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                    color: currentPage === totalPages ? "#9ca3af" : "#111827",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontWeight: "500"
+                  }}
+                >
+                  Next <FontAwesomeIcon icon={faChevronRight} />
+                </button>
+              </div>
+            )}
           </div>
         </section>
       </div>
     </div>
   );
 }
-
