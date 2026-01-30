@@ -69,7 +69,38 @@ function FinalCheckoutContent() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
+  const [userProfile, setUserProfile] = useState<{ profilePicture: string; username: string } | null>(null);
+  const [imageError, setImageError] = useState(false);
+
+  const fetchUserProfile = async () => {
+    if (!username) return;
+    try {
+        const response = await fetch(`/api/social/tiktok/profile?username=${username}`);
+        if (response.ok) {
+            const data = await response.json();
+            const profile = data.profile || data;
+            
+            if (profile.profilePicture) {
+                setUserProfile({
+                    profilePicture: profile.profilePicture,
+                    username: profile.username
+                });
+                setImageError(false);
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (username) {
+      fetchUserProfile();
+    }
+  }, [username]);
+
   const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  const [loadingOffers, setLoadingOffers] = useState(true);
 
   // Fetch wallet balance
   useEffect(() => {
@@ -87,6 +118,7 @@ function FinalCheckoutContent() {
   }, []);
 
   useEffect(() => {
+    setLoadingOffers(true);
     fetch('/api/upsells?platform=TIKTOK&serviceType=VIEWS')
       .then(res => res.json())
       .then(data => {
@@ -107,10 +139,12 @@ function FinalCheckoutContent() {
           }));
         }
       })
-      .catch(err => console.error("Failed to fetch upsells:", err));
+      .catch(err => console.error("Failed to fetch upsells:", err))
+      .finally(() => setLoadingOffers(false));
   }, []);
 
   const handleAddOffer = (offer: typeof offers[0]) => {
+    if (!offer) return;
     if (!addedOffers.find(o => o.id === offer.id)) {
       setAddedOffers([...addedOffers, offer]);
     }
@@ -448,12 +482,54 @@ function FinalCheckoutContent() {
 
             <div className="final-checkout-right">
               <div className="checkout-card">
-                <div className="account-info-item">
-                  <div className="account-info-left">
-                    <img src="/tiktok-9.png" alt="TikTok" width={20} height={20} />
-                    <span className="account-info-url">{postLink || `@${username || "username"}`}</span>
+                <div className="account-info-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #eee' }}>
+                  <div className="account-info-left" style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ 
+                      width: '40px', 
+                      height: '40px', 
+                      borderRadius: '50%', 
+                      overflow: 'hidden', 
+                      border: '2px solid #f97316',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: '12px',
+                      background: '#fff'
+                    }}>
+                      {userProfile?.profilePicture && !imageError ? (
+                        <img 
+                          src={`/api/image-proxy?url=${encodeURIComponent(userProfile.profilePicture)}`}
+                          alt={username} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            console.error("Image load error for URL:", userProfile.profilePicture);
+                            setImageError(true);
+                          }}
+                        />
+                      ) : (
+                        <img src="/tiktok-9.png" alt="TikTok" width={20} height={20} />
+                      )}
+                    </div>
+                    <span className="account-info-url" style={{ fontWeight: '600', fontSize: '15px' }}>@{username || "username"}</span>
                   </div>
-                  <button type="button" className="change-button">Change</button>
+                  <button 
+                    type="button" 
+                    className="change-button"
+                    onClick={() => router.push(detailsUrl)}
+                    style={{
+                      border: '1px solid #f97316',
+                      color: '#f97316',
+                      background: 'white',
+                      padding: '6px 16px',
+                      borderRadius: '6px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Change
+                  </button>
                 </div>
               </div>
 
@@ -465,7 +541,7 @@ function FinalCheckoutContent() {
                     <FontAwesomeIcon icon={faEye} className="order-item-icon" />
                     <div className="order-item-details">
                       <span className="order-item-text">{qty} TikTok Views</span>
-                      <span className="order-item-subtext">Applying to 1 post.</span>
+                      <span className="order-item-subtext" style={{ marginTop: '8px', display: 'block', color: '#666' }}>Applying to 1 post.</span>
                     </div>
                   </div>
                   <span className="order-item-price">{formatPrice(priceValue)}</span>
@@ -573,62 +649,49 @@ function FinalCheckoutContent() {
               <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
               
               <div className="checkout-card exclusive-offers">
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer1") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faHeart} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">50 likes x 10 posts</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(5.99)}</span>
-                      <span className="offer-price-old">{formatPrice(7.99)}</span>
-                    </div>
+                {loadingOffers ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                    Loading offers...
                   </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[0])}
-                    disabled={!!addedOffers.find(o => o.id === "offer1")}
-                  >
-                    {addedOffers.find(o => o.id === "offer1") ? "Added" : "+ Add"}
-                  </button>
-                </div>
+                ) : offers.length > 0 ? (
+                  offers.map((offer, index) => {
+                    const isFollowers = offer.text.toLowerCase().includes("follower");
+                    const colorClass = isFollowers ? "offer-pink" : "offer-green";
+                    const icon = isFollowers ? faLink : faHeart;
+                    const isAdded = !!addedOffers.find(o => o.id === offer.id);
+                    
+                    // Calculate original price for display (assuming 25% discount logic from hardcoded UI if not provided)
+                    // The API returns 'price' which is the discounted price.
+                    // We can estimate old price or just show what we have.
+                    // Based on previous code: old price was roughly price / 0.75
+                    const oldPrice = offer.price / 0.75;
 
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer2") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faHeart} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">100 likes x 10 posts</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
+                    return (
+                      <div key={offer.id} className={`offer-item ${colorClass} ${isAdded ? "offer-added" : ""}`}>
+                        <div className="offer-badge">25%</div>
+                        <FontAwesomeIcon icon={icon} className="offer-icon" />
+                        <div className="offer-details">
+                          <span className="offer-text">{offer.text}</span>
+                          <div className="offer-price">
+                            <span className="offer-price-new">For only {formatPrice(offer.price)}</span>
+                            <span className="offer-price-old">{formatPrice(oldPrice)}</span>
+                          </div>
+                        </div>
+                        <button 
+                          className="offer-add-btn"
+                          onClick={() => handleAddOffer(offer)}
+                          disabled={isAdded}
+                        >
+                          {isAdded ? "Added" : "+ Add"}
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                    No exclusive offers available at the moment.
                   </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[1])}
-                    disabled={!!addedOffers.find(o => o.id === "offer2")}
-                  >
-                    {addedOffers.find(o => o.id === "offer2") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-pink ${addedOffers.find(o => o.id === "offer3") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faLink} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">1K followers</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[2])}
-                    disabled={!!addedOffers.find(o => o.id === "offer3")}
-                  >
-                    {addedOffers.find(o => o.id === "offer3") ? "Added" : "+ Add"}
-                  </button>
-                </div>
+                )}
               </div>
 
               <div className="checkout-card security-guarantees">
