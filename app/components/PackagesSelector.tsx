@@ -13,6 +13,11 @@ export type PackageOption = {
   strike?: string;
   save?: string;
   offText?: string;
+  isCustom?: boolean;
+  pricingTable?: Record<string, string>;
+  youSaveMode?: 'auto' | 'manual' | 'hide';
+  youSaveValue?: string;
+  isBestValue?: boolean;
 };
 
 export type PackageTabConfig = {
@@ -158,9 +163,18 @@ export default function PackagesSelector({
 
   const defaultIndex = useMemo(() => {
     if (!visiblePackages.length) return 0;
-    if (typeof defaultQtyTarget === "undefined") return 0;
-    const idx = visiblePackages.findIndex((p) => p.qty === defaultQtyTarget);
-    return idx >= 0 ? idx : 0;
+
+    // 1. Priority: Admin "Highlight" / "Best Value" toggle
+    const bestValueIndex = visiblePackages.findIndex(p => p.isBestValue === true);
+    if (bestValueIndex >= 0) return bestValueIndex;
+
+    // 2. Fallback: defaultQtyTarget prop
+    if (typeof defaultQtyTarget !== "undefined") {
+      const idx = visiblePackages.findIndex((p) => p.qty === defaultQtyTarget);
+      if (idx >= 0) return idx;
+    }
+    
+    return 0;
   }, [visiblePackages, defaultQtyTarget]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -184,13 +198,20 @@ export default function PackagesSelector({
 
   // Helper to determine if we should show custom UI for a package
   const shouldShowCustomUI = (p: PackageOption, index: number) => {
+    // If explicitly set by admin (new system), respect it
+    if (p.isCustom === true) return true;
+    if (p.isCustom === false) return false;
+
+    // Legacy fallback logic
     if (typeof p.qty === "string" && p.qty.includes("+")) return true;
     // Check if explicitly marked as custom via offText
     if (p.offText && p.offText.toLowerCase() === "custom") return true;
     // Check if it matches custom min quantity
     if (effCustomEnabled && effCustomMin && parseInitialQty(p.qty) === effCustomMin) return true;
-    // Check if package quantity is exactly 10000 (common starting point for custom packages)
-    if (parseInitialQty(p.qty) === 10000) return true;
+    
+    // REMOVED: Hardcoded 10000 check which was forcing custom UI
+    // if (parseInitialQty(p.qty) === 10000) return true;
+
     // Fallback: if custom enabled and it's the last package
     if (effCustomEnabled && index === visiblePackages.length - 1) return true;
     return false;
@@ -241,127 +262,152 @@ export default function PackagesSelector({
       return { price: `${symbol}—`, strike: undefined, save: undefined };
     }
 
-    // NEW: Check if the custom package itself has a configured price.
-    // If so, use it as the source of truth for the unit rate.
-    const configuredPrice = parsePrice(selected.price);
-    const configuredBaseQty = parseInitialQty(selected.qty);
-
-    // If we have a valid configured price (e.g., $26.99 for 10,000)
-    if (configuredPrice > 0 && configuredBaseQty > 0) {
-      // Calculate unit price based on admin configuration
-      const unitPrice = configuredPrice / configuredBaseQty;
-      
-      // Calculate final price based on current quantity
-      const calculatedPrice = customQty * unitPrice;
-      
-      // Calculate strike price
-      // If strike is configured, use its unit rate; otherwise use 1.5x of price
-      const configuredStrike = selected.strike ? parsePrice(selected.strike) : 0;
-      let calculatedStrike = 0;
-      
-      if (configuredStrike > 0) {
-         const strikeUnitPrice = configuredStrike / configuredBaseQty;
-         calculatedStrike = customQty * strikeUnitPrice;
-      } else {
-         // Default markup if no strike price set
-         calculatedStrike = calculatedPrice * 1.5; 
-      }
-
-      // Round to cents
-      const totalPriceCents = Math.round(calculatedPrice * 100);
-      const totalPrice = totalPriceCents / 100;
-      const formattedPrice = formatPrice(totalPrice);
-
-      const totalStrikeCents = Math.round(calculatedStrike * 100);
-      const totalStrike = totalStrikeCents / 100;
-      const strikePrice = formatPrice(totalStrike);
-
-      // Calculate Savings
-      const saveCents = totalStrikeCents - totalPriceCents;
-      const save = saveCents / 100;
-
-      let saveAmount: string | undefined;
-      if (save > 0) {
-        const symbol = getCurrencySymbol();
-        saveAmount = `You Save ${symbol}${save.toFixed(2)}`;
-      }
-
-      return { price: formattedPrice, strike: strikePrice, save: saveAmount };
-    }
-    
-    // 1. Get all fixed packages sorted by quantity
-    const fixedPackages = visiblePackages
-      .filter((p) => !isCustomQty(p.qty))
-      .map((p) => {
-        const qty = typeof p.qty === "number" ? p.qty : parseInitialQty(p.qty);
-        const price = parsePrice(p.price);
-        // If strike is not present, default to 2x price (as per existing logic fallback)
-        const strike = p.strike ? parsePrice(p.strike) : price * 2;
-        return { qty, price, strike };
-      })
-      .sort((a, b) => a.qty - b.qty);
-
-    if (fixedPackages.length === 0) {
-      const symbol = getCurrencySymbol();
-      return { price: `${symbol}—`, strike: undefined, save: undefined };
-    }
-
     let calculatedPrice = 0;
     let calculatedStrike = 0;
-
-    // 2. Calculate based on range
-    if (customQty <= fixedPackages[0].qty) {
-      // Below min: Use rate of min package
-      const minPkg = fixedPackages[0];
-      const ratio = customQty / minPkg.qty;
-      calculatedPrice = minPkg.price * ratio;
-      calculatedStrike = minPkg.strike * ratio;
-    } else if (customQty >= fixedPackages[fixedPackages.length - 1].qty) {
-      // Above max: Use rate of max package (per requirement "based on a per-1k rate from nearest tier")
-      const maxPkg = fixedPackages[fixedPackages.length - 1];
-      const ratio = customQty / maxPkg.qty;
-      calculatedPrice = maxPkg.price * ratio;
-      calculatedStrike = maxPkg.strike * ratio;
-    } else {
-      // In between: Linear interpolation
-      let lower = fixedPackages[0];
-      let upper = fixedPackages[fixedPackages.length - 1];
-      
-      for (let i = 0; i < fixedPackages.length - 1; i++) {
-        if (fixedPackages[i].qty <= customQty && fixedPackages[i+1].qty >= customQty) {
-          lower = fixedPackages[i];
-          upper = fixedPackages[i+1];
-          break;
-        }
-      }
-      
-      const range = upper.qty - lower.qty;
-      // Avoid division by zero
-      const progress = range === 0 ? 0 : (customQty - lower.qty) / range;
-      
-      calculatedPrice = lower.price + (upper.price - lower.price) * progress;
-      calculatedStrike = lower.strike + (upper.strike - lower.strike) * progress;
-    }
     
-    // 3. Round to cents (Decimal-safe)
+    // 1. Variable Pricing Table (JSON) Logic
+    if (selected.pricingTable && Object.keys(selected.pricingTable).length > 0) {
+      // Get all tiers sorted by quantity
+      const tiers = Object.entries(selected.pricingTable)
+        .map(([q, p]) => ({ qty: parseInt(q), price: parseFloat(p) }))
+        .sort((a, b) => a.qty - b.qty);
+      
+      // Find pricing based on tiers
+      // Logic: interpolation between tiers for smooth pricing
+      
+      // Check for exact match first
+      const exactMatch = tiers.find(t => t.qty === customQty);
+      if (exactMatch) {
+        calculatedPrice = exactMatch.price;
+      } else if (customQty <= tiers[0].qty) {
+        // Below min: Use unit price of min tier
+        const minTier = tiers[0];
+        calculatedPrice = (minTier.price / minTier.qty) * customQty;
+      } else if (customQty >= tiers[tiers.length - 1].qty) {
+        // Above max: Use unit price of max tier
+        const maxTier = tiers[tiers.length - 1];
+        calculatedPrice = (maxTier.price / maxTier.qty) * customQty;
+      } else {
+        // Interpolate between tiers
+        let lower = tiers[0];
+        let upper = tiers[tiers.length - 1];
+        
+        for (let i = 0; i < tiers.length - 1; i++) {
+          if (tiers[i].qty <= customQty && tiers[i+1].qty >= customQty) {
+            lower = tiers[i];
+            upper = tiers[i+1];
+            break;
+          }
+        }
+        
+        const range = upper.qty - lower.qty;
+        const progress = range === 0 ? 0 : (customQty - lower.qty) / range;
+        calculatedPrice = lower.price + (upper.price - lower.price) * progress;
+      }
+    } 
+    // 2. Standard Logic (Unit Price based)
+    else {
+        // Check if the custom package itself has a configured price.
+        // If so, use it as the source of truth for the unit rate.
+        const configuredPrice = parsePrice(selected.price);
+        const configuredBaseQty = parseInitialQty(selected.qty);
+
+        // If we have a valid configured price (e.g., $26.99 for 10,000)
+        if (configuredPrice > 0 && configuredBaseQty > 0) {
+           // Calculate unit price based on admin configuration
+           const unitPrice = configuredPrice / configuredBaseQty;
+           calculatedPrice = customQty * unitPrice;
+        } else {
+           // Fallback: Interpolation logic from fixed packages
+            const fixedPackages = visiblePackages
+              .filter((p) => !isCustomQty(p.qty))
+              .map((p) => {
+                const qty = typeof p.qty === "number" ? p.qty : parseInitialQty(p.qty);
+                const price = parsePrice(p.price);
+                const strike = p.strike ? parsePrice(p.strike) : price * 2;
+                return { qty, price, strike };
+              })
+              .sort((a, b) => a.qty - b.qty);
+
+            if (fixedPackages.length === 0) {
+               calculatedPrice = 0;
+            } else if (customQty <= fixedPackages[0].qty) {
+               const minPkg = fixedPackages[0];
+               calculatedPrice = (minPkg.price / minPkg.qty) * customQty;
+            } else if (customQty >= fixedPackages[fixedPackages.length - 1].qty) {
+               const maxPkg = fixedPackages[fixedPackages.length - 1];
+               calculatedPrice = (maxPkg.price / maxPkg.qty) * customQty;
+            } else {
+                let lower = fixedPackages[0];
+                let upper = fixedPackages[fixedPackages.length - 1];
+                for (let i = 0; i < fixedPackages.length - 1; i++) {
+                    if (fixedPackages[i].qty <= customQty && fixedPackages[i+1].qty >= customQty) {
+                        lower = fixedPackages[i];
+                        upper = fixedPackages[i+1];
+                        break;
+                    }
+                }
+                const range = upper.qty - lower.qty;
+                const progress = range === 0 ? 0 : (customQty - lower.qty) / range;
+                calculatedPrice = lower.price + (upper.price - lower.price) * progress;
+            }
+        }
+    }
+
+    // Calculate Strike Price (Regular Price)
+    // If strike is configured in selected package, use it for unit rate
+    const configuredStrike = selected.strike ? parsePrice(selected.strike) : 0;
+    const configuredBaseQty = parseInitialQty(selected.qty); 
+    
+    if (configuredStrike > 0 && configuredBaseQty > 0) {
+        const strikeUnitPrice = configuredStrike / configuredBaseQty;
+        calculatedStrike = customQty * strikeUnitPrice;
+    } else {
+        // Default markup if no strike price set
+        calculatedStrike = calculatedPrice * 1.5; 
+    }
+
+    // Round to cents
     const totalPriceCents = Math.round(calculatedPrice * 100);
     const totalPrice = totalPriceCents / 100;
     const formattedPrice = formatPrice(totalPrice);
 
-    const totalStrikeCents = Math.round(calculatedStrike * 100);
-    const totalStrike = totalStrikeCents / 100;
-    const strikePrice = formatPrice(totalStrike);
-    
-    // 4. Calculate Savings
-    const saveCents = totalStrikeCents - totalPriceCents;
-    const save = saveCents / 100;
-    
-    let saveAmount: string | undefined;
-    if (save > 0) {
-      const symbol = getCurrencySymbol();
-      saveAmount = `You Save ${symbol}${save.toFixed(2)}`;
+    let strikePrice: string | undefined = undefined;
+    let saveAmount: string | undefined = undefined;
+
+    // Apply "You Save" Logic
+    const youSaveMode = selected.youSaveMode || 'auto';
+    const youSaveValue = selected.youSaveValue;
+
+    if (youSaveMode === 'hide') {
+        strikePrice = undefined;
+        saveAmount = undefined;
+    } else if (youSaveMode === 'manual') {
+         if (calculatedStrike > calculatedPrice) {
+            const totalStrikeCents = Math.round(calculatedStrike * 100);
+            const totalStrike = totalStrikeCents / 100;
+            strikePrice = formatPrice(totalStrike);
+         }
+         if (youSaveValue) {
+            saveAmount = youSaveValue;
+         }
+    } else {
+        // Auto mode
+        if (calculatedStrike > calculatedPrice) {
+            const totalStrikeCents = Math.round(calculatedStrike * 100);
+            const totalStrike = totalStrikeCents / 100;
+            strikePrice = formatPrice(totalStrike);
+            
+            const saveCents = totalStrikeCents - totalPriceCents;
+            const save = saveCents / 100;
+            
+            if (save > 0) {
+                const symbol = getCurrencySymbol();
+                saveAmount = `You Save ${symbol}${save.toFixed(2)}`;
+            }
+        }
     }
-    
+
     return { price: formattedPrice, strike: strikePrice, save: saveAmount };
   };
 

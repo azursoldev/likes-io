@@ -38,6 +38,8 @@ type FreeToolContent = {
   assurance3?: string | null;
   faqs?: FAQ[] | null;
   reviews?: Review[] | null;
+  reviewsTitle?: string | null;
+  reviewsSubtitle?: string | null;
 };
 
 export default function FreeToolsDashboard() {
@@ -99,6 +101,8 @@ export default function FreeToolsDashboard() {
           assurance2: content.assurance2,
           assurance3: content.assurance3,
           faqs: content.faqs,
+          reviewsTitle: content.reviewsTitle,
+          reviewsSubtitle: content.reviewsSubtitle,
           // reviews: content.reviews, // Removing reviews from admin interface
         }),
       });
@@ -266,6 +270,42 @@ export default function FreeToolsDashboard() {
                         className="admin-input"
                         value={content.reviewCount}
                         onChange={(e) => setContent({ ...content, reviewCount: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p>No content loaded</p>
+                )}
+              </div>
+            </div>
+
+            <div className="admin-card" style={{ marginTop: '24px' }}>
+              <div className="admin-card-header">
+                <h2>Reviews Section Settings</h2>
+              </div>
+              <div className="admin-card-body">
+                {loading ? (
+                  <p>Loading...</p>
+                ) : content ? (
+                  <div className="form-grid">
+                    <div className="form-group full">
+                      <label>Reviews Heading (H2)</label>
+                      <input 
+                        type="text" 
+                        className="admin-input"
+                        value={content.reviewsTitle || ""}
+                        onChange={(e) => setContent({ ...content, reviewsTitle: e.target.value })}
+                        placeholder="Loved by Creators Worldwide"
+                      />
+                    </div>
+                    <div className="form-group full">
+                      <label>Reviews Description</label>
+                      <textarea 
+                        className="admin-textarea"
+                        rows={3}
+                        value={content.reviewsSubtitle || ""}
+                        onChange={(e) => setContent({ ...content, reviewsSubtitle: e.target.value })}
+                        placeholder="Real reviews from creators and brands who've seen incredible growth with our service."
                       />
                     </div>
                   </div>

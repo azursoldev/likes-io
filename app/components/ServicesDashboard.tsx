@@ -172,8 +172,8 @@ export default function ServicesDashboard() {
   const [highQualityTitle, setHighQualityTitle] = useState("High-Quality Likes Packages");
   const [premiumTitle, setPremiumTitle] = useState("Premium Packages");
 
-  const [highQualityPriceOptions, setHighQualityPriceOptions] = useState<Array<{ id: number; name: string; item: string; price1: string; price2: string; disc: string; serviceId: string }>>([]);
-  const [premiumPriceOptions, setPremiumPriceOptions] = useState<Array<{ id: number; name: string; item: string; price1: string; price2: string; disc: string; serviceId: string }>>([]);
+  const [highQualityPriceOptions, setHighQualityPriceOptions] = useState<Array<{ id: number; name: string; item: string; price1: string; price2: string; disc: string; serviceId: string; youSaveMode?: string; youSaveValue?: string; isBestValue?: boolean; isCustom?: boolean; pricingTable?: string }>>([]);
+  const [premiumPriceOptions, setPremiumPriceOptions] = useState<Array<{ id: number; name: string; item: string; price1: string; price2: string; disc: string; serviceId: string; youSaveMode?: string; youSaveValue?: string; isBestValue?: boolean; isCustom?: boolean; pricingTable?: string }>>([]);
   const [highQualityFeatures, setHighQualityFeatures] = useState<Array<{ id: number; name: string }>>([]);
   const [premiumFeatures, setPremiumFeatures] = useState<Array<{ id: number; name: string }>>([]);
   const [qualityCompareColumns, setQualityCompareColumns] = useState<Array<{ id: number; title: string; subtitle: string; bullets: string[]; highlight?: boolean; badge?: string }>>([]);
@@ -472,7 +472,12 @@ export default function ServicesDashboard() {
             price1: pkg.price || "",
             price2: pkg.strike || "",
             disc: pkg.save || "",
-            serviceId: pkg.serviceId || "" // Load Service ID from saved data
+            serviceId: pkg.serviceId || "", // Load Service ID from saved data
+            youSaveMode: pkg.youSaveMode || "auto",
+            youSaveValue: pkg.youSaveValue || "",
+            isBestValue: pkg.isBestValue || false,
+            isCustom: pkg.isCustom || false,
+            pricingTable: pkg.pricingTable ? JSON.stringify(pkg.pricingTable, null, 2) : ""
           })));
         }
         
@@ -484,7 +489,12 @@ export default function ServicesDashboard() {
             price1: pkg.price || "",
             price2: pkg.strike || "",
             disc: pkg.save || "",
-            serviceId: pkg.serviceId || "" // Load Service ID from saved data
+            serviceId: pkg.serviceId || "", // Load Service ID from saved data
+            youSaveMode: pkg.youSaveMode || "auto",
+            youSaveValue: pkg.youSaveValue || "",
+            isBestValue: pkg.isBestValue || false,
+            isCustom: pkg.isCustom || false,
+            pricingTable: pkg.pricingTable ? JSON.stringify(pkg.pricingTable, null, 2) : ""
           })));
         }
       }
@@ -687,7 +697,12 @@ export default function ServicesDashboard() {
             strike: opt.price2 || undefined,
             save: opt.disc || undefined,
             offText: opt.name || undefined,
-            serviceId: opt.serviceId || undefined // Include Service ID for SMM Panel integration
+            serviceId: opt.serviceId || undefined,
+            youSaveMode: opt.youSaveMode || "auto",
+            youSaveValue: opt.youSaveValue || undefined,
+            isBestValue: opt.isBestValue || false,
+            isCustom: opt.isCustom || false,
+            pricingTable: opt.pricingTable ? JSON.parse(opt.pricingTable) : undefined
           };
         }) : []
       });
@@ -712,7 +727,12 @@ export default function ServicesDashboard() {
             strike: opt.price2 || undefined,
             save: opt.disc || undefined,
             offText: opt.name || undefined,
-            serviceId: opt.serviceId || undefined // Include Service ID for SMM Panel integration
+            serviceId: opt.serviceId || undefined,
+            youSaveMode: opt.youSaveMode || "auto",
+            youSaveValue: opt.youSaveValue || undefined,
+            isBestValue: opt.isBestValue || false,
+            isCustom: opt.isCustom || false,
+            pricingTable: opt.pricingTable ? JSON.parse(opt.pricingTable) : undefined
           };
         }) : []
       });
@@ -1084,7 +1104,7 @@ export default function ServicesDashboard() {
     }
   };
 
-  const handlePriceOptionChange = (type: "highQuality" | "premium", id: number, field: string, value: string) => {
+  const handlePriceOptionChange = (type: "highQuality" | "premium", id: number, field: string, value: any) => {
     if (type === "highQuality") {
       setHighQualityPriceOptions(highQualityPriceOptions.map(opt => 
         opt.id === id ? { ...opt, [field]: value } : opt
@@ -1561,67 +1581,123 @@ export default function ServicesDashboard() {
                       
                       <div className="price-options-list">
                         {highQualityPriceOptions.map((option) => (
-                          <div key={option.id} className="price-option-form">
-                            <div className="price-option-row">
-                              <input
-                                type="text"
-                                className="add-service-input price-option-field"
-                                value={option.item}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "item", e.target.value)}
-                                placeholder="Qty"
-                              />
-                              <input
-                                type="text"
-                                className="add-service-input price-option-field"
-                                value={option.name}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "name", e.target.value)}
-                                placeholder="Unit"
-                              />
-                              <input
-                                type="number"
-                                step="0.01"
-                                className="add-service-input price-option-field"
-                                value={option.price1}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "price1", e.target.value)}
-                                placeholder="Price"
-                              />
-                              <input
-                                type="number"
-                                step="0.01"
-                                className="add-service-input price-option-field"
-                                value={option.price2}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "price2", e.target.value)}
-                                placeholder="Orig. $"
-                              />
-                              <input
-                                type="text"
-                                className="add-service-input price-option-field"
-                                value={option.disc}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "disc", e.target.value)}
-                                placeholder="Discount"
-                              />
+                          <div key={option.id} className="price-option-form" style={{ padding: "15px", background: "#f9f9f9", borderRadius: "8px", marginBottom: "15px", border: "1px solid #eee" }}>
+                            <div className="price-option-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Qty</label>
+                                <input
+                                  type="text"
+                                  className="add-service-input price-option-field"
+                                  value={option.item}
+                                  onChange={(e) => handlePriceOptionChange("highQuality", option.id, "item", e.target.value)}
+                                  placeholder="1000"
+                                />
+                              </div>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Discount Label</label>
+                                <input
+                                  type="text"
+                                  className="add-service-input price-option-field"
+                                  value={option.name}
+                                  onChange={(e) => handlePriceOptionChange("highQuality", option.id, "name", e.target.value)}
+                                  placeholder="Best Value / 5% OFF"
+                                />
+                              </div>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Sale Price</label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="add-service-input price-option-field"
+                                  value={option.price1}
+                                  onChange={(e) => handlePriceOptionChange("highQuality", option.id, "price1", e.target.value)}
+                                  placeholder="19.99"
+                                />
+                              </div>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Reg. Price</label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="add-service-input price-option-field"
+                                  value={option.price2}
+                                  onChange={(e) => handlePriceOptionChange("highQuality", option.id, "price2", e.target.value)}
+                                  placeholder="29.99"
+                                />
+                              </div>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Service ID</label>
+                                <input
+                                  type="text"
+                                  className="add-service-input price-option-field"
+                                  value={option.serviceId}
+                                  onChange={(e) => handlePriceOptionChange("highQuality", option.id, "serviceId", e.target.value)}
+                                  placeholder="123"
+                                />
+                              </div>
                             </div>
-                            <div className="smm-integration-row">
-                              <FontAwesomeIcon icon={faLink} className="smm-link-icon" />
-                              <span className="smm-integration-text">SMM Panel Integration</span>
+                            
+                            <div className="price-option-advanced" style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center", borderTop: "1px solid #eee", paddingTop: "10px" }}>
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={option.isBestValue || false} 
+                                        onChange={(e) => handlePriceOptionChange("highQuality", option.id, "isBestValue", e.target.checked)}
+                                    />
+                                    Highlight
+                                </label>
+                                
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={option.isCustom || false} 
+                                        onChange={(e) => handlePriceOptionChange("highQuality", option.id, "isCustom", e.target.checked)}
+                                    />
+                                    Variable/Custom
+                                </label>
+                                
+                                <div className="you-save-group" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <label style={{ fontSize: "13px", color: "#666" }}>You Save:</label>
+                                    <select 
+                                        className="add-service-input" 
+                                        style={{ width: "auto", padding: "4px 8px", height: "30px" }}
+                                        value={option.youSaveMode || "auto"}
+                                        onChange={(e) => handlePriceOptionChange("highQuality", option.id, "youSaveMode", e.target.value)}
+                                    >
+                                        <option value="auto">Auto Calc</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="hide">Hide</option>
+                                    </select>
+                                    {option.youSaveMode === "manual" && (
+                                        <input 
+                                            type="text" 
+                                            className="add-service-input" 
+                                            style={{ width: "120px", height: "30px" }}
+                                            value={option.youSaveValue || ""}
+                                            onChange={(e) => handlePriceOptionChange("highQuality", option.id, "youSaveValue", e.target.value)}
+                                            placeholder="e.g. Save $10"
+                                        />
+                                    )}
+                                </div>
+
+                                <button
+                                    className="service-id-delete"
+                                    onClick={() => handleRemovePriceOption("highQuality", option.id)}
+                                    type="button"
+                                    style={{ marginLeft: "auto", color: "#ff4444", background: "none", border: "none", cursor: "pointer" }}
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
                             </div>
-                            <div className="service-id-row">
-                              <input
-                                type="text"
-                                className="add-service-input service-id-input"
-                                value={option.serviceId}
-                                onChange={(e) => handlePriceOptionChange("highQuality", option.id, "serviceId", e.target.value)}
-                                placeholder="Service ID"
-                              />
-                              <FontAwesomeIcon icon={faInfoCircle} className="service-id-info" />
-                              <button
-                                className="service-id-delete"
-                                onClick={() => handleRemovePriceOption("highQuality", option.id)}
-                                type="button"
-                              >
-                                <FontAwesomeIcon icon={faTimes} />
-                              </button>
-                            </div>
+                            
+                            {option.isCustom && (
+                                <div className="pricing-table-config" style={{ marginTop: "10px" }}>
+                                    <PricingTableEditor
+    value={option.pricingTable || ""}
+    onChange={(val) => handlePriceOptionChange("highQuality", option.id, "pricingTable", val)}
+/>
+                                </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1736,66 +1812,122 @@ export default function ServicesDashboard() {
                       <div className="price-options-list">
                         {premiumPriceOptions.map((option) => (
                           <div key={option.id} className="price-option-form">
-                            <div className="price-option-row">
-                              <input
-                                type="text"
-                                className="add-service-input price-option-field"
-                                value={option.item}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "item", e.target.value)}
-                                placeholder="Qty"
-                              />
-                              <input
-                                type="text"
-                                className="add-service-input price-option-field"
-                                value={option.name}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "name", e.target.value)}
-                                placeholder="Unit"
-                              />
-                              <input
-                                type="number"
-                                step="0.01"
-                                className="add-service-input price-option-field"
-                                value={option.price1}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "price1", e.target.value)}
-                                placeholder="Price"
-                              />
-                              <input
-                                type="number"
-                                step="0.01"
-                                className="add-service-input price-option-field"
-                                value={option.price2}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "price2", e.target.value)}
-                                placeholder="Orig. $"
-                              />
-                              <input
-                                type="text"
-                                className="add-service-input price-option-field"
-                                value={option.disc}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "disc", e.target.value)}
-                                placeholder="Discount"
-                              />
+                            <div className="price-option-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Qty</label>
+                                <input
+                                  type="text"
+                                  className="add-service-input price-option-field"
+                                  value={option.item}
+                                  onChange={(e) => handlePriceOptionChange("premium", option.id, "item", e.target.value)}
+                                  placeholder="1000"
+                                />
+                              </div>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Discount Label</label>
+                                <input
+                                  type="text"
+                                  className="add-service-input price-option-field"
+                                  value={option.name}
+                                  onChange={(e) => handlePriceOptionChange("premium", option.id, "name", e.target.value)}
+                                  placeholder="Best Value / 5% OFF"
+                                />
+                              </div>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Sale Price</label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="add-service-input price-option-field"
+                                  value={option.price1}
+                                  onChange={(e) => handlePriceOptionChange("premium", option.id, "price1", e.target.value)}
+                                  placeholder="19.99"
+                                />
+                              </div>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Reg. Price</label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="add-service-input price-option-field"
+                                  value={option.price2}
+                                  onChange={(e) => handlePriceOptionChange("premium", option.id, "price2", e.target.value)}
+                                  placeholder="29.99"
+                                />
+                              </div>
+                              <div className="form-group-compact">
+                                <label style={{ fontSize: "12px", color: "#666", marginBottom: "4px", display: "block" }}>Service ID</label>
+                                <input
+                                  type="text"
+                                  className="add-service-input price-option-field"
+                                  value={option.serviceId}
+                                  onChange={(e) => handlePriceOptionChange("premium", option.id, "serviceId", e.target.value)}
+                                  placeholder="123"
+                                />
+                              </div>
                             </div>
-                            <div className="smm-integration-row">
-                              <FontAwesomeIcon icon={faLink} className="smm-link-icon" />
-                              <span className="smm-integration-text">SMM Panel Integration</span>
+                            
+                            <div className="price-option-advanced" style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center", borderTop: "1px solid #eee", paddingTop: "10px" }}>
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={option.isBestValue || false} 
+                                        onChange={(e) => handlePriceOptionChange("premium", option.id, "isBestValue", e.target.checked)}
+                                    />
+                                    Highlight
+                                </label>
+                                
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={option.isCustom || false} 
+                                        onChange={(e) => handlePriceOptionChange("premium", option.id, "isCustom", e.target.checked)}
+                                    />
+                                    Variable/Custom
+                                </label>
+                                
+                                <div className="you-save-group" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <label style={{ fontSize: "13px", color: "#666" }}>You Save:</label>
+                                    <select 
+                                        className="add-service-input" 
+                                        style={{ width: "auto", padding: "4px 8px", height: "30px" }}
+                                        value={option.youSaveMode || "auto"}
+                                        onChange={(e) => handlePriceOptionChange("premium", option.id, "youSaveMode", e.target.value)}
+                                    >
+                                        <option value="auto">Auto Calc</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="hide">Hide</option>
+                                    </select>
+                                    {option.youSaveMode === "manual" && (
+                                        <input 
+                                            type="text" 
+                                            className="add-service-input" 
+                                            style={{ width: "120px", height: "30px" }}
+                                            value={option.youSaveValue || ""}
+                                            onChange={(e) => handlePriceOptionChange("premium", option.id, "youSaveValue", e.target.value)}
+                                            placeholder="e.g. Save $10"
+                                        />
+                                    )}
+                                </div>
+
+                                <button
+                                    className="service-id-delete"
+                                    onClick={() => handleRemovePriceOption("premium", option.id)}
+                                    type="button"
+                                    style={{ marginLeft: "auto", color: "#ff4444", background: "none", border: "none", cursor: "pointer" }}
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
                             </div>
-                            <div className="service-id-row">
-                              <input
-                                type="text"
-                                className="add-service-input service-id-input"
-                                value={option.serviceId}
-                                onChange={(e) => handlePriceOptionChange("premium", option.id, "serviceId", e.target.value)}
-                                placeholder="Service ID"
-                              />
-                              <FontAwesomeIcon icon={faInfoCircle} className="service-id-info" />
-                              <button
-                                className="service-id-delete"
-                                onClick={() => handleRemovePriceOption("premium", option.id)}
-                                type="button"
-                              >
-                                <FontAwesomeIcon icon={faTimes} />
-                              </button>
-                            </div>
+                            
+                            {option.isCustom && (
+                                <div className="pricing-table-config" style={{ marginTop: "10px" }}>
+                                    <PricingTableEditor
+    value={option.pricingTable || ""}
+    onChange={(val) => handlePriceOptionChange("premium", option.id, "pricingTable", val)}
+/>
+                                </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -2440,14 +2572,69 @@ export default function ServicesDashboard() {
                                 placeholder="Service ID"
                               />
                               <FontAwesomeIcon icon={faInfoCircle} className="service-id-info" />
-                              <button
-                                className="service-id-delete"
-                                onClick={() => handleRemovePriceOption("highQuality", option.id)}
-                                type="button"
-                              >
-                                <FontAwesomeIcon icon={faTimes} />
-                              </button>
                             </div>
+
+                            <div className="price-option-advanced" style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center", borderTop: "1px solid #eee", paddingTop: "10px", marginTop: "10px" }}>
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={option.isBestValue || false} 
+                                        onChange={(e) => handlePriceOptionChange("highQuality", option.id, "isBestValue", e.target.checked)}
+                                    />
+                                    Highlight
+                                </label>
+                                
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={option.isCustom || false} 
+                                        onChange={(e) => handlePriceOptionChange("highQuality", option.id, "isCustom", e.target.checked)}
+                                    />
+                                    Variable/Custom
+                                </label>
+                                
+                                <div className="you-save-group" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <label style={{ fontSize: "13px", color: "#666" }}>You Save:</label>
+                                    <select 
+                                        className="add-service-input" 
+                                        style={{ width: "auto", padding: "4px 8px", height: "30px" }}
+                                        value={option.youSaveMode || "auto"}
+                                        onChange={(e) => handlePriceOptionChange("highQuality", option.id, "youSaveMode", e.target.value)}
+                                    >
+                                        <option value="auto">Auto Calc</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="hide">Hide</option>
+                                    </select>
+                                    {option.youSaveMode === "manual" && (
+                                        <input 
+                                            type="text" 
+                                            className="add-service-input" 
+                                            style={{ width: "120px", height: "30px" }}
+                                            value={option.youSaveValue || ""}
+                                            onChange={(e) => handlePriceOptionChange("highQuality", option.id, "youSaveValue", e.target.value)}
+                                            placeholder="e.g. Save $10"
+                                        />
+                                    )}
+                                </div>
+
+                                <button
+                                    className="service-id-delete"
+                                    onClick={() => handleRemovePriceOption("highQuality", option.id)}
+                                    type="button"
+                                    style={{ marginLeft: "auto", color: "#ff4444", background: "none", border: "none", cursor: "pointer" }}
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                            </div>
+                            
+                            {option.isCustom && (
+                                <div className="pricing-table-config" style={{ marginTop: "10px" }}>
+                                    <PricingTableEditor
+    value={option.pricingTable || ""}
+    onChange={(val) => handlePriceOptionChange("highQuality", option.id, "pricingTable", val)}
+/>
+                                </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -2614,14 +2801,69 @@ export default function ServicesDashboard() {
                                 placeholder="Service ID"
                               />
                               <FontAwesomeIcon icon={faInfoCircle} className="service-id-info" />
-                              <button
-                                className="service-id-delete"
-                                onClick={() => handleRemovePriceOption("premium", option.id)}
-                                type="button"
-                              >
-                                <FontAwesomeIcon icon={faTimes} />
-                              </button>
                             </div>
+
+                            <div className="price-option-advanced" style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center", borderTop: "1px solid #eee", paddingTop: "10px", marginTop: "10px" }}>
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={option.isBestValue || false} 
+                                        onChange={(e) => handlePriceOptionChange("premium", option.id, "isBestValue", e.target.checked)}
+                                    />
+                                    Highlight
+                                </label>
+                                
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px" }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={option.isCustom || false} 
+                                        onChange={(e) => handlePriceOptionChange("premium", option.id, "isCustom", e.target.checked)}
+                                    />
+                                    Variable/Custom
+                                </label>
+                                
+                                <div className="you-save-group" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <label style={{ fontSize: "13px", color: "#666" }}>You Save:</label>
+                                    <select 
+                                        className="add-service-input" 
+                                        style={{ width: "auto", padding: "4px 8px", height: "30px" }}
+                                        value={option.youSaveMode || "auto"}
+                                        onChange={(e) => handlePriceOptionChange("premium", option.id, "youSaveMode", e.target.value)}
+                                    >
+                                        <option value="auto">Auto Calc</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="hide">Hide</option>
+                                    </select>
+                                    {option.youSaveMode === "manual" && (
+                                        <input 
+                                            type="text" 
+                                            className="add-service-input" 
+                                            style={{ width: "120px", height: "30px" }}
+                                            value={option.youSaveValue || ""}
+                                            onChange={(e) => handlePriceOptionChange("premium", option.id, "youSaveValue", e.target.value)}
+                                            placeholder="e.g. Save $10"
+                                        />
+                                    )}
+                                </div>
+
+                                <button
+                                    className="service-id-delete"
+                                    onClick={() => handleRemovePriceOption("premium", option.id)}
+                                    type="button"
+                                    style={{ marginLeft: "auto", color: "#ff4444", background: "none", border: "none", cursor: "pointer" }}
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                            </div>
+                            
+                            {option.isCustom && (
+                                <div className="pricing-table-config" style={{ marginTop: "10px" }}>
+                                    <PricingTableEditor
+    value={option.pricingTable || ""}
+    onChange={(val) => handlePriceOptionChange("premium", option.id, "pricingTable", val)}
+/>
+                                </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -3125,6 +3367,104 @@ export default function ServicesDashboard() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function PricingTableEditor({ value, onChange }: { value: string, onChange: (val: string) => void }) {
+  const [rows, setRows] = useState<{ qty: string, price: string }[]>([]);
+
+  useEffect(() => {
+    try {
+      const parsed = JSON.parse(value || "{}");
+      const initRows = Object.entries(parsed).map(([k, v]) => ({ qty: k, price: String(v) }));
+      initRows.sort((a, b) => Number(a.qty) - Number(b.qty));
+      setRows(initRows);
+    } catch (e) {
+      setRows([]);
+    }
+  }, [value]);
+
+  const updateParent = (newRows: { qty: string, price: string }[]) => {
+    const obj: Record<string, string> = {};
+    newRows.forEach(row => {
+      if (row.qty && row.qty.trim() !== "") {
+        obj[row.qty] = row.price;
+      }
+    });
+    onChange(JSON.stringify(obj, null, 2));
+  };
+
+  const handleChange = (index: number, field: "qty" | "price", val: string) => {
+    const newRows = [...rows];
+    newRows[index] = { ...newRows[index], [field]: val };
+    setRows(newRows);
+    updateParent(newRows);
+  };
+
+  const handleAdd = () => {
+    const newRows = [...rows, { qty: "", price: "" }];
+    setRows(newRows);
+  };
+
+  const handleRemove = (index: number) => {
+    const newRows = rows.filter((_, i) => i !== index);
+    setRows(newRows);
+    updateParent(newRows);
+  };
+
+  return (
+    <div className="pricing-table-editor" style={{ marginTop: "10px", border: "1px solid #eee", padding: "10px", borderRadius: "8px", background: "#f9f9f9" }}>
+      <label style={{ fontSize: "12px", color: "#666", marginBottom: "8px", display: "block", fontWeight: 600 }}>Variable Pricing Tiers</label>
+      
+      {rows.length === 0 && (
+        <p style={{ fontSize: "12px", color: "#999", fontStyle: "italic", marginBottom: "8px" }}>No tiers defined. Add one to start.</p>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {rows.map((row, idx) => (
+          <div key={idx} style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+               <input 
+                 type="number" 
+                 className="add-service-input" 
+                 style={{ height: "30px", fontSize: "13px" }}
+                 placeholder="Qty"
+                 value={row.qty}
+                 onChange={(e) => handleChange(idx, "qty", e.target.value)}
+               />
+            </div>
+            <div style={{ flex: 1 }}>
+               <input 
+                 type="number" 
+                 step="0.01"
+                 className="add-service-input" 
+                 style={{ height: "30px", fontSize: "13px" }}
+                 placeholder="Price ($)"
+                 value={row.price}
+                 onChange={(e) => handleChange(idx, "price", e.target.value)}
+               />
+            </div>
+            <button 
+              type="button" 
+              onClick={() => handleRemove(idx)}
+              style={{ color: "#ff4444", border: "none", background: "none", cursor: "pointer", padding: "4px" }}
+              title="Remove Tier"
+            >
+              <FontAwesomeIcon icon={faTrash} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button 
+        type="button" 
+        onClick={handleAdd}
+        style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#2563eb", background: "none", border: "none", cursor: "pointer", fontWeight: 500 }}
+      >
+        <FontAwesomeIcon icon={faPlus} /> Add Pricing Tier
+      </button>
+      <p style={{ fontSize: "11px", color: "#888", marginTop: "8px" }}>Map quantity to price. The frontend will pick the correct price based on the slider/input.</p>
     </div>
   );
 }

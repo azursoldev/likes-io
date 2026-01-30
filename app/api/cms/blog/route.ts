@@ -12,6 +12,10 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id');
     const category = searchParams.get('category');
     const published = searchParams.get('published') === 'true';
+    const search = searchParams.get('search');
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '6', 10);
+    const skip = (page - 1) * limit;
 
     if (id) {
         const post = await prisma.blogPost.findUnique({
@@ -30,36 +34,57 @@ export async function GET(request: NextRequest) {
     }
 
     const where: any = {};
-    // if (category) where.category = category;
+    if (category && category !== 'All Posts') {
+      where.category = category;
+    }
     if (published) {
       where.isPublished = true;
       where.publishedAt = { lte: new Date() };
     }
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { excerpt: { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
-    const posts = await prisma.blogPost.findMany({
-      where,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    const [posts, total] = await Promise.all([
+      prisma.blogPost.findMany({
+        where,
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          teamMember: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+              role: true,
+            },
           },
         },
-        teamMember: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-            role: true,
-          },
-        },
+        orderBy: { publishedAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.blogPost.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      posts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { publishedAt: 'desc' },
-      take: 50,
     });
-
-    return NextResponse.json({ posts });
   } catch (error: any) {
     console.error('Get blog posts error:', error);
     return NextResponse.json(
