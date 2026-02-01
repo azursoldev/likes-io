@@ -62,8 +62,8 @@ export default async function Page({
     return {
       id: `#${order.id.slice(-6).toUpperCase()}`, // Shortened ID for display
       date,
-      customer: order.user.name || "Unknown",
-      email: order.user.email,
+      customer: order.user?.name || "Unknown",
+      email: order.user?.email || "Unknown",
       service: order.service.name,
       serviceIcon: platform,
       smmOrderId: order.japOrderId || "N/A",

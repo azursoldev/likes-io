@@ -289,11 +289,16 @@ class EmailService {
       `;
     }
 
+    if (!order.user?.email) {
+      console.warn(`Skipping order confirmation email for order ${orderId}: No user email found`);
+      return;
+    }
+
     await this.sendEmail({
       to: order.user.email,
       subject,
       html,
-      userId: order.userId,
+      userId: order.userId || undefined,
       type: 'order_confirmation',
     });
   }
@@ -358,11 +363,16 @@ class EmailService {
       </p>
     `;
 
+    if (!order.user?.email) {
+      console.warn(`Skipping payment success email for order ${orderId}: No user email found`);
+      return;
+    }
+
     await this.sendEmail({
       to: order.user.email,
       subject,
       html,
-      userId: order.userId,
+      userId: order.userId || undefined,
       type: 'order_confirmation', // Changed type to match semantic meaning
     });
   }
@@ -400,11 +410,16 @@ class EmailService {
       `;
     }
 
+    if (!order.user?.email) {
+      console.warn(`Skipping payment failure email for order ${orderId}: No user email found`);
+      return;
+    }
+
     await this.sendEmail({
       to: order.user.email,
       subject,
       html,
-      userId: order.userId,
+      userId: order.userId || undefined,
       type: 'payment_failure',
     });
   }
@@ -447,11 +462,16 @@ class EmailService {
       `;
     }
 
+    if (!order.user?.email) {
+      console.warn(`Skipping order completion email for order ${orderId}: No user email found`);
+      return;
+    }
+
     await this.sendEmail({
       to: order.user.email,
       subject,
       html,
-      userId: order.userId,
+      userId: order.userId || undefined,
       type: 'order_completion',
     });
   }
