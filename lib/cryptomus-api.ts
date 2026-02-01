@@ -42,8 +42,8 @@ export class CryptomusAPI {
   private testMode: boolean;
 
   constructor(merchantId?: string, apiKey?: string, testMode: boolean = false) {
-    this.merchantId = merchantId || process.env.CRYPTOMUS_MERCHANT_ID || '';
-    this.apiKey = apiKey || process.env.CRYPTOMUS_API_KEY || '';
+    this.merchantId = (merchantId || process.env.CRYPTOMUS_MERCHANT_ID || '').trim();
+    this.apiKey = (apiKey || process.env.CRYPTOMUS_API_KEY || '').trim();
     this.baseUrl = 'https://api.cryptomus.com/v1';
     this.testMode = testMode;
   }
