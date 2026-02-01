@@ -89,7 +89,7 @@ export class CryptomusAPI {
     try {
       const response = await axios.post(
         `${this.baseUrl}/payment`,
-        payload,
+        payloadString,
         {
           headers: {
             'merchant': this.merchantId,
@@ -140,7 +140,7 @@ export class CryptomusAPI {
     try {
       const response = await axios.post(
         `${this.baseUrl}/payment/info`,
-        payload,
+        payloadString,
         {
           headers: {
             'merchant': this.merchantId,
