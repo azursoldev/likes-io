@@ -88,6 +88,11 @@ export class CryptomusAPI {
     const payloadString = JSON.stringify(payload).replace(/\//g, '\\/');
     const sign = this.generateSignature(payloadString);
 
+    console.log('[Cryptomus] Creating payment...');
+    console.log('[Cryptomus] Merchant ID:', this.merchantId);
+    console.log('[Cryptomus] Payload String:', payloadString);
+    console.log('[Cryptomus] Signature:', sign);
+
     try {
       const response = await axios.post(
         `${this.baseUrl}/payment`,
