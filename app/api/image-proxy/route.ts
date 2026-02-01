@@ -12,12 +12,14 @@ export async function GET(request: NextRequest) {
     const response = await fetch(url, {
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Referer': 'https://www.instagram.com/'
+            'Referer': 'https://www.instagram.com/',
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
         }
     });
     
     if (!response.ok) {
-        return new NextResponse('Failed to fetch image', { status: response.status });
+        console.error(`Image proxy failed for ${url}: ${response.status} ${response.statusText}`);
+        return new NextResponse(`Failed to fetch image: ${response.statusText}`, { status: response.status });
     }
 
     const contentType = response.headers.get('content-type') || 'image/jpeg';
@@ -28,10 +30,21 @@ export async function GET(request: NextRequest) {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400, s-maxage=86400', // Cache for 24 hours
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Image proxy error:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return new NextResponse(`Internal Server Error: ${error.message}`, { status: 500 });
   }
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

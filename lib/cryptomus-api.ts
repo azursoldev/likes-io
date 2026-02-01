@@ -83,7 +83,9 @@ export class CryptomusAPI {
       lifetime: 7200, // 2 hours
     };
 
-    const payloadString = JSON.stringify(payload);
+    // Ensure payload matches PHP's json_encode default behavior (escaping slashes)
+    // This is often required for Cryptomus signature verification if they re-encode on their end
+    const payloadString = JSON.stringify(payload).replace(/\//g, '\\/');
     const sign = this.generateSignature(payloadString);
 
     try {
