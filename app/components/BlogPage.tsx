@@ -114,7 +114,9 @@ export default function BlogPage() {
         });
         
         setPosts(mapped);
-        setFeaturedPost(mapped[0] ?? null);
+        if (currentPage === 1) {
+            setFeaturedPost(mapped[0] ?? null);
+        }
         if (data.pagination) {
             setTotalPages(data.pagination.totalPages);
         }

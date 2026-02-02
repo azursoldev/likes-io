@@ -1160,7 +1160,7 @@ export default function SettingsDashboard() {
                     onChange={(e) => setCryptomusApiKey(e.target.value)}
                     placeholder="Enter your Payment API key"
                   />
-                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged. Found in Business -> Settings -> API Integration.</span>
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged. Found in Business &rarr; Settings &rarr; API Integration.</span>
                 </label>
                 <div className="settings-toggle-group">
                   <label className="settings-toggle-label">

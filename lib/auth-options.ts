@@ -12,7 +12,12 @@ const baseAuthOptions: Omit<NextAuthOptions, "providers"> = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
+      if (trigger === "update" && session) {
+        if (session.user.name) token.name = session.user.name;
+        if (session.user.email) token.email = session.user.email;
+      }
+
       if (user) {
         // If it's an OAuth login (account is defined)
         if (account && account.type === "oauth") {
@@ -59,6 +64,8 @@ const baseAuthOptions: Omit<NextAuthOptions, "providers"> = {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        if (token.name) session.user.name = token.name;
+        if (token.email) session.user.email = token.email;
       }
       return session
     }

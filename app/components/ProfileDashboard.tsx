@@ -7,15 +7,40 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 export default function ProfileDashboard() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const userName = session?.user?.name || "Admin User";
-  const userEmail = session?.user?.email || "unknown@domain.com";
+  // Profile State
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   const userRole = session?.user?.role === "ADMIN" ? "Administrator" : "User";
   
+  useEffect(() => {
+    // Fetch latest profile data
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/admin/profile");
+        if (res.ok) {
+          const data = await res.json();
+          setName(data.name || "");
+          setEmail(data.email || "");
+        }
+      } catch (e) {
+        console.error("Failed to fetch profile", e);
+      }
+    };
+    fetchProfile();
+  }, []);
+
   useEffect(() => {
     const fetchAvatar = async () => {
       try {
@@ -54,7 +79,7 @@ export default function ProfileDashboard() {
 
   const handleSaveAvatar = async () => {
     try {
-      setSaving(true);
+      setIsSavingAvatar(true);
       const res = await fetch("/api/admin/profile/avatar", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -71,7 +96,66 @@ export default function ProfileDashboard() {
     } catch (err: any) {
       alert(err.message || "Failed to save avatar");
     } finally {
-      setSaving(false);
+      setIsSavingAvatar(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setError(null);
+    setSuccess(null);
+
+    if (newPassword && newPassword !== confirmPassword) {
+      setError("New passwords do not match");
+      return;
+    }
+
+    if (newPassword && !currentPassword) {
+      setError("Current password is required to set a new password");
+      return;
+    }
+
+    try {
+      setIsSavingProfile(true);
+      const res = await fetch("/api/admin/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          currentPassword: currentPassword || undefined,
+          newPassword: newPassword || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update profile");
+      }
+
+      setSuccess("Profile updated successfully");
+      
+      // Update session if name or email changed
+      if (session) {
+        await update({
+          ...session,
+          user: {
+            ...session.user,
+            name: data.user.name,
+            email: data.user.email,
+          },
+        });
+      }
+
+      // Clear password fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+
+    } catch (err: any) {
+      setError(err.message || "Failed to update profile");
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
@@ -84,6 +168,19 @@ export default function ProfileDashboard() {
           <AdminToolbar title="My Profile" />
           <div className="admin-content">
             <div className="settings-page">
+              
+              {error && (
+                <div style={{ padding: "12px", background: "#fee2e2", color: "#991b1b", borderRadius: "8px", marginBottom: "20px" }}>
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div style={{ padding: "12px", background: "#dcfce7", color: "#166534", borderRadius: "8px", marginBottom: "20px" }}>
+                  {success}
+                </div>
+              )}
+
               <div className="settings-card">
                 <h2 className="settings-card-title">Account Details</h2>
                 <div className="settings-form-group">
@@ -92,17 +189,17 @@ export default function ProfileDashboard() {
                     <input
                       type="text"
                       className="settings-input"
-                      value={userName}
-                      readOnly
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                     />
                   </label>
                   <label className="settings-label">
                     Email
                     <input
-                      type="text"
+                      type="email"
                       className="settings-input"
-                      value={userEmail}
-                      readOnly
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </label>
                   <label className="settings-label">
@@ -112,20 +209,55 @@ export default function ProfileDashboard() {
                       className="settings-input"
                       value={userRole}
                       readOnly
+                      style={{ background: "#f3f4f6", cursor: "not-allowed" }}
                     />
                   </label>
                 </div>
               </div>
 
               <div className="settings-card">
-                <h2 className="settings-card-title">Session Status</h2>
-                <p className="settings-card-description">
-                  {status === "loading"
-                    ? "Loading your session..."
-                    : status === "authenticated"
-                    ? "You are logged in."
-                    : "You are not logged in."}
-                </p>
+                <h2 className="settings-card-title">Change Password</h2>
+                <div className="settings-form-group">
+                  <label className="settings-label">
+                    Current Password
+                    <input
+                      type="password"
+                      className="settings-input"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password to change"
+                    />
+                  </label>
+                  <label className="settings-label">
+                    New Password
+                    <input
+                      type="password"
+                      className="settings-input"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Leave blank to keep current"
+                    />
+                  </label>
+                  <label className="settings-label">
+                    Confirm New Password
+                    <input
+                      type="password"
+                      className="settings-input"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                    />
+                  </label>
+
+                  <button 
+                    className="settings-btn" 
+                    onClick={handleSaveProfile}
+                    disabled={isSavingProfile}
+                    style={{ marginTop: "16px", padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", cursor: isSavingProfile ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500" }}
+                  >
+                    {isSavingProfile ? "Saving..." : "Save Profile Changes"}
+                  </button>
+                </div>
               </div>
 
               <div className="settings-card">
@@ -161,13 +293,25 @@ export default function ProfileDashboard() {
                   <button 
                     className="settings-btn" 
                     onClick={handleSaveAvatar}
-                    disabled={saving}
-                    style={{ marginTop: "16px", padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", cursor: saving ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500" }}
+                    disabled={isSavingAvatar}
+                    style={{ marginTop: "16px", padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", cursor: isSavingAvatar ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "500" }}
                   >
-                    {saving ? "Saving..." : "Save Avatar"}
+                    {isSavingAvatar ? "Saving..." : "Save Avatar"}
                   </button>
                 </div>
               </div>
+
+              <div className="settings-card">
+                <h2 className="settings-card-title">Session Status</h2>
+                <p className="settings-card-description">
+                  {status === "loading"
+                    ? "Loading your session..."
+                    : status === "authenticated"
+                    ? "You are logged in."
+                    : "You are not logged in."}
+                </p>
+              </div>
+
             </div>
           </div>
         </main>

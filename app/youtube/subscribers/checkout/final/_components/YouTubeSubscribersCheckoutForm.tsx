@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Script from "next/script";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -36,7 +35,7 @@ export default function YouTubeSubscribersCheckoutForm() {
   const packageType = searchParams.get("type") || "High-Quality";
   const postLink = searchParams.get("postLink") || "";
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet" | "myfatoorah">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "wallet" | "myfatoorah">("crypto");
   const [walletBalance, setWalletBalance] = useState(0);
 
   // Fetch wallet balance
@@ -54,11 +53,7 @@ export default function YouTubeSubscribersCheckoutForm() {
       .catch((err) => console.error("Failed to fetch wallet balance:", err));
   }, []);
 
-  const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState(searchParams.get("email") || "");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvc, setCvc] = useState("");
   const [hasCoupon, setHasCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
@@ -108,6 +103,13 @@ export default function YouTubeSubscribersCheckoutForm() {
     }
   }, [username]);
 
+  // Check if MyFatoorah script is already loaded
+  useEffect(() => {
+    if ((window as any).myFatoorah) {
+      setIsMfLoaded(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (paymentMethod === "myfatoorah" && !mfSession) {
       fetch("/api/payments/initiate-session", { method: "POST" })
@@ -118,6 +120,9 @@ export default function YouTubeSubscribersCheckoutForm() {
             setError("Failed to load payment form");
           } else {
             setMfSession(data);
+            if ((window as any).myFatoorah) {
+              setIsMfLoaded(true);
+            }
           }
         })
         .catch(err => {
@@ -127,48 +132,30 @@ export default function YouTubeSubscribersCheckoutForm() {
     }
   }, [paymentMethod, mfSession]);
 
+  // Load MyFatoorah script manually if needed
   useEffect(() => {
-    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
-      try {
-        const config = {
-          countryCode: mfSession.countryCode,
-          sessionId: mfSession.sessionId,
-          cardViewId: "mf-card-element",
-          supportedNetworks: "visa,mastercard,amex,mada",
-          style: {
-            direction: "ltr",
-            cardHeight: 130,
-            input: {
-              color: "black",
-              fontSize: "13px",
-              fontFamily: "sans-serif",
-              inputHeight: "32px",
-              inputMargin: "0px",
-              borderColor: "e2e8f0",
-              borderWidth: "1px",
-              borderRadius: "8px",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-              placeHolder: {
-                holderName: "Name On Card",
-                cardNumber: "Number",
-                expiryDate: "MM / YY",
-                securityCode: "CVV",
-              }
-            },
-            label: { display: false },
-            error: {
-              borderColor: "red",
-              borderRadius: "8px",
-              boxShadow: "0px",
-            },
-          },
-        };
-        (window as any).myFatoorah.init(config);
-      } catch (err) {
-        console.error("MF Init Exception:", err);
+    if (paymentMethod === "myfatoorah" && mfSession?.scriptUrl && !isMfLoaded && !(window as any).myFatoorah) {
+      const scriptId = "mf-payment-script";
+      if (document.getElementById(scriptId)) {
+        setIsMfLoaded(true);
+        return;
       }
+
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = mfSession.scriptUrl;
+      script.async = true;
+      script.onload = () => {
+        setIsMfLoaded(true);
+      };
+      script.onerror = () => {
+        console.error("MF Script Load Error");
+        setError("Failed to load payment library");
+      };
+      document.body.appendChild(script);
     }
   }, [paymentMethod, mfSession, isMfLoaded]);
+
 
   const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; icon: any}>>([]);
 
@@ -248,6 +235,33 @@ export default function YouTubeSubscribersCheckoutForm() {
   }
   const finalPrice = Math.max(0, totalPrice - discountAmount);
 
+  useEffect(() => {
+    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+      try {
+        const config = {
+          countryCode: mfSession.countryCode,
+          sessionId: mfSession.sessionId,
+          currencyCode: "KWD",
+          amount: totalPrice.toFixed(2),
+          containerId: "mf-embedded-payment",
+          callback: (response: any) => {
+            console.log("MF Subscribers Callback:", response);
+            if (response.paymentCompleted && response.isSuccess) {
+              setProcessing(false);
+            } else {
+              setError("Payment failed or cancelled");
+              setProcessing(false);
+            }
+          },
+          shouldHandlePaymentUrl: true
+        };
+        (window as any).myFatoorah.init(config);
+      } catch (err) {
+        console.error("MF Init Exception:", err);
+      }
+    }
+  }, [paymentMethod, mfSession, isMfLoaded, totalPrice]);
+
   const currencyCode = currency;
 
   const handleApplyCoupon = async () => {
@@ -308,13 +322,7 @@ export default function YouTubeSubscribersCheckoutForm() {
         return;
       }
 
-      if (paymentMethod === "card") {
-        if (!cardholderName || !cardNumber || !expiry || !cvc) {
-          setError("Please fill in all card details");
-          setProcessing(false);
-          return;
-        }
-      } else if (paymentMethod === "myfatoorah") {
+      if (paymentMethod === "myfatoorah") {
         if (!mfSession || !(window as any).myFatoorah) {
            throw new Error("Payment form not loaded");
         }
@@ -387,13 +395,6 @@ export default function YouTubeSubscribersCheckoutForm() {
   return (
     <>
       <Header />
-      {mfSession?.scriptUrl && (
-        <Script 
-          src={mfSession.scriptUrl}
-          strategy="lazyOnload"
-          onLoad={() => setIsMfLoaded(true)}
-        />
-      )}
       <main className="final-checkout-page">
         <div className="final-checkout-container">
           <div className="checkout-progress">
@@ -469,33 +470,6 @@ export default function YouTubeSubscribersCheckoutForm() {
                       </div>
                     )}
 
-                    <div className="payment-option">
-                      <label className="payment-option-label">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="card"
-                          checked={paymentMethod === "card"}
-                          onChange={() => setPaymentMethod("card")}
-                          className="payment-radio"
-                        />
-                        <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
-                        <span>Card</span>
-                      </label>
-                      
-                      {paymentMethod === "card" && (
-                        <div className="card-form">
-                          {/* MyFatoorah Embedded Container */}
-                          <div style={{ width: "100%", minHeight: "150px" }}>
-                            {!isMfLoaded && <p>Loading payment form...</p>}
-                            <div id="mf-card-element" style={{ width: "100%" }}></div>
-                          </div>
-                          
-
-                        </div>
-                      )}
-                    </div>
-
                     {/* Crypto Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
@@ -540,7 +514,7 @@ export default function YouTubeSubscribersCheckoutForm() {
                           {/* MyFatoorah Embedded Container */}
                           <div style={{ width: "100%", minHeight: "150px" }}>
                             {!isMfLoaded && <p>Loading payment form...</p>}
-                            <div id="mf-card-element" style={{ width: "100%" }}></div>
+                            <div id="mf-embedded-payment" style={{ width: "100%" }}></div>
                           </div>
                         </div>
                       )}
@@ -588,7 +562,7 @@ export default function YouTubeSubscribersCheckoutForm() {
             <div className="final-checkout-right">
               <div className="checkout-card">
                 <div className="account-info-item">
-                  <div className="account-info-left" style={{ alignItems: "center" }}>
+                  <div className="account-info-left" style={{ alignItems: "center", marginRight: "20px" }}>
                     {channelInfo ? (
                       <>
                         <img 
@@ -605,7 +579,7 @@ export default function YouTubeSubscribersCheckoutForm() {
                         />
                         <div style={{ display: "flex", flexDirection: "column" }}>
                            <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{channelInfo.name}</span>
-                           <span className="account-info-url" style={{ fontSize: "12px", color: "#666" }}>@{username}</span>
+                           <span className="account-info-url" style={{ fontSize: "11px", color: "#666", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>@{username}</span>
                         </div>
                       </>
                     ) : (
