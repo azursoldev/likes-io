@@ -320,7 +320,7 @@ export async function POST(request: NextRequest) {
     // Create order
     const order = await prisma.order.create({
       data: {
-        userId: userId,
+        ...(userId ? { userId } : {}),
         serviceId: service.id,
         platform: platform.toUpperCase() as Platform,
         serviceType: serviceType.toUpperCase() as ServiceType,

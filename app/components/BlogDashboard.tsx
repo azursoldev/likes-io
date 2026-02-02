@@ -253,6 +253,20 @@ export default function BlogDashboard() {
       
       let imageUrl = editForm.featuredImageUrl;
       if (featuredImageFile) {
+        // Validate file size before upload (5MB limit)
+        if (featuredImageFile.size > 5 * 1024 * 1024) {
+           throw new Error("File is too large. Maximum size is 5MB.");
+        }
+
+        // Validate file type
+        const allowedExts = ['.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico'];
+        const fileName = featuredImageFile.name.toLowerCase();
+        const isValidExt = allowedExts.some(ext => fileName.endsWith(ext));
+        
+        if (!isValidExt) {
+            throw new Error(`Unsupported file type. Allowed: ${allowedExts.join(', ')}`);
+        }
+
         const formData = new FormData();
         formData.append('file', featuredImageFile);
         const uploadResponse = await fetch('/api/upload', {
@@ -261,7 +275,8 @@ export default function BlogDashboard() {
         });
 
         if (!uploadResponse.ok) {
-           throw new Error("Failed to upload image");
+           const errorData = await uploadResponse.json().catch(() => ({}));
+           throw new Error(errorData.error || "Failed to upload image");
         }
 
         const uploadData = await uploadResponse.json();
