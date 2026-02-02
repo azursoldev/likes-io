@@ -46,7 +46,7 @@ export default async function Page() {
 
     const mappedOrders = recentOrders.map((order) => ({
       id: order.id,
-      customer: order.user.name || order.user.email,
+      customer: order.user?.name || order.user?.email || "Unknown",
       service: order.service.name,
       amount: order.payment?.amount
         ? `$${order.payment.amount.toFixed(2)}`

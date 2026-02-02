@@ -299,8 +299,14 @@ function FinalCheckoutContent() {
       // For now, proceed - the API will return 401 if not authenticated
       
       // Validate required fields
+      if (!email) {
+        setError("Please enter your email address");
+        setProcessing(false);
+        return;
+      }
+
       if (paymentMethod === "card") {
-        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
+        if (!cardholderName || !cardNumber || !expiry || !cvc) {
           setError("Please fill in all card details");
           setProcessing(false);
           return;
@@ -349,13 +355,14 @@ function FinalCheckoutContent() {
           paymentMethod: paymentMethod, // 'card' or 'crypto' or 'myfatoorah'
           currency: currencyCode,
           packageServiceId: packageServiceId || undefined, // Service ID from package (JAP Service ID)
+          email: email,
         }),
       });
 
       if (!paymentResponse.ok) {
         const errorData = await paymentResponse.json();
         if (paymentResponse.status === 401) {
-          throw new Error("Please log in to complete your purchase");
+          throw new Error(errorData.error || "Please log in to complete your purchase");
         }
         throw new Error(errorData.error || "Failed to process payment");
       }
@@ -431,6 +438,17 @@ function FinalCheckoutContent() {
                 <h2 className="final-checkout-title">Review & Pay</h2>
                 
                 <form className="payment-form" onSubmit={handlePayment}>
+                  <div className="form-group" style={{ marginBottom: "20px" }}>
+                    <label className="form-label">Email address</label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="john@example.com"
+                      required
+                    />
+                  </div>
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     

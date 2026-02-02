@@ -16,6 +16,7 @@ import {
   faPlay
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useCurrency } from "../../../contexts/CurrencyContext";
 
 type PackageOption = {
@@ -35,6 +36,7 @@ type PackageTab = {
 function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: string; packages?: any[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [inputValue, setInputValue] = useState("");
   const [email, setEmail] = useState("");
@@ -45,6 +47,13 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const [packages, setPackages] = useState<PackageTab[]>(initialPackages || []);
   const [loadingPackages, setLoadingPackages] = useState(!initialPackages);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Autofill email from session
+  useEffect(() => {
+    if (session?.user?.email) {
+      setEmail(session.user.email);
+    }
+  }, [session]);
 
   // Get package info from URL params if available
   const initialQty = searchParams.get("qty") || "1000";

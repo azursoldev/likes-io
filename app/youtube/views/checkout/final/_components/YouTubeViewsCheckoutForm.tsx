@@ -292,8 +292,14 @@ export default function YouTubeViewsCheckoutForm() {
       let cardSessionId: string | undefined;
 
       // Validate required fields
+      if (!email) {
+        setError("Please enter your email address");
+        setProcessing(false);
+        return;
+      }
+
       if (paymentMethod === "card") {
-        if (!cardholderName || !email || !cardNumber || !expiry || !cvc) {
+        if (!cardholderName || !cardNumber || !expiry || !cvc) {
           setError("Please fill in all card details");
           setProcessing(false);
           return;
@@ -344,6 +350,9 @@ export default function YouTubeViewsCheckoutForm() {
       if (!paymentResponse.ok) {
         const errorData = await paymentResponse.json();
         if (paymentResponse.status === 401) {
+          if (errorData.error) {
+            throw new Error(errorData.error);
+          }
           throw new Error("Please log in to complete your purchase");
         }
         throw new Error(errorData.error || "Failed to process payment");
@@ -414,6 +423,18 @@ export default function YouTubeViewsCheckoutForm() {
                 <h2 className="final-checkout-title">Review & Pay</h2>
                 
                 <form className="payment-form" onSubmit={handlePayment}>
+                  <div className="form-group" style={{ marginBottom: "20px" }}>
+                    <label className="form-label">Email address</label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="john@example.com"
+                      required
+                    />
+                  </div>
+
                   <div className="payment-method-section">
                     <h3 className="payment-method-heading">Payment method</h3>
                     
@@ -480,17 +501,7 @@ export default function YouTubeViewsCheckoutForm() {
                             />
                           </div>
                           
-                          <div className="form-group">
-                            <label className="form-label">Email address</label>
-                            <input
-                              type="email"
-                              className="form-input"
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              placeholder="john@example.com"
-                              required
-                            />
-                          </div>
+
                           
                           <div className="form-group">
                             <label className="form-label">Card number</label>

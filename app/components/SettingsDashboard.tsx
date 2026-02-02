@@ -1152,15 +1152,15 @@ export default function SettingsDashboard() {
                   />
                 </label>
                 <label className="settings-label">
-                  Payout API Key
+                  Payment API Key
                   <input
                     type="password"
                     className="settings-input"
                     value={cryptomusApiKey}
                     onChange={(e) => setCryptomusApiKey(e.target.value)}
-                    placeholder="Enter your Payout API key"
+                    placeholder="Enter your Payment API key"
                   />
-                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
+                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged. Found in Business -> Settings -> API Integration.</span>
                 </label>
                 <div className="settings-toggle-group">
                   <label className="settings-toggle-label">

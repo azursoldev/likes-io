@@ -16,6 +16,7 @@ import {
   faEnvelope
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useCurrency } from "../../contexts/CurrencyContext";
 
 type PackageOption = {
@@ -35,6 +36,7 @@ type PackageTab = {
 function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: string; packages?: any[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -56,6 +58,13 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const [priceValue, setPriceValue] = useState(initialPrice);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   
+  // Autofill email from session if available
+  useEffect(() => {
+    if (session?.user?.email) {
+      setEmail(session.user.email);
+    }
+  }, [session]);
+
   // Fetch packages from CMS if not provided via props
   useEffect(() => {
     if (initialPackages && initialPackages.length > 0) return;

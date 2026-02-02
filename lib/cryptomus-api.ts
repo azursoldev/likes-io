@@ -42,8 +42,8 @@ export class CryptomusAPI {
   private testMode: boolean;
 
   constructor(merchantId?: string, apiKey?: string, testMode: boolean = false) {
-    this.merchantId = merchantId || process.env.CRYPTOMUS_MERCHANT_ID || '';
-    this.apiKey = apiKey || process.env.CRYPTOMUS_API_KEY || '';
+    this.merchantId = (merchantId || process.env.CRYPTOMUS_MERCHANT_ID || '').trim();
+    this.apiKey = (apiKey || process.env.CRYPTOMUS_API_KEY || '').trim();
     this.baseUrl = 'https://api.cryptomus.com/v1';
     this.testMode = testMode;
   }
@@ -83,13 +83,20 @@ export class CryptomusAPI {
       lifetime: 7200, // 2 hours
     };
 
-    const payloadString = JSON.stringify(payload);
+    // Ensure payload matches PHP's json_encode default behavior (escaping slashes)
+    // This is often required for Cryptomus signature verification if they re-encode on their end
+    const payloadString = JSON.stringify(payload).replace(/\//g, '\\/');
     const sign = this.generateSignature(payloadString);
+
+    console.log('[Cryptomus] Creating payment...');
+    console.log('[Cryptomus] Merchant ID:', this.merchantId);
+    console.log('[Cryptomus] Payload String:', payloadString);
+    console.log('[Cryptomus] Signature:', sign);
 
     try {
       const response = await axios.post(
         `${this.baseUrl}/payment`,
-        payload,
+        payloadString,
         {
           headers: {
             'merchant': this.merchantId,
@@ -140,7 +147,7 @@ export class CryptomusAPI {
     try {
       const response = await axios.post(
         `${this.baseUrl}/payment/info`,
-        payload,
+        payloadString,
         {
           headers: {
             'merchant': this.merchantId,

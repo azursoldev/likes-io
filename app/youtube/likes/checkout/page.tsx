@@ -14,11 +14,13 @@ import {
   faAngleDown
 } from "@fortawesome/free-solid-svg-icons";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useCurrency } from "../../../contexts/CurrencyContext";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const { formatPrice, getCurrencySymbol } = useCurrency();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -26,6 +28,13 @@ function CheckoutContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Autofill email from session
+  useEffect(() => {
+    if (session?.user?.email) {
+      setEmail(session.user.email);
+    }
+  }, [session]);
 
   // Get package info from URL params if available
   const qty = searchParams.get("qty") || "500";

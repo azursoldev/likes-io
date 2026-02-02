@@ -11,41 +11,21 @@ import { emailService } from '@/lib/email';
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    let userId: string | null = null;
+    let user: any = null;
 
-    if (!session || !session.user || !session.user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    if (session && session.user && session.user.id) {
+      userId = session.user.id;
+      user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
 
-    // Verify user exists in database
-    const userId = session.user.id;
-    if (!userId) {
-      console.error('Session user ID is missing:', session);
-      return NextResponse.json(
-        { error: 'Invalid session. Please log in again.' },
-        { status: 401 }
-      );
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      console.error(`User not found in database. Session user ID: ${userId}, Email: ${session.user.email}`);
-      return NextResponse.json(
-        { error: 'User account not found. Please log in again.' },
-        { status: 401 }
-      );
-    }
-
-    if (user.isBlocked) {
-      return NextResponse.json(
-        { error: 'Your account has been blocked. Please contact support.' },
-        { status: 403 }
-      );
+      if (user && user.isBlocked) {
+        return NextResponse.json(
+          { error: 'Your account has been blocked. Please contact support.' },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
@@ -62,6 +42,8 @@ export async function POST(request: NextRequest) {
       sessionId, // Optional: MyFatoorah session ID (for embedded payment)
       couponCode, // Optional: Coupon code
       upsellIds, // Optional: Array of upsell IDs
+      email, // Optional: Guest email
+      name, // Optional: Guest name
     } = body;
 
     if (!platform || !serviceType || !quantity || !price) {
@@ -338,7 +320,7 @@ export async function POST(request: NextRequest) {
     // Create order
     const order = await prisma.order.create({
       data: {
-        userId: user.id,
+        userId: userId,
         serviceId: service.id,
         platform: platform.toUpperCase() as Platform,
         serviceType: serviceType.toUpperCase() as ServiceType,
@@ -353,6 +335,13 @@ export async function POST(request: NextRequest) {
 
     // Create payment session based on payment method
     if (paymentMethod === 'wallet') {
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Please log in to use wallet balance' },
+          { status: 401 }
+        );
+      }
+
       // Wallet payment: deduct balance and mark order as paid immediately
       try {
         // Get current balance (raw to avoid client staleness)
@@ -481,8 +470,8 @@ export async function POST(request: NextRequest) {
           order.id,
           order.price,
           order.currency,
-          user.name || 'Customer',
-          user.email,
+          user?.name || name || 'Customer',
+          user?.email || email || 'guest@example.com',
           `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/success?orderId=${order.id}`,
           `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/error?orderId=${order.id}`,
           sessionId

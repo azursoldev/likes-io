@@ -242,9 +242,9 @@ export async function PUT(request: NextRequest) {
     const updateData: any = {};
     
     // Cryptomus
-    if (cryptomusMerchantId !== undefined) updateData.cryptomusMerchantId = cryptomusMerchantId || null;
+    if (cryptomusMerchantId !== undefined) updateData.cryptomusMerchantId = cryptomusMerchantId ? cryptomusMerchantId.trim() : null;
     if (cryptomusApiKey !== undefined && !cryptomusApiKey.includes('••••')) {
-      updateData.cryptomusApiKey = cryptomusApiKey || null;
+      updateData.cryptomusApiKey = cryptomusApiKey ? cryptomusApiKey.trim() : null;
     }
     if (cryptomusDisplayName !== undefined) updateData.cryptomusDisplayName = cryptomusDisplayName || null;
     if (cryptomusTestMode !== undefined) updateData.cryptomusTestMode = cryptomusTestMode;

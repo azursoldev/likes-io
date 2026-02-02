@@ -186,7 +186,7 @@ export default async function Page({
         lastFour,
       },
       status: order.status,
-      email: order.user.email,
+      email: order.user?.email || "",
       smmOrderId: order.japOrderId || "N/A",
     };
   });
