@@ -296,12 +296,18 @@ export default function OrderHistory({
 
             <div className="order-modal-progress">
               <div className="order-modal-progress-bar">
-                <div className="order-modal-progress-fill" style={{ width: "100%" }} />
+                <div 
+                  className="order-modal-progress-fill" 
+                  style={{ 
+                    width: selectedOrder.status === 'COMPLETED' ? '100%' : 
+                           selectedOrder.status === 'PROCESSING' ? '50%' : '0%' 
+                  }} 
+                />
               </div>
               <div className="order-modal-steps">
-                <span className="order-step">Received</span>
-                <span className="order-step">Processing</span>
-                <span className="order-step active">Completed</span>
+                <span className={`order-step ${['PROCESSING', 'COMPLETED'].includes(selectedOrder.status) ? 'active' : ''}`}>Received</span>
+                <span className={`order-step ${['PROCESSING', 'COMPLETED'].includes(selectedOrder.status) ? 'active' : ''}`}>Processing</span>
+                <span className={`order-step ${selectedOrder.status === 'COMPLETED' ? 'active' : ''}`}>Completed</span>
               </div>
             </div>
 
