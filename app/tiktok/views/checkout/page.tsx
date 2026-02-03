@@ -80,10 +80,17 @@ function CheckoutContent() {
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
-      // Navigate to posts selection page (if exists) or final checkout
-      router.push(`/tiktok/views/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+    
+    if (!username.trim()) {
+      return;
     }
+
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return;
+    }
+
+    // Navigate to posts selection page (if exists) or final checkout
+    router.push(`/tiktok/views/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&email=${encodeURIComponent(email)}`);
   };
 
   return (

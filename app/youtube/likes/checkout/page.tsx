@@ -109,7 +109,7 @@ function CheckoutContent() {
         // But we might want to keep the original input if the user prefers, 
         // however passing the ID ensures the next page doesn't need to re-resolve it.
         const resolvedUsername = data.profile.username; 
-        router.push(`/youtube/likes/checkout/posts?username=${encodeURIComponent(resolvedUsername)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
+        router.push(`/youtube/likes/checkout/posts?username=${encodeURIComponent(resolvedUsername)}&email=${encodeURIComponent(email)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`);
       } else {
         throw new Error("Channel not found");
       }

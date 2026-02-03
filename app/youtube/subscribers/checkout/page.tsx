@@ -22,7 +22,7 @@ function CheckoutContent() {
   const router = useRouter();
   const { data: session } = useSession();
   const { formatPrice, getCurrencySymbol } = useCurrency();
-  const [username, setUsername] = useState("kyliejenner");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [isPackageOpen, setIsPackageOpen] = useState(false);
   const [error, setError] = useState("");
