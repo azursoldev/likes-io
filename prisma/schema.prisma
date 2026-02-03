@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://doadmin:AVNS_5e1mz4FdZrBE5ZgyCDx@db-likes-io-do-user-28518962-0.f.db.ondigitalocean.com:25060/defaultdb?sslmode=require"
+  url      = "postgresql://doadmin:AVNS_lkLr8-DGC-qPACXAnWJ@db-postgresql-blr1-25504-do-user-28518962-0.j.db.ondigitalocean.com:25060/defaultdb?sslmode=require"
 }
 
 model User {
