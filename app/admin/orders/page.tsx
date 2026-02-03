@@ -16,19 +16,33 @@ export default async function Page({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   try {
-  const page = Number(searchParams.page) || 1;
-  const status = typeof searchParams.status === "string" && searchParams.status !== "All" ? searchParams.status : undefined;
-  const pageSize = 10;
+    const page = Number(searchParams?.page) || 1;
+    const statusParam = searchParams?.status;
+    const status = typeof statusParam === "string" && statusParam !== "All" ? statusParam : undefined;
+    const pageSize = 10;
   
-  // Build where clause
-  const where: Prisma.OrderWhereInput = {};
-  if (status) {
-    where.status = status as any; // Cast to specific enum if needed
-  }
+    // Build where clause
+    const where: Prisma.OrderWhereInput = {};
+    if (status) {
+      where.status = status as any; // Cast to specific enum if needed
+    }
 
-  // Get total count
+    // Get total count
   const totalOrders = await prisma.order.count({ where });
+
   const totalPages = Math.ceil(totalOrders / pageSize);
+
+  // Get services for dropdown
+  const services = await prisma.service.findMany({
+    select: {
+      id: true,
+      name: true,
+      platform: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
 
   // Get orders
   const orders = await prisma.order.findMany({
@@ -61,14 +75,20 @@ export default async function Page({
 
     return {
       id: `#${order.id.slice(-6).toUpperCase()}`, // Shortened ID for display
+      realId: order.id, // Full ID for API
       date,
+      rawDate: order.createdAt.toISOString(),
       customer: order.user?.name || "Unknown",
       email: order.user?.email || "Unknown",
       service: order.service.name,
+      serviceId: order.serviceId,
       serviceIcon: platform,
       smmOrderId: order.japOrderId || "N/A",
       amount: `${currencySymbol}${order.price.toFixed(2)}`,
+      rawAmount: order.price,
       status: order.status,
+      link: order.link,
+      japStatus: order.japStatus,
     };
   });
 
@@ -79,6 +99,7 @@ export default async function Page({
       totalPages={totalPages} 
       totalOrders={totalOrders}
       currentStatus={status || "All"}
+      services={services}
     />
   );
   } catch (error) {

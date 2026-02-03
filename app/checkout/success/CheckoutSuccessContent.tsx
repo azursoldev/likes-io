@@ -7,7 +7,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useGoogleAnalytics } from '../../hooks/useGoogleAnalytics';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faSpinner, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './success.css';
 
 function CheckoutSuccessContentInner() {
@@ -57,6 +57,14 @@ function CheckoutSuccessContentInner() {
       ]);
       trackedRef.current = true;
     }
+
+    if (order) {
+       if (order.status === 'PENDING_PAYMENT') {
+         document.title = 'Payment Pending | Likes.io';
+       } else if (order.status === 'FAILED' || order.status === 'CANCELLED') {
+         document.title = 'Payment Failed | Likes.io';
+       }
+    }
   }, [order, trackPurchase]);
 
   return (
@@ -80,16 +88,35 @@ function CheckoutSuccessContentInner() {
           </div>
         ) : (
           <div className="animate-fade-in">
-            <div className="success-icon-wrapper">
-              <FontAwesomeIcon icon={faCheckCircle} className="success-icon" />
-            </div>
-            
-            <h1 className="success-title">
-              Payment Successful!
-            </h1>
-            <p className="success-message">
-              Thank you for your purchase. Your order has been received and is being processed.
-            </p>
+            {order.status === 'PENDING_PAYMENT' || order.status === 'FAILED' || order.status === 'CANCELLED' ? (
+              <>
+                <div className="success-icon-wrapper" style={{ backgroundColor: '#fee2e2' }}>
+                  <FontAwesomeIcon icon={faTimesCircle} className="success-icon" style={{ color: '#ef4444' }} />
+                </div>
+                
+                <h1 className="success-title" style={{ color: '#ef4444' }}>
+                  {order.status === 'PENDING_PAYMENT' ? 'Payment Not Completed' : 'Payment Failed'}
+                </h1>
+                <p className="success-message">
+                  {order.status === 'PENDING_PAYMENT' 
+                    ? "We haven't received your payment confirmation yet. If you paid via Crypto, it may take a few minutes to confirm." 
+                    : "Your payment could not be processed. Please try again."}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="success-icon-wrapper">
+                  <FontAwesomeIcon icon={faCheckCircle} className="success-icon" />
+                </div>
+                
+                <h1 className="success-title">
+                  Payment Successful!
+                </h1>
+                <p className="success-message">
+                  Thank you for your purchase. Your order has been received and is being processed.
+                </p>
+              </>
+            )}
 
             <div className="order-summary-box">
               <h3 className="summary-title">

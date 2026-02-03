@@ -16,18 +16,25 @@ import {
   faDownload,
   faList,
   faTimes,
+  faEdit,
 } from "@fortawesome/free-solid-svg-icons";
 
 export type OrderRow = {
   id: string;
+  realId: string; // Added for API calls
   date: string;
+  rawDate: string; // ISO string for editing
   customer: string;
   email: string;
   service: string;
+  serviceId: string; // Added for editing
   serviceIcon: string;
   smmOrderId: string;
   amount: string;
+  rawAmount: number; // Added for editing
   status: string;
+  link?: string | null;
+  japStatus?: string | null;
 };
 
 const getServiceIcon = (icon: string) => {
@@ -39,12 +46,19 @@ const getServiceIcon = (icon: string) => {
 
 import { useRouter, useSearchParams } from "next/navigation";
 
+interface ServiceOption {
+  id: string;
+  name: string;
+  platform: string;
+}
+
 interface OrdersDashboardProps {
   initialOrders?: OrderRow[];
   currentPage?: number;
   totalPages?: number;
   totalOrders?: number;
   currentStatus?: string;
+  services?: ServiceOption[];
 }
 
 export default function OrdersDashboard({ 
@@ -52,12 +66,25 @@ export default function OrdersDashboard({
   currentPage = 1, 
   totalPages = 1, 
   totalOrders = 0,
-  currentStatus = "All"
+  currentStatus = "All",
+  services = []
 }: OrdersDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    date: "",
+    email: "",
+    serviceId: "",
+    amount: 0,
+    status: "",
+    link: "",
+    japOrderId: "",
+    japStatus: ""
+  });
+  const [isSaving, setIsSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>(currentStatus);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -108,6 +135,70 @@ export default function OrdersDashboard({
   const handleDetailsClick = (order: OrderRow) => {
     setSelectedOrder(order);
     setShowDetailsModal(true);
+  };
+
+  const handleEditClick = (order: OrderRow) => {
+    setSelectedOrder(order);
+    // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+    const dateObj = new Date(order.rawDate);
+    // Adjust for timezone offset to display local time or keep UTC? 
+    // Usually datetime-local expects local time. 
+    // Let's use simple ISO slice if we assume UTC or handle offset manually.
+    // Better: new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    const formattedDate = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+    setEditFormData({
+      date: formattedDate,
+      email: order.email,
+      serviceId: order.serviceId,
+      amount: order.rawAmount,
+      status: order.status,
+      link: order.link || "",
+      japOrderId: order.smmOrderId === "N/A" ? "" : order.smmOrderId,
+      japStatus: order.japStatus || ""
+    });
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedOrder(null);
+    setEditFormData({ 
+      date: "",
+      email: "",
+      serviceId: "",
+      amount: 0,
+      status: "", 
+      link: "", 
+      japOrderId: "", 
+      japStatus: "" 
+    });
+  };
+
+  const handleSaveOrder = async () => {
+    if (!selectedOrder) return;
+    
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/admin/orders/${selectedOrder.realId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update order");
+      }
+
+      // Success
+      router.refresh(); // Refresh server components
+      handleCloseEditModal();
+    } catch (error) {
+      console.error("Error updating order:", error);
+      alert("Failed to update order");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -243,7 +334,23 @@ export default function OrdersDashboard({
                       </span>
                     </td>
                     <td>
-                      <button className="order-details-link" onClick={() => handleDetailsClick(order)}>Details</button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button className="order-details-link" onClick={() => handleDetailsClick(order)}>Details</button>
+                        <button 
+                          onClick={() => handleEditClick(order)} 
+                          style={{ 
+                            background: 'none', 
+                            border: 'none', 
+                            cursor: 'pointer', 
+                            color: '#64748b',
+                            padding: '4px',
+                            fontSize: '1.1rem'
+                          }}
+                          title="Edit Order"
+                        >
+                          <FontAwesomeIcon icon={faEdit} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -334,6 +441,132 @@ export default function OrdersDashboard({
             <div className="order-details-modal-footer">
               <button className="order-details-close-btn" onClick={handleCloseModal}>
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && selectedOrder && (
+        <div className="order-details-modal-overlay" onClick={handleCloseEditModal}>
+          <div className="order-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="order-details-modal-header">
+              <h2>Edit Order</h2>
+              <button className="order-details-modal-close" onClick={handleCloseEditModal}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+
+            <div className="order-details-modal-body">
+              <div className="order-details-id">{selectedOrder.id}</div>
+              <div className="order-details-divider"></div>
+
+              <div className="order-details-info">
+                {/* Date */}
+                <div className="edit-form-row">
+                  <span className="edit-form-label">Date</span>
+                  <input 
+                    type="datetime-local"
+                    value={editFormData.date}
+                    onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
+                    className="edit-form-input"
+                  />
+                </div>
+
+                {/* Customer (Email) */}
+                <div className="edit-form-row">
+                  <span className="edit-form-label">Customer Email</span>
+                  <input 
+                    type="email"
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                    placeholder="customer@example.com"
+                    className="edit-form-input"
+                  />
+                </div>
+
+                {/* Service */}
+                <div className="edit-form-row">
+                  <span className="edit-form-label">Service</span>
+                  <select 
+                    value={editFormData.serviceId}
+                    onChange={(e) => setEditFormData({...editFormData, serviceId: e.target.value})}
+                    className="edit-form-select"
+                  >
+                    <option value="">Select Service</option>
+                    {services.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.platform})</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Amount */}
+                <div className="edit-form-row">
+                  <span className="edit-form-label">Amount</span>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    value={editFormData.amount}
+                    onChange={(e) => setEditFormData({...editFormData, amount: parseFloat(e.target.value)})}
+                    className="edit-form-input"
+                  />
+                </div>
+
+                <div className="edit-form-row">
+                  <span className="edit-form-label">Status</span>
+                  <select 
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
+                    className="edit-form-select"
+                  >
+                    {statusOptions.filter(s => s !== "All").map(status => (
+                      <option key={status} value={status}>{formatStatus(status)}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="edit-form-row">
+                  <span className="edit-form-label">Link</span>
+                  <input 
+                    value={editFormData.link}
+                    onChange={(e) => setEditFormData({...editFormData, link: e.target.value})}
+                    placeholder="Link"
+                    className="edit-form-input"
+                  />
+                </div>
+
+                <div className="edit-form-row">
+                  <span className="edit-form-label">SMM Order ID</span>
+                  <input 
+                    value={editFormData.japOrderId}
+                    onChange={(e) => setEditFormData({...editFormData, japOrderId: e.target.value})}
+                    placeholder="SMM Order ID"
+                    className="edit-form-input"
+                  />
+                </div>
+                
+                 <div className="edit-form-row">
+                  <span className="edit-form-label">SMM Status</span>
+                  <input 
+                    value={editFormData.japStatus}
+                    onChange={(e) => setEditFormData({...editFormData, japStatus: e.target.value})}
+                    placeholder="SMM Status"
+                    className="edit-form-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="order-details-modal-footer">
+              <button className="order-details-close-btn" onClick={handleCloseEditModal} style={{ marginRight: '12px' }}>
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveOrder} 
+                disabled={isSaving}
+                className="edit-form-submit-btn"
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
