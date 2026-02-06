@@ -136,6 +136,11 @@ export default function InfluenceSection() {
                 src={influenceContent.image}
                 alt="Influence Section Image"
                 className="illus-image illus-image-lg"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.onerror = null; // prevents looping
+                  target.src = "/illustrations/influence-girl-star.svg";
+                }}
               />
             </div>
           </div>
