@@ -1460,6 +1460,11 @@ export default function HomepageContentDashboard() {
                             src={influenceImageFile ? URL.createObjectURL(influenceImageFile) : influenceImage} 
                             alt="Preview" 
                             style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                            onError={(e) => {
+                                const target = e.currentTarget;
+                                target.onerror = null;
+                                target.src = "/illustrations/influence-girl-star.svg";
+                            }}
                           />
                         )}
                       </div>
