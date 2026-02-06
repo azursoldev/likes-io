@@ -118,7 +118,23 @@ type QuickStartButton = {
   icon: string;
 };
 
-const initialInfluenceSteps: InfluenceStep[] = [];
+const initialInfluenceSteps: InfluenceStep[] = [
+  {
+    id: 1,
+    title: "Select Your Package",
+    description: "Choose from our variety of high-quality services designed to meet your specific needs."
+  },
+  {
+    id: 2,
+    title: "Enter Your Details",
+    description: "Provide your username or link. We never ask for your password or sensitive data."
+  },
+  {
+    id: 3,
+    title: "Watch Your Growth",
+    description: "Sit back and relax while we deliver your order instantly and securely."
+  }
+];
 
 const initialQuickStartButtons: QuickStartButton[] = [];
 
@@ -334,8 +350,10 @@ export default function HomepageContentDashboard() {
     // Influence Section
     setInfluenceTitle(content.influenceTitle || "");
     setInfluenceSubtitle(content.influenceSubtitle || "");
-    if (content.influenceSteps) {
+    if (content.influenceSteps && content.influenceSteps.length > 0) {
       setInfluenceSteps(content.influenceSteps);
+    } else {
+      setInfluenceSteps(initialInfluenceSteps);
     }
     setInfluenceImage(content.influenceImage || "");
     if (content.influenceImage) {
@@ -715,6 +733,40 @@ export default function HomepageContentDashboard() {
           newSteps[stepIndex] = step;
           setInfluenceSteps(newSteps);
       }
+  };
+
+  const handleAddInfluenceStep = () => {
+    const newStep: InfluenceStep = {
+      id: Date.now(),
+      title: "New Step",
+      description: "Step description goes here.",
+      subpoints: []
+    };
+    setInfluenceSteps([...influenceSteps, newStep]);
+  };
+
+  const handleRemoveInfluenceStep = (index: number) => {
+    setInfluenceSteps(influenceSteps.filter((_, i) => i !== index));
+  };
+
+  const handleAddInfluenceSubpoint = (stepIndex: number) => {
+    const newSteps = [...influenceSteps];
+    const step = { ...newSteps[stepIndex] };
+    const newSubpoints = step.subpoints ? [...step.subpoints] : [];
+    newSubpoints.push({ title: "New Subpoint", text: "Subpoint details" });
+    step.subpoints = newSubpoints;
+    newSteps[stepIndex] = step;
+    setInfluenceSteps(newSteps);
+  };
+
+  const handleRemoveInfluenceSubpoint = (stepIndex: number, subpointIndex: number) => {
+    const newSteps = [...influenceSteps];
+    const step = { ...newSteps[stepIndex] };
+    if (step.subpoints) {
+      step.subpoints = step.subpoints.filter((_, i) => i !== subpointIndex);
+      newSteps[stepIndex] = step;
+      setInfluenceSteps(newSteps);
+    }
   };
 
   const handleUpdateQuickStartButton = (index: number, field: keyof QuickStartButton, value: string) => {
@@ -1454,11 +1506,21 @@ export default function HomepageContentDashboard() {
                       />
                     </label>
                     
-                    {step.subpoints && (
-                      <div style={{ marginTop: '1rem', paddingLeft: '1rem', borderLeft: '2px solid #eee' }}>
-                        <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#6b7280' }}>Subpoints</h4>
-                        {step.subpoints.map((sub, subIndex) => (
-                          <div key={subIndex} className="homepage-two-col" style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ marginTop: '1rem', paddingLeft: '1rem', borderLeft: '2px solid #eee' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <h4 style={{ fontSize: '0.9rem', color: '#6b7280', margin: 0 }}>Subpoints</h4>
+                        <button 
+                          type="button" 
+                          onClick={() => handleAddInfluenceSubpoint(index)}
+                          style={{ fontSize: '0.8rem', color: '#4f46e5', background: 'none', border: 'none', cursor: 'pointer' }}
+                        >
+                          + Add Subpoint
+                        </button>
+                      </div>
+                      
+                      {step.subpoints && step.subpoints.map((sub, subIndex) => (
+                        <div key={subIndex} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'flex-start' }}>
+                          <div className="homepage-two-col" style={{ flex: 1, marginBottom: 0 }}>
                             <input
                               type="text"
                               className="homepage-input"
@@ -1474,12 +1536,33 @@ export default function HomepageContentDashboard() {
                               onChange={(e) => handleUpdateInfluenceSubpoint(index, subIndex, 'text', e.target.value)}
                             />
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveInfluenceSubpoint(index, subIndex)}
+                            style={{ color: '#ef4444', background: 'none', border: 'none', padding: '0.5rem', cursor: 'pointer' }}
+                            title="Remove Subpoint"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                  <div className="homepage-benefit-actions">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveInfluenceStep(index)}
+                        className="homepage-benefit-delete"
+                      >
+                        Delete
+                      </button>
+                    </div>
                 </div>
               ))}
+              <button type="button" onClick={handleAddInfluenceStep} className="homepage-add-benefit-btn">
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Add Step</span>
+              </button>
             </div>
 
             {/* Quick Start Section */}

@@ -34,14 +34,31 @@ export default function InfluenceSection() {
         const response = await fetch('/api/cms/homepage');
         if (response.ok) {
           const data = await response.json();
-          if (data.content) {
-            setInfluenceContent({
-              title: data.content.influenceTitle || "",
-              subtitle: data.content.influenceSubtitle || "",
-              image: data.content.influenceImage || "",
-              steps: data.content.influenceSteps || []
-            });
-          }
+          // Use data from API or fall back to defaults
+          const content = data.content || {};
+          
+          setInfluenceContent({
+            title: content.influenceTitle || "Build Your Empire of Influence",
+            subtitle: content.influenceSubtitle || "Our proven strategy to boost your social media presence.",
+            image: content.influenceImage || "/illustrations/influence-girl-star.svg",
+            steps: (content.influenceSteps && content.influenceSteps.length > 0) ? content.influenceSteps : [
+              {
+                id: 1,
+                title: "Select Your Package",
+                description: "Choose from our variety of high-quality services designed to meet your specific needs."
+              },
+              {
+                id: 2,
+                title: "Enter Your Details",
+                description: "Provide your username or link. We never ask for your password or sensitive data."
+              },
+              {
+                id: 3,
+                title: "Watch Your Growth",
+                description: "Sit back and relax while we deliver your order instantly and securely."
+              }
+            ]
+          });
         }
       } catch (error) {
         console.error('Error fetching influence content:', error);
