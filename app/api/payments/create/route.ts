@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
       try {
         // Use raw query to bypass potential Prisma Client staleness
         const coupons: any[] = await prisma.$queryRaw`
-          SELECT * FROM "Coupon" 
+          SELECT * FROM "coupons" 
           WHERE "code" = ${couponCode} 
           AND "status" = 'ACTIVE' 
           LIMIT 1
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
           else {
             // Check per user limit
             const userRedemptions: any[] = await prisma.$queryRaw`
-              SELECT COUNT(*) as count FROM "CouponRedemption"
+              SELECT COUNT(*) as count FROM "coupon_redemptions"
               WHERE "couponId" = ${coupon.id} AND "userId" = ${userId}
             `;
             

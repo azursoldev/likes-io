@@ -725,11 +725,19 @@ export class SocialMediaAPI {
 
       // Extract best avatar
       let avatar = '';
-      if (Array.isArray(data.avatar)) {
-         // Get the largest one (last one usually)
-         avatar = data.avatar[data.avatar.length - 1]?.url;
-      } else {
-         avatar = data.avatar;
+      const rawAvatar = data.avatar;
+      if (Array.isArray(rawAvatar)) {
+         const last = rawAvatar[rawAvatar.length - 1];
+         avatar = typeof last === 'string' ? last : (last?.url || '');
+      } else if (typeof rawAvatar === 'string') {
+         avatar = rawAvatar;
+      } else if (rawAvatar && typeof rawAvatar === 'object') {
+         avatar = (rawAvatar as any).url || '';
+      }
+      if (avatar && avatar.startsWith('//')) {
+        avatar = `https:${avatar}`;
+      } else if (avatar && !avatar.startsWith('http')) {
+        avatar = `https://${avatar}`;
       }
 
       return {

@@ -11,7 +11,7 @@ export async function recordCouponRedemption(orderId: string, webhookData: any, 
   try {
     // 1. Find the coupon (using raw query for freshness)
     const coupons: any[] = await prisma.$queryRaw`
-      SELECT * FROM "Coupon" 
+      SELECT * FROM "coupons" 
       WHERE "code" = ${couponCode} 
       LIMIT 1
     `;
@@ -53,7 +53,7 @@ export async function recordCouponRedemption(orderId: string, webhookData: any, 
     
     // Check if already redeemed for this order
     const existing: any[] = await prisma.$queryRaw`
-      SELECT * FROM "CouponRedemption" WHERE "orderId" = ${orderId}
+      SELECT * FROM "coupon_redemptions" WHERE "orderId" = ${orderId}
     `;
     
     if (existing.length > 0) {
@@ -62,13 +62,13 @@ export async function recordCouponRedemption(orderId: string, webhookData: any, 
     }
 
     await prisma.$executeRaw`
-      INSERT INTO "CouponRedemption" ("id", "couponId", "userId", "orderId", "discountAmount", "redeemedAt")
+      INSERT INTO "coupon_redemptions" ("id", "couponId", "userId", "orderId", "discountAmount", "redeemedAt")
       VALUES (${redemptionId}, ${coupon.id}, ${userId}, ${orderId}, ${discountAmount}, NOW())
     `;
 
     // 4. Update coupon count
     await prisma.$executeRaw`
-      UPDATE "Coupon" 
+      UPDATE "coupons" 
       SET "redemptionCount" = "redemptionCount" + 1 
       WHERE "id" = ${coupon.id}
     `;

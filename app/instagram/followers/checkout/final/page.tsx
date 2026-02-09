@@ -73,8 +73,9 @@ function FinalCheckoutContent() {
   const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
   const [isMfLoaded, setIsMfLoaded] = useState(false);
 
+  const enableMfEmbed = false;
   useEffect(() => {
-    if (paymentMethod === "myfatoorah" && !mfSession) {
+    if (enableMfEmbed && paymentMethod === "myfatoorah" && !mfSession) {
       fetch("/api/payments/initiate-session", { method: "POST" })
         .then(res => res.json())
         .then(data => {
@@ -93,7 +94,7 @@ function FinalCheckoutContent() {
   }, [paymentMethod, mfSession]);
 
   useEffect(() => {
-    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
+    if (enableMfEmbed && paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
       try {
         const config = {
           countryCode: mfSession.countryCode,
@@ -229,7 +230,7 @@ function FinalCheckoutContent() {
       discountAmount = appliedCoupon.value;
     }
   }
-  const finalPrice = Math.max(0, totalPrice - discountAmount);
+  const finalPrice = Number(Math.max(0, totalPrice - discountAmount).toFixed(2));
 
   const currencyCode = currency;
 
@@ -246,7 +247,7 @@ function FinalCheckoutContent() {
         body: JSON.stringify({
           code: couponCode,
           orderAmount: totalPrice,
-          serviceType: `${platform}_${service}`,
+          serviceType: `${platform}_${service}`.toUpperCase(),
         }),
       });
       
@@ -293,15 +294,6 @@ function FinalCheckoutContent() {
           setProcessing(false);
           return;
         }
-      } else if (paymentMethod === "myfatoorah") {
-        if (!mfSession || !(window as any).myFatoorah) {
-           throw new Error("Payment form not loaded");
-        }
-        const mfResponse = await (window as any).myFatoorah.submit();
-        if (!mfResponse || !mfResponse.SessionId) {
-          throw new Error("Invalid payment data");
-        }
-        cardSessionId = mfResponse.SessionId;
       } else if (paymentMethod === "wallet") {
         if (walletBalance < finalPrice) {
           setError("Insufficient wallet balance");
@@ -374,11 +366,7 @@ function FinalCheckoutContent() {
       }
     } catch (err: any) {
       console.error("Payment error:", err);
-      if (err.message && err.message.includes("MyFatoorah")) {
-        setError("Please check your card details.");
-      } else {
-        setError(err.message || "Failed to process payment. Please try again.");
-      }
+      setError(err.message || "Failed to process payment. Please try again.");
       setProcessing(false);
     }
   };
@@ -395,7 +383,7 @@ function FinalCheckoutContent() {
   return (
     <>
       <Header />
-      {mfSession?.scriptUrl && (
+      {enableMfEmbed && mfSession?.scriptUrl && (
         <Script 
           src={mfSession.scriptUrl}
           strategy="lazyOnload"
@@ -728,10 +716,24 @@ function FinalCheckoutContent() {
                 </div>
 
                 <div className="order-total">
-                  <span className="total-label">Total to pay</span>
-                  <div className="total-price-wrapper">
-                    <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(finalPrice)}</span>
+                  {appliedCoupon && (
+                    <div className="order-total-row" style={{ fontSize: "14px", color: "#666" }}>
+                      <span>Subtotal</span>
+                      <span>{formatPrice(totalPrice)}</span>
+                    </div>
+                  )}
+                  {appliedCoupon && (
+                    <div className="order-total-row" style={{ fontSize: "14px", color: "#22c55e" }}>
+                      <span>Discount</span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  <div className="order-total-row">
+                    <span className="total-label">Total to pay</span>
+                    <div className="total-price-wrapper">
+                      <button className="currency-button">{currencyCode}</button>
+                      <span className="total-price">{formatPrice(finalPrice)}</span>
+                    </div>
                   </div>
                 </div>
               </div>

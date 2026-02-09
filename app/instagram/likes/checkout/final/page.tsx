@@ -111,6 +111,7 @@ function FinalCheckoutContent() {
       .catch((err) => console.error("Failed to fetch wallet balance:", err));
   }, []);
 
+  const enableMfEmbed = false;
   // Check if MyFatoorah script is already loaded
   useEffect(() => {
     if ((window as any).myFatoorah) {
@@ -120,7 +121,7 @@ function FinalCheckoutContent() {
 
   // Initiate MyFatoorah V3 session when selected
   useEffect(() => {
-    if (paymentMethod === "myfatoorah" && !mfSession) {
+    if (enableMfEmbed && paymentMethod === "myfatoorah" && !mfSession) {
       fetch("/api/payments/initiate-session", { method: "POST" })
         .then(res => res.json())
         .then(data => {
@@ -143,7 +144,7 @@ function FinalCheckoutContent() {
 
   // Load MyFatoorah script manually if needed
   useEffect(() => {
-    if (paymentMethod === "myfatoorah" && mfSession?.scriptUrl && !isMfLoaded && !(window as any).myFatoorah) {
+    if (enableMfEmbed && paymentMethod === "myfatoorah" && mfSession?.scriptUrl && !isMfLoaded && !(window as any).myFatoorah) {
       const scriptId = "mf-payment-script";
       if (document.getElementById(scriptId)) {
         setIsMfLoaded(true);
@@ -214,7 +215,7 @@ function FinalCheckoutContent() {
       discountAmount = appliedCoupon.value;
     }
   }
-  const finalPrice = Math.max(0, totalPrice - discountAmount);
+  const finalPrice = Number(Math.max(0, totalPrice - discountAmount).toFixed(2));
 
   const currencyCode = currency;
 
@@ -261,7 +262,7 @@ function FinalCheckoutContent() {
         body: JSON.stringify({
           code: couponCode,
           orderAmount: totalPrice,
-          serviceType: `${platform}_${service}`,
+          serviceType: `${platform}_${service}`.toUpperCase(),
         }),
       });
       
@@ -311,9 +312,6 @@ function FinalCheckoutContent() {
           setProcessing(false);
           return;
         }
-      } else if (paymentMethod === "myfatoorah") {
-        setProcessing(false);
-        return;
       } else if (paymentMethod === "wallet") {
         if (walletBalance < finalPrice) {
           setError("Insufficient wallet balance");
@@ -380,11 +378,7 @@ function FinalCheckoutContent() {
       }
     } catch (err: any) {
       console.error("Payment error:", err);
-      if (err.message && err.message.includes("MyFatoorah")) {
-        setError("Please check your card details.");
-      } else {
-        setError(err.message || "Failed to process payment. Please try again.");
-      }
+      setError(err.message || "Failed to process payment. Please try again.");
       setProcessing(false);
     }
   };
@@ -527,9 +521,8 @@ function FinalCheckoutContent() {
                       
                       {paymentMethod === "myfatoorah" && (
                         <div className="crypto-form">
-                          <div style={{ width: "100%", minHeight: "150px" }}>
-                            {!isMfLoaded && <p>Loading payment form...</p>}
-                            <div id="mf-embedded-payment" style={{ width: "100%" }}></div>
+                          <div className="crypto-message-box">
+                            <p>You will be redirected to MyFatoorah to complete your payment securely.</p>
                           </div>
                         </div>
                       )}
@@ -555,17 +548,11 @@ function FinalCheckoutContent() {
                   <button 
                     type="submit" 
                     className="pay-button"
-                    disabled={processing || paymentMethod === "myfatoorah"}
-                    style={{ opacity: processing || paymentMethod === "myfatoorah" ? 0.6 : 1, cursor: processing || paymentMethod === "myfatoorah" ? "not-allowed" : "pointer" }}
+                    disabled={processing}
+                    style={{ opacity: processing ? 0.6 : 1, cursor: processing ? "not-allowed" : "pointer" }}
                   >
-                    {paymentMethod === "myfatoorah" ? (
-                      <span>Please complete payment above</span>
-                    ) : (
-                      <>
-                        <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                        {processing ? "Processing..." : `Pay ${formatPrice(totalPrice)}`}
-                      </>
-                    )}
+                    <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
+                    {processing ? "Processing..." : `Pay ${formatPrice(finalPrice)}`}
                   </button>
 
                   <div className="payment-guarantees">
@@ -741,10 +728,24 @@ function FinalCheckoutContent() {
                 </div>
 
                 <div className="order-total">
-                  <span className="total-label">Total to pay</span>
-                  <div className="total-price-wrapper">
-                    <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(finalPrice)}</span>
+                  {appliedCoupon && (
+                    <div className="order-total-row" style={{ fontSize: "14px", color: "#666" }}>
+                      <span>Subtotal</span>
+                      <span>{formatPrice(totalPrice)}</span>
+                    </div>
+                  )}
+                  {appliedCoupon && (
+                    <div className="order-total-row" style={{ fontSize: "14px", color: "#22c55e" }}>
+                      <span>Discount</span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  <div className="order-total-row">
+                    <span className="total-label">Total to pay</span>
+                    <div className="total-price-wrapper">
+                      <button className="currency-button">{currencyCode}</button>
+                      <span className="total-price">{formatPrice(finalPrice)}</span>
+                    </div>
                   </div>
                 </div>
               </div>

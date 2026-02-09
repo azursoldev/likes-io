@@ -19,9 +19,11 @@ import {
 import {
   faBitcoin
 } from "@fortawesome/free-brands-svg-icons";
+import { useRouter } from "next/navigation";
 import { useCurrency } from "@/app/contexts/CurrencyContext";
 
 export default function YouTubeViewsCheckoutForm() {
+  const router = useRouter();
   const { currency } = useCurrency();
   
   // Locked Currency Logic to prevent glitch
@@ -158,7 +160,7 @@ export default function YouTubeViewsCheckoutForm() {
 
   useEffect(() => {
     if (username) {
-      fetch(`/api/social/YOUTUBE/profile?username=${username}`)
+      fetch(`/api/social/YOUTUBE/profile?username=${encodeURIComponent(username)}`)
         .then(res => res.json())
         .then(data => {
           if (data.profile) {
@@ -267,7 +269,7 @@ export default function YouTubeViewsCheckoutForm() {
         body: JSON.stringify({
           code: couponCode,
           orderAmount: totalPrice,
-          serviceType: "youtube_views",
+          serviceType: "YOUTUBE_VIEWS",
         }),
       });
       
@@ -572,14 +574,22 @@ export default function YouTubeViewsCheckoutForm() {
                            <span className="account-info-url" style={{ fontSize: "11px", color: "#666", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>@{username}</span>
                         </div>
                       </>
-                     ) : (
-                       <>
-                         <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
-                         <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{`@${username || "username"}`}</span>
-                       </>
-                     )}
+                    ) : (
+                      <>
+                        <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
+                        <span className="account-info-url" style={{ fontSize: "11px", color: "#666", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
+                          {videoLink || `@${username || "username"}`}
+                        </span>
+                      </>
+                    )}
                   </div>
-                  <button type="button" className="change-button">Change</button>
+                  <button 
+                    type="button" 
+                    className="change-button"
+                    onClick={() => router.push(`/youtube/views/checkout?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&videoLink=${encodeURIComponent(videoLink)}${addedOffers.length ? `&offers=${encodeURIComponent(addedOffers.map(o => o.id).join(","))}` : ""}`)}
+                  >
+                    Change
+                  </button>
                 </div>
               </div>
 

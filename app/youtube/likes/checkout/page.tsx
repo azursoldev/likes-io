@@ -29,12 +29,7 @@ function CheckoutContent() {
   const [error, setError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Autofill email from session
-  useEffect(() => {
-    if (session?.user?.email) {
-      setEmail(session.user.email);
-    }
-  }, [session]);
+ 
 
   // Get package info from URL params if available
   const qty = searchParams.get("qty") || "500";

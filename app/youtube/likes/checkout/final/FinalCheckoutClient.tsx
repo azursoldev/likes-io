@@ -148,7 +148,7 @@ function FinalCheckoutContent() {
 
   useEffect(() => {
     if (username) {
-      fetch(`/api/social/YOUTUBE/profile?username=${username}`)
+      fetch(`/api/social/YOUTUBE/profile?username=${encodeURIComponent(username)}`)
         .then(res => res.json())
         .then(data => {
           if (data.profile) {
@@ -517,7 +517,7 @@ function FinalCheckoutContent() {
 
                   <button type="submit" className="pay-button">
                     <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                    Pay {formatPrice(totalPrice)}
+                    Pay {formatPrice(finalPrice)}
                   </button>
 
                   <div className="payment-guarantees">
@@ -546,18 +546,28 @@ function FinalCheckoutContent() {
                   <div className="account-info-left" style={{ alignItems: "center", marginRight: "20px" }}>
                     {channelInfo ? (
                       <>
-                        <img 
-                          src={channelInfo.avatar} 
-                          alt={channelInfo.name} 
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "/youtube-7.png";
-                            target.style.objectFit = "contain";
-                            target.style.padding = "4px";
-                          }}
-                          style={{ borderRadius: "50%", width: "40px", height: "40px", objectFit: "cover", marginRight: "10px" }} 
-                        />
+                        {channelInfo.avatar ? (
+                          <img 
+                            src={channelInfo.avatar} 
+                            alt={channelInfo.name || username} 
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "/youtube-7.png";
+                              target.style.objectFit = "contain";
+                              target.style.padding = "4px";
+                            }}
+                            style={{ borderRadius: "50%", width: "40px", height: "40px", objectFit: "cover", marginRight: "10px" }} 
+                          />
+                        ) : (
+                          <img 
+                            src="/youtube-7.png" 
+                            alt="YouTube" 
+                            width={40} 
+                            height={40}
+                            style={{ borderRadius: "50%", objectFit: "contain", padding: "4px", marginRight: "10px" }} 
+                          />
+                        )}
                         <div style={{ display: "flex", flexDirection: "column" }}>
                            <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{channelInfo.name}</span>
                            <span className="account-info-url" style={{ fontSize: "11px", color: "#666", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>@{username}</span>
@@ -566,7 +576,9 @@ function FinalCheckoutContent() {
                      ) : (
                        <>
                          <img src="/youtube-7.png" alt="YouTube" width={20} height={20} />
-                         <span className="account-info-name" style={{ fontWeight: "600", fontSize: "14px" }}>{`@${username || "username"}`}</span>
+                         <span className="account-info-url" style={{ fontSize: "11px", color: "#666", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
+                           @{(postLink ? postLink.split(",")[0] : (username || "username"))}
+                         </span>
                        </>
                      )}
                   </div>
