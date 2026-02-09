@@ -233,7 +233,7 @@ export default function YouTubeSubscribersCheckoutForm() {
       discountAmount = appliedCoupon.value;
     }
   }
-  const finalPrice = Math.max(0, totalPrice - discountAmount);
+  const finalPrice = Number(Math.max(0, totalPrice - discountAmount).toFixed(2));
 
   useEffect(() => {
     if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
@@ -351,7 +351,7 @@ export default function YouTubeSubscribersCheckoutForm() {
           platform: platformUpper,
           serviceType,
           quantity: parseInt(qty) || 100,
-          price: finalPrice,
+          price: priceValue,
           link: postLink || username,
           paymentMethod: paymentMethod,
           currency: currencyCode,
@@ -704,10 +704,24 @@ export default function YouTubeSubscribersCheckoutForm() {
                 </div>
 
                 <div className="order-total">
-                  <span className="total-label">Total to pay</span>
-                  <div className="total-price-wrapper">
-                    <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(finalPrice)}</span>
+                  {appliedCoupon && (
+                    <div className="order-total-row" style={{ fontSize: "14px", color: "#666" }}>
+                      <span>Subtotal</span>
+                      <span>{formatPrice(totalPrice)}</span>
+                    </div>
+                  )}
+                  {appliedCoupon && (
+                    <div className="order-total-row" style={{ fontSize: "14px", color: "#22c55e" }}>
+                      <span>Discount</span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  <div className="order-total-row">
+                    <span className="total-label">Total to pay</span>
+                    <div className="total-price-wrapper">
+                      <button className="currency-button">{currencyCode}</button>
+                      <span className="total-price">{formatPrice(finalPrice)}</span>
+                    </div>
                   </div>
                 </div>
               </div>

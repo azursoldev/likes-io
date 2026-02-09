@@ -16,11 +16,29 @@ export default function ContactPage() {
     subject: "Order Support",
     message: "",
   });
+  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log("Form submitted:", formData);
+    setErrorMsg("");
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Failed to send message");
+      }
+      setStatus("success");
+      setFormData({ name: "", email: "", subject: "Order Support", message: "" });
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Something went wrong");
+      setStatus("error");
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -163,9 +181,15 @@ export default function ContactPage() {
               </div>
 
               <button type="submit" className="contact-form-submit">
-                Send Message
+                {status === "sending" ? "Sending..." : status === "success" ? "Sent" : "Send Message"}
                 <FontAwesomeIcon icon={faAngleRight} />
               </button>
+              {status === "error" && (
+                <p style={{ color: "#ef4444", marginTop: "8px", fontSize: "13px" }}>{errorMsg}</p>
+              )}
+              {status === "success" && (
+                <p style={{ color: "#10b981", marginTop: "8px", fontSize: "13px" }}>Message sent successfully.</p>
+              )}
             </form>
           </div>
         </div>

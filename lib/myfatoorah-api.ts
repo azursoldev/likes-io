@@ -183,13 +183,17 @@ export class MyFatoorahAPI {
 export async function getMyFatoorahAPI(): Promise<MyFatoorahAPI | null> {
   const settings = await prisma.adminSettings.findFirst();
 
-  if (!settings?.myFatoorahToken) {
+  const token = settings?.myFatoorahToken || process.env.MYFATOORAH_TOKEN || '';
+  const baseURL = settings?.myFatoorahBaseURL || process.env.MYFATOORAH_BASE_URL || 'https://apitest.myfatoorah.com';
+  const testMode = settings?.myFatoorahTestMode ?? (process.env.MYFATOORAH_TEST_MODE ? process.env.MYFATOORAH_TEST_MODE === 'true' : true);
+
+  if (!token) {
     return null;
   }
 
   return new MyFatoorahAPI({
-    token: settings.myFatoorahToken,
-    baseURL: settings.myFatoorahBaseURL || 'https://apitest.myfatoorah.com',
-    testMode: settings.myFatoorahTestMode ?? true,
+    token,
+    baseURL,
+    testMode,
   });
 }

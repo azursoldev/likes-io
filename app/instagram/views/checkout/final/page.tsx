@@ -219,7 +219,7 @@ function FinalCheckoutContent() {
       discountAmount = appliedCoupon.value;
     }
   }
-  const finalPrice = Math.max(0, totalPrice - discountAmount);
+  const finalPrice = Number(Math.max(0, totalPrice - discountAmount).toFixed(2));
   
   const currencyCode = currency;
 
@@ -236,7 +236,7 @@ function FinalCheckoutContent() {
         body: JSON.stringify({
           code: couponCode,
           orderAmount: totalPrice,
-          serviceType: `${platform}_${service}`,
+          serviceType: `${platform}_${service}`.toUpperCase(),
         }),
       });
       
@@ -339,31 +339,6 @@ function FinalCheckoutContent() {
           setProcessing(false);
           return;
         }
-      } else if (paymentMethod === "myfatoorah") {
-        if (!mfSession || !(window as any).myFatoorah) {
-           throw new Error("Payment form not loaded");
-        }
-        // In V3 Complete Payment mode, the payment is handled by the iframe callback.
-        // We shouldn't reach here if we hide the Pay button, OR we might need to handle it differently.
-        // If we want to use the standard 'Pay' button outside the iframe, we need 'Collect Details' mode.
-        // But for 'Complete Payment' mode (which renders its own inputs and logic), usually the user interacts inside the iframe.
-        // However, the doc says "Mode 1: Complete Payment ... MyFatoorah handles the OTP page."
-        // It doesn't explicitly say if it renders a Pay button.
-        // But usually embedded sessions do not render a Pay button, they render inputs.
-        // If so, we might need to call myFatoorah.submit() or similar?
-        // Wait, the doc says: "If shouldHandlePaymentUrl: true ... MyFatoorah handles the OTP page... After that, you will receive paymentCompleted: true"
-        // It doesn't say how to TRIGGER the payment.
-        // Let's assume we still need to trigger it if we have our own button.
-        // But `myFatoorah.submit()` is for V2.
-        // For V3 Session JS, maybe it's automatic or we need another call?
-        // Let's check the doc again. "Mode 2: Collect Details Mode ... Use when you want to collect payment details first, and then complete payment."
-        
-        // If we use "Complete Payment", maybe the iframe contains the Pay button?
-        // "This mode handles the entire payment process in a single flow".
-        // This usually means the iframe has everything including the button.
-        // If so, we should hide our "Pay" button when MyFatoorah is selected.
-        // Let's assume the iframe has the button for now.
-        return; 
       }
 
       if (!username) {
@@ -425,11 +400,7 @@ function FinalCheckoutContent() {
       }
     } catch (err: any) {
       console.error("Payment error:", err);
-      if (err.message && err.message.includes("MyFatoorah")) {
-        setError("Please check your card details.");
-      } else {
-        setError(err.message || "Failed to process payment. Please try again.");
-      }
+      setError(err.message || "Failed to process payment. Please try again.");
       setProcessing(false);
     }
   };
@@ -574,10 +545,8 @@ function FinalCheckoutContent() {
                       
                       {paymentMethod === "myfatoorah" && (
                         <div className="crypto-form">
-                          {/* MyFatoorah Embedded Container */}
-                          <div style={{ width: "100%", minHeight: "150px" }}>
-                            {!isMfLoaded && <p>Loading payment form...</p>}
-                            <div id="mf-embedded-payment" style={{ width: "100%" }}></div>
+                          <div className="crypto-message-box">
+                            <p>You will be redirected to MyFatoorah to complete your payment securely.</p>
                           </div>
                         </div>
                       )}
@@ -600,17 +569,9 @@ function FinalCheckoutContent() {
                     </div>
                   )}
 
-                  <button type="submit" className="pay-button" disabled={processing || paymentMethod === "myfatoorah"}>
-                    {processing ? (
-                      <span>Processing...</span>
-                    ) : paymentMethod === "myfatoorah" ? (
-                      <span>Please complete payment above</span>
-                    ) : (
-                      <>
-                        <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
-                        Pay {formatPrice(totalPrice)}
-                      </>
-                    )}
+                  <button type="submit" className="pay-button" disabled={processing}>
+                    <FontAwesomeIcon icon={faLock} className="pay-button-icon" />
+                    {processing ? "Processing..." : `Pay ${formatPrice(finalPrice)}`}
                   </button>
 
                   <div className="payment-guarantees">
@@ -762,10 +723,12 @@ function FinalCheckoutContent() {
                       <span>-{formatPrice(discountAmount)}</span>
                     </div>
                   )}
-                  <span className="total-label">Total to pay</span>
-                  <div className="total-price-wrapper">
-                    <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(finalPrice)}</span>
+                  <div className="order-total-row">
+                    <span className="total-label">Total to pay</span>
+                    <div className="total-price-wrapper">
+                      <button className="currency-button">{currencyCode}</button>
+                      <span className="total-price">{formatPrice(finalPrice)}</span>
+                    </div>
                   </div>
                 </div>
               </div>

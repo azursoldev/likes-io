@@ -128,7 +128,7 @@ function FinalCheckoutContent() {
       discountAmount = appliedCoupon.value;
     }
   }
-  const finalPrice = Math.max(0, totalPrice - discountAmount);
+  const finalPrice = Number(Math.max(0, totalPrice - discountAmount).toFixed(2));
 
   const currencyCode = currency;
 
@@ -145,7 +145,7 @@ function FinalCheckoutContent() {
         body: JSON.stringify({
           code: couponCode,
           orderAmount: totalPrice,
-          serviceType: `${platform}_${service}`,
+          serviceType: `${platform}_${service}`.toUpperCase(),
         }),
       });
       
@@ -540,10 +540,24 @@ function FinalCheckoutContent() {
                 </div>
 
                 <div className="order-total">
-                  <span className="total-label">Total to pay</span>
-                  <div className="total-price-wrapper">
-                    <button className="currency-button">{currencyCode}</button>
-                    <span className="total-price">{formatPrice(finalPrice)}</span>
+                  {appliedCoupon && (
+                    <div className="order-total-row" style={{ fontSize: "14px", color: "#666" }}>
+                      <span>Subtotal</span>
+                      <span>{formatPrice(totalPrice)}</span>
+                    </div>
+                  )}
+                  {appliedCoupon && (
+                    <div className="order-total-row" style={{ fontSize: "14px", color: "#22c55e" }}>
+                      <span>Discount</span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  <div className="order-total-row">
+                    <span className="total-label">Total to pay</span>
+                    <div className="total-price-wrapper">
+                      <button className="currency-button">{currencyCode}</button>
+                      <span className="total-price">{formatPrice(finalPrice)}</span>
+                    </div>
                   </div>
                 </div>
               </div>

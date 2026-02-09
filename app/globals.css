@@ -63190,7 +63190,8 @@ section.learn-more-section .container {
 .final-checkout-title { font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 24px 0; }
 .pay-button { width: 100%; padding: 16px 24px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 24px; }
 .pay-button:hover { background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); }
-.order-total { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; margin-top: 16px; border-top: 2px solid #e5e7eb; }
+.order-total { display: flex; flex-direction: column; gap: 8px; padding: 16px 0; margin-top: 16px; border-top: 2px solid #e5e7eb; }
+.order-total-row { display: flex; align-items: center; justify-content: space-between; }
 .total-price { font-size: 20px; font-weight: 700; color: #111827; }
 
 .payment-method-section { margin-bottom: 24px; }

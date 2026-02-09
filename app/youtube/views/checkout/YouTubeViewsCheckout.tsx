@@ -48,12 +48,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const [loadingPackages, setLoadingPackages] = useState(!initialPackages);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Autofill email from session
-  useEffect(() => {
-    if (session?.user?.email) {
-      setEmail(session.user.email);
-    }
-  }, [session]);
+ 
 
   // Get package info from URL params if available
   const initialQty = searchParams.get("qty") || "1000";

@@ -58,12 +58,7 @@ function CheckoutContent({ basePath, packages: initialPackages }: { basePath?: s
   const [priceValue, setPriceValue] = useState(initialPrice);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   
-  // Autofill email from session if available
-  useEffect(() => {
-    if (session?.user?.email) {
-      setEmail(session.user.email);
-    }
-  }, [session]);
+ 
 
   // Fetch packages from CMS if not provided via props
   useEffect(() => {
