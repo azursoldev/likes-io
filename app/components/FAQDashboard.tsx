@@ -107,7 +107,7 @@ function FAQSection({
               <div className="faq-row" key={item.id}>
                 <div className="faq-question-answer">
                   <div className="faq-question">{item.question}</div>
-                  <div className="faq-answer">{item.answer}</div>
+                  <div className="faq-answer" dangerouslySetInnerHTML={{ __html: item.answer }} />
                 </div>
                 <div className="faq-row-actions">
                   <button className="faq-edit-btn" onClick={() => onEdit?.(item)}>
@@ -503,7 +503,7 @@ export default function FAQDashboard() {
                   <div className="faq-row" key={`home-${item.id}`}>
                     <div className="faq-question-answer">
                       <div className="faq-question">{item.question}</div>
-                      <div className="faq-answer">{item.answer}</div>
+                      <div className="faq-answer" dangerouslySetInnerHTML={{ __html: item.answer }} />
                     </div>
                     <div className="faq-row-actions">
                       <button className="faq-edit-btn" onClick={() => handleStartEdit(item)}>

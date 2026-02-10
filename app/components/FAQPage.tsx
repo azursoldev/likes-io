@@ -177,7 +177,7 @@ export default function FAQPage() {
                   </button>
                   {openQuestion === faq.id && (
                     <div className="faq-answer">
-                      <p>{faq.answer}</p>
+                      <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
                     </div>
                   )}
                 </div>
