@@ -113,7 +113,7 @@ export default function FAQSection({
                 </button>
                 {isOpen && (
                   <div className="faq-body">
-                    <p>{item.a}</p>
+                    <div dangerouslySetInnerHTML={{ __html: item.a }} />
                   </div>
                 )}
               </article>
