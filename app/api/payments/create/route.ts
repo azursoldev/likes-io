@@ -327,7 +327,7 @@ export async function POST(request: NextRequest) {
         quantity: parseInt(quantity),
         price: finalPrice,
         currency,
-        status: 'PENDING_PAYMENT',
+        status: 'CREATED',
         link: link || null,
         upsellData: upsellData.length ? upsellData : undefined,
       },
@@ -372,7 +372,7 @@ export async function POST(request: NextRequest) {
               transactionId: null,
               amount: order.price,
               currency: order.currency,
-              status: 'SUCCESS',
+              status: 'PAID',
               webhookData: appliedCoupon ? { couponCode: appliedCoupon.code, discountAmount } : undefined,
             },
           }),
@@ -399,7 +399,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           orderId: order.id,
-          paymentStatus: 'SUCCESS'
+          paymentStatus: 'PAID'
         });
       } catch (error: any) {
         console.error('Wallet payment error:', error);

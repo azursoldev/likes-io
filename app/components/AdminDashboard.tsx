@@ -30,7 +30,9 @@ interface DashboardData {
     service: string;
     amount: string;
     status: string;
+    paymentStatus?: string;
   }[];
+  salesChart?: { date: string; amount: number }[];
 }
 
 interface AdminDashboardProps {
@@ -39,6 +41,7 @@ interface AdminDashboardProps {
 
 export default function AdminDashboard({ initialData }: AdminDashboardProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showUnpaid, setShowUnpaid] = useState(false);
 
   const stats = [
     {
@@ -51,7 +54,7 @@ export default function AdminDashboard({ initialData }: AdminDashboardProps) {
     },
     {
       title: "Total Revenue",
-      value: initialData ? `$${initialData.totalRevenue.toFixed(2)}` : "$62.46",
+      value: initialData ? `$${initialData.totalRevenue.toFixed(2)}` : "$0.00",
       delta: "vs last week",
       icon: faChartLine,
       iconColor: "#2563eb",
@@ -59,7 +62,7 @@ export default function AdminDashboard({ initialData }: AdminDashboardProps) {
     },
     {
       title: "Total Orders",
-      value: initialData ? initialData.totalOrders.toString() : "6",
+      value: initialData ? initialData.totalOrders.toString() : "0",
       delta: "vs last week",
       icon: faClipboardList,
       iconColor: "#f97316",
@@ -67,7 +70,7 @@ export default function AdminDashboard({ initialData }: AdminDashboardProps) {
     },
     {
       title: "Total Users",
-      value: initialData ? initialData.totalUsers.toString() : "45",
+      value: initialData ? initialData.totalUsers.toString() : "0",
       delta: "vs last week",
       icon: faCloud,
       iconColor: "#9333ea",
@@ -75,13 +78,12 @@ export default function AdminDashboard({ initialData }: AdminDashboardProps) {
     },
   ];
 
-  const orders = initialData?.orders || [
-    { id: "#12345", customer: "John Doe", service: "1K Premium Likes", amount: "$29.99", status: "Completed" },
-    { id: "#12344", customer: "Emily White", service: "500 Followers", amount: "$7.99", status: "Completed" },
-    { id: "#12343", customer: "Jane Smith", service: "10K Views", amount: "$39.99", status: "Processing" },
-    { id: "#12342", customer: "Mike Johnson", service: "2.5K Followers", amount: "$28.89", status: "Failed" },
-    { id: "#12341", customer: "Chris Green", service: "100 Premium Likes", amount: "$5.99", status: "Completed" },
-  ];
+  const rawOrders = initialData?.orders || [];
+  const filteredOrders = showUnpaid 
+    ? rawOrders 
+    : rawOrders.filter(order => order.paymentStatus === "PAID" || order.status === "COMPLETED");
+  
+  const displayOrders = filteredOrders.slice(0, 5);
 
   return (
     <div className="admin-wrapper">
@@ -153,6 +155,48 @@ export default function AdminDashboard({ initialData }: AdminDashboardProps) {
             <div className="admin-card admin-orders-card">
               <div className="admin-card-header">
                 <h2>Recent Orders</h2>
+                <div className="admin-card-actions">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label className="admin-toggle-label" style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      cursor: 'pointer',
+                      padding: 0,
+                      background: 'none',
+                      border: 'none'
+                    }}>
+                      <input 
+                        type="checkbox" 
+                        checked={showUnpaid} 
+                        onChange={(e) => setShowUnpaid(e.target.checked)} 
+                        style={{ display: 'none' }}
+                      />
+                      <span style={{
+                        position: 'relative',
+                        display: 'inline-block',
+                        width: '40px',
+                        height: '20px',
+                        backgroundColor: showUnpaid ? '#2563eb' : '#cbd5e1',
+                        borderRadius: '20px',
+                        transition: '.4s'
+                      }}>
+                        <span style={{
+                          position: 'absolute',
+                          content: '""',
+                          height: '14px',
+                          width: '14px',
+                          left: showUnpaid ? '22px' : '4px',
+                          bottom: '3px',
+                          backgroundColor: 'white',
+                          transition: '.4s',
+                          borderRadius: '50%'
+                        }}></span>
+                      </span>
+                    </label>
+                    <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Show unpaid attempts</span>
+                  </div>
+                </div>
               </div>
               <table className="admin-table">
                 <thead>
@@ -165,9 +209,9 @@ export default function AdminDashboard({ initialData }: AdminDashboardProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order) => (
+                  {displayOrders.map((order) => (
                     <tr key={order.id}>
-                      <td>{order.id}</td>
+                      <td title={order.id}>#{order.id.slice(-6).toUpperCase()}</td>
                       <td>{order.customer}</td>
                       <td>{order.service}</td>
                       <td>{order.amount}</td>
@@ -176,6 +220,13 @@ export default function AdminDashboard({ initialData }: AdminDashboardProps) {
                       </td>
                     </tr>
                   ))}
+                  {displayOrders.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                        No recent orders found
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -184,7 +235,34 @@ export default function AdminDashboard({ initialData }: AdminDashboardProps) {
               <div className="admin-card-header">
                 <h2>Sales This Week</h2>
               </div>
-              <div className="admin-placeholder-chart">Chart Placeholder</div>
+              <div className="admin-chart-container" style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '8px', padding: '20px 10px' }}>
+                {initialData?.salesChart?.map((day) => {
+                  const maxAmount = Math.max(...(initialData.salesChart?.map(d => d.amount) || [1]));
+                  const height = maxAmount > 0 ? (day.amount / maxAmount) * 100 : 0;
+                  const date = new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' });
+                  
+                  return (
+                    <div key={day.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <div 
+                        className="chart-bar" 
+                        style={{ 
+                          width: '100%', 
+                          height: `${height}%`, 
+                          backgroundColor: '#2563eb', 
+                          borderRadius: '4px 4px 0 0',
+                          minHeight: day.amount > 0 ? '4px' : '0',
+                          transition: 'height 0.3s ease'
+                        }}
+                        title={`$${day.amount.toFixed(2)}`}
+                      ></div>
+                      <span style={{ fontSize: '10px', color: '#64748b' }}>{date}</span>
+                    </div>
+                  );
+                })}
+                {(!initialData?.salesChart || initialData.salesChart.length === 0) && (
+                  <div className="admin-placeholder-chart">No sales data available</div>
+                )}
+              </div>
             </div>
           </section>
           </div>

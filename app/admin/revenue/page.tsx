@@ -12,7 +12,7 @@ export default async function Page() {
     // Fetch all completed payments
     const payments = await prisma.payment.findMany({
       where: {
-        status: "SUCCESS",
+        status: "PAID",
       },
       include: {
         order: true,
@@ -84,7 +84,25 @@ export default async function Page() {
       };
     });
 
-    return <RevenueDashboard initialTransactions={transactions} summary={summary} />;
+    // 6. Revenue Chart (Last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const chartData: { date: string; amount: number }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateKey = d.toISOString().split('T')[0];
+      
+      const dayAmount = payments
+        .filter(p => p.createdAt.toISOString().split('T')[0] === dateKey)
+        .reduce((sum, p) => sum + p.amount, 0);
+        
+      chartData.push({ date: dateKey, amount: dayAmount });
+    }
+    chartData.sort((a, b) => a.date.localeCompare(b.date));
+
+    return <RevenueDashboard initialTransactions={transactions} summary={summary} chartData={chartData} />;
   } catch (error) {
     console.error("Error loading revenue data:", error);
     // Return empty dashboard on error

@@ -69,11 +69,11 @@ export async function POST(request: NextRequest) {
     const order = payment.order;
 
     // Update payment status
-    let paymentStatus: 'PENDING' | 'SUCCESS' | 'FAILED' = 'PENDING';
+    let paymentStatus: 'PENDING' | 'PAID' | 'FAILED' = 'PENDING';
     let orderStatus = order.status;
 
     if (payment_status === 'paid' || payment_status === 'paid_over') {
-      paymentStatus = 'SUCCESS';
+      paymentStatus = 'PAID';
       orderStatus = 'PROCESSING';
 
       // Update payment

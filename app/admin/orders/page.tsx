@@ -18,13 +18,20 @@ export default async function Page({
   try {
     const page = Number(searchParams?.page) || 1;
     const statusParam = searchParams?.status;
-    const status = typeof statusParam === "string" && statusParam !== "All" ? statusParam : undefined;
+    
+    // Default to PAID if no status is specified (Instruction 4)
+    // "All" will show all orders including unpaid ones
+    const status = typeof statusParam === "string" ? (statusParam === "All" ? undefined : statusParam) : "PAID";
     const pageSize = 10;
   
     // Build where clause
     const where: Prisma.OrderWhereInput = {};
     if (status) {
-      where.status = status as any; // Cast to specific enum if needed
+      if (status === "PAID") {
+        where.payment = { status: "PAID" };
+      } else {
+        where.status = status as any;
+      }
     }
 
     // Get total count
@@ -98,7 +105,7 @@ export default async function Page({
       currentPage={page} 
       totalPages={totalPages} 
       totalOrders={totalOrders}
-      currentStatus={status || "All"}
+      currentStatus={statusParam === "All" ? "All" : (status || "PAID")}
       services={services}
     />
   );

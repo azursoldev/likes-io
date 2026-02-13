@@ -22,12 +22,22 @@ export async function pollOrderStatuses() {
       try {
         const status = await japAPI.getOrderStatus(order.japOrderId);
 
-        // Update order status based on JAP status
+        // Update order status based on JAP status (Instruction 7)
         let newStatus = order.status;
-        if (status.status === 'Completed' || status.status === 'completed') {
+        const panelStatus = status.status.toLowerCase();
+
+        if (panelStatus === 'completed') {
           newStatus = 'COMPLETED';
-        } else if (status.status === 'Failed' || status.status === 'failed' || status.status === 'Cancelled') {
+        } else if (panelStatus === 'canceled' || panelStatus === 'cancelled') {
+          newStatus = 'CANCELLED';
+        } else if (panelStatus === 'failed') {
           newStatus = 'FAILED';
+        } else if (panelStatus === 'in progress' || panelStatus === 'pending' || panelStatus === 'processing') {
+          newStatus = 'PROCESSING';
+        } else if (panelStatus === 'partial') {
+          // Partial often means COMPLETED but with some issues, 
+          // but for metrics we might want to treat it as COMPLETED if paid.
+          newStatus = 'COMPLETED'; 
         }
 
         await prisma.order.update({
