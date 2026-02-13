@@ -86,12 +86,14 @@ export default function OrdersDashboard({
   });
   const [isSaving, setIsSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>(currentStatus);
+  const [showUnpaid, setShowUnpaid] = useState<boolean>(currentStatus === "All");
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync internal state with props
   useEffect(() => {
     setStatusFilter(currentStatus);
+    setShowUnpaid(currentStatus === "All");
   }, [currentStatus]);
 
   useEffect(() => {
@@ -124,10 +126,24 @@ export default function OrdersDashboard({
     // Update URL for server-side filtering
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", "1"); // Reset to page 1 on filter change
+    
     if (status === "All") {
       params.delete("status");
+      setShowUnpaid(false); // If they pick "All" from dropdown, it's basically the same as PAID in our logic? No, All means All.
     } else {
       params.set("status", status);
+    }
+    router.push(`?${params.toString()}`);
+  };
+
+  const handleToggleUnpaid = (checked: boolean) => {
+    setShowUnpaid(checked);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1");
+    if (checked) {
+      params.set("status", "All");
+    } else {
+      params.delete("status"); // Deleting status defaults to PAID in page.tsx
     }
     router.push(`?${params.toString()}`);
   };
@@ -186,16 +202,18 @@ export default function OrdersDashboard({
         body: JSON.stringify(editFormData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to update order");
+        throw new Error(data.error || "Failed to update order");
       }
 
       // Success
       router.refresh(); // Refresh server components
       handleCloseEditModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating order:", error);
-      alert("Failed to update order");
+      alert(error.message || "Failed to update order");
     } finally {
       setIsSaving(false);
     }
@@ -220,7 +238,7 @@ export default function OrdersDashboard({
   // We rely on server-side filtering now, so initialOrders is already filtered
   const filteredOrders = initialOrders;
 
-  const statusOptions = ["All", "PENDING_PAYMENT", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED", "REFUNDED"];
+  const statusOptions = ["All", "CREATED", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED", "REFUNDED"];
 
   const startItem = (currentPage - 1) * 10 + 1;
   const endItem = Math.min(currentPage * 10, totalOrders);
@@ -272,6 +290,40 @@ export default function OrdersDashboard({
                 <input placeholder="Search by Order ID, na" aria-label="Search orders" />
               </div>
               <div className="orders-actions-right">
+                <div className="unpaid-toggle-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px' }}>
+                  <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '20px' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={showUnpaid}
+                      onChange={(e) => handleToggleUnpaid(e.target.checked)}
+                      style={{ opacity: 0, width: 0, height: 0 }}
+                    />
+                    <span className="slider round" style={{
+                      position: 'absolute',
+                      cursor: 'pointer',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: showUnpaid ? '#2563eb' : '#ccc',
+                      transition: '.4s',
+                      borderRadius: '20px'
+                    }}>
+                      <span style={{
+                        position: 'absolute',
+                        content: '""',
+                        height: '14px',
+                        width: '14px',
+                        left: showUnpaid ? '22px' : '4px',
+                        bottom: '3px',
+                        backgroundColor: 'white',
+                        transition: '.4s',
+                        borderRadius: '50%'
+                      }}></span>
+                    </span>
+                  </label>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Show unpaid attempts</span>
+                </div>
                 <div className="orders-filter-dropdown-wrapper" ref={dropdownRef}>
                   <div 
                     className="orders-filter-dropdown"

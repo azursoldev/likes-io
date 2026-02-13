@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     await prisma.payment.update({
       where: { id: payment.id },
       data: {
-        status: result.status === 'success' ? 'SUCCESS' : 'FAILED',
+        status: result.status === 'success' ? 'PAID' : 'FAILED',
         webhookData: { ...(event as any), couponCode: existingWebhookData.couponCode, discountAmount: existingWebhookData.discountAmount },
       },
     });

@@ -8,21 +8,21 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  email     String     @unique
-  password  String
-  name      String?
-  role      UserRole   @default(USER)
-  isBlocked Boolean    @default(false)
-  walletBalance Float  @default(0)
-  walletTransactions WalletTransaction[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  avatarUrl String?
-  blogPosts BlogPost[]
-  orders    Order[]
-  reviews   Review[]
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  password            String
+  name                String?
+  role                UserRole             @default(USER)
+  isBlocked           Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  avatarUrl           String?
+  walletBalance       Float                @default(0)
+  blogPosts           BlogPost[]
+  orders              Order[]
   passwordResetTokens PasswordResetToken[]
+  walletTransactions  WalletTransaction[]
+  reviews             Review[]
 
   @@index([email])
   @@index([role])
@@ -41,9 +41,9 @@ model Order {
   link        String?
   japOrderId  String?
   japStatus   String?
-  upsellData  Json?       // Stores [{ upsellId, price, title }]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  upsellData  Json?
   service     Service     @relation(fields: [serviceId], references: [id])
   user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   payment     Payment?
@@ -96,43 +96,27 @@ model Payment {
 }
 
 model Upsell {
-  id            String   @id @default(cuid())
+  id            String       @id @default(cuid())
   title         String
   description   String?
-  
-  // Mapping
-  serviceId     String?  // Optional: maps to a Service
-  packageId     String?  // Optional: if using package ID
-  
-  // Pricing
+  serviceId     String?
+  packageId     String?
   basePrice     Float
   discountType  DiscountType @default(PERCENT)
   discountValue Float
-  
-  // Display
   badgeText     String?
-  badgeColor    String? @default("red")
-  badgeIcon     String? // "thumbs-up", "user-plus", etc.
-  
-  // Targeting rules
+  badgeColor    String?      @default("red")
+  badgeIcon     String?
   platform      Platform?
   serviceType   ServiceType?
   minSubtotal   Float?
-  
-  // State
-  isActive      Boolean  @default(true)
-  sortOrder     Int      @default(0)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isActive      Boolean      @default(true)
+  sortOrder     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@index([isActive])
   @@index([platform, serviceType])
-}
-
-enum DiscountType {
-  PERCENT
-  FIXED
 }
 
 model SocialProfile {
@@ -150,84 +134,78 @@ model SocialProfile {
 }
 
 model SocialProof {
-  id           String   @id @default(cuid())
-  platform     String
-  username     String
-  service      String
-  timeText     String
-  notificationLabel String @default("just purchased")
-  displayOrder Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(cuid())
+  platform          String
+  username          String
+  service           String
+  timeText          String
+  notificationLabel String   @default("just purchased")
+  displayOrder      Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model AdminSettings {
-  id                     String   @id @default(cuid())
-  japApiUrl              String?
-  japApiKey              String?
-  checkoutApiKey         String?
-  checkoutWebhookSecret  String?
-  bigPayMeApiKey         String?
-  bigPayMeWebhookSecret  String?
-  rapidApiKey            String?
-  rapidApiInstagramHost  String?
-  rapidApiTikTokHost     String?
-  rapidApiYouTubeHost    String?
-  smtpHost               String?
-  smtpPort               Int?
-  smtpSecure             Boolean  @default(false)
-  smtpUser               String?
-  smtpPass               String?
-  smtpFrom               String?
-  defaultCurrency        String   @default("USD")
-  cryptomusMerchantId    String?
-  cryptomusApiKey        String?
-  cryptomusDisplayName   String?
-  cryptomusTestMode      Boolean  @default(false)
-  bigPayMerchantId       String?
-  bigPayDisplayName      String?
-  bigPayApiSecret        String?
-  bigPayTestMode         Boolean  @default(false)
-  exitIntentEnabled      Boolean  @default(false)
-  exitIntentTitle        String?
-  exitIntentSubtitle     String?
-  exitIntentDiscountCode String?
-  newServiceIndicator    Boolean  @default(true)
-  supportEmail           String?
-  updatedAt              DateTime @updatedAt
-  bannerDurationHours    Int      @default(24)
-  bannerEnabled          Boolean  @default(true)
-  inboxCount             Int      @default(0)
-  teamCount              Int      @default(0)
-  faviconUrl             String?
-  footerLogoUrl          String?
-  headerLogoUrl          String?
-  homeMetaDescription    String?
-  homeMetaTitle          String?
-  robotsTxtContent       String?  @default("User-agent: *\nAllow: /")
-  customSitemapXml       String?  @db.Text
-  sitemapEnabled         Boolean  @default(true)
-  recaptchaSecretKey     String?
-  recaptchaSiteKey       String?
-  googleClientId         String?
-  googleClientSecret     String?
-  facebookClientId       String?
-  facebookClientSecret   String?
-
-  // Google Analytics & Search Console
-  googleAnalyticsId      String?
-  googleSiteVerification String?
-
-  // MyFatoorah Settings
-  myFatoorahToken        String?
-  myFatoorahBaseURL      String?  @default("https://apitest.myfatoorah.com")
-  myFatoorahTestMode     Boolean  @default(true)
+  id                      String   @id @default(cuid())
+  japApiUrl               String?
+  japApiKey               String?
+  checkoutApiKey          String?
+  checkoutWebhookSecret   String?
+  bigPayMeApiKey          String?
+  bigPayMeWebhookSecret   String?
+  rapidApiKey             String?
+  rapidApiInstagramHost   String?
+  rapidApiTikTokHost      String?
+  rapidApiYouTubeHost     String?
+  smtpHost                String?
+  smtpUser                String?
+  smtpPass                String?
+  defaultCurrency         String   @default("USD")
+  updatedAt               DateTime @updatedAt
+  bannerDurationHours     Int      @default(24)
+  bannerEnabled           Boolean  @default(true)
+  bigPayApiSecret         String?
+  bigPayDisplayName       String?
+  bigPayMerchantId        String?
+  bigPayTestMode          Boolean  @default(false)
+  cryptomusApiKey         String?
+  cryptomusDisplayName    String?
+  cryptomusMerchantId     String?
+  cryptomusTestMode       Boolean  @default(false)
+  customSitemapXml        String?
+  exitIntentDiscountCode  String?
+  exitIntentEnabled       Boolean  @default(false)
+  exitIntentSubtitle      String?
+  exitIntentTitle         String?
+  facebookClientId        String?
+  facebookClientSecret    String?
+  faviconUrl              String?
+  footerLogoUrl           String?
+  googleAnalyticsId       String?
+  googleClientId          String?
+  googleClientSecret      String?
+  googleSiteVerification  String?
+  headerLogoUrl           String?
+  homeMetaDescription     String?
+  homeMetaTitle           String?
+  inboxCount              Int      @default(0)
+  myFatoorahBaseURL       String?  @default("https://apitest.myfatoorah.com")
+  myFatoorahTestMode      Boolean  @default(true)
+  myFatoorahToken         String?
   myFatoorahWebhookSecret String?
-
-  // System Status
-  systemStatus           String?  @default("Operational")
-  systemStatusMessage    String?  @default("All Systems Operational")
-  systemStatusEnabled    Boolean  @default(true)
+  newServiceIndicator     Boolean  @default(true)
+  recaptchaSecretKey      String?
+  recaptchaSiteKey        String?
+  robotsTxtContent        String?  @default("User-agent: *\nAllow: /")
+  sitemapEnabled          Boolean  @default(true)
+  smtpFrom                String?
+  smtpPort                Int?
+  smtpSecure              Boolean  @default(false)
+  supportEmail            String?
+  systemStatus            String?  @default("Operational")
+  systemStatusEnabled     Boolean  @default(true)
+  systemStatusMessage     String?  @default("All Systems Operational")
+  teamCount               Int      @default(0)
 
   @@map("admin_settings")
 }
@@ -235,10 +213,10 @@ model AdminSettings {
 model EmailLog {
   id                String   @id @default(cuid())
   userId            String?
-  type              String   // e.g., "order_confirmation", "password_reset"
-  status            String   // "sent" or "failed"
+  type              String
+  status            String
   providerMessageId String?
-  metadata          Json?    // Any extra data
+  metadata          Json?
   createdAt         DateTime @default(now())
 
   @@index([userId])
@@ -248,54 +226,54 @@ model EmailLog {
 }
 
 model HomepageContent {
-  id                     String   @id @default(cuid())
-  heroTitle              String
-  heroSubtitle           String
-  heroRating             String?
-  heroReviewCount        String?
-  heroCtaButtons         Json?
-  isActive               Boolean  @default(true)
-  updatedAt              DateTime @updatedAt
-  benefits               Json?
-  heroProfileEngagement  String?
-  heroProfileFollowers   String?
-  heroProfileHandle      String?
-  heroProfileLikes       String?
-  heroProfileRole        String?
-  influenceSubtitle      String?
-  influenceTitle         String?
-  platformSubtitle       String?
-  platformTitle          String?
-  quickStartDescription1 String?
-  quickStartDescription2 String?
-  quickStartTitle        String?
-  whyChooseSubtitle      String?
-  whyChooseTitle         String?
-  platformCards          Json?
-  heroProfileImage       String?
-  influenceImage         String?
-  influenceSteps         Json?
-  quickStartButtons      Json?
-  getStartedMainHeading  String?
-  serviceIcons           Json?
+  id                      String   @id @default(cuid())
+  heroTitle               String
+  heroSubtitle            String
+  heroRating              String?
+  heroReviewCount         String?
+  heroCtaButtons          Json?
+  isActive                Boolean  @default(true)
+  updatedAt               DateTime @updatedAt
+  benefits                Json?
+  getStartedMainHeading   String?
   getStartedPlatformIcons Json?
-  socialProofLabel       String?  @default("just purchased")
+  heroProfileEngagement   String?
+  heroProfileFollowers    String?
+  heroProfileHandle       String?
+  heroProfileImage        String?
+  heroProfileLikes        String?
+  heroProfileRole         String?
+  influenceImage          String?
+  influenceSteps          Json?
+  influenceSubtitle       String?
+  influenceTitle          String?
+  platformCards           Json?
+  platformSubtitle        String?
+  platformTitle           String?
+  quickStartButtons       Json?
+  quickStartDescription1  String?
+  quickStartDescription2  String?
+  quickStartTitle         String?
+  serviceIcons            Json?
+  socialProofLabel        String?  @default("just purchased")
+  whyChooseSubtitle       String?
+  whyChooseTitle          String?
 
   @@map("homepage_content")
 }
 
 model TeamMember {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   name         String
   role         String
-  description  String
-  twitterUrl   String?
-  linkedinUrl  String?
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
   avatarUrl    String?
-  displayOrder Int      @default(0)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime   @default(now())
+  description  String
+  linkedinUrl  String?
+  twitterUrl   String?
+  updatedAt    DateTime   @updatedAt
   blogPosts    BlogPost[]
 
   @@index([displayOrder])
@@ -362,16 +340,16 @@ model PlatformSection {
 }
 
 model GetStartedContent {
-  id          Int         @id @default(autoincrement())
-  platform    Platform
-  packType    ServiceType
-  quality     String
-  heading     String?
+  id               Int         @id @default(autoincrement())
+  platform         Platform
+  packType         ServiceType
+  quality          String
+  features         Json
+  explanation      String?
+  pricing          Json?
+  isActive         Boolean     @default(true)
   explanationTitle String?
-  features    Json
-  explanation String?
-  pricing     Json?
-  isActive    Boolean     @default(true)
+  heading          String?
 
   @@unique([platform, packType, quality])
   @@index([platform])
@@ -412,33 +390,31 @@ model ServicePageContent {
   id                    Int         @id @default(autoincrement())
   platform              Platform
   serviceType           ServiceType
-  slug                  String?     @unique
-  metaTitle             String?
-  metaDescription       String?
   heroTitle             String
   heroSubtitle          String
   heroRating            String?
   heroReviewCount       String?
   assuranceCardText     String?
-  learnMoreText         String?
-  learnMoreModalContent String?
   packages              Json
   qualityCompare        Json?
   howItWorks            Json?
   isActive              Boolean     @default(true)
   updatedAt             DateTime    @updatedAt
   benefits              Json?
-  moreServicesTitle     String?
-  moreServicesHighlight String?
+  customEnabled         Boolean     @default(false)
+  customMaxQuantity     Int?
+  customMinQuantity     Int?
+  customRoundToStep     Boolean     @default(false)
+  customStep            Int?
+  learnMoreModalContent String?
+  learnMoreText         String?
+  metaDescription       String?
+  metaTitle             String?
   moreServicesBody      String?
   moreServicesButtons   Json?
-
-  // Custom Quantity Settings
-  customEnabled       Boolean     @default(false)
-  customMinQuantity   Int?
-  customMaxQuantity   Int?
-  customStep          Int?
-  customRoundToStep   Boolean     @default(false)
+  moreServicesHighlight String?
+  moreServicesTitle     String?
+  slug                  String?     @unique
 
   @@unique([platform, serviceType])
   @@index([platform, serviceType])
@@ -469,9 +445,9 @@ model Review {
   orderId     String?
   rating      Int
   comment     String
-  authorName  String?
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
+  authorName  String?
   updatedAt   DateTime @updatedAt
   order       Order?   @relation(fields: [orderId], references: [id])
   user        User?    @relation(fields: [userId], references: [id])
@@ -482,13 +458,13 @@ model Review {
 }
 
 model PasswordResetToken {
-  id         String   @id @default(cuid())
-  userId     String
-  tokenHash  String
-  expiresAt  DateTime
-  usedAt     DateTime?
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -497,15 +473,15 @@ model PasswordResetToken {
 model Testimonial {
   id           String       @id @default(cuid())
   handle       String
+  role         String?      @default("Verified Buyer")
   text         String
   rating       Int
-  role         String?      @default("Verified Buyer")
   platform     Platform?
-  serviceType  ServiceType?
   isApproved   Boolean      @default(false)
   isFeatured   Boolean      @default(false)
   displayOrder Int          @default(0)
   createdAt    DateTime     @default(now())
+  serviceType  ServiceType?
   updatedAt    DateTime     @updatedAt
 
   @@index([isApproved])
@@ -515,24 +491,23 @@ model Testimonial {
 }
 
 model BlogPost {
-  id          String    @id @default(cuid())
-  title       String
-  slug        String    @unique
-  content     String
-  excerpt     String?
-  coverImage  String?
-  authorId    String
-  author      User      @relation(fields: [authorId], references: [id])
-  teamMemberId String?
-  teamMember   TeamMember? @relation(fields: [teamMemberId], references: [id])
-
-  category    String?
+  id              String      @id @default(cuid())
+  title           String
+  slug            String      @unique
+  content         String
+  excerpt         String?
+  coverImage      String?
+  authorId        String
+  teamMemberId    String?
+  category        String?
   metaTitle       String?
   metaDescription String?
-  isPublished Boolean   @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isPublished     Boolean     @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  author          User        @relation(fields: [authorId], references: [id])
+  teamMember      TeamMember? @relation(fields: [teamMemberId], references: [id])
 
   @@index([slug])
   @@index([isPublished])
@@ -550,9 +525,9 @@ model LegalPage {
 
 model EmailTemplate {
   id        String   @id @default(cuid())
-  type      String
   subject   String
   body      String
+  type      String
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -600,21 +575,20 @@ model IconAsset {
 }
 
 model Coupon {
-  id                    String   @id @default(cuid())
-  code                  String   @unique
+  id                    String             @id @default(cuid())
+  code                  String             @unique
   type                  CouponType
   value                 Float
-  currency              String?  @default("USD")
-  status                CouponStatus @default(ACTIVE)
+  currency              String?            @default("USD")
+  status                CouponStatus       @default(ACTIVE)
   startsAt              DateTime?
   expiresAt             DateTime?
   maxRedemptions        Int?
   maxRedemptionsPerUser Int?
   minOrderAmount        Float?
-  applicableServices    Json?    // Array of service IDs or types
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
+  applicableServices    Json?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   redemptions           CouponRedemption[]
 
   @@index([code])
@@ -623,13 +597,12 @@ model Coupon {
 }
 
 model CouponRedemption {
-  id        String   @id @default(cuid())
-  couponId  String
-  userId    String?
-  orderId   String?
+  id         String   @id @default(cuid())
+  couponId   String
+  userId     String?
+  orderId    String?
   redeemedAt DateTime @default(now())
-  
-  coupon    Coupon   @relation(fields: [couponId], references: [id])
+  coupon     Coupon   @relation(fields: [couponId], references: [id])
 
   @@index([couponId])
   @@index([userId])
@@ -637,39 +610,60 @@ model CouponRedemption {
 }
 
 model FreeToolPageContent {
-  id              String   @id @default(cuid())
-  slug            String   @unique
-  heroTitle       String
-  heroDescription String
-  rating          String
-  reviewCount     String
-  
-  // Form Section
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  heroTitle        String
+  heroDescription  String
+  rating           String
+  reviewCount      String
   step1Title       String?
   step1Description String?
   step2Title       String?
   step2Description String?
   step3Title       String?
   step3Description String?
-  
   inputLabel       String?
   inputPlaceholder String?
-  
   buttonText       String?
-  
   assurance1       String?
   assurance2       String?
   assurance3       String?
-  
   faqs             Json?
   reviews          Json?
-
   reviewsTitle     String?
   reviewsSubtitle  String?
+  updatedAt        DateTime @updatedAt
 
-  updatedAt       DateTime @updatedAt
-  
   @@map("free_tool_page_content")
+}
+
+model WalletTransaction {
+  id        String        @id @default(cuid())
+  userId    String
+  amount    Float
+  currency  String        @default("USD")
+  type      WalletTxnType
+  note      String?
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Navigation {
+  id                String   @id @default(cuid())
+  headerMenu        Json?
+  footerMenu        Json?
+  headerColumnMenus Json?
+  footerColumnMenus Json?
+  updatedAt         DateTime @updatedAt
+
+  @@map("navigation")
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
 }
 
 enum CouponType {
@@ -726,31 +720,7 @@ enum PaymentStatus {
   REFUNDED
 }
 
-model WalletTransaction {
-  id        String   @id @default(cuid())
-  userId    String
-  amount    Float
-  currency  String   @default("USD")
-  type      WalletTxnType
-  note      String?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
-}
-
 enum WalletTxnType {
   CREDIT
   DEBIT
-}
-
-model Navigation {
-  id                String   @id @default(cuid())
-  headerMenu        Json?
-  footerMenu        Json?
-  headerColumnMenus Json?
-  footerColumnMenus Json?
-  updatedAt         DateTime @updatedAt
-
-  @@map("navigation")
 }

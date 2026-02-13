@@ -44,16 +44,13 @@ const statusIcon = (status: string) => {
 interface RevenueDashboardProps {
   initialTransactions?: TransactionRow[];
   summary?: RevenueSummary;
+  chartData?: { date: string; amount: number }[];
 }
 
 export default function RevenueDashboard({ 
   initialTransactions = [], 
-  summary = {
-    today: "$0.00",
-    week: "$0.00",
-    month: "$0.00",
-    total: "$0.00"
-  }
+  summary = { today: "$0.00", week: "$0.00", month: "$0.00", total: "$0.00" },
+  chartData = []
 }: RevenueDashboardProps) {
   const summaryCards = [
     { title: "Today’s Revenue", value: summary.today },
@@ -120,7 +117,34 @@ export default function RevenueDashboard({
             <section className="revenue-stack">
               <div className="revenue-chart-card">
                 <div className="revenue-card-header">Revenue (Last 7 Days)</div>
-                <div className="revenue-chart-placeholder">Chart Placeholder</div>
+                <div className="revenue-chart-container" style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '8px', padding: '20px 10px' }}>
+                  {chartData.map((day) => {
+                    const maxAmount = Math.max(...(chartData.map(d => d.amount) || [1]));
+                    const height = maxAmount > 0 ? (day.amount / maxAmount) * 100 : 0;
+                    const date = new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' });
+                    
+                    return (
+                      <div key={day.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        <div 
+                          className="chart-bar" 
+                          style={{ 
+                            width: '100%', 
+                            height: `${height}%`, 
+                            backgroundColor: '#16a34a', 
+                            borderRadius: '4px 4px 0 0',
+                            minHeight: day.amount > 0 ? '4px' : '0',
+                            transition: 'height 0.3s ease'
+                          }}
+                          title={`$${day.amount.toFixed(2)}`}
+                        ></div>
+                        <span style={{ fontSize: '10px', color: '#64748b' }}>{date}</span>
+                      </div>
+                    );
+                  })}
+                  {chartData.length === 0 && (
+                    <div className="revenue-chart-placeholder">No revenue data available</div>
+                  )}
+                </div>
               </div>
 
               <div className="revenue-table-card">

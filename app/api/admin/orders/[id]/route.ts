@@ -44,7 +44,7 @@ export async function PATCH(
 
     // Handle Customer (Email) update
     if (email) {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.user.findFirst({
         where: { email },
       });
 
@@ -61,6 +61,22 @@ export async function PATCH(
       where: { id: params.id },
       data: updateData,
     });
+
+    // Also update associated payment if status is set to PROCESSING or COMPLETED
+    if (status === "PROCESSING" || status === "COMPLETED") {
+      await prisma.payment.updateMany({
+        where: { orderId: params.id },
+        data: { status: "PAID" },
+      });
+    }
+
+    // Also update associated payment amount if provided
+    if (amount !== undefined) {
+      await prisma.payment.updateMany({
+        where: { orderId: params.id },
+        data: { amount: Number(amount) },
+      });
+    }
 
     return NextResponse.json(updatedOrder);
   } catch (error) {
