@@ -1,5 +1,6 @@
 import AdminDashboard from "../components/AdminDashboard";
 import { prisma } from "@/lib/prisma";
+import { PaymentStatus } from "@prisma/client";
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export default async function Page() {
     const totalOrders = await prisma.order.count({
       where: {
         OR: [
-          { payment: { status: "PAID" } },
+          { payment: { status: PaymentStatus.PAID } },
           { status: "COMPLETED" }
         ]
       }
@@ -23,7 +24,7 @@ export default async function Page() {
       _sum: { price: true },
       where: {
         OR: [
-          { payment: { status: "PAID" } },
+          { payment: { status: PaymentStatus.PAID } },
           { status: "COMPLETED" }
         ]
       },
@@ -36,7 +37,7 @@ export default async function Page() {
       where: {
         createdAt: { gte: today },
         OR: [
-          { payment: { status: "PAID" } },
+          { payment: { status: PaymentStatus.PAID } },
           { status: "COMPLETED" }
         ]
       },
@@ -56,7 +57,7 @@ export default async function Page() {
       where: {
         createdAt: { gte: sevenDaysAgo },
         OR: [
-          { payment: { status: "PAID" } },
+          { payment: { status: PaymentStatus.PAID } },
           { status: "COMPLETED" }
         ]
       },
