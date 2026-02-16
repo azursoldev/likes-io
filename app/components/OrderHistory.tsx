@@ -52,7 +52,7 @@ const STATUS_FILTER_OPTIONS: { value: StatusFilterValue; label: string }[] = [
 function getStatusMeta(status: string): { label: string; className: string } {
   if (status === "COMPLETED") return { label: "Completed", className: "completed" };
   if (status === "PROCESSING") return { label: "Processing", className: "processing" };
-  if (status === "PENDING_PAYMENT") return { label: "Pending", className: "pending" };
+  if (status === "CREATED") return { label: "Pending", className: "pending" };
   if (status === "FAILED") return { label: "Failed", className: "failed" };
   if (status === "REFUNDED") return { label: "Refunded", className: "refunded" };
   if (status === "CANCELLED") return { label: "Canceled", className: "cancelled" };
