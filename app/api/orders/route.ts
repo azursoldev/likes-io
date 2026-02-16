@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     // Calculate price
     const price = service.finalPrice * quantity;
 
-    // Create order
+    // Create order with initial status CREATED (awaiting payment)
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         quantity: parseInt(quantity),
         price,
         currency: 'USD', // TODO: Get from user preferences or settings
-        status: 'PENDING_PAYMENT',
+        status: 'CREATED',
         link: link || null,
       },
       include: {

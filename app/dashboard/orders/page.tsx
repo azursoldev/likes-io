@@ -81,7 +81,7 @@ function buildStatusWhere(
   if (filter === "All") return undefined;
   if (filter === "Completed") return "COMPLETED";
   if (filter === "Processing") return "PROCESSING";
-  if (filter === "Pending") return "PENDING_PAYMENT";
+  if (filter === "Pending") return "CREATED";
   if (filter === "Failed") return "FAILED";
   if (filter === "RefundedCanceled") {
     return {
