@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
+import { PaymentStatus } from "@prisma/client";
 
 export async function PATCH(
   request: Request,
@@ -66,7 +67,7 @@ export async function PATCH(
     if (status === "PROCESSING" || status === "COMPLETED") {
       await prisma.payment.updateMany({
         where: { orderId: params.id },
-        data: { status: "PAID" },
+        data: { status: PaymentStatus.PAID },
       });
     }
 

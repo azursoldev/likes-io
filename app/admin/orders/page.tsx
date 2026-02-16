@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import OrdersDashboard, { OrderRow } from "../../components/OrdersDashboard";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma, PaymentStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export default async function Page({
     const where: Prisma.OrderWhereInput = {};
     if (status) {
       if (status === "PAID") {
-        where.payment = { status: "PAID" };
+        where.payment = { status: PaymentStatus.PAID };
       } else {
         where.status = status as any;
       }
