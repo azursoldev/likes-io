@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine new status
-    const newStatus = isSuccess ? 'PAID' : 'FAILED';
+    const newStatus = isSuccess ? 'SUCCESS' : 'FAILED';
     
     const existingWebhookData = payment.webhookData as any || {};
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         });
 
         // If payment successful, process order
-        if (newStatus === 'PAID') {
+        if (newStatus === 'SUCCESS') {
             const order = payment.order;
             
             // Record Coupon Redemption

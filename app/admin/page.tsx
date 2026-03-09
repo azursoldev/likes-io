@@ -13,7 +13,7 @@ export default async function Page() {
     const totalOrders = await prisma.order.count({
       where: {
         OR: [
-          { payment: { status: PaymentStatus.PAID } },
+          { payment: { status: PaymentStatus.SUCCESS } },
           { status: "COMPLETED" }
         ]
       }
@@ -24,7 +24,7 @@ export default async function Page() {
       _sum: { price: true },
       where: {
         OR: [
-          { payment: { status: PaymentStatus.PAID } },
+          { payment: { status: PaymentStatus.SUCCESS } },
           { status: "COMPLETED" }
         ]
       },
@@ -37,7 +37,7 @@ export default async function Page() {
       where: {
         createdAt: { gte: today },
         OR: [
-          { payment: { status: PaymentStatus.PAID } },
+          { payment: { status: PaymentStatus.SUCCESS } },
           { status: "COMPLETED" }
         ]
       },
@@ -57,7 +57,7 @@ export default async function Page() {
       where: {
         createdAt: { gte: sevenDaysAgo },
         OR: [
-          { payment: { status: PaymentStatus.PAID } },
+          { payment: { status: PaymentStatus.SUCCESS } },
           { status: "COMPLETED" }
         ]
       },

@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         quantity: parseInt(quantity),
         price,
         currency: 'USD', // TODO: Get from user preferences or settings
-        status: 'CREATED',
+        status: 'PENDING_PAYMENT',
         link: link || null,
       },
       include: {

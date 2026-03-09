@@ -88,46 +88,46 @@ export async function POST(request: NextRequest) {
           const qty = parseInt(quantity);
           const min = serviceContent.customMinQuantity;
           const max = serviceContent.customMaxQuantity;
-          
+
           let isStandardPackage = false;
           const packages = serviceContent.packages as any[];
-          
+
           if (packages && Array.isArray(packages)) {
             const parsePkgQty = (q: string | number): number => {
-               if (typeof q === 'number') return q;
-               const s = q.toString().replace(/,/g, '').trim();
-               if (s.toLowerCase().includes('k')) return parseFloat(s) * 1000;
-               return parseFloat(s);
+              if (typeof q === 'number') return q;
+              const s = q.toString().replace(/,/g, '').trim();
+              if (s.toLowerCase().includes('k')) return parseFloat(s) * 1000;
+              return parseFloat(s);
             };
 
             for (const tab of packages) {
-               if (tab.packages && Array.isArray(tab.packages)) {
-                  for (const pkg of tab.packages) {
+              if (tab.packages && Array.isArray(tab.packages)) {
+                for (const pkg of tab.packages) {
                      if (typeof pkg.qty === 'string' && pkg.qty.includes('+')) continue;
-                     
-                     const pkgQty = parsePkgQty(pkg.qty);
-                     if (pkgQty === qty) {
-                        isStandardPackage = true;
-                        break;
-                     }
+
+                  const pkgQty = parsePkgQty(pkg.qty);
+                  if (pkgQty === qty) {
+                    isStandardPackage = true;
+                    break;
                   }
-               }
-               if (isStandardPackage) break;
+                }
+              }
+              if (isStandardPackage) break;
             }
           }
 
           if (!isStandardPackage) {
-             if (min !== null && qty < min) {
+            if (min !== null && qty < min) {
                 return NextResponse.json({ error: `Quantity must be at least ${min}` }, { status: 400 });
-             }
-             if (max !== null && qty > max) {
+            }
+            if (max !== null && qty > max) {
                 return NextResponse.json({ error: `Quantity must be at most ${max}` }, { status: 400 });
-             }
-             if (serviceContent.customRoundToStep && serviceContent.customStep) {
-                if (qty % serviceContent.customStep !== 0) {
+            }
+            if (serviceContent.customRoundToStep && serviceContent.customStep) {
+              if (qty % serviceContent.customStep !== 0) {
                    return NextResponse.json({ error: `Quantity must be a multiple of ${serviceContent.customStep}` }, { status: 400 });
-                }
-             }
+              }
+            }
           }
         }
       }
@@ -136,14 +136,14 @@ export async function POST(request: NextRequest) {
     // Upsell Calculation
     let upsellTotal = 0;
     const upsellData: any[] = [];
-    
+
     if (upsellIds && Array.isArray(upsellIds) && upsellIds.length > 0) {
       try {
         // @ts-ignore
         const upsells = await prisma.upsell.findMany({
           where: { id: { in: upsellIds }, isActive: true }
         });
-        
+
         for (const upsell of upsells) {
           let itemPrice = upsell.basePrice;
           if (upsell.discountType === 'PERCENT') {
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
             itemPrice -= upsell.discountValue;
           }
           if (itemPrice < 0) itemPrice = 0;
-          
+
           upsellTotal += itemPrice;
           upsellData.push({
             id: upsell.id,
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
     let servicePrice = parseFloat(price);
     let totalBeforeDiscount = servicePrice + upsellTotal;
     let finalPrice = totalBeforeDiscount;
-    
+
     let appliedCoupon = null;
     let discountAmount = 0;
 
@@ -192,14 +192,14 @@ export async function POST(request: NextRequest) {
           // Check expiry
           if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
             console.log(`Coupon ${couponCode} expired`);
-          } 
+          }
           // Check start date
           else if (coupon.startsAt && new Date(coupon.startsAt) > new Date()) {
             console.log(`Coupon ${couponCode} not started yet`);
           }
           // Check max redemptions
           else if (coupon.maxRedemptions && coupon.redemptionCount >= coupon.maxRedemptions) {
-             console.log(`Coupon ${couponCode} max redemptions reached`);
+            console.log(`Coupon ${couponCode} max redemptions reached`);
           }
           else {
             // Check per user limit
@@ -207,46 +207,46 @@ export async function POST(request: NextRequest) {
               SELECT COUNT(*) as count FROM "coupon_redemptions"
               WHERE "couponId" = ${coupon.id} AND "userId" = ${userId}
             `;
-            
+
             const userRedemptionCount = Number(userRedemptions[0]?.count || 0);
-            
+
             if (coupon.maxRedemptionsPerUser && userRedemptionCount >= coupon.maxRedemptionsPerUser) {
               console.log(`Coupon ${couponCode} max redemptions per user reached`);
             } else {
-               // Coupon is valid, calculate discount
-               if (coupon.type === 'PERCENT') {
-                 discountAmount = (finalPrice * coupon.value) / 100;
-               } else {
-                 discountAmount = coupon.value;
-               }
-               
-               // Ensure price doesn't go below 0
-               if (discountAmount > finalPrice) {
-                 discountAmount = finalPrice;
-               }
-               
-               // Recalculate final price (trusting the input price as base, but applying discount)
-               // Ideally we should recalculate base price from DB, but for now we trust the input price matches the selected package
-               // If we wanted to be stricter, we would re-fetch the service price.
-               
-               // Let's rely on the client sending the discounted price, but we VERIFY it.
-               // Or better, we ignore the client's discounted price and calculate it ourselves from the client's "original" price?
-               // The client sends `price` which is usually the FINAL price. 
-               // Wait, the client code sends `finalPrice`.
-               // So if we apply discount again, we might double discount!
-               
-               // Strategy: 
-               // 1. We assume the `price` sent by client IS the final price they expect to pay.
-               // 2. We verify if this price matches (Base Price - Discount).
-               // But we don't know the Base Price easily without fetching the package.
-               // 
-               // Alternative: The client sends `price` (final) and `couponCode`.
-               // We just log the usage and update the DB. 
-               // BUT validation is important. 
-               // If I can't easily fetch base price, I will assume the `price` in body IS the final price.
-               // I will record the redemption.
-               
-               appliedCoupon = coupon;
+              // Coupon is valid, calculate discount
+              if (coupon.type === 'PERCENT') {
+                discountAmount = (finalPrice * coupon.value) / 100;
+              } else {
+                discountAmount = coupon.value;
+              }
+
+              // Ensure price doesn't go below 0
+              if (discountAmount > finalPrice) {
+                discountAmount = finalPrice;
+              }
+
+              // Recalculate final price (trusting the input price as base, but applying discount)
+              // Ideally we should recalculate base price from DB, but for now we trust the input price matches the selected package
+              // If we wanted to be stricter, we would re-fetch the service price.
+
+              // Let's rely on the client sending the discounted price, but we VERIFY it.
+              // Or better, we ignore the client's discounted price and calculate it ourselves from the client's "original" price?
+              // The client sends `price` which is usually the FINAL price.
+              // Wait, the client code sends `finalPrice`.
+              // So if we apply discount again, we might double discount!
+
+              // Strategy:
+              // 1. We assume the `price` sent by client IS the final price they expect to pay.
+              // 2. We verify if this price matches (Base Price - Discount).
+              // But we don't know the Base Price easily without fetching the package.
+              //
+              // Alternative: The client sends `price` (final) and `couponCode`.
+              // We just log the usage and update the DB.
+              // BUT validation is important.
+              // If I can't easily fetch base price, I will assume the `price` in body IS the final price.
+              // I will record the redemption.
+
+              appliedCoupon = coupon;
             }
           }
         }
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
 
     // Find service - first try by serviceId if provided, otherwise find by platform/serviceType
     let service = null;
-    
+
     if (serviceId) {
       service = await prisma.service.findUnique({
         where: { id: serviceId },
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
         }
       });
     }
-    
+
     // If not found by serviceId or japServiceId, find any active service by platform/serviceType
     if (!service) {
       service = await prisma.service.findFirst({
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
     if (!service) {
       // Calculate price per unit from total price and quantity
       const pricePerUnit = servicePrice / parseInt(quantity);
-      
+
       service = await prisma.service.create({
         data: {
           name: `${platform} ${serviceType}`,
@@ -327,7 +327,7 @@ export async function POST(request: NextRequest) {
         quantity: parseInt(quantity),
         price: finalPrice,
         currency,
-        status: 'CREATED',
+        status: 'PENDING_PAYMENT',
         link: link || null,
         upsellData: upsellData.length ? upsellData : undefined,
       },
@@ -349,8 +349,8 @@ export async function POST(request: NextRequest) {
           SELECT "walletBalance" FROM "User" WHERE "id" = ${user.id} LIMIT 1
         `;
         const currentBalance = Array.isArray(rows) && rows.length > 0 && rows[0].walletBalance != null
-          ? Number(rows[0].walletBalance)
-          : Number((user as any)?.walletBalance ?? 0);
+            ? Number(rows[0].walletBalance)
+            : Number((user as any)?.walletBalance ?? 0);
 
         if (currentBalance < order.price) {
           return NextResponse.json(
@@ -372,7 +372,7 @@ export async function POST(request: NextRequest) {
               transactionId: null,
               amount: order.price,
               currency: order.currency,
-              status: 'PAID',
+              status: 'SUCCESS',
               webhookData: appliedCoupon ? { couponCode: appliedCoupon.code, discountAmount } : undefined,
             },
           }),
@@ -412,7 +412,7 @@ export async function POST(request: NextRequest) {
       // Cryptomus payment
       try {
         const cryptomusAPI = await getCryptomusAPI();
-        
+
         if (!cryptomusAPI) {
           return NextResponse.json(
             { error: 'Cryptomus payment is not configured. Please contact support or use card payment.' },
@@ -458,7 +458,7 @@ export async function POST(request: NextRequest) {
       // MyFatoorah payment
       try {
         const myFatoorahAPI = await getMyFatoorahAPI();
-        
+
         if (!myFatoorahAPI) {
           return NextResponse.json(
             { error: 'MyFatoorah payment is not configured. Please contact support or use card payment.' },
