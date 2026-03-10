@@ -28,7 +28,7 @@ export default async function Page({
     const where: Prisma.OrderWhereInput = {};
     if (status) {
       if (status === "PAID") {
-        where.payment = { status: PaymentStatus.PAID };
+        where.payment = { status: PaymentStatus.SUCCESS };
       } else {
         where.status = status as any;
       }

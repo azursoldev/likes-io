@@ -67,7 +67,7 @@ export async function PATCH(
     if (status === "PROCESSING" || status === "COMPLETED") {
       await prisma.payment.updateMany({
         where: { orderId: params.id },
-        data: { status: PaymentStatus.PAID },
+        data: { status: PaymentStatus.SUCCESS },
       });
     }
 

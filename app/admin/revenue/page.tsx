@@ -12,7 +12,7 @@ export default async function Page() {
     // Fetch all completed payments
     const payments = await prisma.payment.findMany({
       where: {
-        status: "PAID",
+        status: "SUCCESS",
       },
       include: {
         order: true,

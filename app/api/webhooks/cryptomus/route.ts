@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     // Get Cryptomus API instance to verify webhook
     const cryptomusAPI = await getCryptomusAPI();
-    
+
     if (!cryptomusAPI) {
       console.error('Cryptomus API not configured');
       return NextResponse.json(
@@ -69,11 +69,11 @@ export async function POST(request: NextRequest) {
     const order = payment.order;
 
     // Update payment status
-    let paymentStatus: 'PENDING' | 'PAID' | 'FAILED' = 'PENDING';
+    let paymentStatus: 'PENDING' | 'SUCCESS' | 'FAILED' = 'PENDING';
     let orderStatus = order.status;
 
     if (payment_status === 'paid' || payment_status === 'paid_over') {
-      paymentStatus = 'PAID';
+      paymentStatus = 'SUCCESS';
       orderStatus = 'PROCESSING';
 
       // Update payment
