@@ -62,7 +62,7 @@ export default function YouTubeViewsCheckoutForm() {
     }
   }, []);
 
-  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "wallet" | "myfatoorah">("crypto");
+  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "wallet" | "ziina">("crypto");
   const [walletBalance, setWalletBalance] = useState(0);
 
   // Fetch wallet balance
@@ -92,67 +92,8 @@ export default function YouTubeViewsCheckoutForm() {
   const [couponSuccess, setCouponSuccess] = useState("");
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
   
-  // MyFatoorah State
-  const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
-  const [isMfLoaded, setIsMfLoaded] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
-
-  // Check if MyFatoorah script is already loaded
-  useEffect(() => {
-    if ((window as any).myFatoorah) {
-      setIsMfLoaded(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (paymentMethod === "myfatoorah" && !mfSession) {
-      // Initiate MyFatoorah Session
-      fetch("/api/payments/initiate-session", {
-        method: "POST",
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            console.error("MF Init Error:", data.error);
-            setError("Failed to load payment form");
-          } else {
-            setMfSession(data);
-            if ((window as any).myFatoorah) {
-              setIsMfLoaded(true);
-            }
-          }
-        })
-        .catch(err => {
-          console.error("MF Fetch Error:", err);
-          setError("Failed to load payment form");
-        });
-    }
-  }, [paymentMethod, mfSession]);
-
-  // Load MyFatoorah script manually if needed
-  useEffect(() => {
-    if (paymentMethod === "myfatoorah" && mfSession?.scriptUrl && !isMfLoaded && !(window as any).myFatoorah) {
-      const scriptId = "mf-payment-script";
-      if (document.getElementById(scriptId)) {
-        setIsMfLoaded(true);
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.id = scriptId;
-      script.src = mfSession.scriptUrl;
-      script.async = true;
-      script.onload = () => {
-        setIsMfLoaded(true);
-      };
-      script.onerror = () => {
-        console.error("MF Script Load Error");
-        setError("Failed to load payment library");
-      };
-      document.body.appendChild(script);
-    }
-  }, [paymentMethod, mfSession, isMfLoaded]);
 
 
   const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; discount: number; icon: any}>>([]);
@@ -225,33 +166,6 @@ export default function YouTubeViewsCheckoutForm() {
   const finalPrice = Math.max(0, totalPrice - discountAmount);
   const subtotal = totalPrice;
 
-  useEffect(() => {
-    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
-      try {
-        const config = {
-          countryCode: mfSession.countryCode,
-          sessionId: mfSession.sessionId,
-          currencyCode: "KWD", // Added currency code
-          amount: totalPrice.toFixed(2), // Added amount
-          containerId: "mf-embedded-payment", // Changed to generic container ID
-          callback: (response: any) => {
-            console.log("MF Views Callback:", response);
-            if (response.paymentCompleted && response.isSuccess) {
-               setProcessing(false);
-            } else {
-               setError("Payment failed or cancelled");
-               setProcessing(false);
-            }
-          },
-          shouldHandlePaymentUrl: true
-        };
-        (window as any).myFatoorah.init(config);
-      } catch (err) {
-        console.error("MF Init Exception:", err);
-      }
-    }
-  }, [paymentMethod, mfSession, isMfLoaded, totalPrice]);
-
   // Views specific logic for multiple videos
   const videoLinks = videoLink.split(",").filter(s => s.trim());
   const videoCount = videoLinks.length;
@@ -305,8 +219,6 @@ export default function YouTubeViewsCheckoutForm() {
     setError("");
 
     try {
-      let cardSessionId: string | undefined;
-
       // Validate required fields
       if (!email) {
         setError("Please enter your email address");
@@ -314,16 +226,7 @@ export default function YouTubeViewsCheckoutForm() {
         return;
       }
 
-      if (paymentMethod === "myfatoorah") {
-        if (!mfSession || !(window as any).myFatoorah) {
-           throw new Error("Payment form not loaded");
-        }
-        const mfResponse = await (window as any).myFatoorah.submit();
-        if (!mfResponse || !mfResponse.SessionId) {
-          throw new Error("Invalid payment data");
-        }
-        cardSessionId = mfResponse.SessionId;
-      } else if (paymentMethod === "wallet") {
+      if (paymentMethod === "wallet") {
         if (walletBalance < finalPrice) {
           setError("Insufficient wallet balance");
           setProcessing(false);
@@ -353,7 +256,6 @@ export default function YouTubeViewsCheckoutForm() {
           paymentMethod: paymentMethod,
           currency: lockedCurrency,
           email: email,
-          sessionId: cardSessionId
         }),
       });
 
@@ -379,8 +281,8 @@ export default function YouTubeViewsCheckoutForm() {
       }
     } catch (err: any) {
       console.error("Payment error:", err);
-      if (err.message && err.message.includes("MyFatoorah")) {
-        setError("Please check your card details.");
+      if (err.message && err.message.includes("Ziina")) {
+        setError("Please try again or use another payment method.");
       } else {
         setError(err.message || "Failed to process payment. Please try again.");
       }
@@ -475,26 +377,24 @@ export default function YouTubeViewsCheckoutForm() {
                       </div>
                     )}
 
-                    {/* MyFatoorah Payment Option */}
+                    {/* Ziina Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
                           type="radio"
                           name="paymentMethod"
-                          value="myfatoorah"
-                          checked={paymentMethod === "myfatoorah"}
-                          onChange={() => setPaymentMethod("myfatoorah")}
+                          value="ziina"
+                          checked={paymentMethod === "ziina"}
+                          onChange={() => setPaymentMethod("ziina")}
                           className="payment-radio"
                         />
                         <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
-                        <span>MyFatoorah (KNET, Visa/Master)</span>
+                        <span>Ziina (Card / Bank)</span>
                       </label>
-                      
-                      {paymentMethod === "myfatoorah" && (
+                      {paymentMethod === "ziina" && (
                         <div className="crypto-form">
-                          <div style={{ width: "100%", minHeight: "150px" }}>
-                            {!isMfLoaded && <p>Loading payment form...</p>}
-                            <div id="mf-embedded-payment" style={{ width: "100%" }}></div>
+                          <div className="crypto-message-box">
+                            <p>You will be redirected to Ziina to complete your payment securely.</p>
                           </div>
                         </div>
                       )}

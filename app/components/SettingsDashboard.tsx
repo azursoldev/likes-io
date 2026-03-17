@@ -62,11 +62,9 @@ export default function SettingsDashboard() {
   const [smtpPass, setSmtpPass] = useState("");
   const [smtpFrom, setSmtpFrom] = useState("");
 
-  // MyFatoorah Configuration
-  const [myFatoorahToken, setMyFatoorahToken] = useState("••••••••");
-  const [myFatoorahBaseURL, setMyFatoorahBaseURL] = useState("https://apitest.myfatoorah.com");
-  const [myFatoorahTestMode, setMyFatoorahTestMode] = useState(true);
-  const [myFatoorahWebhookSecret, setMyFatoorahWebhookSecret] = useState("");
+  // Ziina Configuration (API key is read from .env only)
+  const [ziinaTestMode, setZiinaTestMode] = useState(true);
+  const [ziinaWebhookSecret, setZiinaWebhookSecret] = useState("");
 
   const [headerMenu, setHeaderMenu] = useState<any[]>([]);
   const [headerColumnMenus, setHeaderColumnMenus] = useState<any[]>([]);
@@ -204,10 +202,8 @@ export default function SettingsDashboard() {
         if (data.smtpPass) setSmtpPass(data.smtpPass);
         if (data.smtpFrom) setSmtpFrom(data.smtpFrom);
 
-        if (data.myFatoorahToken) setMyFatoorahToken(data.myFatoorahToken);
-        if (data.myFatoorahBaseURL) setMyFatoorahBaseURL(data.myFatoorahBaseURL);
-        if (data.myFatoorahTestMode !== undefined) setMyFatoorahTestMode(data.myFatoorahTestMode);
-        if (data.myFatoorahWebhookSecret) setMyFatoorahWebhookSecret(data.myFatoorahWebhookSecret);
+        if (data.ziinaTestMode !== undefined) setZiinaTestMode(data.ziinaTestMode);
+        if (data.ziinaWebhookSecret) setZiinaWebhookSecret(data.ziinaWebhookSecret);
 
         if (data.homeMetaTitle) setHomeMetaTitle(data.homeMetaTitle);
         if (data.homeMetaDescription) setHomeMetaDescription(data.homeMetaDescription);
@@ -315,10 +311,8 @@ export default function SettingsDashboard() {
             smtpUser,
             smtpPass,
             smtpFrom,
-            myFatoorahToken: myFatoorahToken?.includes('••••') ? undefined : myFatoorahToken,
-            myFatoorahBaseURL,
-            myFatoorahTestMode,
-            myFatoorahWebhookSecret,
+            ziinaTestMode,
+            ziinaWebhookSecret: ziinaWebhookSecret?.includes('••••') ? undefined : ziinaWebhookSecret,
             homeMetaTitle,
             homeMetaDescription,
             robotsTxtContent,
@@ -1179,54 +1173,33 @@ export default function SettingsDashboard() {
               </div>
             </div>
 
-            {/* MyFatoorah Gateway */}
+            {/* Ziina Gateway */}
             <div className="settings-card">
-              <h2 className="settings-card-title">MyFatoorah Gateway</h2>
-              <p className="settings-card-description">Configure MyFatoorah payment gateway settings.</p>
+              <h2 className="settings-card-title">Ziina Gateway</h2>
+              <p className="settings-card-description">Configure Ziina payment gateway (card/bank redirect). API key is read from <code className="settings-code">ZIINA_API_KEY</code> in your .env file.</p>
               <div className="settings-form-group">
-                <label className="settings-label">
-                  API Token
-                  <input
-                    type="password"
-                    className="settings-input"
-                    value={myFatoorahToken}
-                    onChange={(e) => setMyFatoorahToken(e.target.value)}
-                    placeholder="Enter your MyFatoorah API token"
-                  />
-                  <span className="settings-helper-text">Leave as •••• to keep current value unchanged.</span>
-                </label>
-                <label className="settings-label">
-                  Base URL
-                  <input
-                    type="text"
-                    className="settings-input"
-                    value={myFatoorahBaseURL}
-                    onChange={(e) => setMyFatoorahBaseURL(e.target.value)}
-                    placeholder="https://apitest.myfatoorah.com"
-                  />
-                </label>
                 <div className="settings-toggle-group">
                   <label className="settings-toggle-label">
                     <span>Test Mode</span>
-                    <span className="settings-toggle-description">Enable to use the test environment (apitest.myfatoorah.com).</span>
+                    <span className="settings-toggle-description">Enable for test payments (no real charges).</span>
                   </label>
                   <label className="settings-toggle-switch">
                     <input
                       type="checkbox"
-                      checked={myFatoorahTestMode}
-                      onChange={(e) => setMyFatoorahTestMode(e.target.checked)}
+                      checked={ziinaTestMode}
+                      onChange={(e) => setZiinaTestMode(e.target.checked)}
                     />
                     <span className="settings-toggle-slider"></span>
                   </label>
                 </div>
                 <label className="settings-label">
-                  Webhook Secret
+                  Webhook Secret (optional)
                   <input
                     type="text"
                     className="settings-input"
-                    value={myFatoorahWebhookSecret}
-                    onChange={(e) => setMyFatoorahWebhookSecret(e.target.value)}
-                    placeholder="Webhook Secret (starts with /jW...)"
+                    value={ziinaWebhookSecret}
+                    onChange={(e) => setZiinaWebhookSecret(e.target.value)}
+                    placeholder="For HMAC verification of webhooks"
                   />
                 </label>
               </div>

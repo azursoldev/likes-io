@@ -68,7 +68,7 @@ export default async function Page() {
       // Determine payment method label
       let method = "Card";
       if (payment.gateway === "CRYPTOMUS") method = "Crypto";
-      if (payment.gateway === "MYFATOORAH") method = "MyFatoorah";
+      if (payment.gateway === "ZIINA") method = "Ziina";
 
       return {
         id: payment.transactionId || payment.id,

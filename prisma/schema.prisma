@@ -193,6 +193,9 @@ model AdminSettings {
   myFatoorahTestMode      Boolean  @default(true)
   myFatoorahToken         String?
   myFatoorahWebhookSecret String?
+  ziinaApiKey             String?
+  ziinaTestMode           Boolean  @default(true)
+  ziinaWebhookSecret      String?
   newServiceIndicator     Boolean  @default(true)
   recaptchaSecretKey      String?
   recaptchaSiteKey        String?
@@ -697,6 +700,7 @@ enum ServiceType {
 }
 
 enum OrderStatus {
+  CREATED       // Legacy: orders created before PENDING_PAYMENT was used
   PENDING_PAYMENT
   PROCESSING
   COMPLETED
@@ -711,10 +715,12 @@ enum PaymentGateway {
   CRYPTOMUS
   MYFATOORAH
   WALLET
+  ZIINA
 }
 
 enum PaymentStatus {
   PENDING
+  PAID      // Legacy: treat as paid; app uses SUCCESS for new payments
   SUCCESS
   FAILED
   REFUNDED

@@ -167,8 +167,8 @@ export default async function Page({
         lastFour = "****";
       } else if (order.payment.gateway === "CRYPTOMUS") {
         paymentType = "Crypto";
-      } else if (order.payment.gateway === "MYFATOORAH") {
-        paymentType = "MyFatoorah";
+      } else if (order.payment.gateway === "ZIINA") {
+        paymentType = "Ziina";
       } else if (order.payment.gateway === "WALLET") {
         paymentType = "Wallet";
       }

@@ -49,7 +49,7 @@ function FinalCheckoutContent() {
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&email=${encodeURIComponent(emailParam)}`;
   const postsUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&postLink=${encodeURIComponent(postLink)}&email=${encodeURIComponent(emailParam)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "myfatoorah" | "wallet">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "ziina" | "wallet">("card");
   const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState(emailParam);
@@ -110,65 +110,6 @@ function FinalCheckoutContent() {
       })
       .catch((err) => console.error("Failed to fetch wallet balance:", err));
   }, []);
-
-  // MyFatoorah State
-  const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
-  const [isMfLoaded, setIsMfLoaded] = useState(false);
-
-  // Check if MyFatoorah script is already loaded
-  useEffect(() => {
-    if ((window as any).myFatoorah) {
-      setIsMfLoaded(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (paymentMethod === "myfatoorah" && !mfSession) {
-      fetch("/api/payments/initiate-session", { method: "POST" })
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            console.error("MF Init Error:", data.error);
-            setError("Failed to load payment form: " + data.error);
-          } else {
-            setMfSession(data);
-            // If script is already loaded (from previous navigation), set loaded to true
-            if ((window as any).myFatoorah) {
-              setIsMfLoaded(true);
-            }
-          }
-        })
-        .catch(err => {
-          console.error("MF Fetch Error:", err);
-          setError("Failed to load payment form. Please try again.");
-        });
-    }
-  }, [paymentMethod, mfSession]);
-
-  // Load MyFatoorah Script Manually
-  useEffect(() => {
-    if (paymentMethod === "myfatoorah" && mfSession?.scriptUrl && !isMfLoaded && !(window as any).myFatoorah) {
-      const scriptId = "mf-payment-script";
-      if (document.getElementById(scriptId)) {
-        setIsMfLoaded(true);
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.id = scriptId;
-      script.src = mfSession.scriptUrl;
-      script.async = true;
-      script.onload = () => {
-        console.log("MF Script Loaded Manually");
-        setIsMfLoaded(true);
-      };
-      script.onerror = () => {
-        console.error("MF Script Load Error");
-        setError("Failed to load payment library");
-      };
-      document.body.appendChild(script);
-    }
-  }, [paymentMethod, mfSession, isMfLoaded]);
 
   const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; icon: any}>>([]);
   
@@ -266,47 +207,6 @@ function FinalCheckoutContent() {
     setCouponError("");
   };
 
-  useEffect(() => {
-    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
-      try {
-        const config = {
-          sessionId: mfSession.sessionId,
-          countryCode: mfSession.countryCode,
-          currencyCode: "KWD",
-          amount: totalPrice.toFixed(2),
-          containerId: "mf-embedded-payment",
-          callback: (response: any) => {
-            console.log("MF Callback:", response);
-            if (response.paymentCompleted && response.isSuccess) {
-              // Handle successful payment
-              // Here we should probably call a verify API or complete the order
-              // For now, let's just alert
-              alert("Payment Successful!");
-              setProcessing(false);
-            } else {
-               setError("Payment failed or cancelled");
-               setProcessing(false);
-            }
-          },
-          shouldHandlePaymentUrl: true
-        };
-        (window as any).myFatoorah.init(config);
-      } catch (err) {
-        console.error("MF Init Exception:", err);
-        setError("Error initializing payment form");
-      }
-    }
-  }, [paymentMethod, mfSession, isMfLoaded]);
-  
-  useEffect(() => {
-    if (paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
-      // Re-init MyFatoorah when price changes (due to coupon)
-      // This might be tricky if the library doesn't support update. 
-      // We might need to unmount and remount or call init again.
-      // For now, let's assume calling init again works or the user hasn't loaded it yet.
-    }
-  }, [paymentMethod, mfSession, isMfLoaded, finalPrice]);
-
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setProcessing(true);
@@ -369,7 +269,7 @@ function FinalCheckoutContent() {
           quantity: parseInt(qty) || 50,
           price: basePrice,
           link: postLink || null,
-          paymentMethod: paymentMethod, // 'card' or 'crypto' or 'myfatoorah'
+          paymentMethod: paymentMethod, // 'card' | 'crypto' | 'ziina' | 'wallet'
           currency: currencyCode,
           packageServiceId: packageServiceId || undefined, // Service ID from package (JAP Service ID)
           sessionId: cardSessionId,
@@ -528,25 +428,24 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
-                    {/* MyFatoorah Payment Option */}
+                    {/* Ziina Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
                           type="radio"
                           name="paymentMethod"
-                          value="myfatoorah"
-                          checked={paymentMethod === "myfatoorah"}
-                          onChange={() => setPaymentMethod("myfatoorah")}
+                          value="ziina"
+                          checked={paymentMethod === "ziina"}
+                          onChange={() => setPaymentMethod("ziina")}
                           className="payment-radio"
                         />
                         <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
-                        <span>MyFatoorah (KNET, Visa/Master)</span>
+                        <span>Ziina (Card / Bank)</span>
                       </label>
-                      
-                      {paymentMethod === "myfatoorah" && (
+                      {paymentMethod === "ziina" && (
                         <div className="crypto-form">
                           <div className="crypto-message-box">
-                            <p>You will be redirected to MyFatoorah to complete your payment securely.</p>
+                            <p>You will be redirected to Ziina to complete your payment securely.</p>
                           </div>
                         </div>
                       )}

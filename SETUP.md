@@ -57,13 +57,30 @@ Update `.env` with all required API keys and credentials:
 
 ### 6. Create Admin User
 
-You'll need to create an admin user manually in the database or through a script:
+Use the provided script (recommended). It uses the same bcrypt hashing as the app and works against whatever database `DATABASE_URL` points to.
 
-```sql
--- Hash password with bcrypt (use online tool or script)
-INSERT INTO "User" (id, email, password, role, "createdAt")
-VALUES ('admin-id', 'admin@example.com', '$2a$10$hashedpassword', 'ADMIN', NOW());
+**Create admin (default: admin@example.com / Admin123!):**
+
+```bash
+node scripts/create-admin.js
 ```
+
+**Custom email/password:**
+
+```bash
+ADMIN_EMAIL=admin@yourdomain.com ADMIN_PASSWORD=Admin123! node scripts/create-admin.js
+```
+
+**Create admin on production:** Set `DATABASE_URL` to your production database, then run the script. From the project root:
+
+```bash
+DATABASE_URL="postgresql://user:pass@prod-host:5432/dbname?sslmode=require" \
+  ADMIN_EMAIL=admin@example.com \
+  ADMIN_PASSWORD=Admin123! \
+  node scripts/create-admin.js
+```
+
+If a user with that email already exists, the script updates their password and sets role to ADMIN.
 
 ### 7. Start Development Server
 

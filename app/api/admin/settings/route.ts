@@ -105,11 +105,10 @@ export async function GET() {
       hasBigPayMeConfig: !!settings.bigPayMeApiKey,
       hasRapidApiConfig: !!settings.rapidApiKey,
       hasSmtpConfig: !!settings.smtpHost,
-      // MyFatoorah Settings
-      myFatoorahToken: maskApiKey(getField(settings, 'myFatoorahToken', null)),
-      myFatoorahBaseURL: getField(settings, 'myFatoorahBaseURL', 'https://apitest.myfatoorah.com'),
-      myFatoorahTestMode: getField(settings, 'myFatoorahTestMode', true),
-      myFatoorahWebhookSecret: maskApiKey(getField(settings, 'myFatoorahWebhookSecret', null)),
+      // Ziina Settings
+      ziinaApiKey: maskApiKey(getField(settings, 'ziinaApiKey', null)),
+      ziinaTestMode: getField(settings, 'ziinaTestMode', true),
+      ziinaWebhookSecret: maskApiKey(getField(settings, 'ziinaWebhookSecret', null)),
 
       // SEO & BrandingSMTP Configuration
       smtpHost: getField(settings, 'smtpHost', ''),
@@ -226,9 +225,8 @@ export async function PUT(request: NextRequest) {
       smtpPass,
       smtpFrom,
       defaultCurrency,
-      myFatoorahToken,
-      myFatoorahBaseURL,
-      myFatoorahTestMode,
+      ziinaApiKey,
+      ziinaTestMode,
     } = body;
 
     let settings: any;
@@ -320,14 +318,13 @@ export async function PUT(request: NextRequest) {
     if (googleAnalyticsId !== undefined) updateData.googleAnalyticsId = googleAnalyticsId || null;
     if (googleSiteVerification !== undefined) updateData.googleSiteVerification = googleSiteVerification || null;
 
-    // MyFatoorah Settings
-    if (myFatoorahToken !== undefined && !myFatoorahToken.includes('••••')) {
-      updateData.myFatoorahToken = myFatoorahToken || null;
+    // Ziina Settings
+    if (ziinaApiKey !== undefined && !ziinaApiKey.includes('••••')) {
+      updateData.ziinaApiKey = ziinaApiKey || null;
     }
-    if (myFatoorahBaseURL !== undefined) updateData.myFatoorahBaseURL = myFatoorahBaseURL;
-    if (myFatoorahTestMode !== undefined) updateData.myFatoorahTestMode = myFatoorahTestMode;
-    if (body.myFatoorahWebhookSecret !== undefined && !body.myFatoorahWebhookSecret.includes('••••')) {
-      updateData.myFatoorahWebhookSecret = body.myFatoorahWebhookSecret || null;
+    if (ziinaTestMode !== undefined) updateData.ziinaTestMode = ziinaTestMode;
+    if (body.ziinaWebhookSecret !== undefined && !body.ziinaWebhookSecret.includes('••••')) {
+      updateData.ziinaWebhookSecret = body.ziinaWebhookSecret || null;
     }
 
     if (defaultCurrency !== undefined) updateData.defaultCurrency = defaultCurrency;

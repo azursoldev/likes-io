@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { Platform, ServiceType } from '@prisma/client';
 import { checkoutAPI } from '@/lib/checkout-api';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
-import { getMyFatoorahAPI } from '@/lib/myfatoorah-api';
+import { getZiinaAPI } from '@/lib/ziina-api';
 import { emailService } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       currency = 'USD',
       serviceId, // Optional: serviceId from package data (database service ID)
       packageServiceId, // Optional: JAP Service ID from package (SMM Panel Integration)
-      sessionId, // Optional: MyFatoorah session ID (for embedded payment)
+      sessionId, // Optional: legacy (unused for Ziina)
       couponCode, // Optional: Coupon code
       upsellIds, // Optional: Array of upsell IDs
       email, // Optional: Guest email
@@ -454,35 +454,34 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-    } else if (paymentMethod === 'myfatoorah') {
-      // MyFatoorah payment
+    } else if (paymentMethod === 'ziina') {
+      // Ziina payment (redirect to hosted page)
       try {
-        const myFatoorahAPI = await getMyFatoorahAPI();
+        const ziinaAPI = await getZiinaAPI();
 
-        if (!myFatoorahAPI) {
+        if (!ziinaAPI) {
           return NextResponse.json(
-            { error: 'MyFatoorah payment is not configured. Please contact support or use card payment.' },
+            { error: 'Ziina payment is not configured. Please contact support or use another payment method.' },
             { status: 400 }
           );
         }
 
-        const myFatoorahPayment = await myFatoorahAPI.createPayment(
-          order.id,
-          order.price,
-          order.currency,
-          user?.name || name || 'Customer',
-          user?.email || email || 'guest@example.com',
-          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/success?orderId=${order.id}`,
-          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/checkout/error?orderId=${order.id}`,
-          sessionId
-        );
+        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const intent = await ziinaAPI.createPaymentIntent({
+          amount: order.price,
+          currency: order.currency,
+          successUrl: `${baseUrl}/checkout/success?orderId=${order.id}`,
+          cancelUrl: `${baseUrl}/checkout/error?orderId=${order.id}`,
+          failureUrl: `${baseUrl}/checkout/error?orderId=${order.id}`,
+          message: `Order ${order.id}`,
+          orderId: order.id,
+        });
 
-        // Create payment record
         await prisma.payment.create({
           data: {
             orderId: order.id,
-            gateway: 'MYFATOORAH',
-            transactionId: myFatoorahPayment.InvoiceId.toString(),
+            gateway: 'ZIINA',
+            transactionId: intent.id,
             amount: order.price,
             currency: order.currency,
             status: 'PENDING',
@@ -492,14 +491,14 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           orderId: order.id,
-          checkoutUrl: myFatoorahPayment.PaymentURL,
-          paymentId: myFatoorahPayment.InvoiceId,
+          checkoutUrl: intent.redirect_url,
+          paymentId: intent.id,
           paymentStatus: 'PENDING',
         });
       } catch (error: any) {
-        console.error('MyFatoorah payment creation error:', error);
+        console.error('Ziina payment creation error:', error);
         return NextResponse.json(
-          { error: error.message || 'Failed to create MyFatoorah payment session' },
+          { error: error.message || 'Failed to create Ziina payment session' },
           { status: 500 }
         );
       }

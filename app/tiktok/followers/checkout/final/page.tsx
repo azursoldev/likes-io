@@ -46,7 +46,7 @@ function FinalCheckoutContent() {
   const detailsUrl = `/${platform}/${service}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
   const accountUrl = `/${platform}/${service}/checkout/posts?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}`;
 
-  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "wallet" | "myfatoorah">("crypto");
+  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "wallet" | "ziina">("crypto");
   const [walletBalance, setWalletBalance] = useState(0);
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const [hasCoupon, setHasCoupon] = useState(false);
@@ -62,8 +62,6 @@ function FinalCheckoutContent() {
   const [addedOffers, setAddedOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
-  const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
-  const [isMfLoaded, setIsMfLoaded] = useState(false);
 
   const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
 
@@ -181,18 +179,7 @@ function FinalCheckoutContent() {
         return;
       }
 
-      let cardSessionId = undefined;
-
-      if (paymentMethod === "myfatoorah") {
-        if (!mfSession || !(window as any).myFatoorah) {
-           throw new Error("Payment form not loaded");
-        }
-        const mfResponse = await (window as any).myFatoorah.submit();
-        if (!mfResponse || !mfResponse.SessionId) {
-          throw new Error("Invalid payment data");
-        }
-        cardSessionId = mfResponse.SessionId;
-      } else if (paymentMethod === "wallet") {
+      if (paymentMethod === "wallet") {
         if (walletBalance < finalPrice) {
           setError("Insufficient wallet balance");
           setProcessing(false);
@@ -354,26 +341,24 @@ function FinalCheckoutContent() {
                       )}
                     </div>
 
-                    {/* MyFatoorah Payment Option */}
+                    {/* Ziina Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
                           type="radio"
                           name="paymentMethod"
-                          value="myfatoorah"
-                          checked={paymentMethod === "myfatoorah"}
-                          onChange={() => setPaymentMethod("myfatoorah")}
+                          value="ziina"
+                          checked={paymentMethod === "ziina"}
+                          onChange={() => setPaymentMethod("ziina")}
                           className="payment-radio"
                         />
                         <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
-                        <span>MyFatoorah (KNET, Visa/Master)</span>
+                        <span>Ziina (Card / Bank)</span>
                       </label>
-                      
-                      {paymentMethod === "myfatoorah" && (
+                      {paymentMethod === "ziina" && (
                         <div className="crypto-form">
-                          <div style={{ width: "100%", minHeight: "150px" }}>
-                            {!isMfLoaded && <p>Loading payment form...</p>}
-                            <div id="mf-embedded-payment" style={{ width: "100%" }}></div>
+                          <div className="crypto-message-box">
+                            <p>You will be redirected to Ziina to complete your payment securely.</p>
                           </div>
                         </div>
                       )}

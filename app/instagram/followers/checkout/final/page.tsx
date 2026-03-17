@@ -46,7 +46,7 @@ function FinalCheckoutContent() {
   const detailsUrl = `${baseUrl}/checkout?qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&email=${encodeURIComponent(searchParams.get("email") || "")}`;
   // No postsUrl for followers
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet" | "myfatoorah">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "wallet" | "ziina">("card");
   const [walletBalance, setWalletBalance] = useState(0);
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState(searchParams.get("email") || "");
@@ -68,73 +68,6 @@ function FinalCheckoutContent() {
   const [error, setError] = useState("");
   const [userProfile, setUserProfile] = useState<{ profilePicture?: string, username?: string } | null>(null);
   const [imageError, setImageError] = useState(false);
-
-  // MyFatoorah State
-  const [mfSession, setMfSession] = useState<{sessionId: string, countryCode: string, scriptUrl: string} | null>(null);
-  const [isMfLoaded, setIsMfLoaded] = useState(false);
-
-  const enableMfEmbed = false;
-  useEffect(() => {
-    if (enableMfEmbed && paymentMethod === "myfatoorah" && !mfSession) {
-      fetch("/api/payments/initiate-session", { method: "POST" })
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            console.error("MF Init Error:", data.error);
-            setError("Failed to load payment form");
-          } else {
-            setMfSession(data);
-          }
-        })
-        .catch(err => {
-          console.error("MF Fetch Error:", err);
-          setError("Failed to load payment form");
-        });
-    }
-  }, [paymentMethod, mfSession]);
-
-  useEffect(() => {
-    if (enableMfEmbed && paymentMethod === "myfatoorah" && mfSession && isMfLoaded && (window as any).myFatoorah) {
-      try {
-        const config = {
-          countryCode: mfSession.countryCode,
-          sessionId: mfSession.sessionId,
-          cardViewId: "mf-card-element",
-          supportedNetworks: "visa,mastercard,amex,mada",
-          style: {
-            direction: "ltr",
-            cardHeight: 130,
-            input: {
-              color: "black",
-              fontSize: "13px",
-              fontFamily: "sans-serif",
-              inputHeight: "32px",
-              inputMargin: "0px",
-              borderColor: "e2e8f0",
-              borderWidth: "1px",
-              borderRadius: "8px",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-              placeHolder: {
-                holderName: "Name On Card",
-                cardNumber: "Number",
-                expiryDate: "MM / YY",
-                securityCode: "CVV",
-              }
-            },
-            label: { display: false },
-            error: {
-              borderColor: "red",
-              borderRadius: "8px",
-              boxShadow: "0px",
-            },
-          },
-        };
-        (window as any).myFatoorah.init(config);
-      } catch (err) {
-        console.error("MF Init Exception:", err);
-      }
-    }
-  }, [paymentMethod, mfSession, isMfLoaded]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -337,7 +270,7 @@ function FinalCheckoutContent() {
           quantity: parseInt(qty) || 50,
           price: priceValue,
           link: targetLink || null,
-          paymentMethod: paymentMethod, // 'card' or 'crypto' or 'myfatoorah'
+          paymentMethod: paymentMethod, // 'card' | 'crypto' | 'ziina' | 'wallet'
           currency: currencyCode,
           packageServiceId: packageServiceId || undefined,
           couponCode: appliedCoupon?.code,
@@ -383,13 +316,6 @@ function FinalCheckoutContent() {
   return (
     <>
       <Header />
-      {enableMfEmbed && mfSession?.scriptUrl && (
-        <Script 
-          src={mfSession.scriptUrl}
-          strategy="lazyOnload"
-          onLoad={() => setIsMfLoaded(true)}
-        />
-      )}
       <main className="final-checkout-page">
         <div className="final-checkout-container">
           {/* Progress Indicator */}
@@ -467,24 +393,25 @@ function FinalCheckoutContent() {
                     </div>
                     )}
 
-                    {/* MyFatoorah Payment Option */}
+                    {/* Ziina Payment Option */}
                     <div className="payment-option">
                       <label className="payment-option-label">
                         <input
                           type="radio"
                           name="paymentMethod"
-                          value="myfatoorah"
-                          checked={paymentMethod === "myfatoorah"}
-                          onChange={() => setPaymentMethod("myfatoorah")}
+                          value="ziina"
+                          checked={paymentMethod === "ziina"}
+                          onChange={() => setPaymentMethod("ziina")}
                           className="payment-radio"
                         />
                         <FontAwesomeIcon icon={faCreditCard} className="payment-option-icon" />
-                        <span>MyFatoorah (KNET, Visa/Master)</span>
+                        <span>Ziina (Card / Bank)</span>
                       </label>
-                      
-                      {paymentMethod === "myfatoorah" && (
-                        <div className="card-form" style={{ minHeight: '150px' }}>
-                          <div id="mf-card-element" style={{ width: '100%' }}></div>
+                      {paymentMethod === "ziina" && (
+                        <div className="crypto-form">
+                          <div className="crypto-message-box">
+                            <p>You will be redirected to Ziina to complete your payment securely.</p>
+                          </div>
                         </div>
                       )}
                     </div>
