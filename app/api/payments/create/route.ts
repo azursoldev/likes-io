@@ -317,10 +317,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create order
+    // Create order (only set userId if we verified the user exists in DB to avoid FK violation)
     const order = await prisma.order.create({
       data: {
-        ...(userId ? { userId } : {}),
+        ...(user?.id ? { userId: user.id } : {}),
         serviceId: service.id,
         platform: platform.toUpperCase() as Platform,
         serviceType: serviceType.toUpperCase() as ServiceType,
