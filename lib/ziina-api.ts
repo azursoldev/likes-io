@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { prisma } from "@/lib/prisma";
 
 const ZIINA_API_BASE = "https://api-v2.ziina.com/api";
 
@@ -37,7 +37,11 @@ export class ZiinaAPI {
     return this.config.testMode;
   }
 
-  private async request<T>(endpoint: string, method: string, body?: object): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    method: string,
+    body?: object,
+  ): Promise<T> {
     const url = `${ZIINA_API_BASE}${endpoint}`;
     const headers = {
       Accept: "application/json",
@@ -85,7 +89,11 @@ export class ZiinaAPI {
     return this.request("/payment_intent", "POST", body);
   }
 
-  verifyWebhookSignature(payload: string, secret: string, signature: string): boolean {
+  verifyWebhookSignature(
+    payload: string,
+    secret: string,
+    signature: string,
+  ): boolean {
     if (!payload || !secret || !signature) return false;
     try {
       const hmac = crypto.createHmac("sha256", secret);
@@ -105,7 +113,7 @@ export async function getZiinaAPI(): Promise<ZiinaAPI | null> {
 
   const settings = await prisma.adminSettings.findFirst();
   const s = settings as { ziinaTestMode?: boolean } | null;
-  const testMode = s?.ziinaTestMode ?? (process.env.ZIINA_TEST_MODE ? process.env.ZIINA_TEST_MODE === "true" : true);
+  const testMode = process.env.ZIINA_TEST_MODE === "true";
 
   return new ZiinaAPI({ apiKey, testMode });
 }
