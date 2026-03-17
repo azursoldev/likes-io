@@ -18,6 +18,7 @@ function CheckoutSuccessContentInner() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [ziinaCheckComplete, setZiinaCheckComplete] = useState(false);
   const { trackPurchase } = useGoogleAnalytics();
   const trackedRef = useRef(false);
 
@@ -49,7 +50,7 @@ function CheckoutSuccessContentInner() {
     fetchOrder();
   }, [orderId]);
 
-  // Ziina: when webhook isn't reliable, sync status from Ziina GET /payment_intent/{id} (once when we see PENDING_PAYMENT + ZIINA)
+  // Ziina: sync status from Ziina GET /payment_intent/{id}; when done (or after timeout), set ziinaCheckComplete so we show real status
   const syncAttemptedRef = useRef(false);
   useEffect(() => {
     if (!orderId || !order || order.status !== 'PENDING_PAYMENT' || syncAttemptedRef.current) return;
@@ -57,6 +58,8 @@ function CheckoutSuccessContentInner() {
     if (gateway !== 'ZIINA') return;
 
     syncAttemptedRef.current = true;
+    const timeout = setTimeout(() => setZiinaCheckComplete(true), 10000); // fallback: stop "Confirming..." after 10s
+
     fetch(`/api/orders/${orderId}/sync-payment`)
       .then((res) => res.json())
       .then((data) => {
@@ -65,7 +68,10 @@ function CheckoutSuccessContentInner() {
         }
       })
       .catch(() => {})
-      .finally(() => fetchOrder());
+      .finally(() => {
+        clearTimeout(timeout);
+        fetchOrder().then(() => setZiinaCheckComplete(true));
+      });
   }, [orderId, order?.status, order?.payment?.gateway]);
 
   // When order is still PENDING_PAYMENT, poll for status update (webhook or sync may have updated)
@@ -139,7 +145,7 @@ function CheckoutSuccessContentInner() {
           </div>
         ) : (
           <div className="animate-fade-in">
-            {order.status === 'PENDING_PAYMENT' && order.payment?.gateway === 'ZIINA' ? (
+            {order.status === 'PENDING_PAYMENT' && order.payment?.gateway === 'ZIINA' && !ziinaCheckComplete ? (
               <>
                 <div className="loading-container" style={{ marginBottom: '1rem' }}>
                   <FontAwesomeIcon icon={faSpinner} className="loading-spinner fa-spin" />
