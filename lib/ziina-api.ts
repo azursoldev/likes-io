@@ -89,6 +89,11 @@ export class ZiinaAPI {
     return this.request("/payment_intent", "POST", body);
   }
 
+  /** GET /payment_intent/{id} - check status (completed, failed, pending, etc.) */
+  async getPaymentIntent(id: string): Promise<{ id: string; status: string }> {
+    return this.request(`/payment_intent/${encodeURIComponent(id)}`, "GET");
+  }
+
   verifyWebhookSignature(
     payload: string,
     secret: string,

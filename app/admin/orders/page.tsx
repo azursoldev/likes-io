@@ -19,9 +19,8 @@ export default async function Page({
     const page = Number(searchParams?.page) || 1;
     const statusParam = searchParams?.status;
     
-    // Default to PAID if no status is specified (Instruction 4)
-    // "All" will show all orders including unpaid ones
-    const status = typeof statusParam === "string" ? (statusParam === "All" ? undefined : statusParam) : "PAID";
+    // Default to All so unpaid/pending orders (e.g. Ziina before webhook) are visible
+    const status = typeof statusParam === "string" ? (statusParam === "All" ? undefined : statusParam) : undefined;
     const pageSize = 10;
   
     // Build where clause
@@ -105,7 +104,7 @@ export default async function Page({
       currentPage={page} 
       totalPages={totalPages} 
       totalOrders={totalOrders}
-      currentStatus={statusParam === "All" ? "All" : (status || "PAID")}
+      currentStatus={statusParam === "All" || status === undefined ? "All" : status}
       services={services}
     />
   );

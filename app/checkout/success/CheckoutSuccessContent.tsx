@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import { useGoogleAnalytics } from '../../hooks/useGoogleAnalytics';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faSpinner, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './success.css';
+
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { faCheckCircle, faSpinner, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Footer from '../../components/Footer';
+import Header from '../../components/Header';
+import Link from 'next/link';
+import { useGoogleAnalytics } from '../../hooks/useGoogleAnalytics';
+import { useSearchParams } from 'next/navigation';
 
 function CheckoutSuccessContentInner() {
   const searchParams = useSearchParams();
@@ -19,31 +21,78 @@ function CheckoutSuccessContentInner() {
   const { trackPurchase } = useGoogleAnalytics();
   const trackedRef = useRef(false);
 
+  const fetchOrder = async () => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('Please log in to view your order');
+        throw new Error('Failed to load order');
+      }
+      const data = await res.json();
+      setOrder(data.order);
+      return data.order;
+    } catch (err: any) {
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
   useEffect(() => {
     if (!orderId) {
       setError('Order ID missing');
       setLoading(false);
       return;
     }
-
-    const fetchOrder = async () => {
-      try {
-        const res = await fetch(`/api/orders/${orderId}/status`);
-        if (!res.ok) {
-          if (res.status === 401) throw new Error('Please log in to view your order');
-          throw new Error('Failed to load order');
-        }
-        const data = await res.json();
-        setOrder(data.order);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrder();
   }, [orderId]);
+
+  // Ziina: when webhook isn't reliable, sync status from Ziina GET /payment_intent/{id} (once when we see PENDING_PAYMENT + ZIINA)
+  const syncAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (!orderId || !order || order.status !== 'PENDING_PAYMENT' || syncAttemptedRef.current) return;
+    const gateway = order.payment?.gateway;
+    if (gateway !== 'ZIINA') return;
+
+    syncAttemptedRef.current = true;
+    fetch(`/api/orders/${orderId}/sync-payment`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.synced && data.orderStatus) {
+          setOrder((prev: any) => (prev ? { ...prev, status: data.orderStatus } : prev));
+        }
+      })
+      .catch(() => {})
+      .finally(() => fetchOrder());
+  }, [orderId, order?.status, order?.payment?.gateway]);
+
+  // When order is still PENDING_PAYMENT, poll for status update (webhook or sync may have updated)
+  useEffect(() => {
+    if (!orderId || !order || order.status !== 'PENDING_PAYMENT') return;
+
+    const maxPolls = 20; // 20 * 3s = 60s
+    let count = 0;
+
+    const interval = setInterval(async () => {
+      count += 1;
+      if (count > maxPolls) {
+        clearInterval(interval);
+        return;
+      }
+      const updated = await fetch(`/api/orders/${orderId}/status`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => data?.order ?? null);
+      if (updated && updated.status !== 'PENDING_PAYMENT') {
+        setOrder(updated);
+        setLoading(false);
+        clearInterval(interval);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [orderId, order?.status]);
 
   useEffect(() => {
     if (order && !trackedRef.current) {
@@ -59,7 +108,9 @@ function CheckoutSuccessContentInner() {
     }
 
     if (order) {
-       if (order.status === 'PENDING_PAYMENT') {
+       if (order.status === 'PENDING_PAYMENT' && order.payment?.gateway === 'ZIINA') {
+         document.title = 'Confirming payment | Likes.io';
+       } else if (order.status === 'PENDING_PAYMENT') {
          document.title = 'Payment Pending | Likes.io';
        } else if (order.status === 'FAILED' || order.status === 'CANCELLED') {
          document.title = 'Payment Failed | Likes.io';
@@ -88,7 +139,14 @@ function CheckoutSuccessContentInner() {
           </div>
         ) : (
           <div className="animate-fade-in">
-            {order.status === 'PENDING_PAYMENT' || order.status === 'FAILED' || order.status === 'CANCELLED' ? (
+            {order.status === 'PENDING_PAYMENT' && order.payment?.gateway === 'ZIINA' ? (
+              <>
+                <div className="loading-container" style={{ marginBottom: '1rem' }}>
+                  <FontAwesomeIcon icon={faSpinner} className="loading-spinner fa-spin" />
+                  <p className="text-gray-600">Confirming your payment...</p>
+                </div>
+              </>
+            ) : order.status === 'PENDING_PAYMENT' || order.status === 'FAILED' || order.status === 'CANCELLED' ? (
               <>
                 <div className="success-icon-wrapper" style={{ backgroundColor: '#fee2e2' }}>
                   <FontAwesomeIcon icon={faTimesCircle} className="success-icon" style={{ color: '#ef4444' }} />
