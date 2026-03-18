@@ -1,10 +1,12 @@
 "use client";
+
 import React, { useEffect, useMemo, useState } from "react";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
+import { iconMap } from "./IconMap";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useRouter } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { iconMap } from "./IconMap";
-import { faImage } from "@fortawesome/free-solid-svg-icons";
 
 type PackType = "likes" | "followers" | "views" | "subscribers";
 type Platform = "instagram" | "tiktok" | "youtube";
@@ -17,7 +19,7 @@ export default function GetStarted() {
   const [packType, setPackType] = useState<PackType>("likes");
   const [quality, setQuality] = useState<Quality>("premium");
   const [qty, setQty] = useState(500);
-  
+
   // Profile fetch state
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -72,8 +74,12 @@ export default function GetStarted() {
   const [sliderIndex, setSliderIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [mainHeading, setMainHeading] = useState("Get Started Instantly");
-  const [serviceIcons, setServiceIcons] = useState<Record<string, { icon: string, label: string }>>({});
-  const [getStartedPlatformIcons, setGetStartedPlatformIcons] = useState<Record<string, { icon: string, label: string }>>({});
+  const [serviceIcons, setServiceIcons] = useState<
+    Record<string, { icon: string; label: string }>
+  >({});
+  const [getStartedPlatformIcons, setGetStartedPlatformIcons] = useState<
+    Record<string, { icon: string; label: string }>
+  >({});
 
   // Fetch global homepage content (for main heading)
   useEffect(() => {
@@ -83,15 +89,15 @@ export default function GetStarted() {
         if (res.ok) {
           const data = await res.json();
           if (data.content) {
-             if (data.content.getStartedMainHeading) {
-               setMainHeading(data.content.getStartedMainHeading);
-             }
-             if (data.content.serviceIcons) {
-               setServiceIcons(data.content.serviceIcons);
-             }
-             if (data.content.getStartedPlatformIcons) {
-               setGetStartedPlatformIcons(data.content.getStartedPlatformIcons);
-             }
+            if (data.content.getStartedMainHeading) {
+              setMainHeading(data.content.getStartedMainHeading);
+            }
+            if (data.content.serviceIcons) {
+              setServiceIcons(data.content.serviceIcons);
+            }
+            if (data.content.getStartedPlatformIcons) {
+              setGetStartedPlatformIcons(data.content.getStartedPlatformIcons);
+            }
           }
         }
       } catch (error) {
@@ -122,16 +128,19 @@ export default function GetStarted() {
     // Followers/Subscribers just need profile -> Go to /checkout/final (bypassing details)
     const needsPostLink = ["likes", "views"].includes(packType);
     const nextStep = needsPostLink ? "posts" : "final";
-    
-    const cleanUsername = username.replace(/^@/, '');
+
+    const cleanUsername = username.replace(/^@/, "");
     const type = quality === "hq" ? "High-Quality" : "Premium";
     const emailParam = email ? `&email=${encodeURIComponent(email)}` : "";
-    
+
     // Construct checkout URL
     const checkoutUrl = `/${platform}/${packType}/checkout/${nextStep}?qty=${displayQty}&price=${displayPrice}&type=${encodeURIComponent(type)}&username=${encodeURIComponent(cleanUsername)}${emailParam}`;
 
     // If we already have valid profile data, just redirect
-    if (profileData && profileData.username.toLowerCase() === cleanUsername.toLowerCase()) {
+    if (
+      profileData &&
+      profileData.username.toLowerCase() === cleanUsername.toLowerCase()
+    ) {
       router.push(checkoutUrl);
       return;
     }
@@ -141,7 +150,9 @@ export default function GetStarted() {
     setUsernameError("");
 
     try {
-      const res = await fetch(`/api/social/${platform}/profile?username=${cleanUsername}`);
+      const res = await fetch(
+        `/api/social/${platform}/profile?username=${cleanUsername}`,
+      );
       const data = await res.json();
 
       if (res.ok && data.profile) {
@@ -150,7 +161,9 @@ export default function GetStarted() {
       } else if (res.status === 500 || res.status === 503) {
         // If API fails (e.g. missing API key or service down), allow user to proceed
         // We don't want to block valid users if our validation service is having issues
-        console.warn("Profile validation service unavailable, proceeding without validation");
+        console.warn(
+          "Profile validation service unavailable, proceeding without validation",
+        );
         router.push(checkoutUrl);
       } else {
         setUsernameError("Invalid username. Please check and try again.");
@@ -169,7 +182,9 @@ export default function GetStarted() {
       try {
         setLoading(true);
         // Fetch Get Started Content (Features & Explanation)
-        const contentRes = await fetch(`/api/cms/get-started?platform=${platform}&serviceType=${packType}&quality=${quality}`);
+        const contentRes = await fetch(
+          `/api/cms/get-started?platform=${platform}&serviceType=${packType}&quality=${quality}`,
+        );
         if (contentRes.ok) {
           const contentData = await contentRes.json();
           setDynamicFeatures(contentData.features || []);
@@ -179,22 +194,30 @@ export default function GetStarted() {
         }
 
         // Fetch Packages
-        const packagesRes = await fetch(`/api/cms/service-pages/${platform}/${packType}`);
+        const packagesRes = await fetch(
+          `/api/cms/service-pages/${platform}/${packType}`,
+        );
         if (packagesRes.ok) {
           const packagesData = await packagesRes.json();
           if (packagesData.packages && Array.isArray(packagesData.packages)) {
             // Find the correct tab based on quality
             const targetTabId = quality === "hq" ? "high" : "premium";
-            const tab = packagesData.packages.find((t: any) => 
-              t.id === targetTabId || 
-              t.label?.toLowerCase().includes(targetTabId === "high" ? "high" : "premium")
+            const tab = packagesData.packages.find(
+              (t: any) =>
+                t.id === targetTabId ||
+                t.label
+                  ?.toLowerCase()
+                  .includes(targetTabId === "high" ? "high" : "premium"),
             );
 
             if (tab) {
               if (tab.customSettings) {
                 setCustomSettings(tab.customSettings);
                 // If custom settings are enabled and we are in custom mode (no packages), set initial qty
-                if (tab.customSettings.enabled && (!tab.packages || tab.packages.length === 0)) {
+                if (
+                  tab.customSettings.enabled &&
+                  (!tab.packages || tab.packages.length === 0)
+                ) {
                   setQty(tab.customSettings.min || 100);
                 }
               } else {
@@ -202,13 +225,24 @@ export default function GetStarted() {
               }
 
               if (tab.packages && Array.isArray(tab.packages)) {
-                const parsedPackages = tab.packages.map((pkg: any) => ({
-                  ...pkg,
-                  // Parse numbers for logic but keep originals if needed
-                  quantity: typeof pkg.qty === 'string' ? parseInt(pkg.qty.replace(/,/g, ''), 10) : pkg.qty,
-                  priceVal: typeof pkg.price === 'string' ? parseFloat(pkg.price.replace(/[^0-9.]/g, '')) : pkg.price,
-                  oldPriceVal: typeof pkg.strike === 'string' ? parseFloat(pkg.strike.replace(/[^0-9.]/g, '')) : pkg.strike,
-                })).sort((a: any, b: any) => a.quantity - b.quantity);
+                const parsedPackages = tab.packages
+                  .map((pkg: any) => ({
+                    ...pkg,
+                    // Parse numbers for logic but keep originals if needed
+                    quantity:
+                      typeof pkg.qty === "string"
+                        ? parseInt(pkg.qty.replace(/,/g, ""), 10)
+                        : pkg.qty,
+                    priceVal:
+                      typeof pkg.price === "string"
+                        ? parseFloat(pkg.price.replace(/[^0-9.]/g, ""))
+                        : pkg.price,
+                    oldPriceVal:
+                      typeof pkg.strike === "string"
+                        ? parseFloat(pkg.strike.replace(/[^0-9.]/g, ""))
+                        : pkg.strike,
+                  }))
+                  .sort((a: any, b: any) => a.quantity - b.quantity);
 
                 setAvailablePackages(parsedPackages);
                 // Set slider to middle or start
@@ -249,11 +283,11 @@ export default function GetStarted() {
 
   // Derived values for display
   const displayQty = selectedPackage ? selectedPackage.quantity : qty;
-  
+
   // Use price from package if available, otherwise calculate fallback
   const displayPrice = useMemo(() => {
     if (selectedPackage) return selectedPackage.priceVal;
-    
+
     // Fallback logic
     const platformPrices = PRICES[platform] || PRICES.instagram;
     const base = platformPrices[packType] ?? 0.03;
@@ -262,7 +296,8 @@ export default function GetStarted() {
   }, [selectedPackage, platform, packType, quality, displayQty]);
 
   const displayOldPrice = useMemo(() => {
-    if (selectedPackage && selectedPackage.oldPriceVal) return selectedPackage.oldPriceVal;
+    if (selectedPackage && selectedPackage.oldPriceVal)
+      return selectedPackage.oldPriceVal;
     return displayPrice * 1.5; // Default 50% markup if no old price
   }, [selectedPackage, displayPrice]);
 
@@ -275,25 +310,30 @@ export default function GetStarted() {
   const features = dynamicFeatures;
   const explanation = dynamicExplanation;
 
-
   const PillIcon = ({ name }: { name: Platform }) => {
     switch (name) {
       case "instagram":
         return (
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H7zm5 3a5 5 0 110 10 5 5 0 010-10zm6.5-1.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+            <path
+              fill="currentColor"
+              d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H7zm5 3a5 5 0 110 10 5 5 0 010-10zm6.5-1.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
+            />
           </svg>
         );
       case "tiktok":
         return (
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M14 3v4.6c1.3 1 2.9 1.6 4.6 1.6V13c-1.9-.1-3.6-.8-4.6-1.9V14a5 5 0 11-5-5c.3 0 .7 0 1 .1V6.5c-2.7-.3-5 1.7-5.4 4.3A6 6 0 1014 14V3z"/>
+            <path
+              fill="currentColor"
+              d="M14 3v4.6c1.3 1 2.9 1.6 4.6 1.6V13c-1.9-.1-3.6-.8-4.6-1.9V14a5 5 0 11-5-5c.3 0 .7 0 1 .1V6.5c-2.7-.3-5 1.7-5.4 4.3A6 6 0 1014 14V3z"
+            />
           </svg>
         );
       case "youtube":
         return (
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M10 8l6 4-6 4V8z"/>
+            <path fill="currentColor" d="M10 8l6 4-6 4V8z" />
           </svg>
         );
       default:
@@ -302,16 +342,28 @@ export default function GetStarted() {
   };
 
   // Skeleton Loader
-  if (loading && availablePackages.length === 0 && dynamicFeatures.length === 0) {
+  if (
+    loading &&
+    availablePackages.length === 0 &&
+    dynamicFeatures.length === 0
+  ) {
     return (
       <section className="getstarted">
         <div className="container">
           <div className="gs-header">
             <h3 className="font-heading">{mainHeading}</h3>
             <div className="gs-platforms">
-              {['Instagram', 'TikTok', 'YouTube'].map((p) => (
+              {["Instagram", "TikTok", "YouTube"].map((p) => (
                 <button key={p} className="pill">
-                  <span className="pill-icon" style={{ width: 12, height: 12, background: '#ccc', borderRadius: '50%' }}></span>
+                  <span
+                    className="pill-icon"
+                    style={{
+                      width: 12,
+                      height: 12,
+                      background: "#ccc",
+                      borderRadius: "50%",
+                    }}
+                  ></span>
                   {p}
                 </button>
               ))}
@@ -321,44 +373,132 @@ export default function GetStarted() {
           <div className="gs-grid">
             {/* Left card skeleton */}
             <div className="gs-left card-lg boxgray">
-              <div className="gs-tabs" style={{ gap: '10px' }}>
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="shimmer-bg" style={{ width: '100px', height: '40px', borderRadius: '8px' }}></div>
+              <div className="gs-tabs" style={{ gap: "10px" }}>
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="shimmer-bg"
+                    style={{
+                      width: "100px",
+                      height: "40px",
+                      borderRadius: "8px",
+                    }}
+                  ></div>
                 ))}
               </div>
 
-              <div className="gs-quality" style={{ marginTop: '20px' }}>
-                <div className="shimmer-bg" style={{ width: '100%', height: '40px', borderRadius: '8px' }}></div>
+              <div className="gs-quality" style={{ marginTop: "20px" }}>
+                <div
+                  className="shimmer-bg"
+                  style={{ width: "100%", height: "40px", borderRadius: "8px" }}
+                ></div>
               </div>
 
-              <div className="gs-qty" style={{ marginTop: '30px' }}>
+              <div className="gs-qty" style={{ marginTop: "30px" }}>
                 <div className="gs-qty-top">
-                  <div className="shimmer-bg" style={{ width: '120px', height: '30px', borderRadius: '4px' }}></div>
-                  <div className="shimmer-bg" style={{ width: '80px', height: '30px', borderRadius: '4px' }}></div>
+                  <div
+                    className="shimmer-bg"
+                    style={{
+                      width: "120px",
+                      height: "30px",
+                      borderRadius: "4px",
+                    }}
+                  ></div>
+                  <div
+                    className="shimmer-bg"
+                    style={{
+                      width: "80px",
+                      height: "30px",
+                      borderRadius: "4px",
+                    }}
+                  ></div>
                 </div>
-                <div className="shimmer-bg" style={{ width: '100%', height: '10px', borderRadius: '4px', marginTop: '20px' }}></div>
+                <div
+                  className="shimmer-bg"
+                  style={{
+                    width: "100%",
+                    height: "10px",
+                    borderRadius: "4px",
+                    marginTop: "20px",
+                  }}
+                ></div>
               </div>
 
-              <div className="gs-form" style={{ marginTop: '30px' }}>
-                 <div className="shimmer-bg" style={{ width: '100%', height: '50px', borderRadius: '12px' }}></div>
-                 <div className="shimmer-bg" style={{ width: '100%', height: '50px', borderRadius: '12px', marginTop: '15px' }}></div>
+              <div className="gs-form" style={{ marginTop: "30px" }}>
+                <div
+                  className="shimmer-bg"
+                  style={{
+                    width: "100%",
+                    height: "50px",
+                    borderRadius: "12px",
+                  }}
+                ></div>
+                <div
+                  className="shimmer-bg"
+                  style={{
+                    width: "100%",
+                    height: "50px",
+                    borderRadius: "12px",
+                    marginTop: "15px",
+                  }}
+                ></div>
               </div>
             </div>
 
             {/* Right features skeleton */}
             <div className="gs-right card-lg">
-              <div className="shimmer-bg" style={{ width: '60%', height: '24px', borderRadius: '4px', marginBottom: '20px' }}></div>
+              <div
+                className="shimmer-bg"
+                style={{
+                  width: "60%",
+                  height: "24px",
+                  borderRadius: "4px",
+                  marginBottom: "20px",
+                }}
+              ></div>
               <ul className="gs-features">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <li key={i} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                    <div className="shimmer-bg" style={{ width: '20px', height: '20px', borderRadius: '50%' }}></div>
-                    <div className="shimmer-bg" style={{ width: '80%', height: '20px', borderRadius: '4px' }}></div>
+                  <li
+                    key={i}
+                    style={{
+                      display: "flex",
+                      gap: "10px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div
+                      className="shimmer-bg"
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                      }}
+                    ></div>
+                    <div
+                      className="shimmer-bg"
+                      style={{
+                        width: "80%",
+                        height: "20px",
+                        borderRadius: "4px",
+                      }}
+                    ></div>
                   </li>
                 ))}
               </ul>
-              <div className="gs-divider" style={{ margin: '20px 0' }} />
-              <div className="shimmer-bg" style={{ width: '70%', height: '24px', borderRadius: '4px', marginBottom: '10px' }}></div>
-              <div className="shimmer-bg" style={{ width: '100%', height: '60px', borderRadius: '4px' }}></div>
+              <div className="gs-divider" style={{ margin: "20px 0" }} />
+              <div
+                className="shimmer-bg"
+                style={{
+                  width: "70%",
+                  height: "24px",
+                  borderRadius: "4px",
+                  marginBottom: "10px",
+                }}
+              ></div>
+              <div
+                className="shimmer-bg"
+                style={{ width: "100%", height: "60px", borderRadius: "4px" }}
+              ></div>
             </div>
           </div>
         </div>
@@ -372,31 +512,49 @@ export default function GetStarted() {
         <div className="gs-header">
           <h3 className="font-heading">{mainHeading}</h3>
           <div className="gs-platforms">
-            {['instagram', 'tiktok', 'youtube'].map((p) => {
-                const key = p as Platform;
-                const customIcon = getStartedPlatformIcons[key]?.icon;
-                const customLabel = getStartedPlatformIcons[key]?.label;
-                const defaultIcon = key === "instagram" ? "/instagram-11.png" : key === "tiktok" ? "/tiktok-9.png" : "/youtube-7.png";
-                const defaultLabel = key === "instagram" ? "Instagram" : key === "tiktok" ? "TikTok" : "YouTube";
-                const iconToUse = customIcon || defaultIcon;
+            {["instagram", "tiktok", "youtube"].map((p) => {
+              const key = p as Platform;
+              const customIcon = getStartedPlatformIcons[key]?.icon;
+              const customLabel = getStartedPlatformIcons[key]?.label;
+              const defaultIcon =
+                key === "instagram"
+                  ? "/instagram-11.png"
+                  : key === "tiktok"
+                    ? "/tiktok-9.png"
+                    : "/youtube-7.png";
+              const defaultLabel =
+                key === "instagram"
+                  ? "Instagram"
+                  : key === "tiktok"
+                    ? "TikTok"
+                    : "YouTube";
+              const iconToUse = customIcon || defaultIcon;
 
-                return (
-                    <button key={key} className={`pill ${platform === key ? "active" : ""}`} onClick={() => setPlatform(key)}>
-                    <span className="pill-icon">
-                        {(iconToUse.startsWith('/') || iconToUse.startsWith('http')) ? (
-                            <img 
-                                src={iconToUse} 
-                                alt={customLabel || defaultLabel} 
-                                width={12} 
-                                height={12} 
-                            />
-                        ) : (
-                            <FontAwesomeIcon icon={iconMap[iconToUse] || faImage} style={{ width: '12px', height: '12px' }} />
-                        )}
-                    </span>
-                    {customLabel || defaultLabel}
-                    </button>
-                );
+              return (
+                <button
+                  key={key}
+                  className={`pill ${platform === key ? "active" : ""}`}
+                  onClick={() => setPlatform(key)}
+                >
+                  <span className="pill-icon">
+                    {iconToUse.startsWith("/") ||
+                    iconToUse.startsWith("http") ? (
+                      <img
+                        src={iconToUse}
+                        alt={customLabel || defaultLabel}
+                        width={12}
+                        height={12}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        icon={iconMap[iconToUse] || faImage}
+                        style={{ width: "12px", height: "12px" }}
+                      />
+                    )}
+                  </span>
+                  {customLabel || defaultLabel}
+                </button>
+              );
             })}
           </div>
         </div>
@@ -408,32 +566,58 @@ export default function GetStarted() {
               {PLATFORM_TABS[platform].map((tab) => {
                 const customIcon = serviceIcons[tab]?.icon;
                 const customLabel = serviceIcons[tab]?.label;
-                const defaultIcon = tab === "likes" ? "/heart-3.svg" : tab === "followers" ? "/avatar.svg" : tab === "subscribers" ? "/avatar.svg" : "/eye-2.svg";
+                const defaultIcon =
+                  tab === "likes"
+                    ? "/heart-3.svg"
+                    : tab === "followers"
+                      ? "/avatar.svg"
+                      : tab === "subscribers"
+                        ? "/avatar.svg"
+                        : "/eye-2.svg";
                 const defaultLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
                 const iconToUse = customIcon || defaultIcon;
 
                 return (
-                <button key={tab} className={`gs-tab ${packType === tab ? "active" : ""}`} onClick={() => setPackType(tab)}>
-                  <span className="icon">
-                    {(iconToUse.startsWith('/') || iconToUse.startsWith('http')) ? (
+                  <button
+                    key={tab}
+                    className={`gs-tab ${packType === tab ? "active" : ""}`}
+                    onClick={() => setPackType(tab)}
+                  >
+                    <span className="icon">
+                      {iconToUse.startsWith("/") ||
+                      iconToUse.startsWith("http") ? (
                         <img
                           src={iconToUse}
                           alt={customLabel || defaultLabel}
                           width={16}
                           height={16}
                         />
-                    ) : (
-                        <FontAwesomeIcon icon={iconMap[iconToUse] || faImage} style={{ width: '16px', height: '16px' }} />
-                    )}
-                  </span>
-                  {customLabel || defaultLabel}
-                </button>
-              )})}
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={iconMap[iconToUse] || faImage}
+                          style={{ width: "16px", height: "16px" }}
+                        />
+                      )}
+                    </span>
+                    {customLabel || defaultLabel}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="gs-quality">
-              <button className={`q-tab ${quality === "hq" ? "active" : ""}`} onClick={() => setQuality("hq")}>High-Quality</button>
-              <button className={`q-tab ${quality === "premium" ? "active" : ""}`} onClick={() => setQuality("premium")}>Premium</button>
+              <button
+                className={`q-tab ${quality === "hq" ? "active" : ""}`}
+                onClick={() => setQuality("hq")}
+              >
+                High-Quality
+              </button>
+              <button
+                className={`q-tab ${quality === "premium" ? "active" : ""}`}
+                onClick={() => setQuality("premium")}
+              >
+                Premium
+              </button>
             </div>
 
             <div className="gs-qty">
@@ -442,7 +626,17 @@ export default function GetStarted() {
                   <span className="qty-val">{displayQty.toLocaleString()}</span>
                   <span className="qty-label"> {LABELS[packType]}</span>
                   {displayDiscount && (
-                    <span className="discount-badge" style={{ marginLeft: '10px', fontSize: '12px', background: '#e0f2fe', color: '#0284c7', padding: '2px 8px', borderRadius: '12px' }}>
+                    <span
+                      className="discount-badge"
+                      style={{
+                        marginLeft: "10px",
+                        fontSize: "12px",
+                        background: "#e0f2fe",
+                        color: "#0284c7",
+                        padding: "2px 8px",
+                        borderRadius: "12px",
+                      }}
+                    >
                       {displayDiscount}
                     </span>
                   )}
@@ -452,7 +646,7 @@ export default function GetStarted() {
                   <span className="old">{formatPrice(displayOldPrice)}</span>
                 </div>
               </div>
-              
+
               {!customSettings?.enabled && availablePackages.length > 0 ? (
                 <input
                   className="range"
@@ -464,34 +658,42 @@ export default function GetStarted() {
                   onChange={(e) => setSliderIndex(parseInt(e.target.value, 10))}
                 />
               ) : (
-                <div className="custom-qty-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-                   <button 
-                      type="button"
-                      className="qty-btn"
-                      onClick={() => {
-                        const step = customSettings?.step || 50;
-                        const min = customSettings?.min || 50;
-                        const newQty = Math.max(min, qty - step);
-                        setQty(newQty);
-                      }}
-                      style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        borderRadius: '50%', 
-                        border: '1px solid #e2e8f0',
-                        background: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '18px',
-                        color: '#64748b',
-                        flexShrink: 0
-                      }}
-                   >
-                     −
-                   </button>
-                   <input
+                <div
+                  className="custom-qty-wrapper"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    width: "100%",
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="qty-btn"
+                    onClick={() => {
+                      const step = customSettings?.step || 50;
+                      const min = customSettings?.min || 50;
+                      const newQty = Math.max(min, qty - step);
+                      setQty(newQty);
+                    }}
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      border: "1px solid #e2e8f0",
+                      background: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      fontSize: "18px",
+                      color: "#64748b",
+                      flexShrink: 0,
+                    }}
+                  >
+                    −
+                  </button>
+                  <input
                     className="range"
                     type="range"
                     min={customSettings?.min || 50}
@@ -501,75 +703,156 @@ export default function GetStarted() {
                     onChange={(e) => setQty(parseInt(e.target.value, 10))}
                     style={{ flex: 1 }}
                   />
-                  <button 
-                      type="button"
-                      className="qty-btn"
-                      onClick={() => {
-                        const step = customSettings?.step || 50;
-                        const max = customSettings?.max || 5000;
-                        const newQty = Math.min(max, qty + step);
-                        setQty(newQty);
-                      }}
-                      style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        borderRadius: '50%', 
-                        border: '1px solid #e2e8f0',
-                        background: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '18px',
-                        color: '#64748b',
-                        flexShrink: 0
-                      }}
-                   >
-                     +
-                   </button>
+                  <button
+                    type="button"
+                    className="qty-btn"
+                    onClick={() => {
+                      const step = customSettings?.step || 50;
+                      const max = customSettings?.max || 5000;
+                      const newQty = Math.min(max, qty + step);
+                      setQty(newQty);
+                    }}
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      border: "1px solid #e2e8f0",
+                      background: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      fontSize: "18px",
+                      color: "#64748b",
+                      flexShrink: 0,
+                    }}
+                  >
+                    +
+                  </button>
                 </div>
               )}
             </div>
 
             <form className="gs-form" onSubmit={handleBuy}>
-              <div className="gs-input-group" style={{ position: 'relative' }}>
-                <div className="gs-input-wrapper" style={{ display: 'flex', alignItems: 'center', background: '#fff', borderRadius: '12px', border: usernameError ? '1px solid #ef4444' : '1px solid #e2e8f0', padding: '5px' }}>
+              <div className="gs-input-group" style={{ position: "relative" }}>
+                <div
+                  className="gs-input-wrapper"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    background: "#fff",
+                    borderRadius: "12px",
+                    border: usernameError
+                      ? "1px solid #ef4444"
+                      : "1px solid #e2e8f0",
+                    padding: "5px",
+                  }}
+                >
                   {profileData?.profilePicture && (
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', marginRight: '10px', flexShrink: 0 }}>
-                      <img src={profileData.profilePicture} alt={username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        marginRight: "10px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <img
+                        src={profileData.profilePicture}
+                        alt={username}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
                     </div>
                   )}
-                  <div style={{ flex: 1, position: 'relative' }}>
-                    <input 
-                      className="input-field" 
-                      style={{ border: 'none', width: '100%', outline: 'none', padding: '10px 5px' }}
-                      placeholder={`Your ${platform === "instagram" ? "Instagram" : platform === "tiktok" ? "TikTok" : "YouTube"} username`} 
+                  <div style={{ flex: 1, position: "relative" }}>
+                    <input
+                      className="input-field"
+                      style={{
+                        border: "none",
+                        width: "100%",
+                        outline: "none",
+                        padding: "10px 5px",
+                      }}
+                      placeholder={`Your ${platform === "instagram" ? "Instagram" : platform === "tiktok" ? "TikTok" : "YouTube"} username`}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                     />
                     {isFetchingProfile && (
-                      <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)' }}>
-                        <div className="spinner" style={{ width: '16px', height: '16px', border: '2px solid #f3f3f3', borderTop: '2px solid #3498db', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                      <div
+                        style={{
+                          position: "absolute",
+                          right: "10px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                        }}
+                      >
+                        <div
+                          className="spinner"
+                          style={{
+                            width: "16px",
+                            height: "16px",
+                            border: "2px solid #f3f3f3",
+                            borderTop: "2px solid #3498db",
+                            borderRadius: "50%",
+                            animation: "spin 1s linear infinite",
+                          }}
+                        ></div>
                         <style jsx>{`
                           @keyframes spin {
-                            0% { transform: rotate(0deg); }
-                            100% { transform: rotate(360deg); }
+                            0% {
+                              transform: rotate(0deg);
+                            }
+                            100% {
+                              transform: rotate(360deg);
+                            }
                           }
                         `}</style>
                       </div>
                     )}
                   </div>
                 </div>
-                {usernameError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '5px', marginLeft: '5px' }}>{usernameError}</div>}
+                {usernameError && (
+                  <div
+                    style={{
+                      color: "#ef4444",
+                      fontSize: "12px",
+                      marginTop: "5px",
+                      marginLeft: "5px",
+                    }}
+                  >
+                    {usernameError}
+                  </div>
+                )}
               </div>
 
-              <div className="gs-input-group" style={{ marginTop: '10px' }}>
-                <div className="gs-input-wrapper" style={{ display: 'flex', alignItems: 'center', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '5px' }}>
-                  <div style={{ flex: 1, position: 'relative' }}>
+              <div className="gs-input-group" style={{ marginTop: "10px" }}>
+                <div
+                  className="gs-input-wrapper"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    background: "#fff",
+                    borderRadius: "12px",
+                    border: "1px solid #e2e8f0",
+                    padding: "5px",
+                  }}
+                >
+                  <div style={{ flex: 1, position: "relative" }}>
                     <input
                       className="input-field"
                       type="email"
-                      style={{ border: 'none', width: '100%', outline: 'none', padding: '10px 5px' }}
+                      style={{
+                        border: "none",
+                        width: "100%",
+                        outline: "none",
+                        padding: "10px 5px",
+                      }}
                       placeholder="Your email address"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -578,7 +861,13 @@ export default function GetStarted() {
                 </div>
               </div>
 
-              <button type="submit" className="btn buy-btn" style={{ marginTop: '15px' }}>Get Started</button>
+              <button
+                type="submit"
+                className="btn buy-btn"
+                style={{ marginTop: "15px" }}
+              >
+                Get Started
+              </button>
 
               <div className="gs-trust">
                 <span className="trust-item">🛡️ Account-Safe Delivery</span>
@@ -590,7 +879,8 @@ export default function GetStarted() {
           {/* Right features */}
           <div className="gs-right card-lg">
             <h4 className="gs-right-title">
-              {dynamicHeading || `${quality === 'hq' ? 'High Quality' : 'Premium'} ${packType.charAt(0).toUpperCase() + packType.slice(1)} Features`}
+              {dynamicHeading ||
+                `${quality === "hq" ? "High Quality" : "Premium"} ${packType.charAt(0).toUpperCase() + packType.slice(1)} Features`}
             </h4>
             {/* Dynamic Features List */}
             <ul className="gs-features">
@@ -614,7 +904,8 @@ export default function GetStarted() {
 
             <div className="gs-divider" />
             <h4 className="gs-right-sub">
-              {dynamicExplanationTitle || `Why Are ${PLATFORM_LABELS[platform]} ${packType.charAt(0).toUpperCase() + packType.slice(1)} Important?`}
+              {dynamicExplanationTitle ||
+                `Why Are ${PLATFORM_LABELS[platform]} ${packType.charAt(0).toUpperCase() + packType.slice(1)} Important?`}
             </h4>
             <p className="gs-right-text">{explanation}</p>
           </div>

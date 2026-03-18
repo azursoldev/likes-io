@@ -16,7 +16,14 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "seed:icons": "node scripts/seed-icons.js"
+    "seed": "node scripts/seed-all.js",
+    "seed:base": "node scripts/seed-base.js",
+    "seed:services": "node scripts/seed-service-pages.js",
+    "seed:icons": "node scripts/seed-icons.js",
+    "db:reset": "prisma migrate reset --force && npm run seed"
+  },
+  "prisma": {
+    "seed": "node scripts/seed-all.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",

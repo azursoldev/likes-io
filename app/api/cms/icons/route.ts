@@ -57,19 +57,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const icon = await prisma.iconAsset.create({
-      data: {
-        name,
-        category: category || null,
-        url: url || '',
-        alt: alt || null,
-        displayOrder: displayOrder || 0,
-      },
+    const data = {
+      name,
+      category: category ?? null,
+      url: url ?? '',
+      alt: alt ?? null,
+      displayOrder: displayOrder ?? 0,
+    };
+
+    const existing = await prisma.iconAsset.findUnique({
+      where: { name },
     });
+
+    const icon = existing
+      ? await prisma.iconAsset.update({
+          where: { name },
+          data: {
+            category: data.category,
+            url: data.url,
+            alt: data.alt,
+            displayOrder: data.displayOrder,
+          },
+        })
+      : await prisma.iconAsset.create({
+          data,
+        });
 
     return NextResponse.json({ icon });
   } catch (error: any) {
-    console.error('Create icon error:', error);
+    console.error('Create/update icon error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to create icon' },
       { status: 500 }
