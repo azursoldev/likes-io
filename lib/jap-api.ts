@@ -226,8 +226,31 @@ export class JAPAPI {
 
       const response = await this.connect(orderData);
 
+      if (response?.error) {
+        const msg =
+          typeof response.error === 'string'
+            ? response.error
+            : JSON.stringify(response.error);
+        throw new Error(`JAP add order: ${msg}`);
+      }
+
+      const rawId = response?.order ?? response?.id;
+      const numericId =
+        typeof rawId === 'number' ? rawId : parseInt(String(rawId), 10);
+      if (
+        rawId === undefined ||
+        rawId === null ||
+        rawId === '' ||
+        !Number.isFinite(numericId) ||
+        numericId === 0
+      ) {
+        throw new Error(
+          'JAP add order: panel did not return a valid order id (check service id, link, and quantity)'
+        );
+      }
+
       return {
-        order: response.order || response.id || 0,
+        order: numericId,
         status: response.status,
         remains: response.remains,
         start_count: response.start_count,

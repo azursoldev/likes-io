@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { emailService } from "@/lib/email";
 import { recordCouponRedemption } from "@/lib/coupon-utils";
-import { japAPI } from "@/lib/jap-api";
+import { trySubmitOrderToJap } from "@/lib/fulfill-jap-order";
 
 export interface OrderMinimal {
   id: string;
@@ -41,28 +41,7 @@ export async function applyZiinaPaymentStatus(
     const order = payment.order;
     await recordCouponRedemption(payment.orderId, existingWebhookData, order.userId);
 
-    if (order.serviceId && order.link) {
-      try {
-        const service = await prisma.service.findUnique({ where: { id: order.serviceId } });
-        if (service?.japServiceId) {
-          const japOrder = await japAPI.createOrder(
-            service.japServiceId,
-            order.link,
-            order.quantity
-          );
-          await prisma.order.update({
-            where: { id: order.id },
-            data: {
-              status: "PROCESSING",
-              japOrderId: japOrder.order.toString(),
-              japStatus: japOrder.status,
-            },
-          });
-        }
-      } catch (err: unknown) {
-        console.error("[Ziina sync] JAP order error:", err);
-      }
-    }
+    await trySubmitOrderToJap(order.id);
 
     await prisma.order.update({
       where: { id: payment.orderId },

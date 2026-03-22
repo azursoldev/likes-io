@@ -47,6 +47,7 @@ export default function YouTubeViewsCheckoutForm() {
   const [priceValue, setPriceValue] = useState<number>(29.99);
   const [packageType, setPackageType] = useState("High-Retention");
   const [videoLink, setVideoLink] = useState("");
+  const [packageServiceId, setPackageServiceId] = useState("");
   const [email, setEmail] = useState("");
   
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function YouTubeViewsCheckoutForm() {
       setPriceValue(parseFloat(sp.get("price") || "29.99"));
       setPackageType(sp.get("type") || "High-Retention");
       setVideoLink(sp.get("videoLink") || "");
+      setPackageServiceId(sp.get("serviceId") || "");
       const em = sp.get("email") || "";
       setEmail(em);
     }
@@ -256,6 +258,7 @@ export default function YouTubeViewsCheckoutForm() {
           paymentMethod: paymentMethod,
           currency: lockedCurrency,
           email: email,
+          ...(packageServiceId ? { packageServiceId } : {}),
         }),
       });
 
@@ -486,7 +489,7 @@ export default function YouTubeViewsCheckoutForm() {
                   <button 
                     type="button" 
                     className="change-button"
-                    onClick={() => router.push(`/youtube/views/checkout?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&videoLink=${encodeURIComponent(videoLink)}${addedOffers.length ? `&offers=${encodeURIComponent(addedOffers.map(o => o.id).join(","))}` : ""}`)}
+                    onClick={() => router.push(`/youtube/views/checkout?username=${encodeURIComponent(username)}&qty=${qty}&price=${priceValue}&type=${encodeURIComponent(packageType)}&videoLink=${encodeURIComponent(videoLink)}${packageServiceId ? `&serviceId=${encodeURIComponent(packageServiceId)}` : ""}${addedOffers.length ? `&offers=${encodeURIComponent(addedOffers.map(o => o.id).join(","))}` : ""}`)}
                   >
                     Change
                   </button>

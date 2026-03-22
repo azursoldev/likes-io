@@ -7,6 +7,7 @@ import { checkoutAPI } from '@/lib/checkout-api';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
 import { getZiinaAPI } from '@/lib/ziina-api';
 import { emailService } from '@/lib/email';
+import { trySubmitOrderToJap } from '@/lib/fulfill-jap-order';
 
 export async function POST(request: NextRequest) {
   try {
@@ -278,12 +279,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // If not found by serviceId or japServiceId, find any active service by platform/serviceType
+    const platformEnum = platform.toUpperCase() as Platform;
+    const serviceTypeEnum = serviceType.toUpperCase() as ServiceType;
+
+    // Prefer an active row that already has an SMM panel service id (avoids unmapped duplicates)
     if (!service) {
       service = await prisma.service.findFirst({
         where: {
-          platform: platform.toUpperCase() as Platform,
-          serviceType: serviceType.toUpperCase() as ServiceType,
+          platform: platformEnum,
+          serviceType: serviceTypeEnum,
+          isActive: true,
+          japServiceId: { not: null },
+        },
+      });
+    }
+
+    // If still not found, any active service by platform/serviceType
+    if (!service) {
+      service = await prisma.service.findFirst({
+        where: {
+          platform: platformEnum,
+          serviceType: serviceTypeEnum,
           isActive: true,
         },
       });
@@ -399,6 +415,8 @@ export async function POST(request: NextRequest) {
             data: { status: 'PROCESSING' }
           })
         ]);
+
+        await trySubmitOrderToJap(order.id);
 
         try {
           await emailService.sendPaymentSuccess(order.id);

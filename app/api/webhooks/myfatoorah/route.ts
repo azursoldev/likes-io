@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { japAPI } from '@/lib/jap-api';
+import { trySubmitOrderToJap } from '@/lib/fulfill-jap-order';
 import { getMyFatoorahAPI } from '@/lib/myfatoorah-api';
 import { emailService } from '@/lib/email';
 import { recordCouponRedemption } from '@/lib/coupon-utils';
@@ -94,31 +94,8 @@ export async function POST(request: NextRequest) {
             // Record Coupon Redemption
             await recordCouponRedemption(payment.orderId, existingWebhookData, order.userId);
             
-             if (order && order.serviceId && order.link) {
-                try {
-                  const service = await prisma.service.findUnique({
-                    where: { id: order.serviceId },
-                  });
-
-                  if (service && service.japServiceId) {
-                    const japOrder = await japAPI.createOrder(
-                      service.japServiceId,
-                      order.link,
-                      order.quantity
-                    );
-
-                    await prisma.order.update({
-                      where: { id: order.id },
-                      data: {
-                        status: 'PROCESSING',
-                        japOrderId: japOrder.order.toString(),
-                        japStatus: japOrder.status,
-                      },
-                    });
-                  }
-                } catch (error: any) {
-                  console.error('Failed to create JAP order:', error);
-                }
+             if (order) {
+                await trySubmitOrderToJap(order.id);
              }
              
             // Update order status (if not already handled by JAP logic above)

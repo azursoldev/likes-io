@@ -33,6 +33,7 @@ function FinalCheckoutContent() {
   const [priceValue, setPriceValue] = useState<number>(17.99);
   const [packageType, setPackageType] = useState("High-Quality");
   const [postLink, setPostLink] = useState("");
+  const [packageServiceId, setPackageServiceId] = useState("");
   
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -42,6 +43,7 @@ function FinalCheckoutContent() {
       setPriceValue(parseFloat(sp.get("price") || "17.99"));
       setPackageType(sp.get("type") || "High-Quality");
       setPostLink(sp.get("postLink") || "");
+      setPackageServiceId(sp.get("serviceId") || "");
       const em = sp.get("email") || "";
       setUrlEmail(em);
       setEmail(em);
@@ -244,6 +246,7 @@ function FinalCheckoutContent() {
           paymentMethod: paymentMethod,
           currency: currencyCode,
           email: email,
+          ...(packageServiceId ? { packageServiceId } : {}),
         }),
       });
 

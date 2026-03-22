@@ -34,6 +34,7 @@ export default function YouTubeSubscribersCheckoutForm() {
   const priceValue = parseFloat(searchParams.get("price") || "15.99");
   const packageType = searchParams.get("type") || "High-Quality";
   const postLink = searchParams.get("postLink") || "";
+  const packageServiceId = searchParams.get("serviceId") || "";
 
   const [paymentMethod, setPaymentMethod] = useState<"crypto" | "wallet" | "ziina">("crypto");
   const [walletBalance, setWalletBalance] = useState(0);
@@ -263,6 +264,7 @@ export default function YouTubeSubscribersCheckoutForm() {
           currency: currencyCode,
           email: email,
           couponCode: appliedCoupon?.code,
+          ...(packageServiceId ? { packageServiceId } : {}),
         }),
       });
 

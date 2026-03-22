@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkoutAPI } from '@/lib/checkout-api';
 import { prisma } from '@/lib/prisma';
-import { japAPI } from '@/lib/jap-api';
+import { trySubmitOrderToJap } from '@/lib/fulfill-jap-order';
 import { emailService } from '@/lib/email';
 import { recordCouponRedemption } from '@/lib/coupon-utils';
 
@@ -51,36 +51,8 @@ export async function POST(request: NextRequest) {
       // Record Coupon Redemption
       await recordCouponRedemption(payment.orderId, existingWebhookData, order.userId);
       
-      if (order && order.serviceId && order.link) {
-        try {
-          // Get service to find JAP service ID
-          const service = await prisma.service.findUnique({
-            where: { id: order.serviceId },
-          });
-
-          if (service && service.japServiceId) {
-            // Create order in JAP
-            // Note: platform is not needed for JAP API, service ID determines everything
-            const japOrder = await japAPI.createOrder(
-              service.japServiceId,
-              order.link,
-              order.quantity
-            );
-
-            // Update order with JAP order ID
-            await prisma.order.update({
-              where: { id: order.id },
-              data: {
-                status: 'PROCESSING',
-                japOrderId: japOrder.order.toString(),
-                japStatus: japOrder.status,
-              },
-            });
-          }
-        } catch (error: any) {
-          console.error('Failed to create JAP order:', error);
-          // Order will remain in pending state, can be retried manually
-        }
+      if (order) {
+        await trySubmitOrderToJap(order.id);
       }
 
       // Update order status

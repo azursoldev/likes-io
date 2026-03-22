@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCryptomusAPI } from '@/lib/cryptomus-api';
-import { japAPI } from '@/lib/jap-api';
+import { trySubmitOrderToJap } from '@/lib/fulfill-jap-order';
 import { recordCouponRedemption } from '@/lib/coupon-utils';
 import { emailService } from '@/lib/email';
 
@@ -98,28 +98,7 @@ export async function POST(request: NextRequest) {
       const existingWebhookData = payment.webhookData as any || {};
       await recordCouponRedemption(payment.orderId, existingWebhookData, order.userId);
 
-      // Create JAP order if service has japServiceId
-      if (order.serviceId && order.link && order.service?.japServiceId) {
-        try {
-          const japOrder = await japAPI.createOrder(
-            order.service.japServiceId,
-            order.link,
-            order.quantity
-          );
-
-          // Update order with JAP order ID
-          await prisma.order.update({
-            where: { id: order.id },
-            data: {
-              japOrderId: japOrder.order.toString(),
-              japStatus: japOrder.status,
-            },
-          });
-        } catch (error: any) {
-          console.error('Failed to create JAP order after Cryptomus payment:', error);
-          // Order will remain in processing state, can be retried manually
-        }
-      }
+      await trySubmitOrderToJap(order.id);
 
       // Send email
       try {
