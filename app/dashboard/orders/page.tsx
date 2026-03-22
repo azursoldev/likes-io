@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { OrderStatus, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import OrderHistory from "../../components/OrderHistory";
@@ -111,17 +112,17 @@ export default async function Page({
   const statusFilter = normalizeStatusFilter(rawStatus);
   const statusWhere = buildStatusWhere(statusFilter);
 
+  const sessionEmail = session.user.email;
   const orConditions: Prisma.OrderWhereInput[] = [
     { userId: session.user.id },
+    ...(sessionEmail
+      ? [
+          { user: { email: sessionEmail } } satisfies Prisma.OrderWhereInput,
+          // buyerEmail is on Order after migration; assert if IDE types lag behind `npx prisma generate`
+          { buyerEmail: sessionEmail } as Prisma.OrderWhereInput,
+        ]
+      : []),
   ];
-
-  if (session.user.email) {
-    orConditions.push({
-      user: {
-        email: session.user.email,
-      },
-    });
-  }
 
   const andConditions: Prisma.OrderWhereInput[] = [
     { OR: orConditions },
@@ -167,7 +168,7 @@ export default async function Page({
         lastFour = "****";
       } else if (order.payment.gateway === "CRYPTOMUS") {
         paymentType = "Crypto";
-      } else if (order.payment.gateway === "ZIINA") {
+      } else if ((order.payment.gateway as string) === "ZIINA") {
         paymentType = "Ziina";
       } else if (order.payment.gateway === "WALLET") {
         paymentType = "Wallet";
@@ -186,7 +187,8 @@ export default async function Page({
         lastFour,
       },
       status: order.status,
-      email: order.user?.email || "",
+      email:
+        (order as { buyerEmail?: string | null }).buyerEmail || order.user?.email || "",
       smmOrderId: order.japOrderId || "N/A",
     };
   });

@@ -136,10 +136,17 @@ export async function POST(request: NextRequest) {
     // Calculate price
     const price = service.finalPrice * quantity;
 
+    const sessionUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true, name: true },
+    });
+
     // Create order with initial status CREATED (awaiting payment)
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
+        ...(sessionUser?.email ? { buyerEmail: sessionUser.email } : {}),
+        ...(sessionUser?.name ? { buyerName: sessionUser.name } : {}),
         serviceId: service.id,
         platform: platform.toUpperCase() as Platform,
         serviceType: serviceType.toUpperCase() as ServiceType,

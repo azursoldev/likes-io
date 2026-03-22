@@ -19,6 +19,53 @@ type FeaturedBrand = {
   isActive: boolean;
 };
 
+/** Match paths ignoring a single trailing slash (e.g. /foo vs /foo/). */
+function normalizePathForMatch(path: string): string {
+  if (!path || path === "all") return path;
+  return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+}
+
+/**
+ * Prefer the page-specific row over "all" so an external URL on a service page
+ * is not overridden by an earlier "all" entry (e.g. link "/" or "#").
+ */
+function resolvePageLinkForPath(pageLinks: PageLink[] | undefined, pathname: string): PageLink | null {
+  if (!pageLinks?.length) return null;
+  const current = normalizePathForMatch(pathname);
+  const exact = pageLinks.find((pl) => {
+    if (pl.pagePath === "all") return false;
+    return normalizePathForMatch(pl.pagePath) === current;
+  });
+  if (exact) return exact;
+  return pageLinks.find((pl) => pl.pagePath === "all") ?? null;
+}
+
+/** Avoid accidental same-origin navigation when admins omit https:// */
+function normalizeFeaturedHref(raw: string): string {
+  const link = raw.trim();
+  if (!link || link === "#") return link;
+  if (/^(https?:|mailto:|tel:)/i.test(link)) return link;
+  if (link.startsWith("//")) return `https:${link}`;
+  if (link.startsWith("/")) return link;
+  if (/^www\./i.test(link) || /^[a-z0-9][a-z0-9-]*\.[a-z]{2,}/i.test(link)) {
+    return `https://${link.replace(/^\/+/, "")}`;
+  }
+  return link;
+}
+
+function isExternalHttpHref(href: string): boolean {
+  return /^https?:\/\//i.test(href);
+}
+
+function buildBrandRel(pageLink: PageLink | null, href: string): string | undefined {
+  const parts: string[] = [];
+  if (pageLink?.nofollow) parts.push("nofollow");
+  if (isExternalHttpHref(href)) {
+    parts.push("noopener", "noreferrer");
+  }
+  return parts.length ? parts.join(" ") : undefined;
+}
+
 export default function FeaturedOn() {
   const pathname = usePathname();
   const [brands, setBrands] = useState<FeaturedBrand[]>([]);
@@ -58,12 +105,9 @@ export default function FeaturedOn() {
         return true;
       }
 
-      // Check if any page link matches current path or "all"
-      return brand.pageLinks.some(pageLink => {
-        if (pageLink.pagePath === "all") {
-          return true;
-        }
-        return pageLink.pagePath === pathname;
+      return brand.pageLinks.some((pageLink) => {
+        if (pageLink.pagePath === "all") return true;
+        return normalizePathForMatch(pageLink.pagePath) === normalizePathForMatch(pathname);
       });
     });
   };
@@ -99,19 +143,9 @@ export default function FeaturedOn() {
             const logoUrl = brand.logoUrl;
             const altText = brand.altText || brandName;
             
-            // Get the first matching page link for the current path
-            const getPageLink = () => {
-              if (!brand.pageLinks || brand.pageLinks.length === 0) return null;
-              
-              // Find link for current path or "all"
-              const matchingLink = brand.pageLinks.find(pageLink => 
-                pageLink.pagePath === pathname || pageLink.pagePath === "all"
-              );
-              
-              return matchingLink?.link || null;
-            };
-
-            const brandLink = getPageLink();
+            const pageLinkRow = resolvePageLinkForPath(brand.pageLinks, pathname);
+            const rawHref = pageLinkRow?.link?.trim() || null;
+            const brandLink = rawHref ? normalizeFeaturedHref(rawHref) : null;
 
             const content = logoUrl ? (
               <img src={logoUrl} alt={altText} style={{ maxHeight: "24px", maxWidth: "120px" }} />
@@ -120,16 +154,16 @@ export default function FeaturedOn() {
             );
 
             if (brandLink && brandLink !== "#") {
-              // Find if nofollow is set for this link
-              const pageLink = brand.pageLinks.find(pl => pl.pagePath === pathname || pl.pagePath === "all");
-              
+              const external = isExternalHttpHref(brandLink);
+              const rel = buildBrandRel(pageLinkRow, brandLink);
               return (
                 <a
                   key={brand.id ?? index}
                   href={brandLink}
                   className="brand-link"
                   style={{ textDecoration: "none", color: "inherit" }}
-                  {...(pageLink?.nofollow ? { rel: "nofollow" } : {})}
+                  {...(external ? { target: "_blank" } : {})}
+                  {...(rel ? { rel } : {})}
                 >
                   {content}
                 </a>

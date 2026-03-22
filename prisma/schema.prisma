@@ -31,6 +31,9 @@ model User {
 model Order {
   id          String      @id @default(cuid())
   userId      String?
+  /// Buyer email at checkout (guest or logged-in); used when userId is null or for admin display
+  buyerEmail  String?
+  buyerName   String?
   serviceId   String
   platform    Platform
   serviceType ServiceType

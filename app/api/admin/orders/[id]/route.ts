@@ -43,19 +43,16 @@ export async function PATCH(
       updateData.serviceId = serviceId;
     }
 
-    // Handle Customer (Email) update
-    if (email) {
-      const user = await prisma.user.findFirst({
-        where: { email },
+    // Handle customer email: always store on order; link user account when one exists
+    if (email !== undefined && email !== null && String(email).trim() !== "") {
+      const trimmed = String(email).trim();
+      updateData.buyerEmail = trimmed;
+      const linkedUser = await prisma.user.findUnique({
+        where: { email: trimmed },
       });
-
-      if (!user) {
-        return NextResponse.json(
-          { error: `User with email ${email} not found` },
-          { status: 400 }
-        );
+      if (linkedUser) {
+        updateData.userId = linkedUser.id;
       }
-      updateData.userId = user.id;
     }
 
     const updatedOrder = await prisma.order.update({

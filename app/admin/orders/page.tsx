@@ -79,13 +79,16 @@ export default async function Page({
     // Format currency
     const currencySymbol = order.currency === "USD" ? "$" : order.currency + " ";
 
+    const buyerEmail =
+      order.buyerEmail?.trim() || order.user?.email?.trim() || null;
+
     return {
       id: `#${order.id.slice(-6).toUpperCase()}`, // Shortened ID for display
       realId: order.id, // Full ID for API
       date,
       rawDate: order.createdAt.toISOString(),
-      customer: order.user?.name || "Unknown",
-      email: order.user?.email || "Unknown",
+      customer: buyerEmail || "Unknown",
+      email: buyerEmail || "Unknown",
       service: order.service.name,
       serviceId: order.serviceId,
       serviceIcon: platform,

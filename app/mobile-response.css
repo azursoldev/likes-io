@@ -505,12 +505,164 @@ html.dark .mobile-dropdown {
     display: none !important;
   }
 
-  .faq-title{
-    font-weight: 700 !important;
+  .faq-section .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    box-sizing: border-box;
   }
 
-  .faq-sub{
+  .faq-section {
+    padding-top: 2rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  .faq-title {
+    font-weight: 700 !important;
+    font-size: clamp(1.375rem, 5vw, 1.75rem) !important;
+    line-height: 1.25 !important;
+    padding: 0 0.25rem;
+    text-wrap: balance;
+  }
+
+  .faq-sub {
     font-weight: 500 !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.55 !important;
+    margin: 0.75rem auto 1.5rem !important;
+    padding: 0 0.75rem !important;
+    max-width: 36rem;
+  }
+
+  .faq-list {
+    max-width: 100% !important;
+    width: 100%;
+  }
+
+  .faq-item:hover,
+  .faq-item:focus-within {
+    transform: none !important;
+  }
+
+  .faq-head {
+    align-items: flex-start !important;
+    padding: 1rem 0.875rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .faq-q {
+    font-size: 0.9375rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .faq-body {
+    padding: 0 0.875rem 1rem !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.6 !important;
+  }
+
+  /* /faq page — category rail + accordion */
+  .faq-page .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    box-sizing: border-box;
+  }
+
+  .faq-page {
+    padding-top: 2rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  .faq-page-header {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .faq-page-title {
+    font-size: clamp(1.375rem, 6vw, 1.75rem) !important;
+    line-height: 1.2 !important;
+    padding: 0 0.25rem;
+  }
+
+  .faq-page-content {
+    gap: 1.25rem !important;
+  }
+
+  .faq-categories {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+  }
+
+  .faq-category-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0.875rem 1rem !important;
+    font-size: 0.9375rem !important;
+  }
+
+  .faq-question-btn {
+    padding: 1rem 1rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .faq-question-text {
+    font-size: 0.9375rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .faq-answer {
+    font-size: 0.9375rem !important;
+    line-height: 1.65 !important;
+    padding-bottom: 1.125rem !important;
+  }
+
+  .faq-question-toggle {
+    margin-top: 2px;
+  }
+
+  /* Section & page titles — tighter, readable on small screens */
+  .platforms-title {
+    font-size: clamp(1.5rem, 5.5vw, 2rem) !important;
+    line-height: 1.2 !important;
+    padding: 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  .platforms-subtitle {
+    font-size: 0.9375rem !important;
+    line-height: 1.55 !important;
+    padding: 0 1rem;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .influence-title,
+  .advantage .font-heading,
+  .quickstart .font-heading {
+    font-size: clamp(1.375rem, 5vw, 1.875rem) !important;
+    line-height: 1.2 !important;
+    text-wrap: balance;
+    padding: 0 0.75rem;
+  }
+
+  .service-hero .hero-title {
+    font-size: clamp(1.5rem, 5.5vw, 2.25rem) !important;
+    line-height: 1.15 !important;
+    padding: 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  .service-hero .hero-sub {
+    padding: 0 1rem !important;
+    font-size: 1rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .qc-section-title {
+    font-size: clamp(1.25rem, 4.5vw, 1.5rem) !important;
+    line-height: 1.25 !important;
+    padding: 0 0.75rem;
+    text-wrap: balance;
   }
 
   .qs-title{

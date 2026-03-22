@@ -24,9 +24,14 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error('Error fetching settings for metadata:', error);
   }
 
+  const homeTitle = (settings?.homeMetaTitle || '').trim();
+  const homeDescription = (settings?.homeMetaDescription || '').trim();
+
   return {
-    title: settings?.homeMetaTitle || 'Likes.io: Buy Instagram, TikTok & YouTube Engagement | Real & Instant',
-    description: settings?.homeMetaDescription || 'Elevate your social media presence with Likes.io. Buy real, high-quality Instagram, TikTok, and YouTube engagement (Likes, Followers, Views) with instant delivery. Safe, secure, and guaranteed results.',
+    title: homeTitle || 'Likes.io: Buy Instagram, TikTok & YouTube Engagement | Real & Instant',
+    description:
+      homeDescription ||
+      'Elevate your social media presence with Likes.io. Buy real, high-quality Instagram, TikTok, and YouTube engagement (Likes, Followers, Views) with instant delivery. Safe, secure, and guaranteed results.',
     icons: { icon: settings?.faviconUrl || '/favicon.ico' },
     metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'https://likes.io'),
     alternates: {

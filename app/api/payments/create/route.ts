@@ -317,10 +317,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const guestEmail =
+      typeof email === 'string' && email.trim() ? email.trim() : null;
+    const guestName =
+      typeof name === 'string' && name.trim() ? name.trim() : null;
+    const buyerEmail = guestEmail || user?.email || null;
+    const buyerName = guestName || user?.name || null;
+
     // Create order (only set userId if we verified the user exists in DB to avoid FK violation)
     const order = await prisma.order.create({
       data: {
         ...(user?.id ? { userId: user.id } : {}),
+        ...(buyerEmail ? { buyerEmail } : {}),
+        ...(buyerName ? { buyerName } : {}),
         serviceId: service.id,
         platform: platform.toUpperCase() as Platform,
         serviceType: serviceType.toUpperCase() as ServiceType,

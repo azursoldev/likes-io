@@ -79,5 +79,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return customRoutes;
+  if (customRoutes.length > 0) {
+    return customRoutes;
+  }
+
+  const defaultRoutes: MetadataRoute.Sitemap = [
+    {
+      url: baseUrl,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 1,
+    },
+  ];
+
+  try {
+    const slugs = await prisma.servicePageContent.findMany({
+      select: { slug: true, updatedAt: true },
+      orderBy: { slug: 'asc' },
+    });
+    for (const row of slugs) {
+      if (!row.slug) continue;
+      defaultRoutes.push({
+        url: `${baseUrl}/${row.slug}`,
+        lastModified: row.updatedAt ?? new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching service pages for sitemap:', error);
+  }
+
+  return defaultRoutes;
 }

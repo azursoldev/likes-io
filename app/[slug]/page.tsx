@@ -22,6 +22,47 @@ import LearnMoreSection from "../components/LearnMoreSection";
 
 import { getDefaultMoreServicesButtons } from "../utils/serviceDefaults";
 
+/** DB slugs are stored lowercase; normalize so direct hits still resolve if middleware is bypassed */
+function normalizeSlug(slug: string): string {
+  return slug.trim().toLowerCase();
+}
+
+const INDEXABLE_ROBOTS = {
+  index: true as const,
+  follow: true as const,
+  googleBot: {
+    index: true as const,
+    follow: true as const,
+    'max-video-preview': -1 as const,
+    'max-image-preview': 'large' as const,
+    'max-snippet': -1 as const,
+  },
+};
+
+function plainTextFromHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function buildServiceMetaDescription(content: {
+  metaDescription?: string | null;
+  heroSubtitle?: string | null;
+  heroTitle?: string | null;
+  platform?: string | null;
+  serviceType?: string | null;
+}): string {
+  const fromCms = (content.metaDescription || '').trim();
+  if (fromCms) return fromCms;
+
+  const fromSubtitle = plainTextFromHtml((content.heroSubtitle || '').trim());
+  if (fromSubtitle) return fromSubtitle;
+
+  const platform = (content.platform || 'social').replace(/-/g, ' ');
+  const service = (content.serviceType || 'engagement').replace(/-/g, ' ');
+  const title = (content.heroTitle || '').trim();
+  const base = `Grow on ${platform} with real ${service} from Likes.io — instant delivery, secure checkout, and support when you need it.`;
+  return title ? `${title}. ${base}` : base;
+}
+
 async function getServiceContent(slug: string): Promise<ServicePageContentData | null> {
   let content;
   let faqs: any[] = [];
@@ -110,35 +151,55 @@ async function getServiceContent(slug: string): Promise<ServicePageContentData |
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const slug = normalizeSlug(params.slug);
   try {
     const content = await prisma.servicePageContent.findFirst({
-      where: { slug: params.slug },
+      where: { slug },
     });
 
     if (!content) {
       return {
         title: 'Service Not Found',
+        robots: { index: false, follow: false },
       };
     }
-    
+
+    const title = (content as any).metaTitle || content.heroTitle;
+    const description = buildServiceMetaDescription(content as any);
+
     return {
-      title: (content as any).metaTitle || content.heroTitle, 
-      description: (content as any).metaDescription || content.heroSubtitle,
+      title,
+      description,
+      robots: INDEXABLE_ROBOTS,
       alternates: {
-        canonical: `/${params.slug}`,
+        canonical: `/${slug}`,
+      },
+      openGraph: {
+        title,
+        description,
+        url: `/${slug}`,
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
       },
     };
   } catch (error) {
     console.error('Error fetching metadata:', error);
     return {
       title: 'Likes.io',
-      description: 'Boost your social media presence',
+      description:
+        'Elevate your social media presence with Likes.io — real Instagram, TikTok, and YouTube engagement with instant delivery.',
+      robots: INDEXABLE_ROBOTS,
     };
   }
 }
 
 export default async function Page({ params }: { params: { slug: string } }) {
-  const content = await getServiceContent(params.slug);
+  const slug = normalizeSlug(params.slug);
+  const content = await getServiceContent(slug);
 
   if (!content || !content.platform || !content.serviceType) {
     notFound();
@@ -191,7 +252,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
     }
   };
 
-  const slugKey = content.slug || params.slug;
+  const slugKey = content.slug || slug;
   const mapped = serviceSchemaDefaults[slugKey] || null;
 
   const serviceJsonLd = {
@@ -219,7 +280,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
       <ServicePageContentProvider
-        slug={params.slug}
+        slug={slugKey}
         initialData={content}
         defaultHeroTitle={content.heroTitle}
         defaultHeroSubtitle={content.heroSubtitle}

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "buyerEmail" TEXT;
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "buyerName" TEXT;
