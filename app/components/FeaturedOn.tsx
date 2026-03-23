@@ -1,5 +1,6 @@
 "use client";
 
+import { isWildcardPagePath } from "@/lib/featured-on-page-links";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
@@ -21,7 +22,7 @@ type FeaturedBrand = {
 
 /** Match paths ignoring a single trailing slash (e.g. /foo vs /foo/). */
 function normalizePathForMatch(path: string): string {
-  if (!path || path === "all") return path;
+  if (!path || isWildcardPagePath(path)) return path;
   return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
 }
 
@@ -33,11 +34,11 @@ function resolvePageLinkForPath(pageLinks: PageLink[] | undefined, pathname: str
   if (!pageLinks?.length) return null;
   const current = normalizePathForMatch(pathname);
   const exact = pageLinks.find((pl) => {
-    if (pl.pagePath === "all") return false;
+    if (isWildcardPagePath(pl.pagePath)) return false;
     return normalizePathForMatch(pl.pagePath) === current;
   });
   if (exact) return exact;
-  return pageLinks.find((pl) => pl.pagePath === "all") ?? null;
+  return pageLinks.find((pl) => isWildcardPagePath(pl.pagePath)) ?? null;
 }
 
 /** Avoid accidental same-origin navigation when admins omit https:// */
@@ -106,7 +107,7 @@ export default function FeaturedOn() {
       }
 
       return brand.pageLinks.some((pageLink) => {
-        if (pageLink.pagePath === "all") return true;
+        if (isWildcardPagePath(pageLink.pagePath)) return true;
         return normalizePathForMatch(pageLink.pagePath) === normalizePathForMatch(pathname);
       });
     });

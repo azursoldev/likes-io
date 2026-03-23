@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import {
+  normalizePageLinksArray,
+  validatePageLinksForSave,
+  validatePageLinksRequired,
+} from '@/lib/featured-on-page-links';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,9 +28,10 @@ export async function GET() {
           where: {
             featuredOnId: { in: brands.map((b: any) => b.id) },
           },
+          orderBy: { id: 'asc' },
         });
 
-        // Group pageLinks by featuredOnId
+        // Group pageLinks by featuredOnId (DB order preserved per brand)
         const pageLinksByBrandId = pageLinksData.reduce((acc: any, link: any) => {
           if (!acc[link.featuredOnId]) {
             acc[link.featuredOnId] = [];
@@ -134,6 +140,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedPageLinks =
+      Array.isArray(pageLinks) && pageLinks.length > 0
+        ? normalizePageLinksArray(pageLinks)
+        : [];
+    if (normalizedPageLinks.length > 0) {
+      const validationError = validatePageLinksRequired(normalizedPageLinks);
+      if (validationError) {
+        return NextResponse.json({ error: validationError }, { status: 400 });
+      }
+    } else {
+      return NextResponse.json(
+        { error: 'At least one page link is required.' },
+        { status: 400 }
+      );
+    }
+
     // Build data object dynamically to handle missing fields
     // Don't include link or altText initially - they may not exist in DB
     const createData: any = {
@@ -147,13 +169,13 @@ export async function POST(request: NextRequest) {
     // We'll try without it first to avoid column errors
 
     // Only include pageLinks if the relation exists
-    if (pageLinks && pageLinks.length > 0) {
+    if (normalizedPageLinks.length > 0) {
       try {
         createData.pageLinks = {
-          create: pageLinks.map((link: any) => ({
-            pagePath: link.pagePath || 'all',
-            link: link.link || null,
-            nofollow: link.nofollow || false,
+          create: normalizedPageLinks.map((link) => ({
+            pagePath: link.pagePath,
+            link: link.link,
+            nofollow: link.nofollow,
           })),
         };
       } catch (pageLinksError) {
@@ -185,9 +207,9 @@ export async function POST(request: NextRequest) {
           // Try to create pageLinks using the relation
           const pageLinksData = pageLinksToCreate.create.map((link: any) => ({
             featuredOnId: brand.id,
-            pagePath: link.pagePath || 'all',
-            link: link.link || null,
-            nofollow: link.nofollow || false,
+            pagePath: link.pagePath,
+            link: link.link,
+            nofollow: link.nofollow,
           }));
 
           console.log('PageLinks data to insert:', pageLinksData);
@@ -319,19 +341,30 @@ export async function PUT(request: NextRequest) {
       updateDataKeys: Object.keys(updateData),
     });
 
-    if (updateData.displayOrder !== undefined) {
-      updateData.displayOrder = parseInt(updateData.displayOrder);
-    }
+    const displayOrderNum =
+      updateData.displayOrder !== undefined
+        ? parseInt(String(updateData.displayOrder), 10)
+        : undefined;
 
-    // Build update data dynamically
-    const finalUpdateData: any = { ...updateData };
-    
-    // Only include altText if it's provided
-    if (altText !== undefined) {
-      finalUpdateData.altText = altText;
+    // FeaturedOn model has only: brandName, logoUrl, displayOrder, isActive (no altText / pageLinks).
+    // Sending unknown fields (e.g. altText) caused Prisma to throw; the catch path returned early
+    // and never replaced pageLinks — external URLs appeared "not saved".
+    const finalUpdateData: {
+      brandName?: string;
+      logoUrl?: string | null;
+      displayOrder?: number;
+      isActive?: boolean;
+    } = {};
+    if (updateData.brandName !== undefined) finalUpdateData.brandName = updateData.brandName;
+    if (updateData.logoUrl !== undefined) finalUpdateData.logoUrl = updateData.logoUrl;
+    if (displayOrderNum !== undefined && !Number.isNaN(displayOrderNum)) {
+      finalUpdateData.displayOrder = displayOrderNum;
     }
+    if (updateData.isActive !== undefined) finalUpdateData.isActive = updateData.isActive;
 
-    // Handle pageLinks separately - remove from updateData
+    // altText is accepted by the admin UI for image logos but is not a DB column on featured_on.
+    void altText;
+
     const pageLinksToUpdate = pageLinks;
     console.log('pageLinksToUpdate:', {
       value: pageLinksToUpdate,
@@ -341,14 +374,9 @@ export async function PUT(request: NextRequest) {
       isNull: pageLinksToUpdate === null,
       length: Array.isArray(pageLinksToUpdate) ? pageLinksToUpdate.length : 'N/A',
     });
-    
-    // Remove pageLinks from updateData if it exists there
-    if ('pageLinks' in finalUpdateData) {
-      delete finalUpdateData.pageLinks;
-    }
 
     try {
-      // Update the brand first without pageLinks
+      // Update the brand row first (page links are replaced below).
       const brand = await prisma.featuredOn.update({
         where: { id: parseInt(id) },
         data: finalUpdateData,
@@ -357,10 +385,19 @@ export async function PUT(request: NextRequest) {
       // Handle pageLinks separately if provided
       let updatedPageLinks: any[] = [];
       if (pageLinksToUpdate !== undefined) {
+        const normalizedUpdate =
+          Array.isArray(pageLinksToUpdate) && pageLinksToUpdate.length > 0
+            ? normalizePageLinksArray(pageLinksToUpdate)
+            : [];
+        const validationErr = validatePageLinksForSave(normalizedUpdate);
+        if (validationErr) {
+          return NextResponse.json({ error: validationErr }, { status: 400 });
+        }
+
         console.log('Updating pageLinks for brand:', {
           brandId: parseInt(id),
-          pageLinksCount: Array.isArray(pageLinksToUpdate) ? pageLinksToUpdate.length : 0,
-          pageLinks: pageLinksToUpdate,
+          pageLinksCount: normalizedUpdate.length,
+          pageLinks: normalizedUpdate,
         });
         
         try {
@@ -379,12 +416,12 @@ export async function PUT(request: NextRequest) {
           }
 
           // Create new pageLinks if any
-          if (Array.isArray(pageLinksToUpdate) && pageLinksToUpdate.length > 0) {
-            const pageLinksData = pageLinksToUpdate.map((link: any) => ({
+          if (normalizedUpdate.length > 0) {
+            const pageLinksData = normalizedUpdate.map((link) => ({
               featuredOnId: parseInt(id),
-              pagePath: link.pagePath || 'all',
-              link: link.link || null,
-              nofollow: link.nofollow || false,
+              pagePath: link.pagePath,
+              link: link.link,
+              nofollow: link.nofollow,
             }));
 
             console.log('PageLinks data to insert:', pageLinksData);
@@ -451,27 +488,67 @@ export async function PUT(request: NextRequest) {
 
       return NextResponse.json({ brand: { ...brand, pageLinks: updatedPageLinks } });
     } catch (updateError: any) {
-      // If error is about missing columns (link, altText, etc.), try without them
-      if (updateError.message?.includes('link') || 
-          updateError.message?.includes('altText') || 
-          updateError.message?.includes('Unknown argument') ||
-          updateError.message?.includes('does not exist')) {
-        
-        const fallbackData: any = { ...updateData };
-        if (updateData.displayOrder !== undefined) {
-          fallbackData.displayOrder = parseInt(updateData.displayOrder);
+      // Legacy DBs: retry with only known FeaturedOn columns (never altText / pageLinks on parent row).
+      if (
+        updateError.message?.includes('link') ||
+        updateError.message?.includes('altText') ||
+        updateError.message?.includes('Unknown argument') ||
+        updateError.message?.includes('does not exist')
+      ) {
+        const fallbackData: {
+          brandName?: string;
+          logoUrl?: string | null;
+          displayOrder?: number;
+          isActive?: boolean;
+        } = {};
+        if (updateData.brandName !== undefined) fallbackData.brandName = updateData.brandName;
+        if (updateData.logoUrl !== undefined) fallbackData.logoUrl = updateData.logoUrl;
+        if (displayOrderNum !== undefined && !Number.isNaN(displayOrderNum)) {
+          fallbackData.displayOrder = displayOrderNum;
         }
-
-        // Remove fields that might not exist in database
-        delete fallbackData.link;
-        delete fallbackData.altText;
+        if (updateData.isActive !== undefined) fallbackData.isActive = updateData.isActive;
 
         const brand = await prisma.featuredOn.update({
           where: { id: parseInt(id) },
           data: fallbackData,
         });
 
-        return NextResponse.json({ brand: { ...brand, pageLinks: [] } });
+        // Re-run page link replacement — previously this path returned pageLinks: [] and skipped DB writes.
+        let updatedPageLinks: any[] = [];
+        if (pageLinksToUpdate !== undefined) {
+          const normalizedUpdate =
+            Array.isArray(pageLinksToUpdate) && pageLinksToUpdate.length > 0
+              ? normalizePageLinksArray(pageLinksToUpdate)
+              : [];
+          const validationErr = validatePageLinksForSave(normalizedUpdate);
+          if (validationErr) {
+            return NextResponse.json({ error: validationErr }, { status: 400 });
+          }
+          try {
+            await (prisma as any).featuredOnPageLink.deleteMany({
+              where: { featuredOnId: parseInt(id) },
+            });
+            if (normalizedUpdate.length > 0) {
+              for (const link of normalizedUpdate) {
+                const created = await (prisma as any).featuredOnPageLink.create({
+                  data: {
+                    featuredOnId: parseInt(id),
+                    pagePath: link.pagePath,
+                    link: link.link,
+                    nofollow: link.nofollow,
+                  },
+                });
+                updatedPageLinks.push(created);
+              }
+            }
+          } catch (e: any) {
+            if (e.code !== 'P2021' && !e.message?.includes('does not exist')) {
+              throw e;
+            }
+          }
+        }
+
+        return NextResponse.json({ brand: { ...brand, pageLinks: updatedPageLinks } });
       }
       throw updateError;
     }

@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  normalizePageLinkForStorage,
+  normalizePageLinksArray,
+  validatePageLinksRequired,
+} from "@/lib/featured-on-page-links";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
@@ -7,11 +12,29 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faX } from "@fortawesome/free-solid-svg-icons";
 import { useMemo, useState, useEffect } from "react";
 
+/** Form state: empty string means “no destination” (stored as null). */
 type PageLink = {
   pagePath: string;
   link: string;
   nofollow: boolean;
 };
+
+function mapApiPageLinkToForm(link: {
+  pagePath?: string | null;
+  link?: string | null;
+  nofollow?: boolean;
+}): PageLink {
+  const n = normalizePageLinkForStorage({
+    pagePath: link.pagePath,
+    link: link.link,
+    nofollow: link.nofollow,
+  });
+  return {
+    pagePath: n.pagePath,
+    link: n.link ?? "",
+    nofollow: n.nofollow,
+  };
+}
 
 type FeaturedItem = {
   id: number;
@@ -37,6 +60,8 @@ export default function FeaturedOnDashboard() {
 
   const pageOptions = useMemo(() => [
     { value: "all", label: "All Pages" },
+    /** Same visibility as “All Pages”; label makes external destinations obvious in the row below. */
+    { value: "__external__", label: "External URL (all pages)" },
     { value: "/", label: "Homepage" },
     { value: getLink("instagram", "likes"), label: "Instagram Likes" },
     { value: "/free-instagram-likes", label: "Free Instagram Likes" },
@@ -79,16 +104,10 @@ export default function FeaturedOnDashboard() {
       if (response.ok) {
         const data = await response.json();
         const brands = (data.brands || []).map((brand: any) => {
-          // Ensure pageLinks is always an array with proper structure
-          const pageLinks = (brand.pageLinks || []).map((link: any) => ({
-            pagePath: link.pagePath || "all",
-            link: link.link || "#",
-            nofollow: link.nofollow || false,
-          }));
-          
+          const pageLinks = (brand.pageLinks || []).map((link: any) => mapApiPageLinkToForm(link));
           return {
             ...brand,
-            pageLinks: pageLinks,
+            pageLinks,
           };
         });
         
@@ -135,7 +154,7 @@ export default function FeaturedOnDashboard() {
           const data = await response.json();
           const brands = (data.brands || []).map((brand: any) => ({
             ...brand,
-            pageLinks: brand.pageLinks || [],
+            pageLinks: (brand.pageLinks || []).map((link: any) => mapApiPageLinkToForm(link)),
           }));
           setItems(brands);
         }
@@ -182,15 +201,7 @@ export default function FeaturedOnDashboard() {
     let validPageLinks: PageLink[] = [];
     
     if (item.pageLinks && Array.isArray(item.pageLinks) && item.pageLinks.length > 0) {
-      validPageLinks = item.pageLinks.map((link: any) => {
-        const mappedLink = {
-          pagePath: String(link.pagePath || "all"),
-          link: String(link.link || "#"),
-          nofollow: Boolean(link.nofollow !== undefined ? link.nofollow : false),
-        };
-        console.log('Mapped link:', mappedLink);
-        return mappedLink;
-      });
+      validPageLinks = item.pageLinks.map((link: any) => mapApiPageLinkToForm(link));
       console.log('Final validPageLinks:', validPageLinks);
     } else {
       // If no pageLinks, create a default one
@@ -215,27 +226,22 @@ export default function FeaturedOnDashboard() {
       return;
     }
 
-    if (pageLinks.length === 0) {
-      alert("At least one page link is required");
-      return;
-    }
-
     try {
       setSaving(true);
-      
-      // Ensure pageLinks have the correct structure
-      const validPageLinks = pageLinks.map(link => ({
-        pagePath: link.pagePath || "all",
-        link: link.link || "#",
-        nofollow: link.nofollow || false,
-      }));
-      
+
+      const validPageLinks = normalizePageLinksArray(pageLinks);
+      const pageLinksError = validatePageLinksRequired(validPageLinks);
+      if (pageLinksError) {
+        alert(pageLinksError);
+        return;
+      }
+
       console.log('Saving brand with pageLinks:', {
         brandName: brandName.trim(),
         pageLinksCount: validPageLinks.length,
         pageLinks: validPageLinks,
       });
-      
+
       const brandData: any = {
         brandName: brandName.trim(),
         altText: type === "image" ? (altText.trim() || brandName.trim()) : null,
@@ -550,13 +556,19 @@ export default function FeaturedOnDashboard() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                   <span style={{ fontSize: "13px", color: "#374151", fontWeight: "500" }}>Page Links</span>
                 </div>
+                <p style={{ fontSize: "12px", color: "#6b7280", margin: "0 0 10px" }}>
+                  Pick where this badge appears, then set the click destination: internal path (e.g.{" "}
+                  <code style={{ fontSize: "11px" }}>/blog</code>) or a full external URL (e.g.{" "}
+                  <code style={{ fontSize: "11px" }}>https://press.example.com/article</code>).
+                </p>
                 {pageLinks.map((pageLink, index) => (
-                  <div key={index} style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "8px" }}>
+                  <div key={index} style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "10px" }}>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <select
                       className="faq-modal-input featured-dark-input"
                       value={pageLink.pagePath}
                       onChange={(e) => handleUpdatePageLink(index, "pagePath", e.target.value)}
-                      style={{ flex: "0 0 150px" }}
+                      style={{ flex: "0 0 180px" }}
                     >
                       {pageOptions.map(option => (
                         <option key={option.value} value={option.value}>
@@ -568,7 +580,11 @@ export default function FeaturedOnDashboard() {
                       className="faq-modal-input featured-dark-input"
                       value={pageLink.link}
                       onChange={(e) => handleUpdatePageLink(index, "link", e.target.value)}
-                      placeholder="#"
+                      placeholder={
+                        pageLink.pagePath === "__external__"
+                          ? "https://example.com/article"
+                          : "/path or https://external-site.com/..."
+                      }
                       style={{ flex: 1 }}
                     />
                     <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px", color: "#374151" }}>
@@ -600,6 +616,12 @@ export default function FeaturedOnDashboard() {
                     >
                       <FontAwesomeIcon icon={faX} style={{ fontSize: "12px" }} />
                     </button>
+                  </div>
+                  {pageLink.pagePath === "__external__" && (
+                    <p style={{ fontSize: "11px", color: "#92400e", margin: 0, paddingLeft: "4px" }}>
+                      Use a full URL (https://…). Nofollow is recommended for paid/press links.
+                    </p>
+                  )}
                   </div>
                 ))}
                 <button
