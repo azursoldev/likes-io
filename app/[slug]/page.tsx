@@ -160,7 +160,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     if (!content) {
       return {
         title: 'Service Not Found',
-        robots: { index: false, follow: false },
+        // robots: { index: false, follow: false },
       };
     }
 
