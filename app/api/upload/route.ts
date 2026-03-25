@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use original filename (sanitized) so re-uploading the same file overwrites it
-    const sanitizedBase = path.basename(file.name, ext).replaceAll(/[^a-zA-Z0-9._-]/g, '_');
+    const sanitizedBase = path.basename(file.name, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
     const filename = `${sanitizedBase}${ext}`;
     
     // Get optional folder param
