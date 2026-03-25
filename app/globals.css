@@ -2807,7 +2807,8 @@ h3.affiliate-benefit-title {
   .contact-feature-text {font-size: 15px;line-height: 22px;color: rgb(75, 85, 99);margin: 0;}
   
   .contact-email-section { padding-top: 24px; border-top: 1px solid rgba(17, 24, 39, 0.12); }
-  .contact-email-text { font-size: 15px; color: rgba(17, 24, 39, 0.75); margin: 0 0 12px; }
+  .contact-email-text { font-size: 15px; font-weight: 700; color: rgba(17, 24, 39, 0.75); margin: 0 0 12px; }
+  .contact-address-block { font-size: 15px; line-height: 1.55; color: rgb(55, 65, 81); margin: 0 0 16px; }
   .contact-email-link { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: rgb(249, 115, 22); text-decoration: none; transition: color 0.2s ease; }
   .contact-email-link:hover { color: rgb(234, 88, 12); }
   .contact-email-link svg { font-size: 16px; }

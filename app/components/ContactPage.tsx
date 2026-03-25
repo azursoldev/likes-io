@@ -106,7 +106,12 @@ export default function ContactPage() {
             </div>
 
             <div className="contact-email-section">
-              <p className="contact-email-text">Prefer to email us directly?</p>
+              <p className="contact-email-text">Contact:</p>
+              <p className="contact-address-block">
+                H.H. Connect for Marketing and PR
+                <br />
+                Sara Building, Liwan 2, Dubai, UAE
+              </p>
               <a href="mailto:support@likes.io" className="contact-email-link">
                 <FontAwesomeIcon icon={faEnvelope} />
                 support@likes.io
