@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 
 export const runtime = "nodejs";
 
@@ -48,8 +47,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create unique filename
-    const filename = `${uuidv4()}${path.extname(file.name)}`;
+    // Use original filename (sanitized) so re-uploading the same file overwrites it
+    const sanitizedBase = path.basename(file.name, ext).replaceAll(/[^a-zA-Z0-9._-]/g, '_');
+    const filename = `${sanitizedBase}${ext}`;
     
     // Get optional folder param
     const folder = request.nextUrl.searchParams.get('folder') || '';

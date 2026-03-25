@@ -323,8 +323,10 @@ export async function POST(request: NextRequest) {
         },
       });
     } else if (packageServiceId) {
-      // If packageServiceId is provided, update service's japServiceId if it's different or missing
-      if (!service.japServiceId || service.japServiceId !== packageServiceId) {
+      // Only update japServiceId if packageServiceId looks like a numeric JAP service ID
+      // (short numeric string, not a UUID) to avoid corrupting a valid mapping
+      const isNumericJapId = /^\d{1,10}$/.test(String(packageServiceId).trim());
+      if (isNumericJapId && (!service.japServiceId || service.japServiceId !== packageServiceId)) {
         service = await prisma.service.update({
           where: { id: service.id },
           data: { japServiceId: packageServiceId },

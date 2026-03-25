@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \":*)",
+      "Bash(PGPASSWORD=\"AVNS_lkLr8-DGC-qPACXAnWJ\" psql \"postgresql://doadmin@db-postgresql-blr1-25504-do-user-28518962-0.j.db.ondigitalocean.com:25060/defaultdb?sslmode=require\" -c \"SELECT id, name, \"\"serviceType\"\", \"\"japServiceId\"\", \"\"isActive\"\" FROM services WHERE platform = ''YOUTUBE'';\")"
+    ]
+  }
+}
