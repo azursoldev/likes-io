@@ -6,6 +6,7 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import NextAuthSessionProvider from '@/lib/session-provider';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
+import { resolveAssetUrl } from '@/lib/url-utils';
 import ExitIntentModal from './components/ExitIntentModal';
 
 import { config } from '@fortawesome/fontawesome-svg-core'
@@ -26,13 +27,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const homeTitle = (settings?.homeMetaTitle || '').trim();
   const homeDescription = (settings?.homeMetaDescription || '').trim();
+  const metaBase =
+    process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'https://likes.io';
+  const faviconResolved =
+    resolveAssetUrl(settings?.faviconUrl, metaBase) || `${metaBase}/favicon.ico`;
 
   return {
     title: homeTitle || 'Likes.io: Buy Instagram, TikTok & YouTube Engagement | Real & Instant',
     description:
       homeDescription ||
       'Elevate your social media presence with Likes.io. Buy real, high-quality Instagram, TikTok, and YouTube engagement (Likes, Followers, Views) with instant delivery. Safe, secure, and guaranteed results.',
-    icons: { icon: settings?.faviconUrl || '/favicon.ico' },
+    icons: { icon: faviconResolved },
     metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'https://likes.io'),
     alternates: {
       canonical: '/',
@@ -84,7 +89,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'https://likes.io';
   const orgId = `${baseUrl}/#organization`;
   const websiteId = `${baseUrl}/#website`;
-  const logoUrl = (settingsWithNavigation?.headerLogoUrl as string) || `${baseUrl}/logo.png`;
+  const logoUrl =
+    resolveAssetUrl(settingsWithNavigation?.headerLogoUrl as string | undefined, baseUrl) ||
+    `${baseUrl}/logo.png`;
   const orgJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",

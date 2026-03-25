@@ -8,6 +8,7 @@ import { faAngleDown, faAngleUp, faBars, faTimes, faClock, faBook } from "@forta
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { useNavigation } from "../hooks/useNavigation";
+import { resolveAssetUrl } from "@/lib/url-utils";
 import "../mobile-response.css";
 
 export default function Header() {
@@ -84,7 +85,7 @@ export default function Header() {
           <div className="brand">
             <a href="/" className="brand-logo">
               {headerLogoUrl ? (
-                <img src={headerLogoUrl} alt="Likes.io" style={{ maxHeight: '40px' }} />
+                <img src={resolveAssetUrl(headerLogoUrl)} alt="Likes.io" style={{ maxHeight: '40px' }} />
               ) : (
                 <>
                   <span className="logo-text">Likes</span>
@@ -238,7 +239,7 @@ export default function Header() {
           <div className="brand">
             <a href="/" className="brand-logo">
               {headerLogoUrl ? (
-                <img src={headerLogoUrl} alt="Likes.io" style={{ maxHeight: '40px' }} />
+                <img src={resolveAssetUrl(headerLogoUrl)} alt="Likes.io" style={{ maxHeight: '40px' }} />
               ) : (
                 <>
                   <span className="logo-text">Likes</span>

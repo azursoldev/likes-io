@@ -62,6 +62,7 @@ import {
   faImage,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import { pickUploadedAssetUrl, resolveAssetUrl } from "@/lib/url-utils";
 
 type IconItem = {
   id: string;
@@ -229,7 +230,7 @@ export default function IconManagementDashboard() {
       }
 
       const uploadData = await uploadRes.json();
-      const fileUrl = uploadData.url || uploadData.publicUrl;
+      const fileUrl = pickUploadedAssetUrl(uploadData);
 
       // Update icon with new URL
       const res = await fetch(`/api/cms/icons?id=${dbId}`, {
@@ -326,7 +327,7 @@ export default function IconManagementDashboard() {
     if (item.url && item.url.trim() !== '') {
       return (
         <img
-          src={item.url}
+          src={resolveAssetUrl(item.url)}
           alt={item.customText || item.name}
           className="icon-image-display"
           style={{ maxWidth: "48px", maxHeight: "48px", objectFit: "contain" }}
@@ -460,7 +461,7 @@ export default function IconManagementDashboard() {
                       if (!res.ok) throw new Error('Upload failed');
                       
                       const data = await res.json();
-                      setNewIconData({...newIconData, url: data.publicUrl || data.url});
+                      setNewIconData({...newIconData, url: pickUploadedAssetUrl(data)});
                     } catch (err) {
                       console.error(err);
                       alert('Failed to upload file');
@@ -473,7 +474,7 @@ export default function IconManagementDashboard() {
               {newIconData.url && (
                 <div style={{ marginTop: "10px" }}>
                   <p style={{ fontSize: "12px", marginBottom: "5px" }}>Preview:</p>
-                  <img src={newIconData.url} alt="Preview" style={{ maxWidth: "50px", maxHeight: "50px" }} />
+                  <img src={resolveAssetUrl(newIconData.url)} alt="Preview" style={{ maxWidth: "50px", maxHeight: "50px" }} />
                 </div>
               )}
             </div>

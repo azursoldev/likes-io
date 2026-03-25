@@ -5,6 +5,7 @@ import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { pickUploadedAssetUrl, resolveAssetUrl } from "@/lib/url-utils";
 
 export default function ProfileDashboard() {
   const { data: session, status, update } = useSession();
@@ -69,7 +70,7 @@ export default function ProfileDashboard() {
       });
       if (!response.ok) throw new Error("Upload failed");
       const data = await response.json();
-      setAvatarUrl(data.url);
+      setAvatarUrl(pickUploadedAssetUrl(data));
     } catch (err) {
       alert("Failed to upload avatar");
     } finally {
@@ -286,7 +287,7 @@ export default function ProfileDashboard() {
                     </div>
                     {avatarUrl && (
                       <div style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-                        <img src={avatarUrl} alt="Avatar Preview" style={{ maxHeight: '80px', maxWidth: '100%', borderRadius: '8px' }} />
+                        <img src={resolveAssetUrl(avatarUrl)} alt="Avatar Preview" style={{ maxHeight: '80px', maxWidth: '100%', borderRadius: '8px' }} />
                       </div>
                     )}
                   </label>

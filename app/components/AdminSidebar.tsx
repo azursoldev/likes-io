@@ -32,7 +32,7 @@ import {
   faTag,
   faGift,
 } from "@fortawesome/free-solid-svg-icons";
-import { getAdminUrl } from "@/lib/url-utils";
+import { getAdminUrl, resolveAssetUrl } from "@/lib/url-utils";
 import { useSettings } from "../contexts/SettingsContext";
 
 type NavItem = {
@@ -149,7 +149,7 @@ export default function AdminSidebar({ activePage }: AdminSidebarProps) {
       <div className="admin-logo-block">
         {headerLogoUrl ? (
           <img 
-            src={headerLogoUrl} 
+            src={resolveAssetUrl(headerLogoUrl)} 
             alt="Likes.io" 
             style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain' }} 
           />

@@ -1,6 +1,7 @@
 "use client";
 
 import { isWildcardPagePath } from "@/lib/featured-on-page-links";
+import { resolveAssetUrl } from "@/lib/url-utils";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
@@ -149,7 +150,7 @@ export default function FeaturedOn() {
             const brandLink = rawHref ? normalizeFeaturedHref(rawHref) : null;
 
             const content = logoUrl ? (
-              <img src={logoUrl} alt={altText} style={{ maxHeight: "24px", maxWidth: "120px" }} />
+              <img src={resolveAssetUrl(logoUrl)} alt={altText} style={{ maxHeight: "24px", maxWidth: "120px" }} />
             ) : (
               <span className="brand">{brandName}</span>
             );

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigation } from "../hooks/useNavigation";
 import { useSettings } from "../contexts/SettingsContext";
+import { resolveAssetUrl } from "@/lib/url-utils";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -230,7 +231,7 @@ export default function Footer() {
         <div className="footer-bottom">
           <div className="brand">
             {footerLogoUrl ? (
-              <img src={footerLogoUrl} alt="Likes.io" style={{ maxHeight: '40px' }} />
+              <img src={resolveAssetUrl(footerLogoUrl)} alt="Likes.io" style={{ maxHeight: '40px' }} />
             ) : (
               <>
                 <span className="logo-text">Likes</span>

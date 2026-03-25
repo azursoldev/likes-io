@@ -24,4 +24,6 @@ Likes.io_*/
 # Build artifacts
 *.cache/
 *.tmp
+# TypeScript incremental build cache (see "incremental" in tsconfig.json)
+*.tsbuildinfo
 .env

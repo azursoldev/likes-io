@@ -4,6 +4,7 @@ import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
 import { useState, useEffect } from "react";
+import { pickUploadedAssetUrl, resolveAssetUrl } from "@/lib/url-utils";
 
 export default function SettingsDashboard() {
   const [loading, setLoading] = useState(true);
@@ -375,7 +376,7 @@ export default function SettingsDashboard() {
       }
 
       const data = await response.json();
-      setUrl(data.url);
+      setUrl(pickUploadedAssetUrl(data));
     } catch (error: any) {
       console.error("Error uploading file:", error);
       alert(`Failed to upload file: ${error.message}`);
@@ -458,7 +459,7 @@ export default function SettingsDashboard() {
                   </div>
                   {headerLogoUrl && (
                     <div style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-                      <img src={headerLogoUrl} alt="Header Logo Preview" style={{ maxHeight: '50px', maxWidth: '100%' }} />
+                      <img src={resolveAssetUrl(headerLogoUrl)} alt="Header Logo Preview" style={{ maxHeight: '50px', maxWidth: '100%' }} />
                     </div>
                   )}
                 </label>
@@ -486,7 +487,7 @@ export default function SettingsDashboard() {
                   </div>
                   {footerLogoUrl && (
                     <div style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-                      <img src={footerLogoUrl} alt="Footer Logo Preview" style={{ maxHeight: '50px', maxWidth: '100%' }} />
+                      <img src={resolveAssetUrl(footerLogoUrl)} alt="Footer Logo Preview" style={{ maxHeight: '50px', maxWidth: '100%' }} />
                     </div>
                   )}
                 </label>
@@ -514,7 +515,7 @@ export default function SettingsDashboard() {
                   </div>
                   {faviconUrl && (
                     <div style={{ marginTop: '10px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-                      <img src={faviconUrl} alt="Favicon Preview" style={{ width: '32px', height: '32px' }} />
+                      <img src={resolveAssetUrl(faviconUrl)} alt="Favicon Preview" style={{ width: '32px', height: '32px' }} />
                     </div>
                   )}
                 </label>
@@ -770,7 +771,7 @@ export default function SettingsDashboard() {
                   <h3 style={{ fontSize: '14px', marginBottom: '10px', color: '#555' }}>Google Search Preview</h3>
                   <div style={{ fontFamily: 'Arial, sans-serif' }}>
                     <div style={{ color: '#202124', fontSize: '14px', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                      {faviconUrl && <img src={faviconUrl} alt="" style={{ width: '16px', height: '16px', marginRight: '8px', borderRadius: '50%' }} />}
+                      {faviconUrl && <img src={resolveAssetUrl(faviconUrl)} alt="" style={{ width: '16px', height: '16px', marginRight: '8px', borderRadius: '50%' }} />}
                       <span>likes.io</span>
                     </div>
                     <div style={{ color: '#1a0dab', fontSize: '20px', lineHeight: '1.3', cursor: 'pointer', textDecoration: 'none' }}>

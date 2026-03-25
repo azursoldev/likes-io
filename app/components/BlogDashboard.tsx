@@ -13,6 +13,7 @@ import {
   faTrash,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
+import { pickUploadedAssetUrl } from "@/lib/url-utils";
 
 type BlogRow = {
   id: number;
@@ -280,7 +281,7 @@ export default function BlogDashboard() {
         }
 
         const uploadData = await uploadResponse.json();
-        imageUrl = uploadData.url || uploadData.publicUrl;
+        imageUrl = pickUploadedAssetUrl(uploadData);
       }
 
       // Create NEW post when no post is selected

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { resolveAssetUrl } from "@/lib/url-utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 
@@ -266,7 +267,7 @@ export default function Hero() {
             <div className="profile-image">
               {heroContent.profile.image && (
                 <img 
-                  src={heroContent.profile.image} 
+                  src={resolveAssetUrl(heroContent.profile.image)} 
                   alt="Post" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                   onError={(e) => {

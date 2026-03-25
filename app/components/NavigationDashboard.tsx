@@ -5,6 +5,7 @@ import "../admin/dashboard.css";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
+import { pickUploadedAssetUrl, resolveAssetUrl } from "@/lib/url-utils";
 
 export default function NavigationDashboard() {
   const [loading, setLoading] = useState(true);
@@ -318,7 +319,7 @@ export default function NavigationDashboard() {
       }
 
       const data = await response.json();
-      setUrl(data.url);
+      setUrl(pickUploadedAssetUrl(data));
     } catch (error: any) {
       console.error("Error uploading file:", error);
       alert(`Failed to upload file: ${error.message}`);
@@ -410,7 +411,7 @@ export default function NavigationDashboard() {
                         }}
                       >
                         <img
-                          src={headerLogoUrl}
+                          src={resolveAssetUrl(headerLogoUrl)}
                           alt="Header Logo Preview"
                           style={{ maxHeight: "50px", maxWidth: "100%" }}
                         />
@@ -663,7 +664,7 @@ export default function NavigationDashboard() {
                         }}
                       >
                         <img
-                          src={footerLogoUrl}
+                          src={resolveAssetUrl(footerLogoUrl)}
                           alt="Footer Logo Preview"
                           style={{ maxHeight: "50px", maxWidth: "100%" }}
                         />
@@ -709,7 +710,7 @@ export default function NavigationDashboard() {
                         }}
                       >
                         <img
-                          src={faviconUrl}
+                          src={resolveAssetUrl(faviconUrl)}
                           alt="Favicon Preview"
                           style={{ width: "32px", height: "32px" }}
                         />

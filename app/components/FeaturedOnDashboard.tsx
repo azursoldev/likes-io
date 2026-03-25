@@ -5,6 +5,7 @@ import {
   normalizePageLinksArray,
   validatePageLinksRequired,
 } from "@/lib/featured-on-page-links";
+import { pickUploadedAssetUrl, resolveAssetUrl } from "@/lib/url-utils";
 import PromoBar from "./PromoBar";
 import AdminSidebar from "./AdminSidebar";
 import AdminToolbar from "./AdminToolbar";
@@ -502,7 +503,7 @@ export default function FeaturedOnDashboard() {
                             }
                             const data = await res.json();
                             // Prefer relative URL to avoid mixed content/localhost issues
-                            const finalUrl = data.url || data.publicUrl;
+                            const finalUrl = pickUploadedAssetUrl(data);
                             if (!finalUrl) {
                               throw new Error("Upload did not return a URL");
                             }
@@ -536,7 +537,7 @@ export default function FeaturedOnDashboard() {
                   </label>
                   {logoUrl && (
                     <div style={{ marginTop: '8px', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-                      <img src={logoUrl} alt={altText || brandName || 'Logo'} style={{ maxHeight: '50px' }} />
+                      <img src={resolveAssetUrl(logoUrl)} alt={altText || brandName || 'Logo'} style={{ maxHeight: '50px' }} />
                     </div>
                   )}
                   <label className="faq-modal-label">

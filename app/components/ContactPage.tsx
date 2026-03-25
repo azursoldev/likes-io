@@ -1,13 +1,15 @@
 "use client";
-import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faHeadset, 
-  faClock, 
-  faThumbsUp,
+
+import {
   faAngleRight,
-  faEnvelope
+  faClock,
+  faEnvelope,
+  faHeadset,
+  faThumbsUp
 } from "@fortawesome/free-solid-svg-icons";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useState } from "react";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({

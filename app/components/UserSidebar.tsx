@@ -15,6 +15,7 @@ import {
 import { signOut } from "next-auth/react";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useSettings } from "../contexts/SettingsContext";
+import { resolveAssetUrl } from "@/lib/url-utils";
 
 type SidebarProps =
   | "dashboard"
@@ -55,7 +56,7 @@ export default function UserSidebar({ active = "dashboard" as SidebarProps }) {
       <div className="dashboard-sidebar-brand">
         <a href="/" className="brand-logo">
           {headerLogoUrl ? (
-            <img src={headerLogoUrl} alt="Likes.io" style={{ maxHeight: '40px' }} />
+            <img src={resolveAssetUrl(headerLogoUrl)} alt="Likes.io" style={{ maxHeight: '40px' }} />
           ) : (
             <>
               <span className="logo-text">Likes</span>

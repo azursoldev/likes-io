@@ -28,6 +28,7 @@ import {
   faUpload,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import { pickUploadedAssetUrl } from "@/lib/url-utils";
 
 type AvailableIcon = {
   id: string;
@@ -1049,7 +1050,7 @@ export default function ServicesDashboard() {
       }
 
       const uploadData = await uploadResponse.json();
-      const iconUrl = uploadData.url || uploadData.publicUrl;
+      const iconUrl = pickUploadedAssetUrl(uploadData);
       
       handleBenefitItemChange(id, 'icon', iconUrl);
     } catch (error) {

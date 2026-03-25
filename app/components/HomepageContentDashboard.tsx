@@ -63,6 +63,7 @@ import {
   faTrash
 } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
+import { pickUploadedAssetUrl } from "@/lib/url-utils";
 
 import { iconMap } from "./IconMap";
 
@@ -454,7 +455,7 @@ export default function HomepageContentDashboard() {
         }
 
         const uploadData = await uploadResponse.json();
-        imageUrl = uploadData.url || uploadData.publicUrl;
+        imageUrl = pickUploadedAssetUrl(uploadData);
         console.log('Admin Dashboard: Upload successful. New imageUrl:', imageUrl);
         setHeroProfileImage(imageUrl);
       } else {
@@ -477,7 +478,7 @@ export default function HomepageContentDashboard() {
         }
 
         const uploadData = await uploadResponse.json();
-        influenceImageUrl = uploadData.url || uploadData.publicUrl;
+        influenceImageUrl = pickUploadedAssetUrl(uploadData);
         setInfluenceImage(influenceImageUrl);
       }
 
@@ -499,7 +500,7 @@ export default function HomepageContentDashboard() {
               const { iconFile, ...rest } = card;
               return {
                 ...rest,
-                icon: uploadData.url || uploadData.publicUrl
+                icon: pickUploadedAssetUrl(uploadData)
               };
             }
           } catch (error) {

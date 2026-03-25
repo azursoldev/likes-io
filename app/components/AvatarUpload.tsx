@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { pickUploadedAssetUrl, resolveAssetUrl } from "@/lib/url-utils";
 import { faCloudUploadAlt, faTimes, faImage, faCrop, faUser as faUserIcon } from "@fortawesome/free-solid-svg-icons";
 
 type Point = { x: number; y: number };
@@ -115,8 +116,7 @@ export default function AvatarUpload({ currentAvatarUrl, onAvatarChange }: Avata
       if (!res.ok) throw new Error("Upload failed");
 
       const data = await res.json();
-      // Prefer relative URL to avoid mixed content/localhost issues
-      const finalUrl = data.url || data.publicUrl;
+      const finalUrl = pickUploadedAssetUrl(data);
       onAvatarChange(finalUrl);
       setIsCropping(false);
       setImageSrc(null);
@@ -133,7 +133,7 @@ export default function AvatarUpload({ currentAvatarUrl, onAvatarChange }: Avata
       <div className="avatar-preview-section" style={{ marginBottom: 15 }}>
         {currentAvatarUrl ? (
           <div className="current-avatar" style={{ display: "flex", alignItems: "center", gap: 15 }}>
-            <img src={currentAvatarUrl} alt="Avatar" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+            <img src={resolveAssetUrl(currentAvatarUrl)} alt="Avatar" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
             <button 
                 type="button"
                 className="remove-avatar-btn" 
