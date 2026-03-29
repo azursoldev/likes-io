@@ -64,19 +64,19 @@ export default function AdvantageSection({ title, subtitle, items, fetchHomepage
 
   const renderIcon = (iconStr: string) => {
     if (iconStr?.startsWith('/') || iconStr?.startsWith('http')) {
-        return <img src={iconStr} alt="" style={{ width: '28px', height: '28px' }} />;
+        return <img src={iconStr} alt="" style={{ width: '40px', height: '40px' }} />;
     }
-    
+
     if (iconMap[iconStr]) {
       return (
-        <FontAwesomeIcon 
-          icon={iconMap[iconStr]} 
-          style={{ width: '28px', height: '28px', color: '#f97316' }} 
+        <FontAwesomeIcon
+          icon={iconMap[iconStr]}
+          style={{ width: '40px', height: '40px', color: '#f97316' }}
         />
       );
     }
-    
-    return <FontAwesomeIcon icon={faImage} style={{ width: '28px', height: '28px', color: '#ccc' }} />;
+
+    return <FontAwesomeIcon icon={faImage} style={{ width: '40px', height: '40px', color: '#ccc' }} />;
   };
 
   return (
