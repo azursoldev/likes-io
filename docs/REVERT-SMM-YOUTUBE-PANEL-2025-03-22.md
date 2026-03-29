@@ -26,20 +26,20 @@ If you use `git checkout <sha> -- path`, include every path in **Files touched**
 
 ## Files touched
 
-| Action | Path |
-|--------|------|
-| **Added** | `lib/fulfill-jap-order.ts` |
-| **Added** | `docs/REVERT-SMM-YOUTUBE-PANEL-2025-03-22.md` (this doc) |
-| Modified | `lib/jap-api.ts` (`createOrder` response handling) |
-| Modified | `app/api/payments/create/route.ts` (service lookup, wallet JAP, import) |
-| Modified | `app/api/webhooks/checkout/route.ts` |
-| Modified | `app/api/webhooks/bigpayme/route.ts` |
-| Modified | `app/api/webhooks/myfatoorah/route.ts` |
-| Modified | `app/api/webhooks/cryptomus/route.ts` |
-| Modified | `lib/ziina-order-sync.ts` |
-| Modified | `app/youtube/views/checkout/final/_components/YouTubeViewsCheckoutForm.tsx` |
-| Modified | `app/youtube/subscribers/checkout/final/_components/YouTubeSubscribersCheckoutForm.tsx` |
-| Modified | `app/youtube/likes/checkout/final/FinalCheckoutClient.tsx` |
+| Action    | Path                                                                                    |
+| --------- | --------------------------------------------------------------------------------------- |
+| **Added** | `lib/fulfill-jap-order.ts`                                                              |
+| **Added** | `docs/REVERT-SMM-YOUTUBE-PANEL-2025-03-22.md` (this doc)                                |
+| Modified  | `lib/jap-api.ts` (`createOrder` response handling)                                      |
+| Modified  | `app/api/payments/create/route.ts` (service lookup, wallet JAP, import)                 |
+| Modified  | `app/api/webhooks/checkout/route.ts`                                                    |
+| Modified  | `app/api/webhooks/bigpayme/route.ts`                                                    |
+| Modified  | `app/api/webhooks/myfatoorah/route.ts`                                                  |
+| Modified  | `app/api/webhooks/cryptomus/route.ts`                                                   |
+| Modified  | `lib/ziina-order-sync.ts`                                                               |
+| Modified  | `app/youtube/views/checkout/final/_components/YouTubeViewsCheckoutForm.tsx`             |
+| Modified  | `app/youtube/subscribers/checkout/final/_components/YouTubeSubscribersCheckoutForm.tsx` |
+| Modified  | `app/youtube/likes/checkout/final/FinalCheckoutClient.tsx`                              |
 
 ## Manual revert steps
 
@@ -117,20 +117,20 @@ if (order && order.serviceId && order.link) {
       const japOrder = await japAPI.createOrder(
         service.japServiceId,
         order.link,
-        order.quantity
+        order.quantity,
       );
 
       await prisma.order.update({
         where: { id: order.id },
         data: {
-          status: 'PROCESSING',
+          status: "PROCESSING",
           japOrderId: japOrder.order.toString(),
           japStatus: japOrder.status,
         },
       });
     }
   } catch (error: any) {
-    console.error('Failed to create JAP order:', error);
+    console.error("Failed to create JAP order:", error);
   }
 }
 ```
@@ -148,7 +148,7 @@ if (order.serviceId && order.link && order.service?.japServiceId) {
     const japOrder = await japAPI.createOrder(
       order.service.japServiceId,
       order.link,
-      order.quantity
+      order.quantity,
     );
 
     await prisma.order.update({
@@ -159,7 +159,7 @@ if (order.serviceId && order.link && order.service?.japServiceId) {
       },
     });
   } catch (error: any) {
-    console.error('Failed to create JAP order after Cryptomus payment:', error);
+    console.error("Failed to create JAP order after Cryptomus payment:", error);
   }
 }
 ```
@@ -174,12 +174,14 @@ if (order.serviceId && order.link && order.service?.japServiceId) {
 ```ts
 if (order.serviceId && order.link) {
   try {
-    const service = await prisma.service.findUnique({ where: { id: order.serviceId } });
+    const service = await prisma.service.findUnique({
+      where: { id: order.serviceId },
+    });
     if (service?.japServiceId) {
       const japOrder = await japAPI.createOrder(
         service.japServiceId,
         order.link,
-        order.quantity
+        order.quantity,
       );
       await prisma.order.update({
         where: { id: order.id },

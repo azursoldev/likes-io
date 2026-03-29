@@ -276,7 +276,7 @@ export class JAPAPI {
       });
       
       return {
-        status: response.status || 'processing',
+        status: response.status ?? 'processing',
         remains: response.remains,
         start_count: response.start_count,
         charge: response.charge,
