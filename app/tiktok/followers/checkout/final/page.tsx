@@ -11,8 +11,6 @@ import {
   faLock,
   faCreditCard,
   faInfoCircle,
-  faLink,
-  faHeart,
   faShieldHalved,
   faTag,
   faCoins,
@@ -63,7 +61,7 @@ function FinalCheckoutContent() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
-  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; icon: any}>>([]);
+  const [offers, setOffers] = useState<Array<{id: string; text: string; price: number; originalPrice: number; icon: any}>>([]);
 
   // Fetch wallet balance
   useEffect(() => {
@@ -96,6 +94,7 @@ function FinalCheckoutContent() {
               id: u.id,
               text: u.title,
               price: Math.max(0, p),
+              originalPrice: u.basePrice,
               icon: faUserPlus
             };
           }));
@@ -547,66 +546,41 @@ function FinalCheckoutContent() {
                 </div>
               </div>
 
-              <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
-              
-              <div className="checkout-card exclusive-offers">
-                <div className="offer-item offer-green">
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faHeart} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">50 likes x 10 posts</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(5.99)}</span>
-                      <span className="offer-price-old">{formatPrice(7.99)}</span>
-                    </div>
+              {offers.length > 0 && (
+                <>
+                  <h3 className="offers-title">EXCLUSIVE OFFERS</h3>
+                  <div className="checkout-card exclusive-offers">
+                    {offers.map((offer, index) => {
+                      const isAdded = !!addedOffers.find(o => o.id === offer.id);
+                      const discountPercent = offer.originalPrice > 0
+                        ? Math.round((1 - offer.price / offer.originalPrice) * 100)
+                        : 0;
+                      return (
+                        <div key={offer.id} className={`offer-item ${index % 2 === 0 ? 'offer-green' : 'offer-pink'} ${isAdded ? 'offer-added' : ''}`}>
+                          <div className="offer-badge">{discountPercent}%</div>
+                          <FontAwesomeIcon icon={offer.icon} className="offer-icon" />
+                          <div className="offer-details">
+                            <span className="offer-text">{offer.text}</span>
+                            <div className="offer-price">
+                              <span className="offer-price-new">For only {formatPrice(offer.price)}</span>
+                              {offer.originalPrice > 0 && (
+                                <span className="offer-price-old">{formatPrice(offer.originalPrice)}</span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            className="offer-add-btn"
+                            onClick={() => handleAddOffer(offer)}
+                            disabled={isAdded}
+                          >
+                            {isAdded ? "Added" : "+ Add"}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[0])}
-                    disabled={!!addedOffers.find(o => o.id === "offer1")}
-                  >
-                    {addedOffers.find(o => o.id === "offer1") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-green ${addedOffers.find(o => o.id === "offer2") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faHeart} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">100 likes x 10 posts</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[1])}
-                    disabled={!!addedOffers.find(o => o.id === "offer2")}
-                  >
-                    {addedOffers.find(o => o.id === "offer2") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-
-                <div className={`offer-item offer-pink ${addedOffers.find(o => o.id === "offer3") ? "offer-added" : ""}`}>
-                  <div className="offer-badge">25%</div>
-                  <FontAwesomeIcon icon={faLink} className="offer-icon" />
-                  <div className="offer-details">
-                    <span className="offer-text">1K views</span>
-                    <div className="offer-price">
-                      <span className="offer-price-new">For only {formatPrice(11.24)}</span>
-                      <span className="offer-price-old">{formatPrice(14.99)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="offer-add-btn"
-                    onClick={() => handleAddOffer(offers[2])}
-                    disabled={!!addedOffers.find(o => o.id === "offer3")}
-                  >
-                    {addedOffers.find(o => o.id === "offer3") ? "Added" : "+ Add"}
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
 
               <div className="checkout-card security-guarantees">
                 <div className="guarantee-item">
